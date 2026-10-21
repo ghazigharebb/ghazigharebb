@@ -1,0 +1,13 @@
+# ── ئەمە بخەرە ناو pubspec.yaml ی ئەپەکە (نەک جێگەی بگرێتەوە) ──
+
+dependencies:
+  flutter_inappwebview: ^6.1.5     # پەڕەی وێب لەناو ئەپ
+  image_picker: ^1.1.2             # (ئەگەر پێشتر هەیە، دووبارەی مەکەوە) تەنها بۆ VexFoodGlue
+
+flutter:
+  assets:
+    # ⚠️ Flutter فۆڵدەرەکان «ناگەڕێت»؛ هەر ٤ فۆڵدەر دەبێت ڕیز بکرێن، بە / کۆتایی:
+    - assets/food_full/web/
+    - assets/food_full/web/data/
+    - assets/food_full/web/img/
+    - assets/food_full/web/fonts/
