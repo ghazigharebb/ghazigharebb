@@ -55,9 +55,9 @@ class BandLockPane extends StatelessWidget {
                 children: [
                   const BandEmblem(size: 78),
                   const SizedBox(height: 2),
-                  Text(title, textAlign: TextAlign.center, style: ku(19, w: FontWeight.w800, h: 1.5)),
+                  VText(title, textAlign: TextAlign.center, style: ku(19, w: FontWeight.w800, h: 1.5)),
                   const SizedBox(height: 4),
-                  Text(text, textAlign: TextAlign.center, style: ku(13, c: V.mu, h: 1.7)),
+                  VText(text, textAlign: TextAlign.center, style: ku(13, c: V.mu, h: 1.7)),
                   const SizedBox(height: 14),
                   Press(
                     onTap: showBandPair,
@@ -71,7 +71,7 @@ class BandLockPane extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('پەیوەستکردن', style: ku(13.5, w: FontWeight.w800, c: V.ink, h: 1.3)),
+                          VText('پەیوەستکردن', style: ku(13.5, w: FontWeight.w800, c: V.ink, h: 1.3)),
                           const SizedBox(width: 8),
                           svgIcon('<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>', '#04323a', size: 17),
                         ],

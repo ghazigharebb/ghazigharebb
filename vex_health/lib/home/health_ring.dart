@@ -10,7 +10,9 @@ import '../band/band_widgets.dart';
 import '../core/icons.dart';
 import '../core/store.dart';
 import '../core/theme.dart';
+import '../vitalage/vital_age_engine.dart';
 import 'detail_sheets.dart';
+import '../plus/gate.dart';
 
 class Metric {
   const Metric({
@@ -54,14 +56,14 @@ class Metric {
 }
 
 /// هەر یەکێک ڕەنگی تایبەتی خۆی: خەو = شەو، دڵ = سووری خوێن ...
-const List<Metric> kMetrics = [
-  Metric(k: 'sleep', hex: '#8b7bff', c: Color(0xFF8B7BFF), g0: Color(0xFFB9ADFF), g1: Color(0xFF6A55FF), sn: 'خەو', n: 'خەو', u: 'کاتژمێر', sc: 0.86),
-  Metric(k: 'hr', hex: '#ff3d5e', c: Color(0xFFFF3D5E), g0: Color(0xFFFF8A9C), g1: Color(0xFFE8173F), sn: 'دڵ', n: 'لێدانی دڵ', u: 'BPM', sc: 0.9),
-  Metric(k: 'temp', hex: '#ffc23d', c: Color(0xFFFFC23D), g0: Color(0xFFFFE08A), g1: Color(0xFFFFA91F), sn: 'پێست', n: 'پلەی پێست', u: '°C', sc: 0.88),
-  Metric(k: 'act', hex: '#3cf08a', c: Color(0xFF3CF08A), g0: Color(0xFF8DFFC0), g1: Color(0xFF1FCF6E), sn: 'چالاکی', n: 'چالاکی', u: 'خولەک', sc: 0.55),
-  Metric(k: 'spo2', hex: '#3db8ff', c: Color(0xFF3DB8FF), g0: Color(0xFF9BE0FF), g1: Color(0xFF1A8CFF), sn: 'ئۆکسجین', n: 'SpO₂', u: '%', sc: 0.62),
-  Metric(k: 'stress', hex: '#ff8a3d', c: Color(0xFFFF8A3D), g0: Color(0xFFFFB37A), g1: Color(0xFFFF6A1F), sn: 'سترێس', n: 'سترێس', u: '', sc: 0.5),
-];
+List<Metric> get kMetrics => vexCache<List<Metric>>('health_ring.dart:kMetrics', () => [
+  Metric(k: 'sleep', hex: '#8b7bff', c: vk(0xFF8B7BFF), g0: vk(0xFFB9ADFF), g1: vk(0xFF6A55FF), sn: 'خەو', n: 'خەو', u: 'کاتژمێر', sc: 0.86),
+  Metric(k: 'hr', hex: '#ff3d5e', c: vk(0xFFFF3D5E), g0: vk(0xFFFF8A9C), g1: vk(0xFFE8173F), sn: 'دڵ', n: 'لێدانی دڵ', u: 'BPM', sc: 0.9),
+  Metric(k: 'temp', hex: '#ffc23d', c: vk(0xFFFFC23D), g0: vk(0xFFFFE08A), g1: vk(0xFFFFA91F), sn: 'پێست', n: 'پلەی پێست', u: '°C', sc: 0.88),
+  Metric(k: 'act', hex: '#3cf08a', c: vk(0xFF3CF08A), g0: vk(0xFF8DFFC0), g1: vk(0xFF1FCF6E), sn: 'چالاکی', n: 'چالاکی', u: 'خولەک', sc: 0.55),
+  Metric(k: 'spo2', hex: '#3db8ff', c: vk(0xFF3DB8FF), g0: vk(0xFF9BE0FF), g1: vk(0xFF1A8CFF), sn: 'ئۆکسجین', n: 'SpO₂', u: '%', sc: 0.62),
+  Metric(k: 'stress', hex: '#ff8a3d', c: vk(0xFFFF8A3D), g0: vk(0xFFFFB37A), g1: vk(0xFFFF6A1F), sn: 'سترێس', n: 'سترێس', u: '', sc: 0.5),
+]);
 
 class StatusTag {
   const StatusTag(this.t, this.c);
@@ -70,9 +72,9 @@ class StatusTag {
 }
 
 StatusTag metricStatus(double sc) {
-  if (sc >= 0.75) return const StatusTag('باش', Color(0xFF3CF08A));
-  if (sc >= 0.5) return const StatusTag('ئاگاداربە', Color(0xFFFFBE4D));
-  return const StatusTag('لاواز', Color(0xFFFF5D6C));
+  if (sc >= 0.75) return StatusTag('باش', vk(0xFF3CF08A));
+  if (sc >= 0.5) return StatusTag('ئاگاداربە', vk(0xFFFFBE4D));
+  return StatusTag('لاواز', vk(0xFFFF5D6C));
 }
 
 int ringScore() {
@@ -85,10 +87,10 @@ int ringScore() {
 
 StatusTag ringStatus() {
   final s = ringScore();
-  if (s >= 85) return const StatusTag('نایاب', Color(0xFF3CF08A));
-  if (s >= 70) return const StatusTag('باش', Color(0xFF3CF08A));
-  if (s >= 55) return const StatusTag('مامناوەند', Color(0xFFFFBE4D));
-  return const StatusTag('گرنگی پێبدە', Color(0xFFFF5D6C));
+  if (s >= 85) return StatusTag('نایاب', vk(0xFF3CF08A));
+  if (s >= 70) return StatusTag('باش', vk(0xFF3CF08A));
+  if (s >= 55) return StatusTag('مامناوەند', vk(0xFFFFBE4D));
+  return StatusTag('گرنگی پێبدە', vk(0xFFFF5D6C));
 }
 
 const int kYesterdayScore = 68;
@@ -132,21 +134,21 @@ class HealthCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 2),
             child: Row(
               children: [
-                Expanded(child: Text('تەندروستیی ئەمڕۆ', style: ku(16, w: FontWeight.w800))),
+                Expanded(child: VText('تەندروستیی ئەمڕۆ', style: ku(16, w: FontWeight.w800))),
                 BandBuilder(
                   builder: (context, on) => Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (on)
-                        const BlinkDot(size: 7, glow: true)
+                        BlinkDot(size: 7, glow: true)
                       else
                         Container(
                           width: 7,
                           height: 7,
-                          decoration: const BoxDecoration(shape: BoxShape.circle, color: BandColors.dot),
+                          decoration: BoxDecoration(shape: BoxShape.circle, color: BandColors.dot),
                         ),
                       const SizedBox(width: 6),
-                      Text(on ? 'زیندوو لە Band ـەوە' : 'پەیوەست نییە',
+                      VText(on ? 'زیندوو لە Band ـەوە' : 'پەیوەست نییە',
                           style: ku(12, w: FontWeight.w600, c: on ? V.mu : BandColors.label)),
                     ],
                   ),
@@ -155,17 +157,24 @@ class HealthCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
+          Gated(
+            kind: GateKind.band,
+            id: 'ring',
+            minHeight: 360,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
           BandBuilder(builder: (context, on) => on ? const HealthRing() : const OfflineHealthRing()),
           BandBuilder(builder: (context, on) => !on ? Padding(
             padding: const EdgeInsets.fromLTRB(6, 2, 6, 8),
-            child: Text(
+            child: VText(
               'نمرەی تەندروستی دوای پەیوەستکردنی Band دەردەکەوێت.',
               textAlign: TextAlign.center,
               style: ku(12.5, w: FontWeight.w700, c: V.mu, h: 1.7),
             ),
           ) : Padding(
             padding: const EdgeInsets.fromLTRB(6, 2, 6, 8),
-            child: Text.rich(
+            child: VText.rich(
               TextSpan(children: [
                 TextSpan(text: '✨ ${good.join('، ')} باشن'),
                 if (w2.isNotEmpty) ...[
@@ -182,45 +191,60 @@ class HealthCard extends StatelessWidget {
               style: ku(12.5, w: FontWeight.w700, c: V.mu, h: 1.7),
             ),
           )),
-          Press(
-            onTap: openVitalAge,
-            scale: 0.98,
-            child: Container(
-              margin: const EdgeInsets.only(top: 2),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: box(r: 16),
-              child: Row(
-                children: [
-                  const Text('🧬', style: TextStyle(fontSize: 20)),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('تەمەنی ژیانی (VitalAge)', style: ku(13, w: FontWeight.w700)),
-                        Text('خەو، HRV و چالاکی هاوکات بکە بۆ کردنەوە', style: ku(12, c: V.mu, h: 1.8)),
-                        const SizedBox(height: 6),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(99),
-                          child: Container(
-                            height: 5,
-                            color: V.track,
-                            alignment: Alignment.centerLeft,
-                            child: const FractionallySizedBox(
-                              widthFactor: 0.22,
-                              heightFactor: 1,
-                              child: DecoratedBox(decoration: BoxDecoration(gradient: V.prime)),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text('‹', style: ku(14, c: V.mu)),
-                ],
-              ),
+              ],
             ),
+          ),
+          ListenableBuilder(
+            listenable: VitalAgeEngine.I,
+            builder: (context, _) {
+              final va = VitalAgeEngine.I;
+              final res = va.compute();
+              return Press(
+                onTap: openVitalAge,
+                scale: 0.98,
+                child: Container(
+                  margin: const EdgeInsets.only(top: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: box(r: 16),
+                  child: Row(
+                    children: [
+                      const VText('🧬', style: TextStyle(fontSize: 20)),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            VText('تەمەنی ژیانی (VitalAge)', style: ku(13, w: FontWeight.w700)),
+                            VText(
+                              res != null
+                                  ? '${res.age.toStringAsFixed(1)} ساڵ · بەراورد بە ${res.realAge} ساڵ'
+                                  : 'کۆکردنەوە: ${va.collected}/${VitalAgeEngine.need} ڕۆژ · ماوە ${va.remaining} ڕۆژ',
+                              style: ku(12, c: V.mu, h: 1.8),
+                            ),
+                            const SizedBox(height: 6),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(99),
+                              child: Container(
+                                height: 5,
+                                color: V.track,
+                                alignment: Alignment.centerLeft,
+                                child: FractionallySizedBox(
+                                  widthFactor: clampD(va.progress, 0.03, 1.0),
+                                  heightFactor: 1,
+                                  child: const DecoratedBox(decoration: BoxDecoration(gradient: V.prime)),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      VText('‹', style: ku(14, c: V.mu)),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -423,7 +447,7 @@ class _HealthRingState extends State<HealthRing> with TickerProviderStateMixin {
             onTap: () => _tapSeg(i),
             child: Container(
               decoration: BoxDecoration(
-                color: mix(const Color(0xFF062B35), m.c, 0.07),
+                color: mix(vk(0xFF062B35), m.c, 0.07),
                 borderRadius: BorderRadius.circular(13),
                 border: Border.all(color: op(m.c, 0.5)),
                 boxShadow: isFocus ? [BoxShadow(color: op(m.c, 0.6), blurRadius: 18, spreadRadius: -4)] : null,
@@ -445,16 +469,16 @@ class _HealthRingState extends State<HealthRing> with TickerProviderStateMixin {
                   Positioned(
                     right: 35,
                     top: 4,
-                    child: Text(
+                    child: VText(
                       m.value(Store.I.h),
                       textDirection: TextDirection.ltr,
-                      style: nu(14.5, c: const Color(0xFFF2FFFF), h: 1.15),
+                      style: nu(14.5, c: vk(0xFFF2FFFF), h: 1.15),
                     ),
                   ),
                   Positioned(
                     right: 35,
                     top: 21,
-                    child: Text(m.sn, style: ku(10, w: FontWeight.w800, c: m.c, h: 1.2)),
+                    child: VText(m.sn, style: ku(10, w: FontWeight.w800, c: m.c, h: 1.2)),
                   ),
                   Positioned(
                     left: 2,
@@ -485,12 +509,12 @@ class _HealthRingState extends State<HealthRing> with TickerProviderStateMixin {
 
   Widget _gradNum(String s, double size) => ShaderMask(
         blendMode: BlendMode.srcIn,
-        shaderCallback: (r) => const LinearGradient(
+        shaderCallback: (r) => LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Colors.white, Color(0xFFA9F6FF)],
+          colors: [kW, vk(0xFFA9F6FF)],
         ).createShader(r),
-        child: Text(s, textDirection: TextDirection.ltr, style: nu(size, c: Colors.white, h: 1.0, ls: -1.5)),
+        child: VText(s, textDirection: TextDirection.ltr, style: nu(size, c: kW, h: 1.0, ls: -1.5)),
       );
 
   Widget _pillTag(StatusTag st, double w, double h, double fs) => Container(
@@ -502,7 +526,7 @@ class _HealthRingState extends State<HealthRing> with TickerProviderStateMixin {
           borderRadius: BorderRadius.circular(h / 2),
           border: Border.all(color: op(st.c, 0.5)),
         ),
-        child: Text(st.t, style: ku(fs, w: FontWeight.w800, c: st.c, h: 1.1)),
+        child: VText(st.t, style: ku(fs, w: FontWeight.w800, c: st.c, h: 1.1)),
       );
 
   // ناوەڕاست: نمرەی گشتی
@@ -516,7 +540,7 @@ class _HealthRingState extends State<HealthRing> with TickerProviderStateMixin {
       height: _vh,
       child: Stack(
         children: [
-          _cText(_cy - 45, 16, Text('نمرەی تەندروستی', style: ku(10, w: FontWeight.w700, c: const Color(0xFF7FB9C2), h: 1.2))),
+          _cText(_cy - 45, 16, VText('نمرەی تەندروستی', style: ku(10, w: FontWeight.w700, c: vk(0xFF7FB9C2), h: 1.2))),
           _cText(
             _cy - 36,
             52,
@@ -533,9 +557,9 @@ class _HealthRingState extends State<HealthRing> with TickerProviderStateMixin {
           _cText(
             _cy + 42,
             16,
-            Text(
+            VText(
               '${dlt >= 0 ? '▲' : '▼'} ${dlt.abs()} لە دوێنێ',
-              style: ku(9.5, w: FontWeight.w800, c: dlt >= 0 ? const Color(0xFF3CF08A) : const Color(0xFFFF8A9D), h: 1.2),
+              style: ku(9.5, w: FontWeight.w800, c: dlt >= 0 ? vk(0xFF3CF08A) : vk(0xFFFF8A9D), h: 1.2),
             ),
           ),
         ],
@@ -560,9 +584,9 @@ class _HealthRingState extends State<HealthRing> with TickerProviderStateMixin {
             height: 16,
             child: SvgPicture.string(iconSvg(kRingIcons[m.k]!, m.hex, stroke: 2.4), width: 16, height: 16),
           ),
-          _cText(_cy - 31, 16, Text(m.n, style: ku(10.5, w: FontWeight.w800, c: m.c, h: 1.2))),
+          _cText(_cy - 31, 16, VText(m.n, style: ku(10.5, w: FontWeight.w800, c: m.c, h: 1.2))),
           _cText(_cy - 21, 38, _gradNum(m.value(Store.I.h), 36)),
-          _cText(_cy + 17, 14, Text(m.u, textDirection: TextDirection.ltr, style: ku(9.5, w: FontWeight.w700, c: const Color(0xFF7FB9C2), h: 1.2))),
+          _cText(_cy + 17, 14, VText(m.u, textDirection: TextDirection.ltr, style: ku(9.5, w: FontWeight.w700, c: vk(0xFF7FB9C2), h: 1.2))),
           Positioned(left: _cx - 30, top: _cy + 33, child: _pillTag(s, 60, 19, 10.5)),
         ],
       ),
@@ -630,10 +654,10 @@ class _RingPainter extends CustomPainter {
       c,
       coreR,
       Paint()
-        ..shader = const RadialGradient(
+        ..shader = RadialGradient(
           center: Alignment(0, -0.3),
           radius: 0.5,
-          colors: [Color(0xFF0E3D4B), Color(0xFF04202A)],
+          colors: [vk(0xFF0E3D4B), vk(0xFF04202A)],
         ).createShader(coreRect),
     );
     canvas.drawCircle(c, coreR, Paint()
@@ -645,7 +669,7 @@ class _RingPainter extends CustomPainter {
     canvas.drawCircle(c, _ri, Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3.5
-      ..color = op(Colors.white, 0.06));
+      ..color = op(kW, 0.06));
     final av = s.arcVal;
     if (av > 0.002) {
       final r = Rect.fromCircle(center: c, radius: _ri);
@@ -659,10 +683,10 @@ class _RingPainter extends CustomPainter {
       if (ac != null) {
         p.color = ac;
       } else {
-        p.shader = const LinearGradient(
+        p.shader = LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF8FF3F9), Color(0xFF2FE6F3), Color(0xFF3CF08A)],
+          colors: [vk(0xFF8FF3F9), vk(0xFF2FE6F3), vk(0xFF3CF08A)],
           stops: [0.0, 0.55, 1.0],
         ).createShader(r);
       }
@@ -677,10 +701,10 @@ class _RingPainter extends CustomPainter {
       final o = s.segOp(i);
       final layer = o < 0.999;
       if (layer) {
-        canvas.saveLayer(Rect.fromLTWH(-40, -40, 440, _vh + 80), Paint()..color = Color.fromRGBO(0, 0, 0, o));
+        canvas.saveLayer(Rect.fromLTWH(-40, -40, 440, _vh + 80), Paint()..color = vkRGBO(0, 0, 0, o));
       }
 
-      canvas.drawArc(rect, rad(a0 - 90), rad(_span), false, _stroke(_sw)..color = op(Colors.white, 0.07));
+      canvas.drawArc(rect, rad(a0 - 90), rad(_span), false, _stroke(_sw)..color = op(kW, 0.07));
 
       final fp = clampD((t - (0.25 + i * 0.12)) / 1.3, 0, 1);
       final f = m.sc * _ease.transform(fp);
@@ -710,13 +734,13 @@ class _RingPainter extends CustomPainter {
           rad(st - 90),
           rad(en - st),
           false,
-          _stroke(1.2)..color = op(Colors.white, 0.35 * so),
+          _stroke(1.2)..color = op(kW, 0.35 * so),
         );
       }
 
       final co = clampD((t - (1.1 + i * 0.12)) / 0.5, 0, 1);
       if (co > 0) {
-        canvas.drawCircle(_pt(_rr, a0 + _span * m.sc), 3, Paint()..color = op(Colors.white, co));
+        canvas.drawCircle(_pt(_rr, a0 + _span * m.sc), 3, Paint()..color = op(kW, co));
       }
 
       // هێڵی پەیوەندی بۆ کارتەکە
@@ -774,19 +798,19 @@ class OfflineHealthRing extends StatelessWidget {
               height: 22,
               child: Container(
                 alignment: Alignment.center,
-                decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0x0FFFFFFF)),
+                decoration: BoxDecoration(shape: BoxShape.circle, color: vk(0x0FFFFFFF)),
                 child: SvgPicture.string(iconSvg(kRingIcons[m.k]!, '#80b4bc', stroke: 2.3), width: 14, height: 14),
               ),
             ),
             Positioned(
               right: 35,
               top: 4,
-              child: Text('—', textDirection: TextDirection.ltr, style: nu(14.5, c: BandColors.mute, h: 1.15)),
+              child: VText('—', textDirection: TextDirection.ltr, style: nu(14.5, c: BandColors.mute, h: 1.15)),
             ),
             Positioned(
               right: 35,
               top: 21,
-              child: Text(m.sn, style: ku(10, w: FontWeight.w800, c: BandColors.mute, h: 1.2)),
+              child: VText(m.sn, style: ku(10, w: FontWeight.w800, c: BandColors.mute, h: 1.2)),
             ),
           ],
         ),
@@ -812,8 +836,8 @@ class OfflineHealthRing extends StatelessWidget {
               const Positioned.fill(child: CustomPaint(painter: _OffRingPainter())),
               for (int i = 0; i < kMetrics.length; i++) _pill(i),
               _cText(_cy - 45, 16,
-                  Text('نمرەی تەندروستی', style: ku(10, w: FontWeight.w700, c: const Color(0xFF7FB9C2), h: 1.2))),
-              _cText(_cy - 36, 52, Text('—', textDirection: TextDirection.ltr, style: nu(46, c: BandColors.mute, h: 1.0))),
+                  VText('نمرەی تەندروستی', style: ku(10, w: FontWeight.w700, c: vk(0xFF7FB9C2), h: 1.2))),
+              _cText(_cy - 36, 52, VText('—', textDirection: TextDirection.ltr, style: nu(46, c: BandColors.mute, h: 1.0))),
               Positioned(
                 left: _cx - 44,
                 top: _cy + 17,
@@ -826,7 +850,7 @@ class OfflineHealthRing extends StatelessWidget {
                     borderRadius: BorderRadius.circular(11),
                     border: Border.all(color: op(BandColors.label, 0.45)),
                   ),
-                  child: Text('پەیوەست نییە', style: ku(11, w: FontWeight.w800, c: BandColors.label, h: 1.1)),
+                  child: VText('پەیوەست نییە', style: ku(11, w: FontWeight.w800, c: BandColors.label, h: 1.1)),
                 ),
               ),
             ],

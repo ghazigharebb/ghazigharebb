@@ -55,11 +55,11 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
   HealthBrief brief = kDemoBrief;
   final Set<int> doneActs = <int>{};
 
-  late final List<_M> metrics = [
-    _M(HI.step, '2,416', 'هەنگاو', const Color(0xFF2FE6F3), '#2fe6f3', 24),
-    _M(HI.fire, '70', 'kcal', const Color(0xFFFF9A52), '#ff9a52', 23),
-    _M(HI.heart, '68', 'bpm', const Color(0xFFFF3D5E), '#ff3d5e', 80),
-    _M(HI.wave, '48', 'HRV ms', const Color(0xFF9D86FF), '#9d86ff', 62),
+  List<_M> get metrics => [
+    _M(HI.step, '2,416', 'هەنگاو', vk(0xFF2FE6F3), '#2fe6f3', 24),
+    _M(HI.fire, '70', 'kcal', vk(0xFFFF9A52), '#ff9a52', 23),
+    _M(HI.heart, '68', 'bpm', vk(0xFFFF3D5E), '#ff3d5e', 80),
+    _M(HI.wave, '48', 'HRV ms', vk(0xFF9D86FF), '#9d86ff', 62),
   ];
 
   @override
@@ -141,45 +141,45 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
       margin: const EdgeInsets.only(top: 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: const Color(0x529D86FF)),
-        boxShadow: const [
-          BoxShadow(color: Color(0xE67A4FF0), blurRadius: 44, offset: Offset(0, 22), spreadRadius: -26),
+        border: Border.all(color: vk(0x529D86FF)),
+        boxShadow: [
+          BoxShadow(color: vk(0xE67A4FF0), blurRadius: 44, offset: Offset(0, 22), spreadRadius: -26),
         ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(26),
         child: Stack(
           children: [
-            const Positioned.fill(
+            Positioned.fill(
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment(-0.34, -1),
                     end: Alignment(0.34, 1),
-                    colors: [Color(0xFF0D3340), Color(0xFF082731)],
+                    colors: [vk(0xFF0D3340), vk(0xFF082731)],
                   ),
                 ),
               ),
             ),
-            const Positioned.fill(
+            Positioned.fill(
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: RadialGradient(
                     center: Alignment.topRight,
                     radius: 1.1,
-                    colors: [Color(0x807A4FF0), Color(0x007A4FF0)],
+                    colors: [vk(0x807A4FF0), vk(0x007A4FF0)],
                     stops: [0.0, 0.58],
                   ),
                 ),
               ),
             ),
-            const Positioned.fill(
+            Positioned.fill(
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: RadialGradient(
                     center: Alignment.bottomLeft,
                     radius: 0.9,
-                    colors: [Color(0x382FE6F3), Color(0x002FE6F3)],
+                    colors: [vk(0x382FE6F3), vk(0x002FE6F3)],
                     stops: [0.0, 0.6],
                   ),
                 ),
@@ -194,19 +194,19 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
                 maxHeight: 900,
                 child: RotationTransition(
                   turns: rot,
-                  child: const SizedBox(
+                  child: SizedBox(
                     width: 900,
                     height: 900,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
                         gradient: SweepGradient(
                           colors: [
-                            Color(0x009D86FF),
-                            Color(0x299D86FF),
-                            Color(0x009D86FF),
-                            Color(0x1F2FE6F3),
-                            Color(0x002FE6F3),
-                            Color(0x002FE6F3),
+                            vk(0x009D86FF),
+                            vk(0x299D86FF),
+                            vk(0x009D86FF),
+                            vk(0x1F2FE6F3),
+                            vk(0x002FE6F3),
+                            vk(0x002FE6F3),
                           ],
                           stops: [0.0, 0.125, 0.25, 0.4, 0.55, 1.0],
                         ),
@@ -234,15 +234,15 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
                       child: AnimatedOpacity(
                         opacity: stage == _Stage.scan ? 0.5 : 1.0,
                         duration: const Duration(milliseconds: 300),
-                        child: Text.rich(
+                        child: VText.rich(
                           TextSpan(children: [
                             const TextSpan(text: 'ڕۆژێکی '),
-                            TextSpan(text: 'ئارامە', style: ku(12.5, w: FontWeight.w800, c: Colors.white, h: 1.75)),
+                            TextSpan(text: 'ئارامە', style: ku(12.5, w: FontWeight.w800, c: kW, h: 1.75)),
                             const TextSpan(text: ': دڵ و ئۆکسجینت ئاسایین، بەڵام '),
-                            TextSpan(text: 'جووڵەت کەمە', style: ku(12.5, w: FontWeight.w800, c: Colors.white, h: 1.75)),
+                            TextSpan(text: 'جووڵەت کەمە', style: ku(12.5, w: FontWeight.w800, c: kW, h: 1.75)),
                             const TextSpan(text: '.'),
                           ]),
-                          style: ku(12.5, c: const Color(0xFFD6E3F0), h: 1.75),
+                          style: ku(12.5, c: vk(0xFFD6E3F0), h: 1.75),
                         ),
                       ),
                     ),
@@ -285,7 +285,7 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
                         child: Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: const Color(0x809D86FF), width: 1.5),
+                            border: Border.all(color: vk(0x809D86FF), width: 1.5),
                           ),
                         ),
                       ),
@@ -298,13 +298,13 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    gradient: const LinearGradient(
+                    gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [Color(0xFF8B6CFF), Color(0xFF2FE6F3)],
+                      colors: [vk(0xFF8B6CFF), vk(0xFF2FE6F3)],
                     ),
-                    boxShadow: const [
-                      BoxShadow(color: Color(0xFF8B6CFF), blurRadius: 22, offset: Offset(0, 8), spreadRadius: -8),
+                    boxShadow: [
+                      BoxShadow(color: vk(0xFF8B6CFF), blurRadius: 22, offset: Offset(0, 8), spreadRadius: -8),
                     ],
                   ),
                   child: AnimatedBuilder(
@@ -331,11 +331,11 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(_greet(),
+              VText(_greet(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: ku(11.5, w: FontWeight.w700, c: const Color(0xFFB9C9F5))),
-              Text('کورتەی ئەمڕۆ', style: ku(15.5, w: FontWeight.w800, c: Colors.white)),
+                  style: ku(11.5, w: FontWeight.w700, c: vk(0xFFB9C9F5))),
+              VText('کورتەی ئەمڕۆ', style: ku(15.5, w: FontWeight.w800, c: kW)),
             ],
           ),
         ),
@@ -343,16 +343,16 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: const Color(0x14FFFFFF),
+            color: vk(0x14FFFFFF),
             borderRadius: BorderRadius.circular(99),
-            border: Border.all(color: const Color(0x1FFFFFFF)),
+            border: Border.all(color: vk(0x1FFFFFFF)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const BlinkDot(size: 6, color: Color(0xFF3CF08A), glow: true),
+              BlinkDot(size: 6, color: vk(0xFF3CF08A), glow: true),
               const SizedBox(width: 6),
-              Text('AI · ${nowHM()}', style: nu(11, w: FontWeight.w700, c: const Color(0xFFD9E6FF))),
+              VText('AI · ${nowHM()}', style: nu(11, w: FontWeight.w700, c: vk(0xFFD9E6FF))),
             ],
           ),
         ),
@@ -383,10 +383,10 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
                     translation: Offset(1.0 - 2.0 * beam.value, 0),
                     child: child,
                   ),
-                  child: const DecoratedBox(
+                  child: DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Color(0x009D86FF), Color(0x009D86FF), Color(0x8CBEF0FF), Color(0x009D86FF), Color(0x009D86FF)],
+                        colors: [vk(0x009D86FF), vk(0x009D86FF), vk(0x8CBEF0FF), vk(0x009D86FF), vk(0x009D86FF)],
                         stops: [0.0, 0.35, 0.5, 0.65, 1.0],
                       ),
                     ),
@@ -407,7 +407,7 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [op(m.k, 0.14), const Color(0x08FFFFFF)],
+          colors: [op(m.k, 0.14), vk(0x08FFFFFF)],
         ),
         border: Border.all(color: op(m.k, 0.26)),
       ),
@@ -422,11 +422,11 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
             child: svgIcon(m.icon, m.hex, size: 13, stroke: 2.2),
           ),
           const SizedBox(height: 4),
-          Text(m.v, textDirection: TextDirection.ltr, style: nu(14, c: Colors.white, h: 1.2)),
-          Text(m.label,
+          VText(m.v, textDirection: TextDirection.ltr, style: nu(14, c: kW, h: 1.2)),
+          VText(m.label,
               maxLines: 1,
               overflow: TextOverflow.clip,
-              style: ku(9.5, w: FontWeight.w700, c: const Color(0xFFA9C0C8), h: 1.4)),
+              style: ku(9.5, w: FontWeight.w700, c: vk(0xFFA9C0C8), h: 1.4)),
           const SizedBox(height: 5),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -434,7 +434,7 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
               borderRadius: BorderRadius.circular(3),
               child: Container(
                 height: 3,
-                color: const Color(0x14FFFFFF),
+                color: vk(0x14FFFFFF),
                 alignment: Alignment.centerLeft,
                 child: FractionallySizedBox(
                   widthFactor: m.w / 100,
@@ -459,14 +459,14 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            gradient: const LinearGradient(
+            gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFF8B6CFF), Color(0xFF5B7BFF), Color(0xFF2FC8E8)],
+              colors: [vk(0xFF8B6CFF), vk(0xFF5B7BFF), vk(0xFF2FC8E8)],
               stops: [0.0, 0.5, 1.0],
             ),
-            boxShadow: const [
-              BoxShadow(color: Color(0xFF8B6CFF), blurRadius: 26, offset: Offset(0, 12), spreadRadius: -12),
+            boxShadow: [
+              BoxShadow(color: vk(0xFF8B6CFF), blurRadius: 26, offset: Offset(0, 12), spreadRadius: -12),
             ],
           ),
           child: ClipRRect(
@@ -481,12 +481,12 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
                       final p = v < 0.55 ? Curves.easeInOut.transform(v / 0.55) : 1.0;
                       return FractionalTranslation(translation: Offset(-1.2 + 2.4 * p, 0), child: child);
                     },
-                    child: const DecoratedBox(
+                    child: DecoratedBox(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment(-1, -0.27),
                           end: Alignment(1, 0.27),
-                          colors: [Color(0x00FFFFFF), Color(0x59FFFFFF), Color(0x00FFFFFF)],
+                          colors: [vk(0x00FFFFFF), vk(0x59FFFFFF), vk(0x00FFFFFF)],
                           stops: [0.35, 0.5, 0.65],
                         ),
                       ),
@@ -500,7 +500,7 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
                     children: [
                       svgIcon(HI.spark, '#ffffff', size: 18, fill: true),
                       const SizedBox(width: 8),
-                      Text('شیکاری داتاکانم بکە', style: ku(14, w: FontWeight.w800, c: Colors.white)),
+                      VText('شیکاری داتاکانم بکە', style: ku(14, w: FontWeight.w800, c: Colors.white)),
                     ],
                   ),
                 ),
@@ -530,14 +530,14 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
                     _dotFor(i),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: Text(
+                      child: VText(
                         _steps[i],
                         style: ku(
                           12.5,
                           w: FontWeight.w700,
                           c: i == step
-                              ? Colors.white
-                              : (i < step ? const Color(0xFFCFE6EC) : const Color(0xFFB9C9D4)),
+                              ? kW
+                              : (i < step ? vk(0xFFCFE6EC) : vk(0xFFB9C9D4)),
                         ),
                       ),
                     ),
@@ -556,8 +556,8 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
         width: 18,
         height: 18,
         alignment: Alignment.center,
-        decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF3CF08A)),
-        child: Text('✓', style: ku(10, w: FontWeight.w900, c: HC.ink, h: 1.0)),
+        decoration: BoxDecoration(shape: BoxShape.circle, color: vk(0xFF3CF08A)),
+        child: VText('✓', style: ku(10, w: FontWeight.w900, c: HC.ink, h: 1.0)),
       );
     }
     if (i == step) {
@@ -571,7 +571,7 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
       height: 18,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: const Color(0x33FFFFFF), width: 2),
+        border: Border.all(color: vk(0x33FFFFFF), width: 2),
       ),
     );
   }
@@ -600,7 +600,7 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
           gradient: LinearGradient(
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
-            colors: [op(k, 0.12), const Color(0x08FFFFFF)],
+            colors: [op(k, 0.12), vk(0x08FFFFFF)],
           ),
           border: Border.all(color: op(k, 0.28)),
         ),
@@ -612,16 +612,16 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
               height: 28,
               alignment: Alignment.center,
               decoration: BoxDecoration(color: op(k, 0.2), borderRadius: BorderRadius.circular(9)),
-              child: Text(emoji, style: const TextStyle(fontSize: 13)),
+              child: VText(emoji, style: const TextStyle(fontSize: 13)),
             ),
             const SizedBox(width: 9),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: ku(12, w: FontWeight.w800, c: k)),
+                  VText(title, style: ku(12, w: FontWeight.w800, c: k)),
                   const SizedBox(height: 2),
-                  Text(body, style: ku(12.5, c: const Color(0xFFE8F3F6), h: 1.7)),
+                  VText(body, style: ku(12.5, c: vk(0xFFE8F3F6), h: 1.7)),
                 ],
               ),
             ),
@@ -640,9 +640,9 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: const Color(0x0DFFFFFF),
+            color: vk(0x0DFFFFFF),
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0x1AFFFFFF)),
+            border: Border.all(color: vk(0x1AFFFFFF)),
           ),
           child: Row(
             children: [
@@ -656,7 +656,7 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
                     return CustomPaint(
                       painter: _ScoreRing(b.score / 100 * t),
                       child: Center(
-                        child: Text('${b.score}', textDirection: TextDirection.ltr, style: nu(14, c: Colors.white)),
+                        child: VText('${b.score}', textDirection: TextDirection.ltr, style: nu(14, c: kW)),
                       ),
                     );
                   },
@@ -667,17 +667,17 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(b.verdict, style: ku(14.5, w: FontWeight.w800, c: Colors.white)),
+                    VText(b.verdict, style: ku(14.5, w: FontWeight.w800, c: kW)),
                     const SizedBox(height: 2),
-                    Text.rich(
+                    VText.rich(
                       TextSpan(children: [
                         const TextSpan(text: 'نمرەی ئامادەیی ئەمڕۆ لە 100 · '),
                         TextSpan(
                           text: '▲ 4 لە دوێنێ',
-                          style: ku(11.5, w: FontWeight.w800, c: const Color(0xFF3CF08A), h: 1.6),
+                          style: ku(11.5, w: FontWeight.w800, c: vk(0xFF3CF08A), h: 1.6),
                         ),
                       ]),
-                      style: ku(11.5, c: const Color(0xFFB3C6CF), h: 1.6),
+                      style: ku(11.5, c: vk(0xFFB3C6CF), h: 1.6),
                     ),
                   ],
                 ),
@@ -686,23 +686,23 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
           ),
         ),
       ),
-      _insight(1, '✅', 'چی باشە', b.good, const Color(0xFF3CF08A)),
-      _insight(2, '⚠️', 'ئاگاداربە', b.watch, const Color(0xFFFFBE4D)),
-      _insight(3, '💡', 'پێشنیاری AI', b.tip, const Color(0xFF2FE6F3)),
+      _insight(1, '✅', 'چی باشە', b.good, vk(0xFF3CF08A)),
+      _insight(2, '⚠️', 'ئاگاداربە', b.watch, vk(0xFFFFBE4D)),
+      _insight(3, '💡', 'پێشنیاری AI', b.tip, vk(0xFF2FE6F3)),
       _fade(
         4,
         Container(
           margin: const EdgeInsets.only(top: 8),
           child: CustomPaint(
-            foregroundPainter: const _DashedBorder(Color(0x669D86FF), 18),
+            foregroundPainter: _DashedBorder(vk(0x669D86FF), 18),
             child: Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: const Color(0x0AFFFFFF), borderRadius: BorderRadius.circular(18)),
+              decoration: BoxDecoration(color: vk(0x0AFFFFFF), borderRadius: BorderRadius.circular(18)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('✨ پلانی ئێستات · دەست لێدە کاتێک تەواوت کرد',
-                      style: ku(12.5, w: FontWeight.w700, c: const Color(0xFFD9D0FF))),
+                  VText('✨ پلانی ئێستات · دەست لێدە کاتێک تەواوت کرد',
+                      style: ku(12.5, w: FontWeight.w700, c: vk(0xFFD9D0FF))),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 7,
@@ -721,10 +721,10 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
         5,
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 10, 4, 0),
-          child: Text(
+          child: VText(
             'VEX AI · ئەمە ئامۆژگاریی پزیشکی نییە',
             textAlign: TextAlign.center,
-            style: ku(10.5, c: const Color(0xFF88A7B0)),
+            style: ku(10.5, c: vk(0xFF88A7B0)),
           ),
         ),
       ),
@@ -736,7 +736,7 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
             onTap: _run,
             child: Padding(
               padding: const EdgeInsets.all(6),
-              child: Text('↻ دووبارە شیکاری بکە', style: ku(12, w: FontWeight.w700, c: const Color(0xFFB9A8FF))),
+              child: VText('↻ دووبارە شیکاری بکە', style: ku(12, w: FontWeight.w700, c: vk(0xFFB9A8FF))),
             ),
           ),
         ),
@@ -746,7 +746,7 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
 
   Widget _act(int i, String text) {
     final done = doneActs.contains(i);
-    final base = ku(12, w: FontWeight.w700, c: done ? const Color(0xFFBFFFD9) : Colors.white);
+    final base = ku(12, w: FontWeight.w700, c: done ? vk(0xFFBFFFD9) : kW);
     return Press(
       onTap: () => setState(() {
         if (done) {
@@ -759,14 +759,14 @@ class _AiBriefCardState extends State<AiBriefCard> with TickerProviderStateMixin
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
         decoration: BoxDecoration(
-          color: done ? const Color(0x293CF08A) : const Color(0x0FFFFFFF),
+          color: done ? vk(0x293CF08A) : vk(0x0FFFFFFF),
           borderRadius: BorderRadius.circular(99),
-          border: Border.all(color: done ? const Color(0xFF3CF08A) : const Color(0x29FFFFFF)),
+          border: Border.all(color: done ? vk(0xFF3CF08A) : vk(0x29FFFFFF)),
         ),
-        child: Text(
+        child: VText(
           text,
           style: done
-              ? base.copyWith(decoration: TextDecoration.lineThrough, decorationColor: const Color(0xFFBFFFD9))
+              ? base.copyWith(decoration: TextDecoration.lineThrough, decorationColor: vk(0xFFBFFFD9))
               : base,
         ),
       ),
@@ -782,7 +782,7 @@ class _SpinArc extends CustomPainter {
     final p = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2
-      ..color = const Color(0xFF8B6CFF);
+      ..color = vk(0xFF8B6CFF);
     canvas.drawArc((Offset.zero & size).deflate(1), -math.pi / 4, math.pi * 1.5, false, p);
   }
 
@@ -805,7 +805,7 @@ class _ScoreRing extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 6 * s
-        ..color = const Color(0x1AFFFFFF),
+        ..color = vk(0x1AFFFFFF),
     );
     if (f <= 0.001) return;
     final rect = Rect.fromCircle(center: c, radius: r);
@@ -818,10 +818,10 @@ class _ScoreRing extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 6 * s
         ..strokeCap = StrokeCap.round
-        ..shader = const LinearGradient(
+        ..shader = LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF8B6CFF), Color(0xFF3CF08A)],
+          colors: [vk(0xFF8B6CFF), vk(0xFF3CF08A)],
         ).createShader(rect),
     );
   }

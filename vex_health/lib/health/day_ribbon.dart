@@ -15,12 +15,12 @@ class _Cat {
   final Color c;
 }
 
-const Map<String, _Cat> _cat = {
-  'sleep': _Cat('خەو', '🌙', Color(0xFF8B6BFF)),
-  'walk': _Cat('چالاکی', '🚶', Color(0xFF3CF08A)),
-  'stress': _Cat('سترێس', '🧠', Color(0xFFFF5F7E)),
-  'meal': _Cat('ژەم', '🍽️', Color(0xFFFFD56B)),
-};
+Map<String, _Cat> get _cat => vexCache<Map<String, _Cat>>('day_ribbon.dart:_cat', () => {
+  'sleep': _Cat('خەو', '🌙', vk(0xFF8B6BFF)),
+  'walk': _Cat('چالاکی', '🚶', vk(0xFF3CF08A)),
+  'stress': _Cat('سترێس', '🧠', vk(0xFFFF5F7E)),
+  'meal': _Cat('ژەم', '🍽️', vk(0xFFFFD56B)),
+});
 
 class _Seg {
   const _Seg(this.t, this.s, this.e,
@@ -226,13 +226,13 @@ class _DayRibbonCardState extends State<DayRibbonCard> with TickerProviderStateM
 
     final sl = sleep;
     if (sl != null && sl.score >= 75) {
-      g.add(_Ins('🌙', const Color(0xFF8B6BFF), 'خەوێکی باش',
+      g.add(_Ins('🌙', vk(0xFF8B6BFF), 'خەوێکی باش',
           '${_dur(sl.len)} · خەوی قووڵ ${sl.deep}خ · نمرە ${sl.score}', '${_tm(sl.s)}–${_tm(sl.e)}',
           seg: sl));
     }
     final bw = bestWalk;
     if (bw != null) {
-      g.add(_Ins('🚶', const Color(0xFF3CF08A), 'باشترین چالاکی: ${bw.what}',
+      g.add(_Ins('🚶', vk(0xFF3CF08A), 'باشترین چالاکی: ${bw.what}',
           '${fmt(bw.steps)} هەنگاو · دڵ ${bw.hr} BPM', _tm(bw.s),
           seg: bw));
     }
@@ -253,12 +253,12 @@ class _DayRibbonCardState extends State<DayRibbonCard> with TickerProviderStateM
       }
     }
     if (c1 - c0 >= 90) {
-      g.add(_Ins('🍃', const Color(0xFF2FE6F3), 'ئارامترین کاتت', 'سترێسی نزم و لێدانی دڵی هێمن',
+      g.add(_Ins('🍃', vk(0xFF2FE6F3), 'ئارامترین کاتت', 'سترێسی نزم و لێدانی دڵی هێمن',
           '${_tm(c0)}–${_tm(c1)}'));
     }
     if (stress.isNotEmpty) {
       final x = stress.first;
-      b.add(_Ins('🧠', const Color(0xFFFF5F7E), 'زۆرترین سترێس${x.what.isNotEmpty ? ' · ${x.what}' : ''}',
+      b.add(_Ins('🧠', vk(0xFFFF5F7E), 'زۆرترین سترێس${x.what.isNotEmpty ? ' · ${x.what}' : ''}',
           '${_dur(x.len)} · بەرزترین ${x.peak}', '${_tm(x.s)}–${_tm(x.e)}',
           seg: x));
     }
@@ -278,17 +278,17 @@ class _DayRibbonCardState extends State<DayRibbonCard> with TickerProviderStateM
       }
     }
     if (i1 - i0 >= 150) {
-      b.add(_Ins('🪑', const Color(0xFFFFBE4D), 'ماوەیەکی درێژ بێ جووڵە', 'هەر کاتژمێرێک 5 خولەک بڕۆ',
+      b.add(_Ins('🪑', vk(0xFFFFBE4D), 'ماوەیەکی درێژ بێ جووڵە', 'هەر کاتژمێرێک 5 خولەک بڕۆ',
           '${_tm(i0)}–${_tm(i1)}'));
     }
     for (final m in ml) {
       if (m.v == 'bad') {
-        b.add(_Ins(m.e, const Color(0xFFFF9A3D), '${m.n} باش نەبوو بۆ ئامانجەکەت', '${m.k} کالۆری', _tm(m.m),
+        b.add(_Ins(m.e, vk(0xFFFF9A3D), '${m.n} باش نەبوو بۆ ئامانجەکەت', '${m.k} کالۆری', _tm(m.m),
             meal: m));
       }
     }
     if (sl != null && sl.score < 75) {
-      a.add(_Ins('😴', const Color(0xFF8B6BFF), 'خەوی قووڵ کەم بوو',
+      a.add(_Ins('😴', vk(0xFF8B6BFF), 'خەوی قووڵ کەم بوو',
           'تەنها ${sl.deep}خ · ئەمشەو مۆبایل کەمتر بەکاربهێنە', '${_tm(sl.s)}–${_tm(sl.e)}',
           seg: sl));
     }
@@ -304,7 +304,7 @@ class _DayRibbonCardState extends State<DayRibbonCard> with TickerProviderStateM
     final at = typeAt(mxM.toDouble(), sg);
     a.add(_Ins(
       '❤️',
-      const Color(0xFFFF5F7E),
+      vk(0xFFFF5F7E),
       'بەرزترین لێدانی دڵ ${mxH.round()} BPM',
       at != null && at.t == 'walk' ? 'لە کاتی پیاسە، ئاسایی بوو' : 'لە کاتی پشوو، ئاگاداری خۆت بە',
       _tm(mxM),
@@ -313,7 +313,7 @@ class _DayRibbonCardState extends State<DayRibbonCard> with TickerProviderStateM
     if (day == 0) {
       final wake = sl != null ? sl.e : 420;
       final bed = (wake - 480 + 1440) % 1440;
-      a.add(_Ins('⏰', const Color(0xFF2FE6F3), 'ئەمشەو ${_tm(bed - 15)} بخەوە', 'بۆ 8 کاتژمێر خەو و هەستانێکی چالاک',
+      a.add(_Ins('⏰', vk(0xFF2FE6F3), 'ئەمشەو ${_tm(bed - 15)} بخەوە', 'بۆ 8 کاتژمێر خەو و هەستانێکی چالاک',
           _tm(bed - 15)));
     }
     return _InsSet(g, b, a);
@@ -396,15 +396,15 @@ class _DayRibbonCardState extends State<DayRibbonCard> with TickerProviderStateM
             borderRadius: BorderRadius.circular(17),
             border: Border.all(color: op(k, 0.45)),
           ),
-          child: Text(e, style: const TextStyle(fontSize: 26)),
+          child: VText(e, style: const TextStyle(fontSize: 26)),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: ku(18, w: FontWeight.w800)),
-              Text(sub, style: ku(13, c: V.mu)),
+              VText(title, style: ku(18, w: FontWeight.w800)),
+              VText(sub, style: ku(13, c: V.mu)),
             ],
           ),
         ),
@@ -449,7 +449,7 @@ class _DayRibbonCardState extends State<DayRibbonCard> with TickerProviderStateM
         children: [
           _sh1(c.e, c.c, title, '${_tm(s.s)} – ${_tm(s.e)}'),
           if (k3.isNotEmpty) K3(k3),
-          if (note.isNotEmpty) Note(Text(note, style: ku(13, h: 1.8))),
+          if (note.isNotEmpty) Note(VText(note, style: ku(13, h: 1.8))),
         ],
       ),
     );
@@ -459,13 +459,13 @@ class _DayRibbonCardState extends State<DayRibbonCard> with TickerProviderStateM
     final Color k;
     final String lb;
     if (m.v == 'good') {
-      k = const Color(0xFF3CF08A);
+      k = vk(0xFF3CF08A);
       lb = '😊 باش بوو بۆ تۆ';
     } else if (m.v == 'bad') {
-      k = const Color(0xFFFF5F7E);
+      k = vk(0xFFFF5F7E);
       lb = '😟 باش نەبوو بۆ ئامانجەکەت';
     } else {
-      k = const Color(0xFFFFBE4D);
+      k = vk(0xFFFFBE4D);
       lb = '😐 مامناوەند';
     }
     final after = hrAt(m.m + 30.0).round();
@@ -480,7 +480,7 @@ class _DayRibbonCardState extends State<DayRibbonCard> with TickerProviderStateM
             K3Item('کات', _tm(m.m)),
             K3Item('دڵ دوای ژەم', '$after'),
           ]),
-          Note(Text('🍽️ ئەم ژەمە لە بەشی خواردنەوە هاتووە و لێرە لەگەڵ داتای Band ـەکەت پێکەوە نیشان دەدرێت.',
+          Note(VText('🍽️ ئەم ژەمە لە بەشی خواردنەوە هاتووە و لێرە لەگەڵ داتای Band ـەکەت پێکەوە نیشان دەدرێت.',
               style: ku(13, h: 1.8))),
         ],
       ),
@@ -499,8 +499,8 @@ class _DayRibbonCardState extends State<DayRibbonCard> with TickerProviderStateM
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('$n', style: nu(20, c: V.tx)),
-                Text(label, style: ku(11, w: FontWeight.w800, c: k)),
+                VText('$n', style: nu(20, c: V.tx)),
+                VText(label, style: ku(11, w: FontWeight.w800, c: k)),
               ],
             ),
           ),
@@ -547,15 +547,15 @@ class _DayRibbonCardState extends State<DayRibbonCard> with TickerProviderStateM
                           height: 34,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(color: op(x.k, 0.14), borderRadius: BorderRadius.circular(11)),
-                          child: Text(x.e, style: const TextStyle(fontSize: 16)),
+                          child: VText(x.e, style: const TextStyle(fontSize: 16)),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(x.t, style: ku(13, w: FontWeight.w800, h: 1.5)),
-                              Text(x.s, style: ku(11, c: V.mu, h: 1.6)),
+                              VText(x.t, style: ku(13, w: FontWeight.w800, h: 1.5)),
+                              VText(x.s, style: ku(11, c: V.mu, h: 1.6)),
                             ],
                           ),
                         ),
@@ -563,7 +563,7 @@ class _DayRibbonCardState extends State<DayRibbonCard> with TickerProviderStateM
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(color: V.track, borderRadius: BorderRadius.circular(99)),
-                          child: Text(x.tm,
+                          child: VText(x.tm,
                               textDirection: TextDirection.ltr,
                               style: nu(11, w: FontWeight.w700, c: V.mu)),
                         ),
@@ -599,9 +599,9 @@ class _DayRibbonCardState extends State<DayRibbonCard> with TickerProviderStateM
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text(title, style: ku(12, w: FontWeight.w800, c: V.mu)),
+                  VText(title, style: ku(12, w: FontWeight.w800, c: V.mu)),
                   const SizedBox(width: 8),
-                  const Expanded(child: Divider(height: 1, thickness: 1, color: V.line)),
+                  Expanded(child: Divider(height: 1, thickness: 1, color: V.line)),
                 ],
               ),
             ),
@@ -616,20 +616,20 @@ class _DayRibbonCardState extends State<DayRibbonCard> with TickerProviderStateM
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          _sh1('📖', const Color(0xFF8B6BFF), 'تێبینییەکانی ${day == 1 ? 'دوێنێ' : 'ئەمڕۆ'}', '${ins.total} تێبینی'),
+          _sh1('📖', vk(0xFF8B6BFF), 'تێبینییەکانی ${day == 1 ? 'دوێنێ' : 'ئەمڕۆ'}', '${ins.total} تێبینی'),
           const SizedBox(height: 14),
           Row(
             children: [
-              count(ins.g.length, '✓ باش', const Color(0xFF3CF08A)),
+              count(ins.g.length, '✓ باش', vk(0xFF3CF08A)),
               const SizedBox(width: 8),
-              count(ins.b.length, '! خراپ', const Color(0xFFFF5F7E)),
+              count(ins.b.length, '! خراپ', vk(0xFFFF5F7E)),
               const SizedBox(width: 8),
-              count(ins.a.length, '• ئاگاداری', const Color(0xFF2FE6F3)),
+              count(ins.a.length, '• ئاگاداری', vk(0xFF2FE6F3)),
             ],
           ),
-          sec(ctx, 'کاتە باشەکان', const Color(0xFF3CF08A), ins.g),
-          sec(ctx, 'کاتە خراپەکان', const Color(0xFFFF5F7E), ins.b),
-          sec(ctx, 'ئاگادارکردنەوەکان', const Color(0xFF2FE6F3), ins.a),
+          sec(ctx, 'کاتە باشەکان', vk(0xFF3CF08A), ins.g),
+          sec(ctx, 'کاتە خراپەکان', vk(0xFFFF5F7E), ins.b),
+          sec(ctx, 'ئاگادارکردنەوەکان', vk(0xFF2FE6F3), ins.a),
           const SizedBox(height: 16),
           Press(
             onTap: () => Navigator.of(ctx).pop(),
@@ -640,7 +640,7 @@ class _DayRibbonCardState extends State<DayRibbonCard> with TickerProviderStateM
                 borderRadius: BorderRadius.circular(15),
                 border: Border.all(color: V.line2),
               ),
-              child: Text('داخستن', textAlign: TextAlign.center, style: ku(14, w: FontWeight.w800)),
+              child: VText('داخستن', textAlign: TextAlign.center, style: ku(14, w: FontWeight.w800)),
             ),
           ),
         ],
@@ -675,7 +675,7 @@ class _DayRibbonCardState extends State<DayRibbonCard> with TickerProviderStateM
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     for (final l in const ['00', '06', '12', '18', '24'])
-                      Text(l, style: nu(9.5, w: FontWeight.w400, c: V.mu)),
+                      VText(l, style: nu(9.5, w: FontWeight.w400, c: V.mu)),
                   ],
                 ),
               ),
@@ -686,7 +686,7 @@ class _DayRibbonCardState extends State<DayRibbonCard> with TickerProviderStateM
               child: Row(
                 children: [
                   Expanded(
-                    child: Text.rich(
+                    child: VText.rich(
                       TextSpan(children: [
                         const TextSpan(text: 'تێبینییەکانی ڕۆژ '),
                         TextSpan(text: '${ins.total}', style: nu(12, c: V.tx)),
@@ -715,7 +715,7 @@ class _DayRibbonCardState extends State<DayRibbonCard> with TickerProviderStateM
           duration: const Duration(milliseconds: 220),
           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
           decoration: BoxDecoration(color: on ? V.tx : Colors.transparent, borderRadius: BorderRadius.circular(10)),
-          child: Text(label, style: ku(11, w: FontWeight.w800, c: on ? V.bg : V.mu)),
+          child: VText(label, style: ku(11, w: FontWeight.w800, c: on ? V.bg : V.mu)),
         ),
       );
     }
@@ -728,22 +728,22 @@ class _DayRibbonCardState extends State<DayRibbonCard> with TickerProviderStateM
           alignment: Alignment.center,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            gradient: const LinearGradient(
+            gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0x4D8B6BFF), Color(0x332FE6F3)],
+              colors: [vk(0x4D8B6BFF), vk(0x332FE6F3)],
             ),
             border: Border.all(color: V.line2),
           ),
-          child: const Text('📖', style: TextStyle(fontSize: 18)),
+          child: const VText('📖', style: TextStyle(fontSize: 18)),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('ڕۆژەکەت', style: ku(16, w: FontWeight.w800)),
-              Text('${day == 1 ? 'دوێنێ' : 'ئەمڕۆ'} · ${kDays[d.weekday % 7]}', style: ku(11, c: V.mu)),
+              VText('ڕۆژەکەت', style: ku(16, w: FontWeight.w800)),
+              VText('${day == 1 ? 'دوێنێ' : 'ئەمڕۆ'} · ${kDays[d.weekday % 7]}', style: ku(11, c: V.mu)),
             ],
           ),
         ),
@@ -809,31 +809,31 @@ class _DayRibbonCardState extends State<DayRibbonCard> with TickerProviderStateM
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xF003161C),
+              color: vk(0xF003161C),
               borderRadius: BorderRadius.circular(13),
               border: Border.all(color: V.line2),
-              boxShadow: const [BoxShadow(color: Color(0x99000000), blurRadius: 24, offset: Offset(0, 10), spreadRadius: -10)],
+              boxShadow: [BoxShadow(color: vk(0x99000000), blurRadius: 24, offset: Offset(0, 10), spreadRadius: -10)],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text.rich(
+                VText.rich(
                   TextSpan(children: [
                     TextSpan(text: c != null ? '${c.e} ' : '😌 '),
-                    TextSpan(text: c != null ? c.n : 'پشوو', style: ku(13, w: FontWeight.w800, c: const Color(0xFFEFFEFF))),
+                    TextSpan(text: c != null ? c.n : 'پشوو', style: ku(13, w: FontWeight.w800, c: vk(0xFFEFFEFF))),
                     const TextSpan(text: '  '),
                     TextSpan(text: _tm(m.round()), style: nu(12, w: FontWeight.w400, c: V.mu)),
                   ]),
-                  style: ku(12, c: const Color(0xFFEFFEFF)),
+                  style: ku(12, c: vk(0xFFEFFEFF)),
                 ),
-                Text.rich(
+                VText.rich(
                   TextSpan(children: [
                     const TextSpan(text: '♥ '),
-                    TextSpan(text: '$hr', style: nu(12, c: const Color(0xFFEFFEFF))),
+                    TextSpan(text: '$hr', style: nu(12, c: vk(0xFFEFFEFF))),
                     const TextSpan(text: ' BPM'),
                   ]),
-                  style: ku(12, c: const Color(0xFFEFFEFF)),
+                  style: ku(12, c: vk(0xFFEFFEFF)),
                 ),
               ],
             ),
@@ -874,7 +874,7 @@ class _DayRibbonCardState extends State<DayRibbonCard> with TickerProviderStateM
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Text(_cat[k]!.n, style: ku(11, w: FontWeight.w700, c: V.mu)),
+                  VText(_cat[k]!.n, style: ku(11, w: FontWeight.w700, c: V.mu)),
                 ],
               ),
             ),
@@ -903,13 +903,13 @@ class _DayRibbonCardState extends State<DayRibbonCard> with TickerProviderStateM
           final Color lc;
           if (grp == 'g') {
             lbl = '✓ باش';
-            lc = const Color(0xFF3CF08A);
+            lc = vk(0xFF3CF08A);
           } else if (grp == 'b') {
             lbl = '! خراپ';
-            lc = const Color(0xFFFF5F7E);
+            lc = vk(0xFFFF5F7E);
           } else {
             lbl = '• ئاگاداری';
-            lc = const Color(0xFF2FE6F3);
+            lc = vk(0xFF2FE6F3);
           }
           return Press(
             onTap: () => _open(x),
@@ -949,8 +949,8 @@ class _DayRibbonCardState extends State<DayRibbonCard> with TickerProviderStateM
                         children: [
                           Row(
                             children: [
-                              Expanded(child: Text(lbl, style: ku(10.5, w: FontWeight.w800, c: lc))),
-                              Text(x.tm,
+                              Expanded(child: VText(lbl, style: ku(10.5, w: FontWeight.w800, c: lc))),
+                              VText(x.tm,
                                   textDirection: TextDirection.ltr,
                                   style: nu(10.5, w: FontWeight.w700, c: V.mu)),
                             ],
@@ -958,17 +958,17 @@ class _DayRibbonCardState extends State<DayRibbonCard> with TickerProviderStateM
                           const SizedBox(height: 2),
                           Row(
                             children: [
-                              Text(x.e, style: const TextStyle(fontSize: 16)),
+                              VText(x.e, style: const TextStyle(fontSize: 16)),
                               const SizedBox(width: 7),
                               Expanded(
-                                child: Text(x.t,
+                                child: VText(x.t,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: ku(13, w: FontWeight.w800, h: 1.45)),
                               ),
                             ],
                           ),
-                          Text(x.s, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(11, c: V.mu)),
+                          VText(x.s, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(11, c: V.mu)),
                         ],
                       ),
                     ),
@@ -994,10 +994,10 @@ class _RibBorder extends CustomPainter {
     final p = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1
-      ..shader = const LinearGradient(
+      ..shader = LinearGradient(
         begin: Alignment(-0.6, -1),
         end: Alignment(0.6, 1),
-        colors: [V.line2, Color(0x268B6BFF), Color(0x008CEBF5)],
+        colors: [V.line2, vk(0x268B6BFF), vk(0x008CEBF5)],
         stops: [0.0, 0.5, 0.8],
       ).createShader(rect);
     canvas.drawRRect(RRect.fromRectAndRadius(rect.deflate(0.5), const Radius.circular(26)), p);
@@ -1012,8 +1012,8 @@ class _RibbonPainter extends CustomPainter {
   _RibbonPainter(this.s) : super(repaint: Listenable.merge([s.grow, s.pulse, s.flash]));
   final _DayRibbonCardState s;
 
-  static final TextStyle _bpm = nu(22, w: FontWeight.w400, c: V.mu);
-  static final TextStyle _now = ku(21, w: FontWeight.w800, c: const Color(0xFF04323A));
+  static TextStyle get _bpm => nu(22, w: FontWeight.w400, c: V.mu);
+  static TextStyle get _now => ku(21, w: FontWeight.w800, c: vk(0xFF04323A));
   static const TextStyle _emoji = TextStyle(fontSize: 25);
 
   void _dash(Canvas canvas, Offset a, Offset b, Paint p) {
@@ -1028,7 +1028,7 @@ class _RibbonPainter extends CustomPainter {
   }
 
   void _text(Canvas canvas, String t, Offset at, TextStyle st, {TextAlign align = TextAlign.center}) {
-    final tp = TextPainter(text: TextSpan(text: t, style: st), textDirection: TextDirection.ltr)..layout();
+    final tp = TextPainter(text: TextSpan(text: vxTr(t), style: st), textDirection: TextDirection.ltr)..layout();
     double x = at.dx;
     if (align == TextAlign.center) x -= tp.width / 2;
     if (align == TextAlign.right) x -= tp.width;
@@ -1048,7 +1048,7 @@ class _RibbonPainter extends CustomPainter {
     // پشوو (بنەڕەت)
     canvas.drawRRect(
       RRect.fromRectAndRadius(const Rect.fromLTWH(0, 72, 1000, 74), const Radius.circular(22)),
-      Paint()..color = const Color(0x8C2A6F7F),
+      Paint()..color = vk(0x8C2A6F7F),
     );
     // داهاتوو (هێڵی لار)
     if (lim < 1440) {
@@ -1056,7 +1056,7 @@ class _RibbonPainter extends CustomPainter {
       canvas.save();
       canvas.clipRect(Rect.fromLTWH(x0, 72, 1000 - x0, 74));
       final hp = Paint()
-        ..color = const Color(0x148CEBF5)
+        ..color = vk(0x148CEBF5)
         ..strokeWidth = 3;
       for (double x = x0 - 80; x < 1080; x += 14.14) {
         canvas.drawLine(Offset(x, 146), Offset(x + 74, 72), hp);
@@ -1121,7 +1121,7 @@ class _RibbonPainter extends CustomPainter {
           ..shader = ui.Gradient.linear(
             Offset(0, minY),
             const Offset(0, 338),
-            const [Color(0x59FF5F7E), Color(0x00FF5F7E)],
+            [vk(0x59FF5F7E), vk(0x00FF5F7E)],
           ),
       );
       canvas.drawPath(
@@ -1130,7 +1130,7 @@ class _RibbonPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 3.5
           ..strokeJoin = StrokeJoin.round
-          ..color = const Color(0xFFFF5F7E),
+          ..color = vk(0xFFFF5F7E),
       );
     }
     _text(canvas, '♥ BPM', const Offset(1000, 200), _bpm, align: TextAlign.right);
@@ -1139,22 +1139,22 @@ class _RibbonPainter extends CustomPainter {
     final mo = (fil != null && fil != 'meal') ? 0.15 : 1.0;
     for (final m in meals) {
       final x = _x(m.m.toDouble());
-      if (mo < 1) canvas.saveLayer(null, Paint()..color = Color.fromRGBO(0, 0, 0, mo));
+      if (mo < 1) canvas.saveLayer(null, Paint()..color = vkRGBO(0, 0, 0, mo));
       canvas.drawLine(
         Offset(x, 54),
         Offset(x, 72),
         Paint()
           ..strokeWidth = 3
-          ..color = const Color(0xFFFFD56B),
+          ..color = vk(0xFFFFD56B),
       );
-      canvas.drawCircle(Offset(x, 30), 24, Paint()..color = const Color(0x2EFFD56B));
+      canvas.drawCircle(Offset(x, 30), 24, Paint()..color = vk(0x2EFFD56B));
       canvas.drawCircle(
         Offset(x, 30),
         24,
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2.5
-          ..color = const Color(0xFFFFD56B),
+          ..color = vk(0xFFFFD56B),
       );
       _text(canvas, m.e, Offset(x, 39), _emoji);
       if (mo < 1) canvas.restore();
@@ -1193,14 +1193,14 @@ class _RibbonPainter extends CustomPainter {
           ..color = op(V.tx, 0.7),
       );
       final y = _hrY(s.hrAt(sm, segs));
-      canvas.drawCircle(Offset(x, y), 10, Paint()..color = const Color(0xFFFF5F7E));
+      canvas.drawCircle(Offset(x, y), 10, Paint()..color = vk(0xFFFF5F7E));
       canvas.drawCircle(
         Offset(x, y),
         10,
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 4
-          ..color = Colors.white,
+          ..color = kW,
       );
     }
     canvas.restore();

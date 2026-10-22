@@ -1,19 +1,18 @@
 // VEX Health — پرۆفایل (هەمان دیزاینی وێب) + چوونە دەرەوە
 // چوونە دەرەوە: هەژمارەکە لەسەر ئەم مۆبایلە دەمێنێتەوە؛ کاتێک بە هەمان ژمارە دێیتەوە، هەموو داتاکانت دەگەڕێتەوە.
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../alerts/alerts_sheets.dart';
 import '../alerts/band_alerts.dart';
 import '../alerts/prayer_calc.dart';
-import '../arena/arena_host.dart';
 import '../band/band_emblem.dart';
 import '../band/device_page.dart';
 import '../band/band_state.dart';
 import '../band/band_test_tile.dart';
 import '../core/icons.dart';
-import '../core/store.dart';
 import '../core/theme.dart';
 import '../family/family_page.dart';
 import '../food/food_page.dart';
@@ -22,8 +21,11 @@ import '../notify/step_notify_tile.dart';
 import '../plus/plus_page.dart';
 import '../plus/plus_state.dart';
 import 'account.dart';
+import 'reg_lang_state.dart';
 import 'reg_data.dart';
 import 'reg_widgets.dart';
+import '../arena/arena_host.dart';
+import '../plus/gate.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key, this.onTab});
@@ -35,7 +37,7 @@ class ProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final mq = MediaQuery.of(context);
     return ListenableBuilder(
-      listenable: Listenable.merge(<Listenable>[Account.I, Store.I, arenaStore]),
+      listenable: Account.I,
       builder: (context, _) {
         final u = Account.I.user ?? const <String, dynamic>{};
         final name = Account.I.name;
@@ -51,7 +53,7 @@ class ProfilePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Rise(child: Text('پرۆفایل', style: ku(24, w: FontWeight.w800, h: 1.5))),
+                  Rise(child: VText('پرۆفایل', style: ku(24, w: FontWeight.w800, h: 1.5))),
                   Rise(
                     delayMs: 50,
                     child: _Hero(
@@ -61,21 +63,17 @@ class ProfilePage extends StatelessWidget {
                       weight: w,
                       height: h,
                       goal: goal,
-                      streak: Store.I.streak,
-                      arenaMember: (arenaStore.acc?.name ?? '').isNotEmpty,
-                      onArena: () => openArena(onTab: onTab),
                     ),
                   ),
-                  Rise(delayMs: 70, child: const _AppearanceGroup()),
                   Rise(delayMs: 80, child: _PlusCard()),
                   Rise(delayMs: 100, child: _BandCard()),
                   Rise(
                     delayMs: 150,
                     child: _Group('کۆمەڵایەتی', [
-                      _RowItem('🏆', const Color(0xFFFFBE4D), 'VEX Arena', 'پێشبڕکێی تەندروستی و خەڵات',
+                      _RowItem('🏆', vk(0xFFFFBE4D), 'VEX Arena', 'پێشبڕکێی تەندروستی و خەڵات',
                           onTap: () => openArena(onTab: onTab)),
-                      _RowItem('👨‍👩‍👧', const Color(0xFF9B7BFF), 'بازنەی خێزان و هاوڕێ', 'چاودێری و هاندانی یەکتر',
-                          onTap: () => pushPage(const FamilyPage())),
+                      _RowItem('👨‍👩‍👧', vk(0xFF9B7BFF), 'بازنەی خێزان و هاوڕێ', 'چاودێری و هاندانی یەکتر',
+                          onTap: () => pushPage(const GatePage(kind: GateKind.plus, id: 'family', child: FamilyPage()))),
                     ]),
                   ),
                   Rise(
@@ -86,20 +84,21 @@ class ProfilePage extends StatelessWidget {
                       _RowItem('🏃', V.cy, 'وەرزش', 'ڕاکردن، پیاسە، پایسکل', onTap: () => onTab?.call(3)),
                       _RowItem('🌙', V.violet, 'خەو', 'قۆناغەکانی خەو و کوالیتی',
                           onTap: () => toast('بەشی خەو بەم زووانە دەکرێتەوە')),
-                      _RowItem('✨', const Color(0xFF4D6BFF), 'VEX AI', 'پرسیار لە یاریدەدەری تەندروستی',
+                      _RowItem('✨', vk(0xFF4D6BFF), 'VEX AI', 'پرسیار لە یاریدەدەری تەندروستی',
                           onTap: () => onTab?.call(2)),
                     ]),
                   ),
                   Rise(delayMs: 220, child: const _AlertsGroup()),
+                  Rise(delayMs: 235, child: const _ThemeCard()),
                   Rise(
                     delayMs: 250,
-                    child: _Group('ڕێکخستنەکان', const [
-                      _SwitchRow('notif', '🔔', Color(0xFFFF9466), 'ئاگادارکردنەوەکان', 'بیرخستنەوەی ئاو، جووڵە و خەو'),
-                      _SwitchRow('fam', '🛡️', Color(0xFF9B7BFF), 'ئاگاداری بۆ خێزان', 'ئەگەر دڵ یان SpO₂ نائاسایی بوو'),
-                      _SwitchRow('vib', '📳', Color(0xFF2FE6F3), 'لەرینەوەی Band', 'کاتی ئاگادارکردنەوە'),
+                    child: _Group('ڕێکخستنەکان', [
+                      _SwitchRow('notif', '🔔', vk(0xFFFF9466), 'ئاگادارکردنەوەکان', 'بیرخستنەوەی ئاو، جووڵە و خەو'),
+                      _SwitchRow('fam', '🛡️', vk(0xFF9B7BFF), 'ئاگاداری بۆ خێزان', 'ئەگەر دڵ یان SpO₂ نائاسایی بوو'),
+                      _SwitchRow('vib', '📳', vk(0xFF2FE6F3), 'لەرینەوەی Band', 'کاتی ئاگادارکردنەوە'),
                     ], tail: [
-                      _RowItem('🌐', V.mint, 'زمان', 'کوردی (سۆرانی)',
-                          onTap: () => toast('ئێستا تەنها کوردی (سۆرانی) بەردەستە')),
+                      _RowItem('🌐', V.mint, 'زمان', kIsEn ? 'English' : (kIsBd ? 'کوردی بادینی' : (kIsAr ? 'العربية' : (kIsFa ? 'فارسی' : (kIsTr ? 'Türkçe' : 'کوردی (سۆرانی)')))),
+                          onTap: () => _pickLanguage()),
                       _RowItem('🚑', V.coral, 'فریاکەوتن', 'پەیوەندی بە 122', onTap: _callEmergency),
                     ]),
                   ),
@@ -113,26 +112,73 @@ class ProfilePage extends StatelessWidget {
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(18),
-                        color: const Color(0x14FF5F7E),
-                        border: Border.all(color: const Color(0x59FF5F7E)),
+                        color: vk(0x14FF5F7E),
+                        border: Border.all(color: vk(0x59FF5F7E)),
                       ),
-                      child: Text('🚪 چوونە دەرەوە', style: ku(15, w: FontWeight.w800, c: const Color(0xFFFF8A9D))),
+                      child: VText('🚪 چوونە دەرەوە', style: ku(15, w: FontWeight.w800, c: vk(0xFFFF8A9D))),
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Text(
+                  VText(
                     'هەژمارەکەت لەسەر ئەم مۆبایلە دەمێنێتەوە. کاتێک دووبارە بە هەمان ژمارە دێیتەوە، هەموو داتاکانت دەگەڕێتەوە.',
                     textAlign: TextAlign.center,
                     style: ku(11.5, c: RC.dim, h: 1.7),
                   ),
                   const SizedBox(height: 14),
-                  Text('VEX Health · وەشانی 1.0', textAlign: TextAlign.center, style: ku(11, c: V.mu)),
+                  VText('VEX Health · وەشانی 1.0', textAlign: TextAlign.center, style: ku(11, c: V.mu)),
                 ],
               ),
             ),
           ),
         );
       },
+    );
+  }
+
+  /// هەڵبژاردنی زمانی ئەپ: کوردی (سۆرانی)، کوردی بادینی، عەرەبی یان English
+  static void _pickLanguage() {
+    showVSheet<void>(
+      builder: (c) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Center(child: Text('🌐', style: TextStyle(fontSize: 40))),
+          const SizedBox(height: 6),
+          // ناوی دوو زمانەکە هەمیشە بە زمانی خۆیان دەنووسرێن (بەبێ وەرگێڕان)
+          Text('Language · زمان', textAlign: TextAlign.center, style: ku(18, w: FontWeight.w800, h: 1.5)),
+          const SizedBox(height: 14),
+          for (final o in const [['en', 'English', 'English'], ['ckb', 'کوردی (سۆرانی)', 'Kurdish (Sorani)'], ['kmr', 'کوردی بادینی', 'Kurdish (Badini)'], ['ar', 'العربية', 'Arabic'], ['fa', 'فارسی', 'Persian'], ['tr', 'Türkçe', 'Turkish']])
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Press(
+                onTap: () {
+                  Navigator.of(c).pop();
+                  LangState.I.set(o[0]);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: LangState.I.code == o[0] ? vk(0x2A2FE6F3) : vk(0x0EFFFFFF),
+                    border: Border.all(color: LangState.I.code == o[0] ? V.cy : V.line),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(o[1],
+                            textDirection: o[0] == 'en' ? TextDirection.ltr : TextDirection.rtl,
+                            style: o[0] == 'en'
+                                ? GoogleFonts.sora(fontSize: 15, fontWeight: FontWeight.w700, color: V.tx)
+                                : GoogleFonts.notoSansArabic(fontSize: 15, fontWeight: FontWeight.w700, color: V.tx)),
+                      ),
+                      if (LangState.I.code == o[0]) Text('✓', style: TextStyle(fontSize: 18, color: V.cy)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -151,11 +197,11 @@ class ProfilePage extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Center(child: Text('🚪', style: TextStyle(fontSize: 44))),
+          const Center(child: VText('🚪', style: TextStyle(fontSize: 44))),
           const SizedBox(height: 6),
-          Text('دڵنیایت دەتەوێت بچیتە دەرەوە؟', textAlign: TextAlign.center, style: ku(19, w: FontWeight.w800, h: 1.5)),
+          VText('دڵنیایت دەتەوێت بچیتە دەرەوە؟', textAlign: TextAlign.center, style: ku(19, w: FontWeight.w800, h: 1.5)),
           const SizedBox(height: 6),
-          Text(
+          VText(
             'داتاکانت پاشەکەوت دەکرێن. بۆ گەڕانەوە، «پێشتر هەژمارم هەیە» دابگرە و هەمان ژمارە بنووسە.',
             textAlign: TextAlign.center,
             style: ku(13, c: V.mu, h: 1.8),
@@ -190,9 +236,6 @@ class _Hero extends StatelessWidget {
     required this.weight,
     required this.height,
     required this.goal,
-    required this.streak,
-    required this.arenaMember,
-    required this.onArena,
   });
   final String name;
   final String initial;
@@ -200,9 +243,6 @@ class _Hero extends StatelessWidget {
   final double weight;
   final double height;
   final int goal;
-  final int streak;
-  final bool arenaMember;
-  final VoidCallback onArena;
 
   String get _sub {
     if (phone.length >= 10) {
@@ -225,17 +265,17 @@ class _Hero extends StatelessWidget {
               children: [
                 Container(
                   padding: const EdgeInsets.all(3),
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: SweepGradient(
-                      colors: [Color(0xFF2FE6F3), Color(0xFF3CF08A), Color(0xFF9B7BFF), Color(0xFF2FE6F3)],
+                      colors: [vk(0xFF2FE6F3), vk(0xFF3CF08A), vk(0xFF9B7BFF), vk(0xFF2FE6F3)],
                     ),
-                    boxShadow: [BoxShadow(color: Color(0x472FE6F3), blurRadius: 26, spreadRadius: -6)],
+                    boxShadow: [BoxShadow(color: vk(0x472FE6F3), blurRadius: 26, spreadRadius: -6)],
                   ),
                   child: Container(
                     alignment: Alignment.center,
-                    decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF062A35)),
-                    child: Text(initial, style: nu(38, c: const Color(0xFFEAFFFF), h: 1.2)),
+                    decoration: BoxDecoration(shape: BoxShape.circle, color: vk(0xFF062A35)),
+                    child: VText(initial, style: nu(38, c: vk(0xFFEAFFFF), h: 1.2)),
                   ),
                 ),
                 Positioned(
@@ -247,7 +287,7 @@ class _Hero extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: V.mint,
-                      border: Border.all(color: const Color(0xFF062A35), width: 3),
+                      border: Border.all(color: vk(0xFF062A35), width: 3),
                     ),
                   ),
                 ),
@@ -255,28 +295,22 @@ class _Hero extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Text(name.isEmpty ? 'هەژماری من' : name,
+          VText(name.isEmpty ? 'هەژماری من' : name,
               maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(21, w: FontWeight.w800, h: 1.4)),
           const SizedBox(height: 2),
-          Text(_sub, style: phone.length >= 10 ? nu(12, w: FontWeight.w600, c: V.mu) : ku(12, c: V.mu)),
+          VText(_sub, style: phone.length >= 10 ? nu(12, w: FontWeight.w600, c: V.mu) : ku(12, c: V.mu)),
           const SizedBox(height: 8),
-          Press(
-            onTap: onArena,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-              decoration: BoxDecoration(
-                color: const Color(0x21FFBE4D),
-                borderRadius: BorderRadius.circular(99),
-                border: Border.all(color: const Color(0x4DFFBE4D)),
-              ),
-              child: Text(
-                arenaMember ? '🏆 VEX Arena · ئەندامی پێشبڕکێ' : '🏆 VEX Arena · بەشداری بکە',
-                style: ku(11.5, w: FontWeight.w800, c: V.amber, h: 1.4),
-              ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            decoration: BoxDecoration(
+              color: vk(0x21FFBE4D),
+              borderRadius: BorderRadius.circular(99),
+              border: Border.all(color: vk(0x4DFFBE4D)),
             ),
+            child: VText('🏆 VEX Arena · بەشداری بکە', style: ku(11.5, w: FontWeight.w800, c: V.amber, h: 1.4)),
           ),
           const SizedBox(height: 16),
-          _Stats(weight: weight, height: height, goal: goal, streak: streak),
+          _Stats(weight: weight, height: height, goal: goal),
         ],
       ),
     );
@@ -285,11 +319,10 @@ class _Hero extends StatelessWidget {
 
 /// چوار پێوەر لە یەک ڕیز: ئایکۆن + ژمارە + یەکە + ناونیشان
 class _Stats extends StatelessWidget {
-  const _Stats({required this.weight, required this.height, required this.goal, required this.streak});
+  const _Stats({required this.weight, required this.height, required this.goal});
   final double weight;
   final double height;
   final int goal;
-  final int streak;
 
   static const String _scale =
       '<path d="M6 4h12l2 16H4z"/><path d="M9 9a3 3 0 0 1 6 0"/><path d="M12 9l1.6-2"/>';
@@ -301,7 +334,7 @@ class _Stats extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tiles = <Widget>[
-      _StatTile(icon: HI.fire, color: const Color(0xFFFF9466), hex: '#ff9466', label: 'زنجیرە', value: '$streak', unit: 'ڕۆژ'),
+      _StatTile(icon: HI.fire, color: vk(0xFFFF9466), hex: '#ff9466', label: 'زنجیرە', value: '0', unit: 'ڕۆژ'),
       _StatTile(
           icon: _scale,
           color: V.cy,
@@ -382,14 +415,14 @@ class _StatTile extends StatelessWidget {
           const SizedBox(height: 7),
           FittedBox(
             fit: BoxFit.scaleDown,
-            child: Text(value, textDirection: TextDirection.ltr, maxLines: 1, style: nu(17, c: V.tx, h: 1.1)),
+            child: VText(value, textDirection: TextDirection.ltr, maxLines: 1, style: nu(17, c: V.tx, h: 1.1)),
           ),
           if (unit.isNotEmpty) ...[
             const SizedBox(height: 3),
-            Text(unit, textDirection: TextDirection.ltr, style: nu(9.5, c: color)),
+            VText(unit, textDirection: TextDirection.ltr, style: nu(9.5, c: color)),
           ],
           const SizedBox(height: 7),
-          Text(label,
+          VText(label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
@@ -411,8 +444,12 @@ class _PlusCard extends StatelessWidget {
       builder: (context, _) {
         final S = PlusState.I;
         final pro = S.isPro;
-        const g1 = Color(0xFFFFE29A);
-        const g2 = Color(0xFFFFBF47);
+        final light = VexTheme.I.isLight;
+        final g1 = vk(0xFFFFE29A);
+        final g2 = vk(0xFFFFBF47);
+        // ڕووناک: کارتی زێڕینی پڕ + دەقی قاوەیی تۆخ؛ تاریک: زێڕی شەفاف + دەقی زێڕین
+        final cTitle = light ? vk(0xFF3B2500) : g1;
+        final cSub = light ? vk(0xFF5E3A00) : vk(0xFFD9BF85);
         final String title = pro ? 'VEX Plus' : 'VEX Plus بکەرەوە';
         final String sub = pro
             ? (S.src == 'trial'
@@ -433,10 +470,10 @@ class _PlusCard extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topRight,
                   end: Alignment.bottomLeft,
-                  colors: [op(g2, 0.22), op(g2, 0.05)],
+                  colors: light ? [vk(0xFFFFE7A3), vk(0xFFFFC857)] : [op(g2, 0.22), op(g2, 0.05)],
                 ),
-                border: Border.all(color: op(g2, 0.5)),
-                boxShadow: [BoxShadow(color: op(g2, 0.3), blurRadius: 26, offset: const Offset(0, 12), spreadRadius: -14)],
+                border: Border.all(color: light ? vk(0xFFD9A23C) : op(g2, 0.5)),
+                boxShadow: [BoxShadow(color: op(g2, light ? 0.35 : 0.3), blurRadius: 26, offset: const Offset(0, 12), spreadRadius: -14)],
               ),
               child: Row(
                 children: [
@@ -446,17 +483,18 @@ class _PlusCard extends StatelessWidget {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(15),
-                      gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFFFFE9A8), g2, Color(0xFFFF9D3D)]),
+                      gradient: light ? null : LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [vk(0xFFFFE9A8), g2, vk(0xFFFF9D3D)]),
+                      color: light ? vk(0xFF3B2500) : null,
                     ),
-                    child: const Text('✦', style: TextStyle(fontSize: 22, color: Color(0xFF3B2500), height: 1.1)),
+                    child: VText('✦', style: TextStyle(fontSize: 22, color: light ? vk(0xFFFFD36B) : vk(0xFF3B2500), height: 1.1)),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(title, style: ku(15, w: FontWeight.w800, c: g1, h: 1.5)),
-                        Text(sub, style: ku(11.5, c: const Color(0xFFD9BF85), h: 1.5)),
+                        VText(title, style: ku(15, w: FontWeight.w800, c: cTitle, h: 1.5)),
+                        VText(sub, style: ku(11.5, c: cSub, h: 1.5)),
                       ],
                     ),
                   ),
@@ -465,12 +503,12 @@ class _PlusCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(99),
-                        gradient: const LinearGradient(colors: [Color(0xFFFF5F5F), Color(0xFFFF9D3D)]),
+                        gradient: LinearGradient(colors: [vk(0xFFFF5F5F), vk(0xFFFF9D3D)]),
                       ),
-                      child: Text('−50٪', textDirection: TextDirection.ltr, style: nu(11, c: Colors.white)),
+                      child: VText('−50٪', textDirection: TextDirection.ltr, style: nu(11, c: Colors.white)),
                     )
                   else
-                    Text('بەڕێوەبردن', style: ku(12, w: FontWeight.w700, c: g1)),
+                    VText('بەڕێوەبردن', style: ku(12, w: FontWeight.w700, c: cTitle)),
                 ],
               ),
             ),
@@ -506,10 +544,10 @@ class _BandCard extends StatelessWidget {
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
-                    gradient: const LinearGradient(
+                    gradient: LinearGradient(
                       begin: Alignment.topRight,
                       end: Alignment.bottomLeft,
-                      colors: [Color(0x332FE6F3), Color(0x1F3CF08A)],
+                      colors: [vk(0x332FE6F3), vk(0x1F3CF08A)],
                     ),
                     border: Border.all(color: V.line2),
                   ),
@@ -520,7 +558,7 @@ class _BandCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('VEX Band V8', style: nu(15, h: 1.4)),
+                      VText('VEX Band V8', style: nu(15, h: 1.4)),
                       const SizedBox(height: 2),
                       Row(
                         children: [
@@ -530,18 +568,18 @@ class _BandCard extends StatelessWidget {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: on ? V.mint : V.coral,
-                              boxShadow: on ? const [BoxShadow(color: V.mint, blurRadius: 8)] : null,
+                              boxShadow: on ? [BoxShadow(color: V.mint, blurRadius: 8)] : null,
                             ),
                           ),
                           const SizedBox(width: 6),
-                          Text(on ? 'پەیوەستە · پاتری 25%' : 'پەیوەست نییە · بۆ پەیوەستکردنەوە دایبگرە',
+                          VText(on ? 'پەیوەستە · پاتری 25%' : 'پەیوەست نییە · بۆ پەیوەستکردنەوە دایبگرە',
                               style: ku(12, c: V.mu, h: 1.5)),
                         ],
                       ),
                     ],
                   ),
                 ),
-                Text('‹', style: ku(18, c: V.mu)),
+                VText('‹', style: ku(18, c: V.mu)),
               ],
             ),
           ),
@@ -570,7 +608,7 @@ class _Group extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-            child: Text(title, style: ku(12, w: FontWeight.w800, c: V.mu)),
+            child: VText(title, style: ku(12, w: FontWeight.w800, c: V.mu)),
           ),
           Container(
             decoration: BoxDecoration(
@@ -583,7 +621,7 @@ class _Group extends StatelessWidget {
               child: Column(
                 children: [
                   for (int i = 0; i < all.length; i++) ...[
-                    if (i > 0) const Divider(height: 1, thickness: 1, color: V.line),
+                    if (i > 0) Divider(height: 1, thickness: 1, color: V.line),
                     all[i],
                   ],
                 ],
@@ -615,15 +653,15 @@ class _RowBody extends StatelessWidget {
             height: 38,
             alignment: Alignment.center,
             decoration: BoxDecoration(color: op(color, 0.16), borderRadius: BorderRadius.circular(12)),
-            child: Text(emoji, style: const TextStyle(fontSize: 19)),
+            child: VText(emoji, style: const TextStyle(fontSize: 19)),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: ku(14, w: FontWeight.w700, h: 1.5)),
-                Text(sub, style: ku(11.5, w: FontWeight.w600, c: V.mu, h: 1.6)),
+                VText(title, style: ku(14, w: FontWeight.w700, h: 1.5)),
+                VText(sub, style: ku(11.5, w: FontWeight.w600, c: V.mu, h: 1.6)),
               ],
             ),
           ),
@@ -653,7 +691,7 @@ class _RowItem extends StatelessWidget {
         color: color,
         title: title,
         sub: sub,
-        trailing: Text('‹', style: ku(18, c: V.mu)),
+        trailing: VText('‹', style: ku(18, c: V.mu)),
       ),
     );
   }
@@ -715,10 +753,10 @@ class _SwitchRowState extends State<_SwitchRow> {
             child: Container(
               width: 22,
               height: 22,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white,
-                boxShadow: [BoxShadow(color: Color(0x4D000000), blurRadius: 6, offset: Offset(0, 2))],
+                color: kW,
+                boxShadow: [BoxShadow(color: vk(0x4D000000), blurRadius: 6, offset: Offset(0, 2))],
               ),
             ),
           ),
@@ -749,7 +787,7 @@ class _AlertsGroup extends StatelessWidget {
           prayerSub = 'داهاتوو: ${prayerShort(nx.key)} · ${fmt12(mins ~/ 60, mins % 60)} ${ampm(mins ~/ 60)}';
         }
         return _Group('ئاگادارکەرەوەی Band (لەرین)', [
-          _RowItem('⏰', V.cy, 'کاتژمێری لەرەر', n > 0 ? '$n کاتژمێر چالاکە' : 'کاتژمێری لەرەر دابنێ',
+          _RowItem('⏰', V.cy, 'کاتژمێری لەرین', n > 0 ? '$n کاتژمێر چالاکە' : 'کاتژمێری لەرین دابنێ',
               onTap: openAlarmSheet),
           _RowItem('⏱️', V.orange, 'کاتی وەرزش',
               A.timerRunning ? 'ئێستا کار دەکات…' : 'کاتی کەمبوونەوە بە میلی چرکە',
@@ -763,89 +801,23 @@ class _AlertsGroup extends StatelessWidget {
 
 
 // ============================================================
-// دەرکەوتن: ڕووناک · تاریک · خۆکار
-// ئێستا تەنها شێوازی تاریک کار دەکات؛ ڕووناک و خۆکار دوای ئەوەی هەموو ڕەنگەکانی ئەپ دەگوازرێنەوە.
+// دۆخی ڕەنگ: خۆکار / ڕووناک / تاریک
 // ============================================================
-class _AppearanceGroup extends StatelessWidget {
-  const _AppearanceGroup();
-
-  static const String _sun =
-      '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.3M12 19.2v2.3M2.5 12h2.3M19.2 12h2.3M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/>';
-  static const String _moon = '<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/>';
-  static const String _auto = '<path d="M7 18.5a4 4 0 0 1-.4-8 5.5 5.5 0 0 1 10.6-1A4.6 4.6 0 0 1 17 18.5z"/><path d="M12 3v1.6M5.2 5.2l1.1 1.1M18.8 5.2l-1.1 1.1"/>';
-
-  Widget _btn(String icon, String label, bool on, VoidCallback onTap) {
-    return Expanded(
-      child: Press(
-        onTap: onTap,
-        scale: 0.96,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.fromLTRB(4, 12, 4, 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            gradient: on ? V.prime : null,
-            boxShadow: on ? [BoxShadow(color: op(V.mint, 0.5), blurRadius: 18, offset: const Offset(0, 8), spreadRadius: -10)] : null,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              svgIcon(icon, on ? '#04323a' : '#8cb7bf', size: 24, stroke: 1.9),
-              const SizedBox(height: 6),
-              Text(label, style: ku(13, w: FontWeight.w800, c: on ? V.ink : V.mu, h: 1.3)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+class _ThemeCard extends StatelessWidget {
+  const _ThemeCard();
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 18),
+    return VCard(
+      padding: const EdgeInsets.all(14),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-            child: Text('دەرکەوتن', style: ku(12, w: FontWeight.w800, c: V.mu)),
-          ),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: V.surf,
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: V.line),
-            ),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(5),
-                  decoration: BoxDecoration(
-                    color: V.surf2,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: V.line),
-                  ),
-                  child: Row(
-                    children: [
-                      _btn(_sun, 'ڕووناک', false, () => toast('شێوازی ڕووناک بەم زووانە دەکرێتەوە')),
-                      const SizedBox(width: 6),
-                      _btn(_moon, 'تاریک', true, () {}),
-                      const SizedBox(width: 6),
-                      _btn(_auto, 'خۆکار', false, () => toast('شێوازی خۆکار بەم زووانە دەکرێتەوە')),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'شێوازی تاریک: ڕەنگە شووشەییەکانی VEX',
-                  textAlign: TextAlign.center,
-                  style: ku(12.5, w: FontWeight.w700, c: V.mu, h: 1.7),
-                ),
-              ],
-            ),
-          ),
+          VText('ڕووکار', style: ku(14, w: FontWeight.w800, h: 1.5)),
+          const SizedBox(height: 2),
+          VText('«خۆکار» لەگەڵ ڕۆژ و شەوی مۆبایلەکەت دەگۆڕێت', style: ku(11.5, c: V.mu, h: 1.6)),
+          const SizedBox(height: 12),
+          const ThemeModePicker(labels: ['خۆکار', 'ڕووناک', 'تاریک']),
         ],
       ),
     );

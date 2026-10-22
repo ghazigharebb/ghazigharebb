@@ -24,8 +24,8 @@ class BandTestTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('تاقیکردنەوە: Band پەیوەستە', style: ku(14, w: FontWeight.w800, h: 1.5)),
-                    Text('تەنها لە debug دەردەکەوێت', style: ku(12, c: V.mu, h: 1.6)),
+                    VText('تاقیکردنەوە: Band پەیوەستە', style: ku(14, w: FontWeight.w800, h: 1.5)),
+                    VText('تەنها لە debug دەردەکەوێت', style: ku(12, c: V.mu, h: 1.6)),
                   ],
                 ),
               ),

@@ -5,6 +5,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import '../core/theme.dart';
 
 class BandEmblem extends StatefulWidget {
   const BandEmblem({super.key, this.size = 80, this.animate = true});
@@ -61,16 +62,16 @@ class _EmblemPainter extends CustomPainter {
   _EmblemPainter(this.secs);
   final double secs;
 
-  static const Color _cy = Color(0xFF2FE6F3);
-  static const Color _mint = Color(0xFF3CF08A);
-  static const Color _c1 = Color(0xFF8FF3F9);
+  static Color get _cy => vk(0xFF2FE6F3);
+  static Color get _mint => vk(0xFF3CF08A);
+  static Color get _c1 => vk(0xFF8FF3F9);
 
   @override
   void paint(Canvas canvas, Size size) {
     canvas.save();
     canvas.scale(size.width / 96, size.height / 96);
 
-    final grad = const LinearGradient(
+    final grad = LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: [_c1, _mint],
@@ -82,7 +83,7 @@ class _EmblemPainter extends CustomPainter {
       const Offset(48, 48),
       47,
       Paint()
-        ..shader = const RadialGradient(colors: [Color(0x612FE6F3), Color(0x002FE6F3)]).createShader(
+        ..shader = RadialGradient(colors: [vk(0x612FE6F3), vk(0x002FE6F3)]).createShader(
           Rect.fromCircle(center: const Offset(48, 48), radius: 47),
         ),
     );
@@ -94,7 +95,7 @@ class _EmblemPainter extends CustomPainter {
       ..strokeWidth = 1.4
       ..strokeCap = StrokeCap.round
       ..shader = grad.createShader(box)
-      ..color = const Color(0xFFFFFFFF).withAlpha(178);
+      ..color = vk(0xFFFFFFFF).withAlpha(178);
     const dashes = [30.0, 10.0, 5.0, 10.0];
     var a = orbit;
     var i = 0;
@@ -115,10 +116,10 @@ class _EmblemPainter extends CustomPainter {
 
     // بەندەکان
     final strap = Paint()
-      ..shader = const LinearGradient(
+      ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [Color(0xFF216374), Color(0xFF082A34)],
+        colors: [vk(0xFF216374), vk(0xFF082A34)],
       ).createShader(box);
     canvas.drawPath(
       Path()
@@ -156,10 +157,10 @@ class _EmblemPainter extends CustomPainter {
     canvas.drawRRect(
       caseR,
       Paint()
-        ..shader = const LinearGradient(
+        ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF1A3A45), Color(0xFF04100F)],
+          colors: [vk(0xFF1A3A45), vk(0xFF04100F)],
         ).createShader(box),
     );
     canvas.drawRRect(
@@ -177,13 +178,13 @@ class _EmblemPainter extends CustomPainter {
     // شاشە
     canvas.drawRRect(
       RRect.fromRectAndRadius(const Rect.fromLTWH(32.5, 29.5, 31, 37), const Radius.circular(10)),
-      Paint()..color = const Color(0xFF031318),
+      Paint()..color = vk(0xFF031318),
     );
 
     // خاڵی لێدانی دڵ
     final pulse = (secs % 1.3) / 1.3;
     final pr = 1.8 + 1.2 * (0.5 - 0.5 * math.cos(pulse * 2 * math.pi));
-    canvas.drawCircle(const Offset(48, 37), pr, Paint()..color = const Color(0xFFFF5F7E));
+    canvas.drawCircle(const Offset(48, 37), pr, Paint()..color = vk(0xFFFF5F7E));
 
     // هێڵی ECG
     final ecg = Path()

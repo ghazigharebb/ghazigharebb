@@ -60,7 +60,7 @@ List<Why> timeNote(Map<String, dynamic> r) {
   final k = toDouble(r['kcal']);
   final out = <Why>[];
   if ((h >= 22 || h < 5) && k > 350) {
-    out.add(const Why('🌙', 'بەم کاتی شەوە قورسە؛ کاریگەری لەسەر خەو دەکات.', Color(0xFF9B7BFF)));
+    out.add(const Why('🌙', 'بەم کاتەی شەو قورسە؛ کاریگەری لەسەر خەو دەکات.', Color(0xFF9B7BFF)));
   }
   if (k > left && left > 0) {
     out.add(Why('⚖️', 'لە کالۆری ماوەی ئەمڕۆت (${fmt(left)}) زیاترە.', V.coral));
@@ -84,7 +84,7 @@ class FoodScanCard extends StatelessWidget {
           decoration: box(r: 15),
           child: FittedBox(
             fit: BoxFit.scaleDown,
-            child: Text(label, maxLines: 1, textAlign: TextAlign.center, style: ku(13, w: FontWeight.w700)),
+            child: VText(label, maxLines: 1, textAlign: TextAlign.center, style: ku(13, w: FontWeight.w700)),
           ),
         ),
       );
@@ -106,15 +106,15 @@ class FoodScanCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: op(V.orange, 0.4)),
                 ),
-                child: const Text('🍽️', style: TextStyle(fontSize: 22)),
+                child: const VText('🍽️', style: TextStyle(fontSize: 22)),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('سکانی خواردن', style: ku(16, w: FontWeight.w800)),
-                    Text('AI دەڵێت بۆ تۆ باشە یان نا، بەم کاتە', style: ku(12, c: V.mu)),
+                    VText('سکانی خواردن', style: ku(16, w: FontWeight.w800)),
+                    VText('AI دەڵێت بۆ تۆ باشە یان نا، بەم کاتە', style: ku(12, c: V.mu)),
                   ],
                 ),
               ),
@@ -176,7 +176,7 @@ class _CamButtonState extends State<CamButton> with TickerProviderStateMixin {
         child: Stack(
           children: [
             const Positioned.fill(child: CustomPaint(painter: _CornerPainter())),
-            const Center(child: Text('🍲', style: TextStyle(fontSize: 32))),
+            const Center(child: VText('🍲', style: TextStyle(fontSize: 32))),
             AnimatedBuilder(
               animation: laser,
               builder: (context, _) => Positioned(
@@ -185,7 +185,7 @@ class _CamButtonState extends State<CamButton> with TickerProviderStateMixin {
                 top: 10 + 52 * Curves.easeInOut.transform(laser.value),
                 height: 2,
                 child: Container(
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: V.mint,
                     boxShadow: [BoxShadow(color: V.mint, blurRadius: 10, spreadRadius: 3)],
                   ),
@@ -279,8 +279,8 @@ class _CamButtonState extends State<CamButton> with TickerProviderStateMixin {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('وێنەی خواردنەکەت بگرە', style: ku(16, w: FontWeight.w800, c: Colors.white)),
-                          Text(
+                          VText('وێنەی خواردنەکەت بگرە', style: ku(16, w: FontWeight.w800, c: Colors.white)),
+                          VText(
                             'کالۆری، پێکهاتە و بڕیاری بۆ تۆ لە چەند چرکەیەکدا',
                             style: ku(12, c: op(Colors.white, 0.88), h: 1.6),
                           ),
@@ -288,7 +288,7 @@ class _CamButtonState extends State<CamButton> with TickerProviderStateMixin {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(99)),
-                            child: Text('📸 سکان بکە', style: ku(12, w: FontWeight.w800, c: const Color(0xFF4B2FC4))),
+                            child: VText('📸 سکان بکە', style: ku(12, w: FontWeight.w800, c: const Color(0xFF4B2FC4))),
                           ),
                         ],
                       ),
@@ -350,7 +350,7 @@ class KcalBlock extends StatelessWidget {
         children: [
           Container(width: 7, height: 7, decoration: BoxDecoration(shape: BoxShape.circle, color: c)),
           const SizedBox(width: 4),
-          Text.rich(
+          VText.rich(
             TextSpan(children: [
               TextSpan(text: '$label '),
               TextSpan(text: '${fmt(g)}g', style: nu(11, c: V.mu)),
@@ -374,7 +374,7 @@ class KcalBlock extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Expanded(
-              child: Text.rich(
+              child: VText.rich(
                 TextSpan(children: [
                   const TextSpan(text: 'کالۆری ئەمڕۆ '),
                   TextSpan(text: ltr('${fmt(t.kcal)} / ${fmt(budget)}'), style: nu(15, c: V.tx)),
@@ -382,7 +382,7 @@ class KcalBlock extends StatelessWidget {
                 style: ku(12, w: FontWeight.w700, c: V.mu),
               ),
             ),
-            Text.rich(
+            VText.rich(
               over
                   ? TextSpan(children: [
                       TextSpan(text: fmt(-left), style: nu(12, c: V.coral)),
@@ -415,15 +415,15 @@ class KcalBlock extends StatelessWidget {
             decoration: box(r: 15),
             child: Row(
               children: [
-                Text(l.e, style: const TextStyle(fontSize: 16)),
+                VText(l.e, style: const TextStyle(fontSize: 16)),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(l.n, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(13, w: FontWeight.w800)),
+                  child: VText(l.n, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(13, w: FontWeight.w800)),
                 ),
                 const SizedBox(width: 8),
-                Text(l.at, textDirection: TextDirection.ltr, style: nu(12, w: FontWeight.w600, c: V.mu)),
+                VText(l.at, textDirection: TextDirection.ltr, style: nu(12, w: FontWeight.w600, c: V.mu)),
                 const SizedBox(width: 10),
-                Text('${fmt(l.kcal)} kcal', textDirection: TextDirection.ltr, style: nu(13, c: V.orange)),
+                VText('${fmt(l.kcal)} kcal', textDirection: TextDirection.ltr, style: nu(13, c: V.orange)),
               ],
             ),
           ),
@@ -647,7 +647,7 @@ class _AnalyseViewState extends State<AnalyseView> with TickerProviderStateMixin
                 Positioned.fill(
                   child: img != null
                       ? Image.memory(img, fit: BoxFit.cover)
-                      : const Center(child: Text('🍽️', style: TextStyle(fontSize: 60))),
+                      : const Center(child: VText('🍽️', style: TextStyle(fontSize: 60))),
                 ),
                 if (!_done) ...[
                   AnimatedBuilder(
@@ -660,8 +660,8 @@ class _AnalyseViewState extends State<AnalyseView> with TickerProviderStateMixin
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(9),
-                          gradient: const LinearGradient(colors: [Color(0x003CF08A), V.mint, Color(0x003CF08A)]),
-                          boxShadow: const [BoxShadow(color: V.mint, blurRadius: 22, spreadRadius: 5)],
+                          gradient: LinearGradient(colors: [Color(0x003CF08A), V.mint, Color(0x003CF08A)]),
+                          boxShadow: [BoxShadow(color: V.mint, blurRadius: 22, spreadRadius: 5)],
                         ),
                       ),
                     ),
@@ -678,7 +678,7 @@ class _AnalyseViewState extends State<AnalyseView> with TickerProviderStateMixin
                           _dots(),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: Text(
+                            child: VText(
                               _msgs[_msgI % _msgs.length],
                               style: ku(13, w: FontWeight.w700, c: const Color(0xFFEAFFFF)),
                             ),
@@ -719,7 +719,7 @@ class _AnalyseViewState extends State<AnalyseView> with TickerProviderStateMixin
                       width: 6,
                       height: 6,
                       margin: const EdgeInsets.symmetric(horizontal: 2),
-                      decoration: const BoxDecoration(shape: BoxShape.circle, color: V.mint),
+                      decoration: BoxDecoration(shape: BoxShape.circle, color: V.mint),
                     ),
                   ),
                 );
@@ -731,7 +731,7 @@ class _AnalyseViewState extends State<AnalyseView> with TickerProviderStateMixin
   }
 
   List<Widget> _errorView() => [
-        Note(Text('⚠️ ${_err ?? ''}', style: ku(13, h: 1.8))),
+        Note(VText('⚠️ ${_err ?? ''}', style: ku(13, h: 1.8))),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -743,7 +743,7 @@ class _AnalyseViewState extends State<AnalyseView> with TickerProviderStateMixin
       ];
 
   List<Widget> _notFoodView() => [
-        Note(Text('🤔 خواردن نەناسرایەوە: $_notFoodName. لە نزیکەوە وێنە بگرە.', style: ku(13, h: 1.8))),
+        Note(VText('🤔 خواردن نەناسرایەوە: $_notFoodName. لە نزیکەوە وێنە بگرە.', style: ku(13, h: 1.8))),
         const SizedBox(height: 10),
         VBtn('📸 وێنەیەکی تر', kind: BtnKind.prime, onTap: _again),
       ];
@@ -767,8 +767,8 @@ class _AnalyseViewState extends State<AnalyseView> with TickerProviderStateMixin
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(val, textDirection: TextDirection.ltr, style: nu(15, c: c)),
-                Text(label, style: ku(10, w: FontWeight.w700, c: V.mu)),
+                VText(val, textDirection: TextDirection.ltr, style: nu(15, c: c)),
+                VText(label, style: ku(10, w: FontWeight.w700, c: V.mu)),
               ],
             ),
           ),
@@ -788,7 +788,7 @@ class _AnalyseViewState extends State<AnalyseView> with TickerProviderStateMixin
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: op(c, 0.3)),
           ),
-          child: Text(lead == null ? text : '$lead  $text', style: ku(13, h: 1.75)),
+          child: VText(lead == null ? text : '$lead  $text', style: ku(13, h: 1.75)),
         );
 
     return [
@@ -805,15 +805,15 @@ class _AnalyseViewState extends State<AnalyseView> with TickerProviderStateMixin
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(color: op(k, 0.5)),
               ),
-              child: Text(item.e, style: const TextStyle(fontSize: 28)),
+              child: VText(item.e, style: const TextStyle(fontSize: 28)),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(item.n, style: ku(17, w: FontWeight.w800, h: 1.5)),
-                  Text(
+                  VText(item.n, style: ku(17, w: FontWeight.w800, h: 1.5)),
+                  VText(
                     (v == 'good' ? '😊 باشە بۆ تۆ' : (v == 'bad' ? '😟 باش نییە بۆ تۆ' : '😐 بە ئەندازە بیخۆ')) +
                         (demo ? ' · نموونە' : ''),
                     style: ku(12, w: FontWeight.w800, c: k),
@@ -828,7 +828,7 @@ class _AnalyseViewState extends State<AnalyseView> with TickerProviderStateMixin
         padding: const EdgeInsets.only(top: 10, bottom: 4),
         child: Align(
           alignment: Alignment.centerLeft,
-          child: Text.rich(
+          child: VText.rich(
             TextSpan(children: [
               TextSpan(text: fmt(item.kcal), style: nu(40, c: V.orange)),
               TextSpan(text: ' kcal', style: ku(13, c: V.mu)),
@@ -856,14 +856,14 @@ class _AnalyseViewState extends State<AnalyseView> with TickerProviderStateMixin
           children: [
             for (final x in items.take(6))
               if (x is Map)
-                chip(Text.rich(
+                chip(VText.rich(
                   TextSpan(children: [
                     TextSpan(text: '${x['name'] ?? ''} '),
                     TextSpan(text: '${fmt(toDouble(x['grams']))}g', style: nu(12, w: FontWeight.w600, c: V.mu)),
                   ]),
                   style: ku(12, w: FontWeight.w700),
                 )),
-            for (final x in vits.take(4)) chip(Text('💊 $x', style: ku(12, w: FontWeight.w700))),
+            for (final x in vits.take(4)) chip(VText('💊 $x', style: ku(12, w: FontWeight.w700))),
           ],
         ),
       ),
@@ -877,7 +877,7 @@ class _AnalyseViewState extends State<AnalyseView> with TickerProviderStateMixin
           ],
         ),
       ),
-      if (tip != null && '$tip'.isNotEmpty) Note(Text('💡 $tip', style: ku(13, h: 1.8))),
+      if (tip != null && '$tip'.isNotEmpty) Note(VText('💡 $tip', style: ku(13, h: 1.8))),
       Container(
         margin: const EdgeInsets.only(top: 12),
         padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
@@ -888,10 +888,10 @@ class _AnalyseViewState extends State<AnalyseView> with TickerProviderStateMixin
         ),
         child: Row(
           children: [
-            const Text('✅'),
+            const VText('✅'),
             const SizedBox(width: 10),
             Expanded(
-              child: Text.rich(
+              child: VText.rich(
                 TextSpan(children: [
                   TextSpan(text: 'زیاد کرا بۆ ${slot[0]} ${slot[1]} · '),
                   TextSpan(text: item.at, style: nu(13, c: V.tx)),
@@ -908,7 +908,7 @@ class _AnalyseViewState extends State<AnalyseView> with TickerProviderStateMixin
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: box(r: 10, border: V.line2),
-                child: Text('پاشگەزبوونەوە', style: ku(12, w: FontWeight.w700)),
+                child: VText('پاشگەزبوونەوە', style: ku(12, w: FontWeight.w700)),
               ),
             ),
           ],
@@ -975,7 +975,7 @@ class _TypeViewState extends State<_TypeView> {
           style: ku(14),
           cursorColor: V.cy,
           decoration: InputDecoration(
-            hintText: 'بۆ نموونە: 8 دانە دۆڵمە و پەرداخێک دۆ',
+            hintText: vxTr('بۆ نموونە: 8 دانە دۆڵمە و پەرداخێک دۆ'),
             hintStyle: ku(14, c: V.mu),
             filled: true,
             fillColor: V.surf2,

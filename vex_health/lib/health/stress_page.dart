@@ -33,12 +33,12 @@ class _Zone {
   final String t;
 }
 
-const List<_Zone> _z = [
-  _Zone('ئارام', '< 25', 0, 25, Color(0xFF03EAFB), 'ئاستت زۆر باشە، بەم شێوەیە بەردەوام بە.'),
-  _Zone('مامناوەند', '25 – 50', 25, 50, Color(0xFF5BE3A4), 'ئاسایییە؛ پشوویەکی کورت بۆ هەناسە و ئاو باشە.'),
-  _Zone('سترێس', '51 – 75', 50, 75, Color(0xFFFFB84D), 'چەند خولەکێک هەناسەی قووڵ هەڵبکێشە و لە شاشە دوور بکەوە.'),
-  _Zone('سەخت', '> 75', 75, 100, Color(0xFFFF5C7A), 'پشوو بدە، و ئەگەر بەردەوام بوو لەگەڵ پزیشک بدوێ.'),
-];
+List<_Zone> get _z => vexCache<List<_Zone>>('stress_page.dart:_z', () => [
+  _Zone('ئارام', '< 25', 0, 25, vk(0xFF03EAFB), 'ئاستت زۆر باشە، بەم شێوەیە بەردەوام بە.'),
+  _Zone('مامناوەند', '25 – 50', 25, 50, vk(0xFF5BE3A4), 'ئاساییە؛ پشوویەکی کورت بۆ هەناسە و ئاو باشە.'),
+  _Zone('سترێس', '51 – 75', 50, 75, vk(0xFFFFB84D), 'چەند خولەکێک هەناسەی قووڵ هەڵبکێشە و لە شاشە دوور بکەوە.'),
+  _Zone('سەخت', '> 75', 75, 100, vk(0xFFFF5C7A), 'پشوو بدە، و ئەگەر بەردەوام بوو لەگەڵ پزیشک بدوێ.'),
+]);
 
 int _zi(num v) => v < 25 ? 0 : (v <= 50 ? 1 : (v <= 75 ? 2 : 3));
 
@@ -181,8 +181,8 @@ class _StressPageState extends State<StressPage> with TickerProviderStateMixin {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(p.t, textDirection: TextDirection.ltr, style: ku(13, c: HC.mu)),
-                              Text('${cv.round()}',
+                              VText(p.t, textDirection: TextDirection.ltr, style: ku(13, c: HC.mu)),
+                              VText('${cv.round()}',
                                   textDirection: TextDirection.ltr, style: nu(68, c: z.c, h: 1.0, ls: -2)),
                               const SizedBox(height: 8),
                               AnimatedContainer(
@@ -194,7 +194,7 @@ class _StressPageState extends State<StressPage> with TickerProviderStateMixin {
                                   border: Border.all(color: z.c),
                                   boxShadow: [BoxShadow(color: op(z.c, 0.6), blurRadius: 18, spreadRadius: -4)],
                                 ),
-                                child: Text(z.n, style: ku(14, w: FontWeight.w600, c: z.c)),
+                                child: VText(z.n, style: ku(14, w: FontWeight.w600, c: z.c)),
                               ),
                             ],
                           ),
@@ -222,11 +222,11 @@ class _StressPageState extends State<StressPage> with TickerProviderStateMixin {
                 width: 34,
                 height: 34,
                 alignment: Alignment.center,
-                decoration: BoxDecoration(color: const Color(0x1A03EAFB), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: vk(0x1A03EAFB), borderRadius: BorderRadius.circular(12)),
                 child: svgIcon(HI.bulb, HX.c2, size: 20),
               ),
               const SizedBox(width: 12),
-              Expanded(child: Text(z.t, style: ku(14, c: HC.tx, h: 1.7))),
+              Expanded(child: VText(z.t, style: ku(14, c: HC.tx, h: 1.7))),
             ],
           ),
         ),
@@ -278,7 +278,7 @@ class _Gauge extends CustomPainter {
   final double v;
 
   static const double cx = 140, cy = 132, r = 108, gp = 1.4;
-  static final TextStyle _lab = ku(11, c: HC.mu);
+  static TextStyle get _lab => ku(11, c: HC.mu);
 
   Offset _pt(double val, double rad0) {
     final a = math.pi - val / 100 * math.pi;
@@ -335,10 +335,10 @@ class _Gauge extends CustomPainter {
       kn + const Offset(0, 2),
       12,
       Paint()
-        ..color = const Color(0x80000000)
+        ..color = vk(0x80000000)
         ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 4),
     );
-    canvas.drawCircle(kn, 11, Paint()..color = Colors.white);
+    canvas.drawCircle(kn, 11, Paint()..color = kW);
     canvas.drawCircle(
       kn,
       11,
@@ -365,7 +365,7 @@ class _StressChart extends CustomPainter {
   final int sel;
   final double t;
 
-  static final TextStyle _lab = ku(10, c: HC.mu);
+  static TextStyle get _lab => ku(10, c: HC.mu);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -428,7 +428,7 @@ class _StressChart extends CustomPainter {
           ..shader = ui.Gradient.linear(
             Offset(pts.first.dx, 0),
             Offset(pts.last.dx, 0),
-            const [Color(0xFF03EAFB), Color(0xFFFFB84D), Color(0xFFFF8A5C)],
+            [vk(0xFF03EAFB), vk(0xFFFFB84D), vk(0xFFFF8A5C)],
             const [0.0, 0.5, 1.0],
           ),
       );
@@ -449,7 +449,7 @@ class _StressChart extends CustomPainter {
         off: 4,
       );
       canvas.drawCircle(sp, 13, Paint()..color = op(zc, 0.22));
-      canvas.drawCircle(sp, 6, Paint()..color = Colors.white);
+      canvas.drawCircle(sp, 6, Paint()..color = kW);
       canvas.drawCircle(
         sp,
         6,

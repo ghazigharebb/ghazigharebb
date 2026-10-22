@@ -16,7 +16,8 @@ String _rn(String s) => s.replaceAll('\uFE0F', '');
 const Map<String, RIcoDef> _kRIcons = {
   '🛋': RIcoDef(r'''<path d="M20 10V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3"/><path d="M2 13a2 2 0 0 1 4 0v2h12v-2a2 2 0 0 1 4 0v5a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/><path d="M5 19v2M19 19v2"/>''', 0xFF9B9FFF),
   '🚶': RIcoDef(r'''<circle cx="13" cy="4.5" r="1.8"/><path d="M9.5 21l2-6-2.5-2.5 1.5-4.5 3.500 1.500 2 3.500M12 15l2.500 2.500V21M10.500 8.500L8 11"/>''', 0xFF3CF08A),
-  '🏃': RIcoDef(r'''<circle cx="14.500" cy="4.500" r="1.800"/><path d="M4 12l3.500-2 3.500 1 2 3-3 3.500-3.500 1M13 14.500l3 2 1 4M11 11l3.500-1.500 3 2.500 3-.5"/>''', 0xFFFFBE4D),
+  '✉': RIcoDef(r'''<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3.500 7.500l8.500 6 8.500-6"/>''', 0xFFFF7A8A),
+  '🏃': RIcoDef(r'''<circle cx="15.400" cy="4.600" r="1.900"/><path d="M13.900 8.200L11.600 13M13.700 9.200l3 1.700 2.500-1.400M13.400 9.400l-3 .7-2.400 2.500M11.600 13l3.500 2.200-.9 5M11.600 13l-2.400 4.200-3.600.3"/>''', 0xFFFFBE4D),
   '🏋': RIcoDef(r'''<path d="M6.500 6.500v11M17.500 6.500v11M3.500 9v6M20.500 9v6M6.500 12h11"/>''', 0xFFFF7A5C),
   '😴': RIcoDef(r'''<path d="M20 14.500A8.500 8.500 0 1 1 9.500 4a6.800 6.800 0 0 0 10.500 10.500z"/><path d="M15 4h3l-3 3.500h3"/>''', 0xFFB9A4FF),
   '🌙': RIcoDef(r'''<path d="M20 14.500A8.500 8.500 0 1 1 9.500 4a6.800 6.800 0 0 0 10.500 10.500z"/>''', 0xFFB9A4FF),
@@ -82,9 +83,9 @@ const Map<String, RIcoDef> _kRIcons = {
 /// ئایا ئایکۆنێک بۆ ئەم ئیمۆجییە هەیە؟
 bool hasRIco(String emoji) => _kRIcons.containsKey(_rn(emoji));
 
-Color rIcoColor(String emoji, [Color fallback = V.cy]) {
+Color rIcoColor(String emoji, [Color? fallback]) { fallback ??= V.cy;
   final d = _kRIcons[_rn(emoji)];
-  return d == null ? fallback : Color(d.color);
+  return d == null ? fallback : vk(d.color);
 }
 
 String _hex(int c) => '#${(c & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}';
@@ -107,10 +108,10 @@ class RIco extends StatelessWidget {
       return SizedBox(
         width: size,
         height: size,
-        child: Center(child: Text(emoji, style: TextStyle(fontSize: size * (tile ? 0.5 : 0.9), height: 1))),
+        child: Center(child: VText(emoji, style: TextStyle(fontSize: size * (tile ? 0.5 : 0.9), height: 1))),
       );
     }
-    final c = color ?? Color(d.color);
+    final c = color ?? vk(d.color);
     final inner = tile ? size * 0.54 : size;
     final svg = SvgPicture.string(
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="${_hex(c.value)}" '
@@ -128,7 +129,7 @@ class RIco extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [mix(c, const Color(0xFF0B2C36), 0.66), mix(c, const Color(0xFF06202A), 0.92)],
+          colors: [mix(c, vk(0xFF0B2C36), 0.66), mix(c, vk(0xFF06202A), 0.92)],
         ),
         border: Border.all(color: op(c, 0.42)),
         boxShadow: [BoxShadow(color: op(c, 0.38), blurRadius: size * 0.4, offset: Offset(0, size * 0.16), spreadRadius: -size * 0.2)],

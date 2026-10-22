@@ -7,3 +7,7 @@
 <string>VEX Health هەنگاوەکانت دەژمێرێت بۆ ئەوەی لە Dynamic Island و شاشەی قفڵ نیشانیان بدات.</string>
 <key>NSLocationWhenInUseUsageDescription</key>
 <string>VEX Health شوێنی نزیکەیی تۆ بەکاردێنێت بۆ ژماردنی کاتەکانی بانگ بۆ شارەکەت.</string>
+
+<!-- vex_ble: بلووتوسی Band -->
+<key>NSBluetoothAlwaysUsageDescription</key>
+<string>VEX Health پێویستی بە بلووتوس هەیە بۆ پەیوەستبوون بە VEX Band و هاوکاتکردنی داتای تەندروستی.</string>

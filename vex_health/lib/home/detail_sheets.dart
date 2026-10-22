@@ -5,8 +5,17 @@ import 'package:flutter/material.dart';
 
 import '../core/store.dart';
 import '../core/theme.dart';
+import '../vitalage/vital_age_page.dart';
+import '../plus/gate.dart';
+import '../band/band_state.dart';
 
 void openMetricDetail(String k) {
+  // Band پەیوەست نییە ← پەردەی لێڵ + «Band بکڕە / پەیوەستی بکە»
+  if (k != 'act' && !BandState.I.bleUp) {
+    final id = const {'hr': 'heart', 'spo2': 'spo2', 'stress': 'stress', 'temp': 'temp', 'sleep': 'sleep'}[k] ?? 'health';
+    showVSheet<void>(builder: (_) => Center(child: GateVeil(kind: GateKind.band, id: id)));
+    return;
+  }
   switch (k) {
     case 'hr':
       showVSheet<void>(builder: (_) => const _HrSheet());
@@ -29,7 +38,7 @@ void openMetricDetail(String k) {
   }
 }
 
-Widget _txt(String s) => Text(s, style: ku(13, h: 1.8));
+Widget _txt(String s) => VText(s, style: ku(13, h: 1.8));
 
 // ---------- لێدانی دڵ ----------
 class _HrSheet extends StatefulWidget {
@@ -78,9 +87,9 @@ class _EcgPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawRect(Offset.zero & size, Paint()..color = const Color(0xFF071318));
+    canvas.drawRect(Offset.zero & size, Paint()..color = vk(0xFF071318));
     final grid = Paint()
-      ..color = const Color(0x1F3CF08A)
+      ..color = vk(0x1F3CF08A)
       ..strokeWidth = 1;
     for (double x = 0; x <= size.width; x += 20) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), grid);
@@ -129,9 +138,9 @@ void _spo2() {
       children: [
         const SheetTitle('🫁 ئۆکسجینی خوێن (SpO₂)'),
         DBig('${h.spo2}%', 'چاودێری بکە', color: V.amber),
-        const BarsChart(
+        BarsChart(
           [95, 96, 94, 97, 96, 97, 98, 97, 96, 93, 97, 98, 97, 96, 97, 98, 97, 96, 95, 93],
-          Color(0xFF14B8D6),
+          vk(0xFF14B8D6),
           85,
           100,
         ),
@@ -141,7 +150,7 @@ void _spo2() {
           K3Item('ئێستا', '${h.spo2}%'),
         ]),
         Note(_txt(
-            '💡 95-100% ئاسایییە. ئەگەر بەردەوام کەمتر لە 94% بوو یان هەناسەت قورس بوو، پزیشک ببینە. جووڵەی دەست و شل لەبەرکردنی Band ژمارەکە کەم دەکەنەوە.')),
+            '💡 95-100% ئاساییە. ئەگەر بەردەوام کەمتر لە 94% بوو یان هەناسەت قورس بوو، پزیشک ببینە. جووڵەی دەست و شل لەبەرکردنی Band ژمارەکە کەم دەکەنەوە.')),
       ],
     ),
   );
@@ -157,9 +166,9 @@ void _stress() {
       children: [
         const SheetTitle('🧠 سترێس و HRV'),
         DBig('${h.stress}', 'مامناوەند', color: V.amber),
-        const BarsChart(
+        BarsChart(
           [40, 38, 45, 60, 52, 58, 44, 40, 42, 46, 41, 40, 39, 42, 44, 48, 50, 52, 55, 55],
-          Color(0xFFFFBE4D),
+          vk(0xFFFFBE4D),
           0,
           100,
         ),
@@ -193,9 +202,9 @@ void _temp() {
       children: [
         const SheetTitle('🌡️ پلەی گەرمی پێست'),
         DBig('${h.temp}°C', 'ئاسایی بۆ مەچەک'),
-        const BarsChart(
+        BarsChart(
           [33.4, 33.6, 33.9, 34.0, 33.8, 34.1, 34.2, 34.0, 33.7, 33.9, 34.2, 34.1, 34.0, 33.9, 34.2],
-          Color(0xFFFF9466),
+          vk(0xFFFF9466),
           32,
           35,
         ),
@@ -204,7 +213,7 @@ void _temp() {
           K3Item('ناوەند', '${h.tempAvg}'),
           K3Item('ئێستا', '${h.temp}'),
         ]),
-        Note(Text.rich(
+        Note(VText.rich(
           TextSpan(children: [
             const TextSpan(text: '💡 Band پلەی گەرمی '),
             TextSpan(text: 'پێستی مەچەک', style: ku(13, w: FontWeight.w800, h: 1.8)),
@@ -233,17 +242,17 @@ List<_Stage?> _sleepStages() {
       continue;
     }
     if (s == 13) {
-      out.add(const _Stage('بەئاگا', Color(0xFF5A6B80)));
+      out.add(_Stage('بەئاگا', vk(0xFF5A6B80)));
       continue;
     }
     final cyc = ((h + 24 - 23.67) % 24) / 1.5;
     final f = cyc % 1;
     if (f < 0.35 && cyc < 3) {
-      out.add(const _Stage('قووڵ', Color(0xFF6F4BFF)));
+      out.add(_Stage('قووڵ', vk(0xFF6F4BFF)));
     } else if (f > 0.74) {
-      out.add(const _Stage('REM', Color(0xFFD2B6FF)));
+      out.add(_Stage('REM', vk(0xFFD2B6FF)));
     } else {
-      out.add(const _Stage('سووک', Color(0xFFA58BFF)));
+      out.add(_Stage('سووک', vk(0xFFA58BFF)));
     }
   }
   return out;
@@ -259,7 +268,7 @@ void _sleep() {
       mainAxisSize: MainAxisSize.min,
       children: [
         const SheetTitle('🌙 خەوی دوێنێ شەو'),
-        const DBig('7:10', 'کاتژمێر · 23:40 → 06:50 · باش', color: Color(0xFFB39DFF)),
+        DBig('7:10', 'کاتژمێر · 23:40 → 06:50 · باش', color: vk(0xFFB39DFF)),
         Padding(
           padding: const EdgeInsets.only(top: 6, bottom: 10),
           child: ClipRRect(
@@ -282,8 +291,8 @@ void _sleep() {
           ),
         ),
         K3([
-          K3Item('قووڵ', hm(minutes('قووڵ')), labelColor: const Color(0xFF6F4BFF)),
-          K3Item('REM', hm(minutes('REM')), labelColor: const Color(0xFFD2B6FF)),
+          K3Item('قووڵ', hm(minutes('قووڵ')), labelColor: vk(0xFF6F4BFF)),
+          K3Item('REM', hm(minutes('REM')), labelColor: vk(0xFFD2B6FF)),
           const K3Item('بەئاگابوون', '1×'),
         ]),
         Note(_txt(
@@ -345,7 +354,7 @@ void openActivitySheet() {
 void openNotifications() {
   Widget ev(String e, String t, String s) => Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: V.line))),
+        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: V.line))),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -354,15 +363,15 @@ void openNotifications() {
               height: 36,
               alignment: Alignment.center,
               decoration: BoxDecoration(color: V.surf2, borderRadius: BorderRadius.circular(12)),
-              child: Text(e, style: const TextStyle(fontSize: 17)),
+              child: VText(e, style: const TextStyle(fontSize: 17)),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(t, style: ku(13, h: 1.7)),
-                  Text(s, style: ku(11, c: V.mu)),
+                  VText(t, style: ku(13, h: 1.7)),
+                  VText(s, style: ku(11, c: V.mu)),
                 ],
               ),
             ),
@@ -384,19 +393,5 @@ void openNotifications() {
 }
 
 // ---------- تەمەنی ژیانی ----------
-void openVitalAge() {
-  showVSheet<void>(
-    builder: (_) => Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const SheetTitle('🧬 تەمەنی ژیانی'),
-        Text(
-          'VitalAge بەپێی خەو، HRV، لێدانی دڵی پشوو و چالاکی دەژمێردرێت. بۆ کردنەوەی، 7 شەو خەو هاوکات بکە.',
-          style: ku(13, c: V.mu, h: 1.8),
-        ),
-        const K3([K3Item('خەو', '0/7'), K3Item('HRV', '✓'), K3Item('چالاکی', '✓')]),
-      ],
-    ),
-  );
-}
+// پەڕەی تەواو: lib/vitalage/vital_age_page.dart
+void openVitalAge() => openVitalAgePage();

@@ -53,10 +53,10 @@ Future<FoodPick?> openFoodPage({bool pick = false, String? query}) async {
 }
 
 const Map<String, String> kSlotIcon = {'b': '🌅', 'l': '☀️', 's': '🍎', 'd': '🌙', 'n': '🌃'};
-const Color _kPro = Color(0xFFFF5F7E);
-const Color _kCarb = Color(0xFFFFBE4D);
-const Color _kFat = Color(0xFF9B7BFF);
-const Color _kDim = Color(0xFF5F8A92);
+Color get _kPro => vk(0xFFFF5F7E);
+Color get _kCarb => vk(0xFFFFBE4D);
+Color get _kFat => vk(0xFF9B7BFF);
+Color get _kDim => vk(0xFF5F8A92);
 
 // ---------- دواین خواردنەکان ----------
 class _Recent {
@@ -107,10 +107,10 @@ class FoodThumb extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(radius),
-            color: const Color(0x142FE6F3),
+            color: vk(0x142FE6F3),
             border: Border.all(color: V.line),
           ),
-          child: Text(f.e, style: TextStyle(fontSize: size * 0.5, height: 1.1)),
+          child: VText(f.e, style: TextStyle(fontSize: size * 0.5, height: 1.1)),
         );
     if (img == null) return emoji();
     return ClipRRect(
@@ -259,7 +259,7 @@ class _FoodPageState extends State<FoodPage> {
     final mq = MediaQuery.of(context);
     final kb = mq.viewInsets.bottom > 0;
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light,
+      value: VexTheme.I.chromeStyle, // ڕووناک/تاریک
       child: Scaffold(
         backgroundColor: V.bg,
         body: Column(
@@ -280,7 +280,7 @@ class _FoodPageState extends State<FoodPage> {
                         height: 42,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(shape: BoxShape.circle, color: V.surf2, border: Border.all(color: V.line)),
-                        child: const Icon(Icons.close_rounded, color: V.tx, size: 22),
+                        child: Icon(Icons.close_rounded, color: V.tx, size: 22),
                       ),
                     ),
                   ),
@@ -289,8 +289,8 @@ class _FoodPageState extends State<FoodPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(widget.pick ? 'چیت لەگەڵی خوارد؟' : 'خواردنەکان', style: ku(19, w: FontWeight.w800, h: 1.4)),
-                        Text('${ltr(fmt(db.foods.length))} خواردن و خواردنەوە · کالۆری و پێکهاتە',
+                        VText(widget.pick ? 'چیت لەگەڵی خوارد؟' : 'خواردنەکان', style: ku(19, w: FontWeight.w800, h: 1.4)),
+                        VText('${ltr(fmt(db.foods.length))} خواردن و خواردنەوە · کالۆری و پێکهاتە',
                             maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(11.5, c: V.mu)),
                       ],
                     ),
@@ -309,24 +309,24 @@ class _FoodPageState extends State<FoodPage> {
                 cursorColor: V.cy,
                 onChanged: (_) => setState(_rebuild),
                 decoration: InputDecoration(
-                  hintText: 'بگەڕێ: دۆڵمە، قەسپ، کۆلا، شلە…',
+                  hintText: vxTr('بگەڕێ: دۆڵمە، قەسپ، کۆلا، شلە…'),
                   hintStyle: ku(14.5, c: _kDim),
-                  prefixIcon: const Icon(Icons.search_rounded, color: V.mu),
+                  prefixIcon: Icon(Icons.search_rounded, color: V.mu),
                   suffixIcon: _q.text.isEmpty
                       ? null
                       : IconButton(
-                          icon: const Icon(Icons.cancel_rounded, color: V.mu, size: 20),
+                          icon: Icon(Icons.cancel_rounded, color: V.mu, size: 20),
                           onPressed: () => setState(() {
                             _q.clear();
                             _rebuild();
                           }),
                         ),
                   filled: true,
-                  fillColor: const Color(0x2E000000),
+                  fillColor: vk(0x2E000000),
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(vertical: 13),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: V.line2)),
-                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: V.cy)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: V.line2)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: V.cy)),
                 ),
               ),
             ),
@@ -360,10 +360,10 @@ class _FoodPageState extends State<FoodPage> {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(99),
-              color: on ? const Color(0x262FE6F3) : V.surf2,
+              color: on ? vk(0x262FE6F3) : V.surf2,
               border: Border.all(color: on ? V.cy : V.line),
             ),
-            child: Text(t, style: ku(12.5, w: FontWeight.w700, c: on ? V.tx : V.mu, h: 1.2)),
+            child: VText(t, style: ku(12.5, w: FontWeight.w700, c: on ? V.tx : V.mu, h: 1.2)),
           ),
         ),
       );
@@ -371,7 +371,7 @@ class _FoodPageState extends State<FoodPage> {
   Widget _list() {
     final mq = MediaQuery.of(context);
     if (!FoodDb.I.loaded) {
-      return Center(child: Text('لیستی خواردنەکان بار نەبوو.', style: ku(14, c: V.mu)));
+      return Center(child: VText('لیستی خواردنەکان بار نەبوو.', style: ku(14, c: V.mu)));
     }
     if (_rows.isEmpty) return _empty();
     return ListView.builder(
@@ -385,7 +385,7 @@ class _FoodPageState extends State<FoodPage> {
         if (x is String) {
           return Padding(
             padding: EdgeInsets.only(top: i == 0 ? 4 : 18, bottom: 6),
-            child: Text(x, style: ku(13.5, w: FontWeight.w800, c: V.mu)),
+            child: VText(x, style: ku(13.5, w: FontWeight.w800, c: V.mu)),
           );
         }
         return _row(x as FoodEntry);
@@ -414,8 +414,8 @@ class _FoodPageState extends State<FoodPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(f.ku, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(14.5, w: FontWeight.w800, h: 1.4)),
-                  Text(
+                  VText(f.label, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(14.5, w: FontWeight.w800, h: 1.4)),
+                  VText(
                     '1 ${u.name} · ${ltr('${fmt(u.g)}g')}${f.ar.isNotEmpty ? ' · ${f.ar.split('/').first.trim()}' : ''}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -428,12 +428,12 @@ class _FoodPageState extends State<FoodPage> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(fmt(f.kcalOf(u, 1)), style: nu(16, h: 1.2)),
-                Text('kcal', style: nu(10, w: FontWeight.w600, c: V.mu)),
+                VText(fmt(f.kcalOf(u, 1)), style: nu(16, h: 1.2)),
+                VText('kcal', style: nu(10, w: FontWeight.w600, c: V.mu)),
               ],
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.chevron_left_rounded, color: _kDim, size: 22),
+            Icon(Icons.chevron_left_rounded, color: _kDim, size: 22),
           ],
         ),
       ),
@@ -445,11 +445,11 @@ class _FoodPageState extends State<FoodPage> {
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: const EdgeInsets.fromLTRB(14, 24, 14, 24),
       children: [
-        const Center(child: Text('🔎', style: TextStyle(fontSize: 40))),
+        const Center(child: VText('🔎', style: TextStyle(fontSize: 40))),
         const SizedBox(height: 8),
-        Text('«${_q.text.trim()}» نەدۆزرایەوە', textAlign: TextAlign.center, style: ku(17, w: FontWeight.w800)),
+        VText('«${_q.text.trim()}» نەدۆزرایەوە', textAlign: TextAlign.center, style: ku(17, w: FontWeight.w800)),
         const SizedBox(height: 4),
-        Text('بە شێوەیەکی تر بینووسە، یان خۆت کالۆرییەکەی دابنێ:',
+        VText('بە شێوەیەکی تر بینووسە، یان خۆت کالۆرییەکەی دابنێ:',
             textAlign: TextAlign.center, style: ku(13, c: V.mu, h: 1.7)),
         const SizedBox(height: 12),
         _customBox(),
@@ -471,7 +471,7 @@ class _FoodPageState extends State<FoodPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(compact ? 'ئەوەی دەتەوێت لە لیستەکەدا نییە؟' : '✍️ «$name» بە کالۆری خۆت',
+          VText(compact ? 'ئەوەی دەتەوێت لە لیستەکەدا نییە؟' : '✍️ «$name» بە کالۆری خۆت',
               maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(13, w: FontWeight.w800, c: compact ? V.mu : V.tx)),
           const SizedBox(height: 8),
           Row(
@@ -487,15 +487,15 @@ class _FoodPageState extends State<FoodPage> {
                   cursorColor: V.cy,
                   onSubmitted: (_) => _addCustom(),
                   decoration: InputDecoration(
-                    hintText: 'kcal',
+                    hintText: vxTr('kcal'),
                     hintStyle: nu(14, w: FontWeight.w600, c: _kDim),
                     counterText: '',
                     isDense: true,
                     filled: true,
-                    fillColor: const Color(0x2E000000),
+                    fillColor: vk(0x2E000000),
                     contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(13), borderSide: const BorderSide(color: V.line2)),
-                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(13), borderSide: const BorderSide(color: V.cy)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(13), borderSide: BorderSide(color: V.line2)),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(13), borderSide: BorderSide(color: V.cy)),
                   ),
                 ),
               ),
@@ -507,7 +507,7 @@ class _FoodPageState extends State<FoodPage> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(borderRadius: BorderRadius.circular(13), gradient: V.prime),
-                  child: Text('➕ زیادکردن', style: ku(14, w: FontWeight.w800, c: V.ink)),
+                  child: VText('➕ زیادکردن', style: ku(14, w: FontWeight.w800, c: V.ink)),
                 ),
               ),
             ],
@@ -528,8 +528,8 @@ class _FoodPageState extends State<FoodPage> {
         final over = eaten > b;
         return Container(
           padding: EdgeInsets.fromLTRB(16, 10, 14, 10 + mq.padding.bottom),
-          decoration: const BoxDecoration(
-            color: Color(0xF2041C24),
+          decoration: BoxDecoration(
+            color: vk(0xF2041C24),
             border: Border(top: BorderSide(color: V.line)),
           ),
           child: Row(
@@ -539,10 +539,10 @@ class _FoodPageState extends State<FoodPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('ئەمڕۆ خواردووتە', style: ku(11.5, c: V.mu)),
-                    Text.rich(
+                    VText('ئەمڕۆ خواردووتە', style: ku(11.5, c: V.mu)),
+                    VText.rich(
                       TextSpan(children: [
-                        TextSpan(text: fmt(eaten), style: nu(18, c: over ? const Color(0xFFFF8A5F) : V.tx)),
+                        TextSpan(text: fmt(eaten), style: nu(18, c: over ? vk(0xFFFF8A5F) : V.tx)),
                         TextSpan(text: ' / ${fmt(b)} kcal', style: nu(12, w: FontWeight.w600, c: V.mu)),
                       ]),
                       textDirection: TextDirection.ltr,
@@ -555,7 +555,7 @@ class _FoodPageState extends State<FoodPage> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), gradient: V.prime),
-                  child: Text('✓ تەواو', style: ku(14.5, w: FontWeight.w800, c: V.ink)),
+                  child: VText('✓ تەواو', style: ku(14.5, w: FontWeight.w800, c: V.ink)),
                 ),
               ),
             ],
@@ -689,11 +689,11 @@ class _FoodSheetState extends State<FoodSheet> {
     }
     HapticFeedback.mediumImpact();
     if (widget.pick) {
-      Navigator.of(context).pop(FoodPick(food: f, unit: _u, n: _n, name: f.ku));
+      Navigator.of(context).pop(FoodPick(food: f, unit: _u, n: _n, name: f.label));
       return;
     }
     final k = f.kcalOf(_u, _n);
-    final nm = '${f.ku} · $_qtyTxt';
+    final nm = '${f.label} · $_qtyTxt';
     Store.I.addFood(FoodItem(
       n: nm.length > 70 ? '${nm.substring(0, 68)}…' : nm,
       kcal: k.round(),
@@ -705,8 +705,8 @@ class _FoodSheetState extends State<FoodSheet> {
       e: f.e,
       slot: _slot,
     ));
-    Navigator.of(context).pop(FoodPick(food: f, unit: _u, n: _n, name: f.ku));
-    toast('✓ ${f.ku} ($_qtyTxt) زیاد کرا بۆ ${kSlotName[_slot]}');
+    Navigator.of(context).pop(FoodPick(food: f, unit: _u, n: _n, name: f.label));
+    toast('✓ ${f.label} ($_qtyTxt) زیاد کرا بۆ ${kSlotName[_slot]}');
   }
 
   @override
@@ -741,8 +741,8 @@ class _FoodSheetState extends State<FoodSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(f.ku, style: ku(20, w: FontWeight.w800, h: 1.4)),
-                  if (subs.isNotEmpty) Text(subs, style: ku(12, c: V.mu, h: 1.5)),
+                  VText(f.label, style: ku(20, w: FontWeight.w800, h: 1.4)),
+                  if (subs.isNotEmpty) VText(subs, style: ku(12, c: V.mu, h: 1.5)),
                 ],
               ),
             ),
@@ -750,7 +750,7 @@ class _FoodSheetState extends State<FoodSheet> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(borderRadius: BorderRadius.circular(99), color: V.surf2, border: Border.all(color: V.line)),
-                child: Text('${cat.e} ${cat.t}', style: ku(11, w: FontWeight.w700, c: V.mu)),
+                child: VText('${cat.e} ${cat.t}', style: ku(11, w: FontWeight.w700, c: V.mu)),
               ),
           ],
         ),
@@ -768,10 +768,10 @@ class _FoodSheetState extends State<FoodSheet> {
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(99),
-                    color: u.name == _u.name ? const Color(0x262FE6F3) : Colors.transparent,
+                    color: u.name == _u.name ? vk(0x262FE6F3) : Colors.transparent,
                     border: Border.all(color: u.name == _u.name ? V.cy : V.line2),
                   ),
-                  child: Text(
+                  child: VText(
                     u.isGram ? u.name : '${u.name} ${ltr('(${fmt(u.g)}g)')}',
                     style: ku(12.5, w: FontWeight.w700, c: u.name == _u.name ? V.tx : V.mu, h: 1.2),
                   ),
@@ -786,7 +786,7 @@ class _FoodSheetState extends State<FoodSheet> {
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(18),
-                color: const Color(0x2E000000),
+                color: vk(0x2E000000),
                 border: Border.all(color: V.line2),
               ),
               child: Directionality(
@@ -811,7 +811,7 @@ class _FoodSheetState extends State<FoodSheet> {
                             decoration: const InputDecoration(isDense: true, border: InputBorder.none, contentPadding: EdgeInsets.zero),
                             onSubmitted: (_) => _cf.unfocus(),
                           ),
-                          Text(_u.name,
+                          VText(_u.name,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               textDirection: TextDirection.rtl,
@@ -828,14 +828,14 @@ class _FoodSheetState extends State<FoodSheet> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text.rich(
+                VText.rich(
                   TextSpan(children: [
-                    TextSpan(text: fmt(k), style: nu(30, c: const Color(0xFFFFE3CC), h: 1.1)),
+                    TextSpan(text: fmt(k), style: nu(30, c: vk(0xFFFFE3CC), h: 1.1)),
                     TextSpan(text: ' kcal', style: nu(12, w: FontWeight.w700, c: V.mu)),
                   ]),
                   textDirection: TextDirection.ltr,
                 ),
-                Text('≈ ${fmt(g)}g', textDirection: TextDirection.ltr, style: nu(12, w: FontWeight.w600, c: V.mu)),
+                VText('≈ ${fmt(g)}g', textDirection: TextDirection.ltr, style: nu(12, w: FontWeight.w600, c: V.mu)),
               ],
             ),
           ],
@@ -854,7 +854,7 @@ class _FoodSheetState extends State<FoodSheet> {
         if (fib >= 0.5 || sug >= 0.5)
           Padding(
             padding: const EdgeInsets.only(top: 8),
-            child: Text.rich(
+            child: VText.rich(
               TextSpan(children: [
                 if (fib >= 0.5) ...[
                   const TextSpan(text: '🥦 ڕیشاڵ '),
@@ -872,7 +872,7 @@ class _FoodSheetState extends State<FoodSheet> {
           ),
         if (!widget.pick) ...[
           const SizedBox(height: 14),
-          Text('بۆ کام ژەم؟', style: ku(12.5, w: FontWeight.w800, c: V.mu)),
+          VText('بۆ کام ژەم؟', style: ku(12.5, w: FontWeight.w800, c: V.mu)),
           const SizedBox(height: 6),
           Wrap(
             spacing: 6,
@@ -892,10 +892,10 @@ class _FoodSheetState extends State<FoodSheet> {
                     padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(99),
-                      color: e.key == _slot ? const Color(0x263CF08A) : Colors.transparent,
+                      color: e.key == _slot ? vk(0x263CF08A) : Colors.transparent,
                       border: Border.all(color: e.key == _slot ? V.mint : V.line2),
                     ),
-                    child: Text('${kSlotIcon[e.key]} ${e.value}',
+                    child: VText('${kSlotIcon[e.key]} ${e.value}',
                         style: ku(12, w: FontWeight.w700, c: e.key == _slot ? V.tx : V.mu, h: 1.2)),
                   ),
                 ),
@@ -911,12 +911,12 @@ class _FoodSheetState extends State<FoodSheet> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
               gradient: V.prime,
-              boxShadow: const [BoxShadow(color: Color(0x553CF08A), blurRadius: 26, offset: Offset(0, 8), spreadRadius: -10)],
+              boxShadow: [BoxShadow(color: vk(0x553CF08A), blurRadius: 26, offset: Offset(0, 8), spreadRadius: -10)],
             ),
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
+                  child: VText(
                     widget.pick ? '➕ زیادکردن بۆ ئەم ژەمە' : '➕ زیادکردن بۆ ${kSlotName[_slot]}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -925,15 +925,15 @@ class _FoodSheetState extends State<FoodSheet> {
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), color: const Color(0x2604323A)),
-                  child: Text('${fmt(k)} kcal', textDirection: TextDirection.ltr, style: nu(14, c: V.ink)),
+                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), color: vk(0x2604323A)),
+                  child: VText('${fmt(k)} kcal', textDirection: TextDirection.ltr, style: nu(14, c: V.ink)),
                 ),
               ],
             ),
           ),
         ),
         const SizedBox(height: 8),
-        Text(
+        VText(
           'ژمارەکان خەمڵاندنی ستانداردن؛ چێشتی ماڵان کەمێک جیاوازە بە پێی ڕۆن و بڕ.',
           textAlign: TextAlign.center,
           style: ku(11, c: _kDim, h: 1.6),
@@ -949,14 +949,14 @@ class _FoodSheetState extends State<FoodSheet> {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(22),
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF0B3442), Color(0xFF062A35)],
+            colors: [vk(0xFF0B3442), vk(0xFF062A35)],
           ),
           border: Border.all(color: V.line),
         ),
-        child: Text(f.e, style: const TextStyle(fontSize: 64)),
+        child: VText(f.e, style: const TextStyle(fontSize: 64)),
       );
 
   Widget _btn(String t, VoidCallback? onTap) => GestureDetector(
@@ -965,7 +965,7 @@ class _FoodSheetState extends State<FoodSheet> {
         child: SizedBox(
           width: 46,
           height: 52,
-          child: Center(child: Text(t, style: nu(24, w: FontWeight.w600, c: onTap == null ? const Color(0xFF35575E) : V.c2, h: 1))),
+          child: Center(child: VText(t, style: nu(24, w: FontWeight.w600, c: onTap == null ? vk(0xFF35575E) : V.c2, h: 1))),
         ),
       );
 
@@ -979,8 +979,8 @@ class _FoodSheetState extends State<FoodSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(11.5, w: FontWeight.w700, c: V.mu)),
-            Text.rich(
+            VText(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(11.5, w: FontWeight.w700, c: V.mu)),
+            VText.rich(
               TextSpan(children: [
                 TextSpan(text: _g(v), style: nu(17)),
                 TextSpan(text: ' g', style: nu(11, w: FontWeight.w600, c: V.mu)),

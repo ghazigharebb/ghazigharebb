@@ -340,7 +340,7 @@ class _VexSplashState extends State<VexSplash> with SingleTickerProviderStateMix
   Widget _letter(double t, int i, String ch, bool last) {
     final p = _seg(t, 0.78 + i * 0.035, 0.45);
     final e = const Cubic(0.2, 0.9, 0.3, 1.0).transform(p);
-    Widget w = Text(ch == ' ' ? ' ' : ch, style: nu(22, c: const Color(0xFFEFFEFF), h: 1.25));
+    Widget w = VText(ch == ' ' ? ' ' : ch, style: nu(22, c: const Color(0xFFEFFEFF), h: 1.25));
     if (i < 3) {
       w = ShaderMask(
         blendMode: BlendMode.srcIn,
@@ -398,7 +398,7 @@ class _VexSplashState extends State<VexSplash> with SingleTickerProviderStateMix
               ),
             ),
             const SizedBox(height: 10),
-            Text('VEX BAND · AI HEALTH', style: nu(10.5, w: FontWeight.w600, c: const Color(0x998CB7BF), ls: 2.5)),
+            VText('VEX BAND · AI HEALTH', style: nu(10.5, w: FontWeight.w600, c: const Color(0x998CB7BF), ls: 2.5)),
           ],
         ),
       ),

@@ -2,6 +2,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import 'vex_theme.dart';
+
 /// ئایکۆنی هێڵی بازنەی تەندروستی
 const Map<String, String> kRingIcons = {
   'sleep': '<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>',
@@ -30,7 +32,9 @@ class Ico {
   static const String drop = '<path d="M12 2.5s-6.5 7-6.5 11.6a6.5 6.5 0 0 0 13 0C18.5 9.5 12 2.5 12 2.5z"/>';
 }
 
-String iconSvg(String inner, String hex, {double stroke = 2, bool fill = false}) =>
+String iconSvg(String inner, String hex0, {double stroke = 2, bool fill = false}) => _iconSvg(inner, vexMapHex(hex0), stroke, fill);
+
+String _iconSvg(String inner, String hex, double stroke, bool fill) =>
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" '
     'fill="${fill ? hex : 'none'}" stroke="${fill ? 'none' : hex}" '
     'stroke-width="$stroke" stroke-linecap="round" stroke-linejoin="round">$inner</svg>';

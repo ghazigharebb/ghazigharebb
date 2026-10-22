@@ -35,39 +35,40 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../core/theme.dart';
 
 // =============================================================================
 // 1. ڕەنگ و ستایل
 // =============================================================================
 
 class VA {
-  static const bg = Color(0xFF04202A);
-  static const bg2 = Color(0xFF073241);
-  static const surf = Color(0x9E0C3A48);
-  static const surf2 = Color(0x0EFFFFFF);
-  static const line = Color(0x218CEBF5);
-  static const line2 = Color(0x428CEBF5);
-  static const text = Color(0xFFEAFBFD);
-  static const muted = Color(0xFF8FB4BC);
-  static const cyan = Color(0xFF2FE6F3);
-  static const cyanSoft = Color(0xFF8FF3F9);
-  static const mint = Color(0xFF3CF08A);
-  static const violet = Color(0xFF9B7BFF);
-  static const coral = Color(0xFFFF6F86);
-  static const amber = Color(0xFFFFBE4D);
-  static const gold = Color(0xFFFFD56B);
-  static const silver = Color(0xFFD9E6EE);
-  static const bronze = Color(0xFFE29A5F);
-  static const sheet = Color(0xFF062A35);
-  static const ink = Color(0xFF04323A);
+  static Color get bg => vk(0xFF04202A);
+  static Color get bg2 => vk(0xFF073241);
+  static Color get surf => vk(0x9E0C3A48);
+  static Color get surf2 => vk(0x0EFFFFFF);
+  static Color get line => vk(0x218CEBF5);
+  static Color get line2 => vk(0x428CEBF5);
+  static Color get text => vk(0xFFEAFBFD);
+  static Color get muted => vk(0xFF8FB4BC);
+  static Color get cyan => vk(0xFF2FE6F3);
+  static Color get cyanSoft => vk(0xFF8FF3F9);
+  static Color get mint => vk(0xFF3CF08A);
+  static Color get violet => vk(0xFF9B7BFF);
+  static Color get coral => vk(0xFFFF6F86);
+  static Color get amber => vk(0xFFFFBE4D);
+  static Color get gold => vk(0xFFFFD56B);
+  static Color get silver => vk(0xFFD9E6EE);
+  static Color get bronze => vk(0xFFE29A5F);
+  static Color get sheet => vk(0xFF062A35);
+  static Color get ink => vk(0xFF04323A);
 
-  static const prime = LinearGradient(
-    colors: [Color(0xFF8FF3F9), Color(0xFF3CF08A)],
+  static get prime => LinearGradient(
+    colors: [vk(0xFF8FF3F9), vk(0xFF3CF08A)],
     begin: Alignment.topRight,
     end: Alignment.bottomLeft,
   );
-  static const goldG = LinearGradient(
-    colors: [Color(0xFFFFF3C4), Color(0xFFFFD56B), Color(0xFFD9971F)],
+  static get goldG => LinearGradient(
+    colors: [vk(0xFFFFF3C4), vk(0xFFFFD56B), vk(0xFFD9971F)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -78,7 +79,7 @@ const _kFont = 'NotoAr';
 Color _al(Color c, double o) => c.withAlpha((o.clamp(0.0, 1.0) * 255).round());
 
 TextStyle _ts(double size,
-        {FontWeight w = FontWeight.w400, Color c = VA.text, double? h, double? ls}) =>
+        {FontWeight w = FontWeight.w400, Color? c, double? h, double? ls}) { c ??= VA.text; return
     TextStyle(
       fontFamily: _kFont,
       fontSize: size,
@@ -87,7 +88,7 @@ TextStyle _ts(double size,
       height: h,
       letterSpacing: ls,
       fontFeatures: const [FontFeature.tabularFigures()],
-    );
+    ); }
 
 /// 1234567 → 1,234,567
 String _fmt(num n) {
@@ -116,19 +117,19 @@ class ArenaCat {
   const ArenaCat(this.id, this.icon, this.name, this.color, this.max, this.src);
 }
 
-const List<ArenaCat> kArenaCats = [
-  ArenaCat('walk', Icons.directions_walk_rounded, 'پیاسە', Color(0xFF3CF08A), 60, 'هەنگاوی Band + لێدانی دڵ'),
-  ArenaCat('run', Icons.directions_run_rounded, 'ڕاکردن', Color(0xFFFF9466), 60, 'GPS + لێدانی دڵ + خێرایی'),
-  ArenaCat('gym', Icons.fitness_center_rounded, 'وەرزش', Color(0xFFFF6F86), 60, 'خولەکی لێدانی دڵی بەرز'),
-  ArenaCat('sleep', Icons.bedtime_rounded, 'خەو', Color(0xFF9B7BFF), 60, 'خەوی Band (لێدانی دڵ + جووڵە)'),
-  ArenaCat('food', Icons.restaurant_rounded, 'خۆراک', Color(0xFFFFBE4D), 50, 'وێنەی ڕاستەوخۆی ژەم + AI'),
-  ArenaCat('water', Icons.water_drop_rounded, 'ئاو', Color(0xFF2FB8F3), 30, 'تۆماری ئاو + ئامانج'),
-  ArenaCat('heart', Icons.favorite_rounded, 'دڵ', Color(0xFFFF5F7E), 40, 'خولەک لە ناوچەی دڵی تەندروست'),
-  ArenaCat('o2', Icons.air_rounded, 'ئۆکسجین', Color(0xFF4FD2E6), 20, 'لەبەرکردنی Band لە شەودا'),
-  ArenaCat('calm', Icons.spa_rounded, 'ئارامی', Color(0xFFA58CFF), 40, 'کاتی سترێسی نزم + هەناسەدان'),
-  ArenaCat('rec', Icons.battery_charging_full_rounded, 'چاکبوونەوە', Color(0xFF3FD69A), 40, 'HRV + خەو + لێدانی پشوو'),
-  ArenaCat('body', Icons.monitor_weight_rounded, 'لەشی تەندروست', Color(0xFFE29A5F), 30, 'ڕەوتی کێشی تەندروست (هەفتانە)'),
-];
+List<ArenaCat> get kArenaCats => vexCache<List<ArenaCat>>('vex_arena.dart:kArenaCats', () => [
+  ArenaCat('walk', Icons.directions_walk_rounded, 'پیاسە', vk(0xFF3CF08A), 60, 'هەنگاوی Band + لێدانی دڵ'),
+  ArenaCat('run', Icons.directions_run_rounded, 'ڕاکردن', vk(0xFFFF9466), 60, 'GPS + لێدانی دڵ + خێرایی'),
+  ArenaCat('gym', Icons.fitness_center_rounded, 'وەرزش', vk(0xFFFF6F86), 60, 'خولەکی لێدانی دڵی بەرز'),
+  ArenaCat('sleep', Icons.bedtime_rounded, 'خەو', vk(0xFF9B7BFF), 60, 'خەوی Band (لێدانی دڵ + جووڵە)'),
+  ArenaCat('food', Icons.restaurant_rounded, 'خۆراک', vk(0xFFFFBE4D), 50, 'وێنەی ڕاستەوخۆی ژەم + AI'),
+  ArenaCat('water', Icons.water_drop_rounded, 'ئاو', vk(0xFF2FB8F3), 30, 'تۆماری ئاو + ئامانج'),
+  ArenaCat('heart', Icons.favorite_rounded, 'دڵ', vk(0xFFFF5F7E), 40, 'خولەک لە ناوچەی دڵی تەندروست'),
+  ArenaCat('o2', Icons.air_rounded, 'ئۆکسجین', vk(0xFF4FD2E6), 20, 'لەبەرکردنی Band لە شەودا'),
+  ArenaCat('calm', Icons.spa_rounded, 'ئارامی', vk(0xFFA58CFF), 40, 'کاتی سترێسی نزم + هەناسەدان'),
+  ArenaCat('rec', Icons.battery_charging_full_rounded, 'چاکبوونەوە', vk(0xFF3FD69A), 40, 'HRV + خەو + لێدانی پشوو'),
+  ArenaCat('body', Icons.monitor_weight_rounded, 'لەشی تەندروست', vk(0xFFE29A5F), 30, 'ڕەوتی کێشی تەندروست (هەفتانە)'),
+]);
 
 ArenaCat catById(String id) => kArenaCats.firstWhere((c) => c.id == id, orElse: () => kArenaCats.first);
 
@@ -421,14 +422,14 @@ class League {
   const League(this.min, this.idx, this.name, this.accent, this.c1, this.c2);
 }
 
-const List<League> kLeagues = [
-  League(0, 0, 'برۆنز', Color(0xFFE29A5F), Color(0xFF5A3417), Color(0xFFA8642F)),
-  League(600, 1, 'زیو', Color(0xFFD9E6EE), Color(0xFF4A5866), Color(0xFF9FB1BF)),
-  League(1500, 2, 'ئاڵتوون', Color(0xFFFFD56B), Color(0xFF6B4A0A), Color(0xFFD9A21F)),
-  League(3000, 3, 'پلاتین', Color(0xFF7FE7FF), Color(0xFF0B4D5C), Color(0xFF2BB5C9)),
-  League(5000, 4, 'ئەڵماس', Color(0xFFB9A6FF), Color(0xFF2A1A6E), Color(0xFF7B5CFF)),
-  League(7500, 5, 'VEX Legend', Color(0xFFFF6F86), Color(0xFF5A0F22), Color(0xFFD62F55)),
-];
+List<League> get kLeagues => vexCache<List<League>>('vex_arena.dart:kLeagues', () => [
+  League(0, 0, 'برۆنز', vk(0xFFE29A5F), vk(0xFF5A3417), vk(0xFFA8642F)),
+  League(600, 1, 'زیو', vk(0xFFD9E6EE), vk(0xFF4A5866), vk(0xFF9FB1BF)),
+  League(1500, 2, 'ئاڵتوون', vk(0xFFFFD56B), vk(0xFF6B4A0A), vk(0xFFD9A21F)),
+  League(3000, 3, 'پلاتین', vk(0xFF7FE7FF), vk(0xFF0B4D5C), vk(0xFF2BB5C9)),
+  League(5000, 4, 'ئەڵماس', vk(0xFFB9A6FF), vk(0xFF2A1A6E), vk(0xFF7B5CFF)),
+  League(7500, 5, 'VEX Legend', vk(0xFFFF6F86), vk(0xFF5A0F22), vk(0xFFD62F55)),
+]);
 
 League leagueOf(num p) {
   var l = kLeagues.first;
@@ -567,15 +568,15 @@ class CardSkin {
       {this.cost = 0, this.league = 0, this.c1, this.c2, this.accent, this.pattern = SkinPattern.none});
 }
 
-const List<CardSkin> kSkins = [
+List<CardSkin> get kSkins => vexCache<List<CardSkin>>('vex_arena.dart:kSkins', () => [
   CardSkin('auto', 'لیگەکەم', pattern: SkinPattern.gloss),
-  CardSkin('neon', 'نیۆنی VEX', cost: 120, c1: Color(0xFF05313D), c2: Color(0xFF0B5160), accent: Color(0xFF2FE6F3), pattern: SkinPattern.grid),
-  CardSkin('night', 'شەوی ئەستێرە', cost: 160, c1: Color(0xFF0B1033), c2: Color(0xFF1D2B6B), accent: Color(0xFF9B7BFF), pattern: SkinPattern.stars),
-  CardSkin('kurd', 'نەخشی کوردی', cost: 220, c1: Color(0xFF5A1414), c2: Color(0xFF8A2B1C), accent: Color(0xFFFFD56B), pattern: SkinPattern.kurd),
-  CardSkin('newroz', 'ئاگری نەورۆز', cost: 260, c1: Color(0xFF3A0D05), c2: Color(0xFFA8320C), accent: Color(0xFFFFBE4D), pattern: SkinPattern.fire),
-  CardSkin('gold', 'ئاڵتوونی', league: 2, c1: Color(0xFF6B4A0A), c2: Color(0xFFE6B13A), accent: Color(0xFFFFD56B), pattern: SkinPattern.gloss),
-  CardSkin('dia', 'ئەڵماس', league: 4, c1: Color(0xFF1D1250), c2: Color(0xFF6A4FE0), accent: Color(0xFFD6C8FF), pattern: SkinPattern.diamond),
-];
+  CardSkin('neon', 'نیۆنی VEX', cost: 120, c1: vk(0xFF05313D), c2: vk(0xFF0B5160), accent: vk(0xFF2FE6F3), pattern: SkinPattern.grid),
+  CardSkin('night', 'شەوی ئەستێرە', cost: 160, c1: vk(0xFF0B1033), c2: vk(0xFF1D2B6B), accent: vk(0xFF9B7BFF), pattern: SkinPattern.stars),
+  CardSkin('kurd', 'نەخشی کوردی', cost: 220, c1: vk(0xFF5A1414), c2: vk(0xFF8A2B1C), accent: vk(0xFFFFD56B), pattern: SkinPattern.kurd),
+  CardSkin('newroz', 'ئاگری نەورۆز', cost: 260, c1: vk(0xFF3A0D05), c2: vk(0xFFA8320C), accent: vk(0xFFFFBE4D), pattern: SkinPattern.fire),
+  CardSkin('gold', 'ئاڵتوونی', league: 2, c1: vk(0xFF6B4A0A), c2: vk(0xFFE6B13A), accent: vk(0xFFFFD56B), pattern: SkinPattern.gloss),
+  CardSkin('dia', 'ئەڵماس', league: 4, c1: vk(0xFF1D1250), c2: vk(0xFF6A4FE0), accent: vk(0xFFD6C8FF), pattern: SkinPattern.diamond),
+]);
 
 CardSkin skinById(String id) => kSkins.firstWhere((s) => s.id == id, orElse: () => kSkins.first);
 
@@ -854,7 +855,7 @@ class _VexArenaPageState extends State<VexArenaPage> {
         title: titleName(st.title),
         stats: myStats(),
         rank: rankOf(myTotal, season),
-        grad: const [Color(0xFF0F9B8E), Color(0xFF1D4E89)],
+        grad: [vk(0xFF0F9B8E), vk(0xFF1D4E89)],
       );
 
   bool skinOwned(CardSkin s) =>
@@ -874,17 +875,17 @@ class _VexArenaPageState extends State<VexArenaPage> {
       child: Scaffold(
         backgroundColor: VA.bg,
         body: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: RadialGradient(
               center: Alignment(0, -1.1),
               radius: 1.3,
-              colors: [Color(0xFF0B4556), VA.bg],
+              colors: [vk(0xFF0B4556), VA.bg],
             ),
           ),
           child: SafeArea(
             bottom: false,
             child: !st.loaded
-                ? const Center(child: CircularProgressIndicator(color: VA.cyan))
+                ? Center(child: CircularProgressIndicator(color: VA.cyan))
                 : ListView(
                     controller: _scroll,
                     padding: const EdgeInsets.fromLTRB(16, 10, 16, 40),
@@ -960,7 +961,7 @@ class _VexArenaPageState extends State<VexArenaPage> {
             padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
             decoration: BoxDecoration(color: VA.surf2, borderRadius: BorderRadius.circular(99), border: Border.all(color: VA.line)),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.groups_rounded, size: 15, color: VA.muted),
+              Icon(Icons.groups_rounded, size: 15, color: VA.muted),
               const SizedBox(width: 5),
               Text(_fmt(s.total + (st.acc != null ? 1 : 0)), style: _ts(12, w: FontWeight.w700)),
               const SizedBox(width: 4),
@@ -983,7 +984,7 @@ class _VexArenaPageState extends State<VexArenaPage> {
       title: 'وەرزشکاری نوێ',
       stats: kStatNames.map((n) => <Object>[n, '??']).toList(),
       rank: season.total + 1,
-      grad: const [Color(0xFF0F9B8E), Color(0xFF1D4E89)],
+      grad: [vk(0xFF0F9B8E), vk(0xFF1D4E89)],
     );
     return _Card(
       child: Column(children: [
@@ -1052,7 +1053,7 @@ class _VexArenaPageState extends State<VexArenaPage> {
                 _CountUp(
                   value: t.total,
                   style: _ts(68, w: FontWeight.w800, h: 1.05),
-                  shader: const LinearGradient(colors: [Colors.white, VA.cyanSoft], begin: Alignment.topCenter, end: Alignment.bottomCenter),
+                  shader: LinearGradient(colors: [kW, VA.cyanSoft], begin: Alignment.topCenter, end: Alignment.bottomCenter),
                 ),
               ]),
             ),
@@ -1065,7 +1066,7 @@ class _VexArenaPageState extends State<VexArenaPage> {
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                   decoration: BoxDecoration(color: _al(VA.mint, .14), borderRadius: BorderRadius.circular(99)),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.arrow_drop_up_rounded, color: VA.mint, size: 18),
+                    Icon(Icons.arrow_drop_up_rounded, color: VA.mint, size: 18),
                     Text(_fmt(yr - r), style: _ts(14, c: VA.mint, w: FontWeight.w800)),
                   ]),
                 ),
@@ -1081,7 +1082,7 @@ class _VexArenaPageState extends State<VexArenaPage> {
                   margin: const EdgeInsets.symmetric(horizontal: 2),
                   decoration: BoxDecoration(
                     gradient: i < seg ? VA.prime : null,
-                    color: i < seg ? null : _al(Colors.white, .08),
+                    color: i < seg ? null : _al(kW, .08),
                     borderRadius: BorderRadius.circular(9),
                   ),
                 ),
@@ -1114,7 +1115,7 @@ class _VexArenaPageState extends State<VexArenaPage> {
               _StatTile(
                   label: 'بەردەوامی',
                   value: Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.local_fire_department_rounded, color: Color(0xFFFF9466), size: 18),
+                    Icon(Icons.local_fire_department_rounded, color: vk(0xFFFF9466), size: 18),
                     const SizedBox(width: 4),
                     Text('$streak', style: _ts(19, w: FontWeight.w800)),
                   ])),
@@ -1266,7 +1267,7 @@ class _VexArenaPageState extends State<VexArenaPage> {
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           _InfoLine(icon: Icons.shield_rounded, text: 'پشتڕاستکردنەوە: ${c.src}'),
           _InfoLine(icon: Icons.track_changes_rounded, text: 'زۆرترین خاڵی ئاسایی: ${c.max}'),
-          const _InfoLine(icon: Icons.favorite_rounded, text: 'تەنها ڕەفتاری تەندروست دەژمێردرێت؛ زیادەڕۆیی خاڵی زیاتر نادات.'),
+          _InfoLine(icon: Icons.favorite_rounded, text: 'تەنها ڕەفتاری تەندروست دەژمێردرێت؛ زیادەڕۆیی خاڵی زیاتر نادات.'),
         ]),
       ),
       const SizedBox(height: 12),
@@ -1417,7 +1418,7 @@ class _VexArenaPageState extends State<VexArenaPage> {
                 gs
                     ? Row(mainAxisSize: MainAxisSize.min, children: [
                         Text('${st.bestPower}', style: _ts(14, w: FontWeight.w800)),
-                        const Icon(Icons.auto_awesome_rounded, size: 14, color: VA.violet),
+                        Icon(Icons.auto_awesome_rounded, size: 14, color: VA.violet),
                       ])
                     : Text(_fmt(my), style: _ts(14, w: FontWeight.w800)),
               ]),
@@ -1454,7 +1455,7 @@ class _VexArenaPageState extends State<VexArenaPage> {
               child: _StatTile(
                   label: 'بەردەوامی',
                   value: Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.local_fire_department_rounded, color: Color(0xFFFF9466), size: 17),
+                    Icon(Icons.local_fire_department_rounded, color: vk(0xFFFF9466), size: 17),
                     Text('${x.streak}', style: _ts(17, w: FontWeight.w800)),
                   ]))),
           const SizedBox(width: 8),
@@ -1462,7 +1463,7 @@ class _VexArenaPageState extends State<VexArenaPage> {
               child: _StatTile(
                   label: 'پێشبینیی ڕاست',
                   value: Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.auto_awesome_rounded, color: VA.violet, size: 17),
+                    Icon(Icons.auto_awesome_rounded, color: VA.violet, size: 17),
                     Text('${x.guess}', style: _ts(17, w: FontWeight.w800)),
                   ]))),
           const SizedBox(width: 8),
@@ -1470,7 +1471,7 @@ class _VexArenaPageState extends State<VexArenaPage> {
         ]),
         const SizedBox(height: 10),
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          const Icon(Icons.visibility_off_rounded, size: 15, color: VA.muted),
+          Icon(Icons.visibility_off_rounded, size: 15, color: VA.muted),
           const SizedBox(width: 6),
           Text('داتای تەندروستیی ئەم کەسە نهێنییە و دەرناکەوێت', style: _ts(12.5, c: VA.muted)),
         ]),
@@ -1505,18 +1506,18 @@ class _VexArenaPageState extends State<VexArenaPage> {
   List<List<Object>> _badges() {
     final t = myTotal;
     return [
-      [Icons.rocket_launch_rounded, 'یەکەم ڕۆژ', st.acc != null, const Color(0xFF3CF08A)],
-      [Icons.local_fire_department_rounded, '7 ڕۆژ', activeDays >= 7, const Color(0xFFFF9466)],
-      [Icons.auto_awesome_rounded, 'پێشبینیکەر', st.bestPower >= 1, const Color(0xFFA58CFF)],
-      [Icons.track_changes_rounded, '3 پێشبینیی ڕاست', st.bestPower >= 3, const Color(0xFFFF6F86)],
-      [Icons.bedtime_rounded, 'خەوی ئاڵتوونی', (data['sleep']?.f ?? 0) >= 1, const Color(0xFF9B7BFF)],
-      [Icons.restaurant_rounded, 'خۆراکی پاک', (data['food']?.f ?? 0) >= .95, const Color(0xFFFFBE4D)],
-      [Icons.directions_run_rounded, '50 کیلۆمەتر', false, const Color(0xFFFF9466)],
-      [Icons.emoji_events_rounded, 'لیگی ئاڵتوون', t >= 1500, const Color(0xFFE6B13A)],
-      [Icons.water_drop_rounded, 'ڕووباری ئاو', (data['water']?.f ?? 0) >= 1, const Color(0xFF2FB8F3)],
-      [Icons.spa_rounded, 'ئارامی', (data['calm']?.f ?? 0) >= 1, const Color(0xFFA58CFF)],
-      [Icons.groups_rounded, '5 هاوڕێ', false, const Color(0xFF3FD69A)],
-      [Icons.workspace_premium_rounded, 'VEX Legend', t >= 7500, const Color(0xFFFF5577)],
+      [Icons.rocket_launch_rounded, 'یەکەم ڕۆژ', st.acc != null, vk(0xFF3CF08A)],
+      [Icons.local_fire_department_rounded, '7 ڕۆژ', activeDays >= 7, vk(0xFFFF9466)],
+      [Icons.auto_awesome_rounded, 'پێشبینیکەر', st.bestPower >= 1, vk(0xFFA58CFF)],
+      [Icons.track_changes_rounded, '3 پێشبینیی ڕاست', st.bestPower >= 3, vk(0xFFFF6F86)],
+      [Icons.bedtime_rounded, 'خەوی ئاڵتوونی', (data['sleep']?.f ?? 0) >= 1, vk(0xFF9B7BFF)],
+      [Icons.restaurant_rounded, 'خۆراکی پاک', (data['food']?.f ?? 0) >= .95, vk(0xFFFFBE4D)],
+      [Icons.directions_run_rounded, '50 کیلۆمەتر', false, vk(0xFFFF9466)],
+      [Icons.emoji_events_rounded, 'لیگی ئاڵتوون', t >= 1500, vk(0xFFE6B13A)],
+      [Icons.water_drop_rounded, 'ڕووباری ئاو', (data['water']?.f ?? 0) >= 1, vk(0xFF2FB8F3)],
+      [Icons.spa_rounded, 'ئارامی', (data['calm']?.f ?? 0) >= 1, vk(0xFFA58CFF)],
+      [Icons.groups_rounded, '5 هاوڕێ', false, vk(0xFF3FD69A)],
+      [Icons.workspace_premium_rounded, 'VEX Legend', t >= 7500, vk(0xFFFF5577)],
     ];
   }
 
@@ -1556,7 +1557,7 @@ class _VexArenaPageState extends State<VexArenaPage> {
                   margin: const EdgeInsets.symmetric(horizontal: 1.5),
                   decoration: BoxDecoration(
                       gradient: i < fill ? VA.prime : null,
-                      color: i < fill ? null : _al(Colors.white, .08),
+                      color: i < fill ? null : _al(kW, .08),
                       borderRadius: BorderRadius.circular(8)),
                 ),
               ),
@@ -1603,7 +1604,7 @@ class _VexArenaPageState extends State<VexArenaPage> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(14),
                     gradient: LinearGradient(colors: [sc.c1, sc.c2], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                    border: Border.all(color: st.skin == s.id ? sc.accent : _al(Colors.white, .15), width: st.skin == s.id ? 2.5 : 1),
+                    border: Border.all(color: st.skin == s.id ? sc.accent : _al(kW, .15), width: st.skin == s.id ? 2.5 : 1),
                     boxShadow: st.skin == s.id ? [BoxShadow(color: _al(sc.accent, .45), blurRadius: 14)] : null,
                   ),
                   child: ClipRRect(
@@ -1617,7 +1618,7 @@ class _VexArenaPageState extends State<VexArenaPage> {
                           child: Container(
                             padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(color: _al(Colors.black, .35), borderRadius: BorderRadius.circular(8)),
-                            child: const Icon(Icons.lock_rounded, size: 12, color: Colors.white),
+                            child: Icon(Icons.lock_rounded, size: 12, color: kW),
                           ),
                         ),
                       Positioned(
@@ -1631,7 +1632,7 @@ class _VexArenaPageState extends State<VexArenaPage> {
                             ok ? s.name : s.league > 0 ? '${s.name} · ${kLeagues[s.league].name}' : '${s.name} · ${s.cost}',
                             textAlign: TextAlign.center,
                             maxLines: 2,
-                            style: _ts(10, c: Colors.white, w: FontWeight.w700, h: 1.3),
+                            style: _ts(10, c: kW, w: FontWeight.w700, h: 1.3),
                           ),
                         ),
                       ),
@@ -1702,7 +1703,7 @@ class _VexArenaPageState extends State<VexArenaPage> {
       ),
       // ---- privacy ----
       _Card(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: const [
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           _Title(icon: Icons.visibility_rounded, text: 'تایبەتمەندی', note: 'کەسانی تر چی دەبینن'),
           SizedBox(height: 8),
           _InfoLine(icon: Icons.visibility_rounded, text: 'کارەکتەر، ناو، شار، کارت، لیگ، پلە و مێدالیا', color: VA.mint),
@@ -1781,7 +1782,7 @@ class _VexArenaPageState extends State<VexArenaPage> {
   Future<void> _openLogout() async {
     final ok = await _sheet<bool>(Builder(
       builder: (ctx) => Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        const Center(child: _IconTile(icon: Icons.logout_rounded, color: VA.coral, size: 60)),
+        Center(child: _IconTile(icon: Icons.logout_rounded, color: VA.coral, size: 60)),
         const SizedBox(height: 10),
         Text('دڵنیایت لەوەی دەتەوێت بچیتە دەرەوە؟', textAlign: TextAlign.center, style: _ts(17, w: FontWeight.w800)),
         const SizedBox(height: 6),
@@ -1889,9 +1890,9 @@ class _ArenaCardViewState extends State<ArenaCardView> with SingleTickerProvider
                         child: Container(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(colors: [
-                              _al(Colors.white, 0),
-                              _al(Colors.white, .28),
-                              _al(Colors.white, 0),
+                              _al(kW, 0),
+                              _al(kW, .28),
+                              _al(kW, 0),
                             ], stops: const [.3, .5, .7]),
                           ),
                         ),
@@ -1905,7 +1906,7 @@ class _ArenaCardViewState extends State<ArenaCardView> with SingleTickerProvider
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.vertical(top: Radius.circular(30 * k), bottom: Radius.circular(26 * k)),
-                  border: Border.all(color: _al(Colors.white, .18), width: 1.5),
+                  border: Border.all(color: _al(kW, .18), width: 1.5),
                 ),
               ),
             ),
@@ -1918,17 +1919,17 @@ class _ArenaCardViewState extends State<ArenaCardView> with SingleTickerProvider
                         style: TextStyle(
                             fontSize: 40 * k,
                             fontWeight: FontWeight.w800,
-                            color: Colors.white,
+                            color: kW,
                             height: 1,
                             shadows: [Shadow(color: _al(Colors.black, .35), blurRadius: 10)])),
                     SizedBox(height: 4 * k),
-                    Text('VEX', style: TextStyle(fontSize: 10 * k, letterSpacing: 1, color: _al(Colors.white, .85))),
+                    Text('VEX', style: TextStyle(fontSize: 10 * k, letterSpacing: 1, color: _al(kW, .85))),
                     SizedBox(height: 5 * k),
                     LeagueEmblem(league: lg, size: 32 * k),
                     SizedBox(height: 5 * k),
                     Row(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(Icons.place_rounded, size: 11 * k, color: _al(Colors.white, .9)),
-                      Text(d.city, style: _ts(10 * k, c: _al(Colors.white, .9))),
+                      Icon(Icons.place_rounded, size: 11 * k, color: _al(kW, .9)),
+                      Text(d.city, style: _ts(10 * k, c: _al(kW, .9))),
                     ]),
                   ]),
                   const Spacer(),
@@ -1948,18 +1949,18 @@ class _ArenaCardViewState extends State<ArenaCardView> with SingleTickerProvider
                 SizedBox(height: 10 * k),
                 Container(
                   padding: EdgeInsets.only(bottom: 6 * k),
-                  decoration: BoxDecoration(border: Border(bottom: BorderSide(color: _al(Colors.white, .22)))),
+                  decoration: BoxDecoration(border: Border(bottom: BorderSide(color: _al(kW, .22)))),
                   child: Text(d.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
-                      style: _ts(18 * k, c: Colors.white, w: FontWeight.w800)),
+                      style: _ts(18 * k, c: kW, w: FontWeight.w800)),
                 ),
                 SizedBox(height: 5 * k),
                 Text(d.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: _ts(11 * k, c: _al(Colors.white, .88))),
+                    style: _ts(11 * k, c: _al(kW, .88))),
                 SizedBox(height: 8 * k),
                 Wrap(
                   alignment: WrapAlignment.center,
@@ -1968,9 +1969,9 @@ class _ArenaCardViewState extends State<ArenaCardView> with SingleTickerProvider
                       .map((s) => SizedBox(
                             width: (w - 32 * k) / 3,
                             child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                              Text('${s[1]}', style: TextStyle(fontSize: 15 * k, fontWeight: FontWeight.w800, color: Colors.white)),
+                              Text('${s[1]}', style: TextStyle(fontSize: 15 * k, fontWeight: FontWeight.w800, color: kW)),
                               SizedBox(width: 4 * k),
-                              Text('${s[0]}', style: _ts(10 * k, c: Colors.white)),
+                              Text('${s[0]}', style: _ts(10 * k, c: kW)),
                             ]),
                           ))
                       .toList(),
@@ -1984,7 +1985,7 @@ class _ArenaCardViewState extends State<ArenaCardView> with SingleTickerProvider
               child: Text('VEX ARENA · SEASON ${Season.number} · #${_fmt(d.rank)}',
                   textAlign: TextAlign.center,
                   textDirection: TextDirection.ltr,
-                  style: TextStyle(fontSize: 9 * k, letterSpacing: 1.1, color: _al(Colors.white, .78))),
+                  style: TextStyle(fontSize: 9 * k, letterSpacing: 1.1, color: _al(kW, .78))),
             ),
           ]),
         ),
@@ -2120,9 +2121,9 @@ class _CharAvatarState extends State<CharAvatar> with SingleTickerProviderStateM
     final has = widget.ch.isNotEmpty;
     Widget inner = has
         ? Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: RadialGradient(center: Alignment(0, -.55), colors: [Color(0xFFE3FCFF), Color(0xFF2FE6F3), Color(0xFF0B5F73)], stops: [0, .7, 1]),
+              gradient: RadialGradient(center: Alignment(0, -.55), colors: [vk(0xFFE3FCFF), vk(0xFF2FE6F3), vk(0xFF0B5F73)], stops: [0, .7, 1]),
             ),
             child: ClipOval(
               child: Align(
@@ -2137,10 +2138,10 @@ class _CharAvatarState extends State<CharAvatar> with SingleTickerProviderStateM
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: LinearGradient(colors: widget.grad ?? const [Color(0xFF0F9B8E), Color(0xFF1D4E89)]),
+              gradient: LinearGradient(colors: widget.grad ?? [vk(0xFF0F9B8E), vk(0xFF1D4E89)]),
             ),
             child: Text(widget.name.trim().isEmpty ? '?' : widget.name.trim().characters.first,
-                style: _ts(s * .38, c: Colors.white, w: FontWeight.w800)),
+                style: _ts(s * .38, c: kW, w: FontWeight.w800)),
           );
     return Container(
       width: s,
@@ -2148,7 +2149,7 @@ class _CharAvatarState extends State<CharAvatar> with SingleTickerProviderStateM
       decoration: widget.ring == null
           ? null
           : BoxDecoration(shape: BoxShape.circle, boxShadow: [
-              const BoxShadow(color: VA.bg, spreadRadius: 2),
+              BoxShadow(color: VA.bg, spreadRadius: 2),
               BoxShadow(color: widget.ring!, spreadRadius: 4),
             ]),
       child: inner,
@@ -2161,7 +2162,7 @@ class _CharAvatarState extends State<CharAvatar> with SingleTickerProviderStateM
           scale: 1.12,
           alignment: Alignment.bottomCenter,
           child: Image.asset(charAsset(widget.ch), width: s, height: s, fit: BoxFit.contain, alignment: Alignment.bottomCenter,
-              errorBuilder: (_, __, ___) => Icon(Icons.person_rounded, size: s * .6, color: Colors.white)),
+              errorBuilder: (_, __, ___) => Icon(Icons.person_rounded, size: s * .6, color: kW)),
         ),
       );
 }
@@ -2200,21 +2201,21 @@ class _EmblemPainter extends CustomPainter {
         p,
         Paint()
           ..shader = LinearGradient(
-            colors: [Color.lerp(c, Colors.white, .45)!, c, Color.lerp(c, Colors.black, .35)!],
+            colors: [Color.lerp(c, kW, .45)!, c, Color.lerp(c, Colors.black, .35)!],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ).createShader(rect));
     canvas.drawPath(p, Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = w * .06
-      ..color = _al(Colors.white, .55));
+      ..color = _al(kW, .55));
     // chevrons = league level
     final cp = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = w * .09
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
-      ..color = _al(Colors.white, .92);
+      ..color = _al(kW, .92);
     final n = math.min(3, idx + 1);
     for (var i = 0; i < n; i++) {
       final y = h * (.34 + i * .15);
@@ -2226,7 +2227,7 @@ class _EmblemPainter extends CustomPainter {
           cp);
     }
     if (idx >= 3) {
-      canvas.drawCircle(Offset(w / 2, h * .2), w * .07, Paint()..color = Colors.white);
+      canvas.drawCircle(Offset(w / 2, h * .2), w * .07, Paint()..color = kW);
     }
   }
 
@@ -2247,13 +2248,13 @@ class _PatternPainter extends CustomPainter {
             Offset.zero & s,
             Paint()
               ..shader = LinearGradient(
-                colors: [_al(Colors.white, .18), _al(Colors.white, 0)],
+                colors: [_al(kW, .18), _al(kW, 0)],
                 begin: Alignment.topLeft,
                 end: const Alignment(.1, -.1),
               ).createShader(Offset.zero & s));
         break;
       case SkinPattern.grid:
-        final g = Paint()..color = _al(const Color(0xFF8FF3F9), .09);
+        final g = Paint()..color = _al(vk(0xFF8FF3F9), .09);
         for (double x = 0; x < s.width; x += 14) {
           canvas.drawRect(Rect.fromLTWH(x, 0, 1, s.height), g);
         }
@@ -2262,8 +2263,8 @@ class _PatternPainter extends CustomPainter {
         }
         break;
       case SkinPattern.stars:
-        final a = Paint()..color = Colors.white;
-        final b = Paint()..color = _al(Colors.white, .55);
+        final a = Paint()..color = kW;
+        final b = Paint()..color = _al(kW, .55);
         for (double y = 0; y < s.height; y += 22) {
           for (double x = 0; x < s.width; x += 22) {
             canvas.drawCircle(Offset(x, y), 1.1, a);
@@ -2273,10 +2274,10 @@ class _PatternPainter extends CustomPainter {
         break;
       case SkinPattern.kurd:
         final a = Paint()
-          ..color = _al(const Color(0xFFFFD56B), .22)
+          ..color = _al(vk(0xFFFFD56B), .22)
           ..strokeWidth = 5;
         final b = Paint()
-          ..color = _al(const Color(0xFFDC3C3C), .3)
+          ..color = _al(vk(0xFFDC3C3C), .3)
           ..strokeWidth = 5;
         for (double d = -s.height; d < s.width + s.height; d += 16) {
           canvas.drawLine(Offset(d, 0), Offset(d + s.height, s.height), a);
@@ -2285,9 +2286,9 @@ class _PatternPainter extends CustomPainter {
         break;
       case SkinPattern.fire:
         for (final f in [
-          [.2, const Color(0xFFFFD56B), .65],
-          [.8, const Color(0xFFFF7800), .6],
-          [.5, const Color(0xFFFF3C00), .5],
+          [.2, vk(0xFFFFD56B), .65],
+          [.8, vk(0xFFFF7800), .6],
+          [.5, vk(0xFFFF3C00), .5],
         ]) {
           final c = Offset(s.width * (f[0] as double), s.height * 1.15);
           final r = s.width * .55;
@@ -2300,7 +2301,7 @@ class _PatternPainter extends CustomPainter {
         }
         break;
       case SkinPattern.diamond:
-        final a = Paint()..color = _al(Colors.white, .12);
+        final a = Paint()..color = _al(kW, .12);
         for (double y = 0; y < s.height; y += 24) {
           for (double x = 0; x < s.width; x += 24) {
             canvas.drawPath(
@@ -2329,12 +2330,12 @@ Future<T?> showArenaSheet<T>(BuildContext context, Widget child) {
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    barrierColor: _al(const Color(0xFF010C10), .7),
+    barrierColor: _al(vk(0xFF010C10), .7),
     builder: (ctx) => Directionality(
       textDirection: TextDirection.rtl,
       child: Container(
         constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * .92),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: VA.sheet,
           borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
           border: Border(top: BorderSide(color: VA.line2)),
@@ -2351,7 +2352,7 @@ Future<T?> showArenaSheet<T>(BuildContext context, Widget child) {
                     width: 46,
                     height: 5,
                     margin: const EdgeInsets.only(bottom: 14),
-                    decoration: BoxDecoration(color: _al(Colors.white, .2), borderRadius: BorderRadius.circular(9)),
+                    decoration: BoxDecoration(color: _al(kW, .2), borderRadius: BorderRadius.circular(9)),
                   ),
                 ),
                 child,
@@ -2447,9 +2448,9 @@ class _PrizeSheetState extends State<_PrizeSheet> with SingleTickerProviderState
                 tween: Tween(begin: pulse ? 1.12 : 1, end: 1),
                 duration: const Duration(milliseconds: 400),
                 builder: (_, sc, child) => Transform.scale(scale: sc, child: child),
-                child: Text(v, style: _ts(26, c: const Color(0xFFFFE9A8), w: FontWeight.w900, h: 1.1)),
+                child: Text(v, style: _ts(26, c: vk(0xFFFFE9A8), w: FontWeight.w900, h: 1.1)),
               ),
-              Text(u, style: _ts(10.5, c: _al(const Color(0xFFFFF3C4), .7), w: FontWeight.w700)),
+              Text(u, style: _ts(10.5, c: _al(vk(0xFFFFF3C4), .7), w: FontWeight.w700)),
             ]),
           ),
         );
@@ -2500,14 +2501,14 @@ class _PrizeSheetState extends State<_PrizeSheet> with SingleTickerProviderState
             height: 26,
             alignment: Alignment.center,
             decoration: BoxDecoration(color: c, shape: BoxShape.circle, border: Border.all(color: VA.sheet, width: 3)),
-            child: Text('$place', style: _ts(12, c: const Color(0xFF2B1D05), w: FontWeight.w900)),
+            child: Text('$place', style: _ts(12, c: vk(0xFF2B1D05), w: FontWeight.w900)),
           ),
         ]),
       );
     }
 
     Widget status() {
-      if (ok) return const _Note(color: VA.mint, icon: Icons.check_rounded, text: 'مەرجی ڕۆژە چالاکەکانت تەواوە. ئێستا تەنها پلەکەت گرنگە.');
+      if (ok) return _Note(color: VA.mint, icon: Icons.check_rounded, text: 'مەرجی ڕۆژە چالاکەکانت تەواوە. ئێستا تەنها پلەکەت گرنگە.');
       if (canReach) {
         return _Note(
             color: VA.cyan,
@@ -2527,8 +2528,8 @@ class _PrizeSheetState extends State<_PrizeSheet> with SingleTickerProviderState
         padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(26),
-          gradient: const RadialGradient(
-              center: Alignment(0, -1), radius: 1.4, colors: [Color(0xFF5A3D06), Color(0xFF2B1D05), Color(0xFF140D02)], stops: [0, .55, 1]),
+          gradient: RadialGradient(
+              center: Alignment(0, -1), radius: 1.4, colors: [vk(0xFF5A3D06), vk(0xFF2B1D05), vk(0xFF140D02)], stops: [0, .55, 1]),
           border: Border.all(color: _al(VA.gold, .35)),
           boxShadow: [BoxShadow(color: _al(VA.amber, .4), blurRadius: 40, offset: const Offset(0, 16), spreadRadius: -18)],
         ),
@@ -2538,14 +2539,14 @@ class _PrizeSheetState extends State<_PrizeSheet> with SingleTickerProviderState
             decoration: BoxDecoration(
                 color: _al(VA.gold, .16), borderRadius: BorderRadius.circular(99), border: Border.all(color: _al(VA.gold, .3))),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.emoji_events_rounded, size: 14, color: VA.gold),
+              Icon(Icons.emoji_events_rounded, size: 14, color: VA.gold),
               const SizedBox(width: 6),
               Text('وەرزی ${Season.number} · خەڵاتەکان', style: _ts(12, c: VA.gold, w: FontWeight.w800)),
             ]),
           ),
           const SizedBox(height: 10),
-          Text('خەڵاتە گەورەکانی وەرز', style: _ts(22, c: const Color(0xFFFFF3C4), w: FontWeight.w800)),
-          Text('کێبڕکێ کۆتایی دێت لە', style: _ts(12.5, c: _al(const Color(0xFFFFF3C4), .72))),
+          Text('خەڵاتە گەورەکانی وەرز', style: _ts(22, c: vk(0xFFFFF3C4), w: FontWeight.w800)),
+          Text('کێبڕکێ کۆتایی دێت لە', style: _ts(12.5, c: _al(vk(0xFFFFF3C4), .72))),
           const SizedBox(height: 14),
           Row(children: [
             cd('${l.inDays}', 'ڕۆژ'),
@@ -2555,9 +2556,9 @@ class _PrizeSheetState extends State<_PrizeSheet> with SingleTickerProviderState
           ]),
           const SizedBox(height: 10),
           Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(Icons.flag_rounded, size: 14, color: _al(const Color(0xFFFFF3C4), .8)),
+            Icon(Icons.flag_rounded, size: 14, color: _al(vk(0xFFFFF3C4), .8)),
             const SizedBox(width: 6),
-            Text('کۆتایی: $endS', style: _ts(12, c: _al(const Color(0xFFFFF3C4), .8), w: FontWeight.w700)),
+            Text('کۆتایی: $endS', style: _ts(12, c: _al(vk(0xFFFFF3C4), .8), w: FontWeight.w700)),
           ]),
           const SizedBox(height: 12),
           ClipRRect(
@@ -2566,13 +2567,13 @@ class _PrizeSheetState extends State<_PrizeSheet> with SingleTickerProviderState
               value: s.day / Season.length,
               minHeight: 8,
               backgroundColor: _al(Colors.white, .12),
-              valueColor: const AlwaysStoppedAnimation(VA.gold),
+              valueColor: AlwaysStoppedAnimation(VA.gold),
             ),
           ),
           const SizedBox(height: 5),
           Row(children: [
-            Expanded(child: Text('ڕۆژی ${s.day}', style: _ts(11, c: _al(const Color(0xFFFFF3C4), .7), w: FontWeight.w700))),
-            Text('$dayLeft ڕۆژ ماوە', style: _ts(11, c: _al(const Color(0xFFFFF3C4), .7), w: FontWeight.w700)),
+            Expanded(child: Text('ڕۆژی ${s.day}', style: _ts(11, c: _al(vk(0xFFFFF3C4), .7), w: FontWeight.w700))),
+            Text('$dayLeft ڕۆژ ماوە', style: _ts(11, c: _al(vk(0xFFFFF3C4), .7), w: FontWeight.w700)),
           ]),
         ]),
       ),
@@ -2612,18 +2613,18 @@ class _PrizeSheetState extends State<_PrizeSheet> with SingleTickerProviderState
                     Container(height: 10, color: _al(VA.cyan, .12)),
                     FractionallySizedBox(
                       widthFactor: math.min(1.0, act / need),
-                      child: Container(height: 10, decoration: const BoxDecoration(gradient: VA.prime)),
+                      child: Container(height: 10, decoration: BoxDecoration(gradient: VA.prime)),
                     ),
                   ]),
                 ),
                 const SizedBox(height: 10),
                 status(),
               ])
-            : const _Note(color: VA.cyan, icon: Icons.rocket_launch_rounded, text: 'هێشتا بەشدار نەبوویت. بەشداریکردن بەخۆڕاییە.'),
+            : _Note(color: VA.cyan, icon: Icons.rocket_launch_rounded, text: 'هێشتا بەشدار نەبوویت. بەشداریکردن بەخۆڕاییە.'),
       ),
       _Box(
         child: Row(children: [
-          const _IconTile(icon: Icons.card_giftcard_rounded, color: VA.violet, size: 46),
+          _IconTile(icon: Icons.card_giftcard_rounded, color: VA.violet, size: 46),
           const SizedBox(width: 12),
           Expanded(
             child: Text.rich(
@@ -2775,7 +2776,7 @@ class _JoinSheetState extends State<_JoinSheet> {
               width: 46,
               height: 46,
               alignment: Alignment.center,
-              decoration: const BoxDecoration(shape: BoxShape.circle, gradient: VA.prime),
+              decoration: BoxDecoration(shape: BoxShape.circle, gradient: VA.prime),
               child: Text(p.name.trim().characters.first, style: _ts(20, c: VA.ink, w: FontWeight.w900)),
             ),
             const SizedBox(width: 12),
@@ -2794,7 +2795,7 @@ class _JoinSheetState extends State<_JoinSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
               decoration: BoxDecoration(color: _al(VA.mint, .14), borderRadius: BorderRadius.circular(99)),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
-                const Icon(Icons.check_rounded, size: 14, color: VA.mint),
+                Icon(Icons.check_rounded, size: 14, color: VA.mint),
                 const SizedBox(width: 3),
                 Text('لە پڕۆفایلەکەت', style: _ts(11, c: VA.mint, w: FontWeight.w800)),
               ]),
@@ -2808,7 +2809,7 @@ class _JoinSheetState extends State<_JoinSheet> {
       ],
       const SizedBox(height: 14),
       Row(children: [
-        const Icon(Icons.place_rounded, size: 15, color: VA.muted),
+        Icon(Icons.place_rounded, size: 15, color: VA.muted),
         const SizedBox(width: 4),
         Text('لە چ شارێکیت؟', style: _ts(13, c: VA.muted, w: FontWeight.w700)),
       ]),
@@ -2970,8 +2971,8 @@ class _CharPickerSheetState extends State<_CharPickerSheet> with SingleTickerPro
                       child: Container(
                         width: 22,
                         height: 22,
-                        decoration: const BoxDecoration(color: VA.mint, shape: BoxShape.circle),
-                        child: const Icon(Icons.check_rounded, size: 14, color: VA.ink),
+                        decoration: BoxDecoration(color: VA.mint, shape: BoxShape.circle),
+                        child: Icon(Icons.check_rounded, size: 14, color: VA.ink),
                       ),
                     ),
                   ),
@@ -3106,9 +3107,9 @@ class _CardRevealState extends State<_CardReveal> with TickerProviderStateMixin 
         child: Material(
           color: Colors.transparent,
           child: Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: RadialGradient(
-                  center: Alignment(0, -.24), radius: 1.1, colors: [Color(0xFF0D4F5E), Color(0xFF04202A), Color(0xFF010B10)], stops: [0, .45, 1]),
+                  center: Alignment(0, -.24), radius: 1.1, colors: [vk(0xFF0D4F5E), vk(0xFF04202A), vk(0xFF010B10)], stops: [0, .45, 1]),
             ),
             child: Stack(alignment: Alignment.center, children: [
               // rotating rays
@@ -3174,26 +3175,26 @@ class _CardRevealState extends State<_CardReveal> with TickerProviderStateMixin 
                               decoration: BoxDecoration(
                                   color: _al(VA.mint, .14), borderRadius: BorderRadius.circular(99), border: Border.all(color: _al(VA.mint, .35))),
                               child: Row(mainAxisSize: MainAxisSize.min, children: [
-                                const Icon(Icons.auto_awesome_rounded, size: 14, color: Color(0xFF7CF7B4)),
+                                Icon(Icons.auto_awesome_rounded, size: 14, color: vk(0xFF7CF7B4)),
                                 const SizedBox(width: 6),
-                                Text('وەرزی ${Season.number} · بەشدارییەکەت قبوڵ کرا', style: _ts(12, c: const Color(0xFF7CF7B4), w: FontWeight.w800)),
+                                Text('وەرزی ${Season.number} · بەشدارییەکەت قبوڵ کرا', style: _ts(12, c: vk(0xFF7CF7B4), w: FontWeight.w800)),
                               ]),
                             ),
                             const SizedBox(height: 10),
                             ShaderMask(
                               shaderCallback: (r) => VA.prime.createShader(r),
-                              child: Text('کارتەکەت ئامادەیە!', style: _ts(26, c: Colors.white, w: FontWeight.w900)),
+                              child: Text('کارتەکەت ئامادەیە!', style: _ts(26, c: kW, w: FontWeight.w900)),
                             ),
                             const SizedBox(height: 4),
                             Text.rich(
                               TextSpan(children: [
                                 TextSpan(text: 'بەخێربێیت ${d.name} · لە لیگی '),
-                                TextSpan(text: widget.league.name, style: _ts(13.5, c: Colors.white, w: FontWeight.w800)),
+                                TextSpan(text: widget.league.name, style: _ts(13.5, c: kW, w: FontWeight.w800)),
                                 const TextSpan(text: ' دەست پێدەکەیت · پلەی '),
-                                TextSpan(text: '#${_fmt(d.rank)}', style: _ts(13.5, c: Colors.white, w: FontWeight.w800)),
+                                TextSpan(text: '#${_fmt(d.rank)}', style: _ts(13.5, c: kW, w: FontWeight.w800)),
                               ]),
                               textAlign: TextAlign.center,
-                              style: _ts(13.5, c: _al(const Color(0xFFEAFCFF), .78), h: 1.6),
+                              style: _ts(13.5, c: _al(vk(0xFFEAFCFF), .78), h: 1.6),
                             ),
                             const SizedBox(height: 16),
                             _Btn(
@@ -3237,9 +3238,9 @@ class _CardBack extends StatelessWidget {
         height: 330,
         decoration: BoxDecoration(
           borderRadius: const BorderRadius.vertical(top: Radius.circular(30), bottom: Radius.circular(26)),
-          gradient: const RadialGradient(
-              center: Alignment(0, -.3), colors: [Color(0xFF1FD4C4), Color(0xFF0B5E74), Color(0xFF06303C)], stops: [0, .55, 1]),
-          border: Border.all(color: _al(Colors.white, .22), width: 1.5),
+          gradient: RadialGradient(
+              center: Alignment(0, -.3), colors: [vk(0xFF1FD4C4), vk(0xFF0B5E74), vk(0xFF06303C)], stops: [0, .55, 1]),
+          border: Border.all(color: _al(kW, .22), width: 1.5),
         ),
         alignment: Alignment.center,
         child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -3248,10 +3249,10 @@ class _CardBack extends StatelessWidget {
                   fontSize: 46,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 2,
-                  color: Colors.white,
+                  color: kW,
                   shadows: [Shadow(color: _al(Colors.black, .35), blurRadius: 20, offset: const Offset(0, 4))])),
           const SizedBox(height: 6),
-          Text('ARENA', style: TextStyle(fontSize: 12, letterSpacing: 6, color: _al(Colors.white, .85))),
+          Text('ARENA', style: TextStyle(fontSize: 12, letterSpacing: 6, color: _al(kW, .85))),
         ]),
       );
 }
@@ -3265,7 +3266,7 @@ class _RaysPainter extends CustomPainter {
     final r = 450.0;
     final o = (appear * 2).clamp(0.0, 1.0);
     final p = Paint()
-      ..shader = RadialGradient(colors: [_al(const Color(0xFF8FF3F9), .09 * o), _al(const Color(0xFF8FF3F9), 0)], stops: const [0, .6])
+      ..shader = RadialGradient(colors: [_al(vk(0xFF8FF3F9), .09 * o), _al(vk(0xFF8FF3F9), 0)], stops: const [0, .6])
           .createShader(Rect.fromCircle(center: c, radius: r));
     for (var i = 0; i < 16; i++) {
       final a = angle + i * (2 * math.pi / 16);
@@ -3296,7 +3297,7 @@ class _BurstPainter extends CustomPainter {
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2
-          ..color = _al(const Color(0xFF8FF3F9), .9 * (1 - t)));
+          ..color = _al(vk(0xFF8FF3F9), .9 * (1 - t)));
     // sparks
     for (var i = 0; i < 18; i++) {
       final delay = (i % 6) * .08;
@@ -3305,7 +3306,7 @@ class _BurstPainter extends CustomPainter {
       final e = Curves.easeOutCubic.transform(k);
       final a = i * 20 * math.pi / 180;
       final d = 30 + 180 * e;
-      final col = i % 3 == 2 ? const Color(0xFFFFD56B) : const Color(0xFF8FF3F9);
+      final col = i % 3 == 2 ? vk(0xFFFFD56B) : vk(0xFF8FF3F9);
       final pos = c + Offset(math.cos(a) * d, math.sin(a) * d);
       canvas.drawCircle(pos, 3 * (1 - .6 * e), Paint()..color = _al(col, 1 - e));
       canvas.drawCircle(pos, 7 * (1 - .6 * e), Paint()..color = _al(col, .25 * (1 - e)));
@@ -3359,7 +3360,7 @@ class _ConfettiPainter extends CustomPainter {
   final double t;
   final List<List<double>> bits;
   _ConfettiPainter(this.t, this.bits);
-  static const cols = [Color(0xFFFFD56B), Color(0xFF3CF08A), Color(0xFF2FE6F3), Color(0xFF9B7BFF), Color(0xFFFF6F86)];
+  static get cols => [vk(0xFFFFD56B), vk(0xFF3CF08A), vk(0xFF2FE6F3), vk(0xFF9B7BFF), vk(0xFFFF6F86)];
   @override
   void paint(Canvas canvas, Size s) {
     for (final b in bits) {
@@ -3398,7 +3399,7 @@ class _Card extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: glow ? VA.line2 : VA.line),
           gradient: glow
-              ? LinearGradient(colors: [_al(const Color(0xFF0F5566), .9), _al(const Color(0xFF0A3644), .9)], begin: Alignment.topLeft, end: Alignment.bottomRight)
+              ? LinearGradient(colors: [_al(vk(0xFF0F5566), .9), _al(vk(0xFF0A3644), .9)], begin: Alignment.topLeft, end: Alignment.bottomRight)
               : null,
           boxShadow: glow ? [BoxShadow(color: _al(VA.cyan, .12), blurRadius: 30, offset: const Offset(0, 12))] : null,
         ),
@@ -3536,8 +3537,8 @@ class _CoinPill extends StatelessWidget {
           Container(
             width: 19,
             height: 19,
-            decoration: const BoxDecoration(shape: BoxShape.circle, gradient: VA.goldG),
-            child: const Icon(Icons.star_rounded, size: 12, color: Color(0xFF6B4300)),
+            decoration: BoxDecoration(shape: BoxShape.circle, gradient: VA.goldG),
+            child: Icon(Icons.star_rounded, size: 12, color: vk(0xFF6B4300)),
           ),
         ]),
       );
@@ -3552,7 +3553,7 @@ class _Seg extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: const Color(0xFF06303C),
+          color: vk(0xFF06303C),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: VA.line),
           boxShadow: [BoxShadow(color: _al(Colors.black, .4), blurRadius: 18, offset: const Offset(0, 8), spreadRadius: -12)],
@@ -3632,8 +3633,8 @@ class _Input extends StatelessWidget {
           filled: true,
           fillColor: VA.surf2,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: VA.line)),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: VA.cyan, width: 1.5)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: VA.line)),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: VA.cyan, width: 1.5)),
         ),
       );
 }
@@ -3645,7 +3646,7 @@ class _StatTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(color: _al(Colors.white, .04), borderRadius: BorderRadius.circular(16), border: Border.all(color: VA.line)),
+        decoration: BoxDecoration(color: _al(kW, .04), borderRadius: BorderRadius.circular(16), border: Border.all(color: VA.line)),
         child: Row(children: [
           Expanded(child: Text(label, style: _ts(12, c: VA.muted, w: FontWeight.w600))),
           value,
@@ -3711,7 +3712,7 @@ class _InfoLine extends StatelessWidget {
   final IconData icon;
   final String text;
   final Color color;
-  const _InfoLine({required this.icon, required this.text, this.color = VA.muted});
+  _InfoLine({required this.icon, required this.text, Color? color}) : color = color ?? VA.muted;
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
@@ -3730,7 +3731,7 @@ class _AiRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: VA.line))),
+        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: VA.line))),
         child: Row(children: [
           Container(
             width: 30,
@@ -3769,13 +3770,13 @@ class _IconTile extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(size * .32),
           gradient: LinearGradient(
-            colors: [Color.lerp(color, Colors.white, .15)!, Color.lerp(color, Colors.black, .25)!],
+            colors: [Color.lerp(color, kW, .15)!, Color.lerp(color, Colors.black, .25)!],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           boxShadow: [BoxShadow(color: _al(color, .35), blurRadius: size * .3, offset: Offset(0, size * .12), spreadRadius: -size * .1)],
         ),
-        child: Icon(icon, size: size * .54, color: Colors.white),
+        child: Icon(icon, size: size * .54, color: kW),
       );
 }
 
@@ -3792,13 +3793,13 @@ class _ActivityTile extends StatelessWidget {
           opacity: active ? 1 : .55,
           child: Container(
             padding: const EdgeInsets.fromLTRB(4, 10, 4, 8),
-            decoration: BoxDecoration(color: _al(Colors.white, .04), borderRadius: BorderRadius.circular(18), border: Border.all(color: VA.line)),
+            decoration: BoxDecoration(color: _al(kW, .04), borderRadius: BorderRadius.circular(18), border: Border.all(color: VA.line)),
             child: Stack(children: [
               if (active)
                 Positioned(
                   top: 0,
                   right: 4,
-                  child: Container(width: 7, height: 7, decoration: const BoxDecoration(color: VA.mint, shape: BoxShape.circle)),
+                  child: Container(width: 7, height: 7, decoration: BoxDecoration(color: VA.mint, shape: BoxShape.circle)),
                 ),
               Column(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                 CatTile(cat: cat, size: 38),
@@ -3807,7 +3808,7 @@ class _ActivityTile extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(color: _al(VA.violet, .16), borderRadius: BorderRadius.circular(99)),
-                  child: Text(points, style: _ts(10.5, c: const Color(0xFFC9B8FF), w: FontWeight.w800)),
+                  child: Text(points, style: _ts(10.5, c: vk(0xFFC9B8FF), w: FontWeight.w800)),
                 ),
               ]),
             ]),
@@ -3828,7 +3829,7 @@ class _Podium extends StatelessWidget {
   Widget build(BuildContext context) => GestureDetector(
         onTap: () => onTap(p),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          if (place == 1) const Icon(Icons.workspace_premium_rounded, color: VA.gold, size: 26),
+          if (place == 1) Icon(Icons.workspace_premium_rounded, color: VA.gold, size: 26),
           CharAvatar(ch: p.ch, name: p.name, size: size, ring: color, grad: p.grad),
           const SizedBox(height: 6),
           Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: _ts(12.5, w: FontWeight.w800)),
@@ -3843,7 +3844,7 @@ class _Podium extends StatelessWidget {
               borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
               gradient: LinearGradient(colors: [color, _al(color, .45)], begin: Alignment.topCenter, end: Alignment.bottomCenter),
             ),
-            child: Text('$place', style: _ts(22, c: const Color(0xFF2B1D05), w: FontWeight.w900)),
+            child: Text('$place', style: _ts(22, c: vk(0xFF2B1D05), w: FontWeight.w900)),
           ),
         ]),
       );
@@ -3863,7 +3864,7 @@ class _RankRow extends StatelessWidget {
       borderRadius: BorderRadius.circular(14),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-        decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: VA.line))),
+        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: VA.line))),
         child: Row(children: [
           SizedBox(width: 44, child: Text(rank, style: _ts(13, c: VA.muted, w: FontWeight.w800))),
           CharAvatar(ch: p.ch, name: p.name, size: 40, ring: lg.accent, grad: p.grad),
@@ -3873,7 +3874,7 @@ class _RankRow extends StatelessWidget {
               Text(p.name, style: _ts(14, w: FontWeight.w800), overflow: TextOverflow.ellipsis),
               Row(children: [
                 Flexible(child: Text('${p.city} · ${lg.name} · ', style: _ts(11.5, c: VA.muted), overflow: TextOverflow.ellipsis)),
-                const Icon(Icons.local_fire_department_rounded, size: 12, color: Color(0xFFFF9466)),
+                Icon(Icons.local_fire_department_rounded, size: 12, color: vk(0xFFFF9466)),
                 Text('${p.streak}', style: _ts(11.5, c: VA.muted)),
               ]),
             ]),
@@ -3922,7 +3923,7 @@ class _PrizeRow extends StatelessWidget {
               height: 22,
               alignment: Alignment.center,
               decoration: BoxDecoration(color: c, shape: BoxShape.circle),
-              child: Text('$n', style: _ts(11, c: const Color(0xFF2B1D05), w: FontWeight.w900)),
+              child: Text('$n', style: _ts(11, c: vk(0xFF2B1D05), w: FontWeight.w900)),
             ),
           ]),
         );
@@ -4031,7 +4032,7 @@ class _PrizeTickerState extends State<_PrizeTicker> with SingleTickerProviderSta
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(Icons.hourglass_bottom_rounded, size: 14, color: VA.gold),
+            Icon(Icons.hourglass_bottom_rounded, size: 14, color: VA.gold),
             const SizedBox(width: 3),
             Text('${widget.daysLeft} ڕۆژ', style: _ts(12, c: VA.gold, w: FontWeight.w800)),
             const SizedBox(width: 8),
@@ -4039,7 +4040,7 @@ class _PrizeTickerState extends State<_PrizeTicker> with SingleTickerProviderSta
               width: 26,
               height: 26,
               decoration: BoxDecoration(color: _al(VA.gold, .18), shape: BoxShape.circle),
-              child: const Icon(Icons.chevron_left_rounded, size: 18, color: VA.gold),
+              child: Icon(Icons.chevron_left_rounded, size: 18, color: VA.gold),
             ),
           ]),
         ),
@@ -4080,14 +4081,14 @@ class _MysteryCardState extends State<_MysteryCard> with SingleTickerProviderSta
     } else if (g != null) {
       lock = _Note(color: VA.violet, icon: Icons.lock_rounded, text: 'پێشبینییەکەت: ${catById(g).name} · ئەنجام لە نیوەشەو ئاشکرا دەبێت');
     } else {
-      lock = const _Note(color: VA.violet, icon: Icons.auto_awesome_rounded, text: 'پێشبینی بکە کامەیە؛ ئەگەر ڕاست بێت +50 خاڵ وەردەگریت');
+      lock = _Note(color: VA.violet, icon: Icons.auto_awesome_rounded, text: 'پێشبینی بکە کامەیە؛ ئەگەر ڕاست بێت +50 خاڵ وەردەگریت');
     }
     return Container(
       margin: const EdgeInsets.only(top: 14),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(26),
-        gradient: const LinearGradient(colors: [Color(0xFF3A2378), Color(0xFF221453)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+        gradient: LinearGradient(colors: [vk(0xFF3A2378), vk(0xFF221453)], begin: Alignment.topLeft, end: Alignment.bottomRight),
         border: Border.all(color: _al(VA.violet, .45)),
         boxShadow: [BoxShadow(color: _al(VA.violet, .25), blurRadius: 30, offset: const Offset(0, 12))],
       ),
@@ -4118,13 +4119,13 @@ class _MysteryCardState extends State<_MysteryCard> with SingleTickerProviderSta
                 Container(
                   width: 104,
                   height: 104,
-                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: _al(Colors.white, .15), style: BorderStyle.solid)),
+                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: _al(kW, .15), style: BorderStyle.solid)),
                 ),
                 ...List.generate(kArenaCats.length, (i) {
                   final a = i / kArenaCats.length * 2 * math.pi + _spin.value * 2 * math.pi;
                   return Transform.translate(
                     offset: Offset(math.cos(a) * 49, math.sin(a) * 49),
-                    child: Icon(kArenaCats[i].icon, size: 14, color: _al(Colors.white, .75)),
+                    child: Icon(kArenaCats[i].icon, size: 14, color: _al(kW, .75)),
                   );
                 }),
                 Container(
@@ -4133,10 +4134,10 @@ class _MysteryCardState extends State<_MysteryCard> with SingleTickerProviderSta
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: const RadialGradient(colors: [Color(0xFFB79CFF), Color(0xFF6A3AE8)]),
+                    gradient: RadialGradient(colors: [vk(0xFFB79CFF), vk(0xFF6A3AE8)]),
                     boxShadow: [BoxShadow(color: _al(VA.violet, .7), blurRadius: 24)],
                   ),
-                  child: rev ? Icon(p.icon, size: 26, color: Colors.white) : Text('?', style: _ts(30, c: Colors.white, w: FontWeight.w900)),
+                  child: rev ? Icon(p.icon, size: 26, color: kW) : Text('?', style: _ts(30, c: kW, w: FontWeight.w900)),
                 ),
               ]),
             ),
@@ -4147,7 +4148,7 @@ class _MysteryCardState extends State<_MysteryCard> with SingleTickerProviderSta
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(color: _al(Colors.black, .2), borderRadius: BorderRadius.circular(16)),
           child: Row(children: [
-            const Icon(Icons.lightbulb_rounded, size: 18, color: VA.gold),
+            Icon(Icons.lightbulb_rounded, size: 18, color: VA.gold),
             const SizedBox(width: 8),
             Expanded(child: Text('ئاماژە: ${kHints[widget.power]}', style: _ts(13.5, w: FontWeight.w700))),
           ]),
@@ -4167,11 +4168,11 @@ class _MysteryCardState extends State<_MysteryCard> with SingleTickerProviderSta
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: win ? _al(VA.mint, .22) : on ? _al(VA.violet, .4) : _al(Colors.white, .06),
+                  color: win ? _al(VA.mint, .22) : on ? _al(VA.violet, .4) : _al(kW, .06),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: win ? VA.mint : on ? VA.violet : _al(Colors.white, .12), width: on || win ? 2 : 1),
+                  border: Border.all(color: win ? VA.mint : on ? VA.violet : _al(kW, .12), width: on || win ? 2 : 1),
                 ),
-                child: Opacity(opacity: disabled && !on && !win ? .5 : 1, child: Icon(c.icon, size: 21, color: Colors.white)),
+                child: Opacity(opacity: disabled && !on && !win ? .5 : 1, child: Icon(c.icon, size: 21, color: kW)),
               ),
             );
           }).toList(),
@@ -4220,7 +4221,7 @@ class VexArenaDemoApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: ThemeData.dark(useMaterial3: true).copyWith(
           scaffoldBackgroundColor: VA.bg,
-          colorScheme: const ColorScheme.dark(primary: VA.cyan, secondary: VA.mint, surface: VA.bg2),
+          colorScheme: ColorScheme.dark(primary: VA.cyan, secondary: VA.mint, surface: VA.bg2),
         ),
         builder: (context, child) => Directionality(textDirection: TextDirection.rtl, child: child!),
         home: VexArenaPage(host: DemoArenaHost()),

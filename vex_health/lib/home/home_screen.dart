@@ -12,6 +12,7 @@ import 'health_ring.dart';
 import 'home_cards.dart';
 import 'sponsor_ad.dart';
 import 'water_card.dart';
+import '../plus/gate.dart';
 
 /// کاتی دوایین هاوکاتکردن لەگەڵ Band
 final ValueNotifier<String> syncTime = ValueNotifier<String>('12:54');
@@ -36,7 +37,7 @@ class HomeScreen extends StatelessWidget {
               Rise(delayMs: 100, child: SponsorCarousel()),
               Rise(delayMs: 150, child: FoodScanCard()),
               Rise(delayMs: 200, child: ActivityCard()),
-              Rise(delayMs: 250, child: FamilyCard()),
+              Rise(delayMs: 250, child: Gated(kind: GateKind.plus, id: 'family', minHeight: 400, compact: false, child: FamilyCard())),
               Rise(delayMs: 300, child: ToolsRow()),
               Rise(delayMs: 350, child: WaterCard()),
             ],
@@ -131,14 +132,14 @@ class _HomeHeaderState extends State<HomeHeader> with SingleTickerProviderStateM
           width: 50,
           height: 50,
           alignment: Alignment.center,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: V.prime,
-            boxShadow: [BoxShadow(color: Color(0x803CF08A), blurRadius: 20, offset: Offset(0, 8), spreadRadius: -10)],
+            boxShadow: [BoxShadow(color: vk(0x803CF08A), blurRadius: 20, offset: Offset(0, 8), spreadRadius: -10)],
           ),
           child: ListenableBuilder(
             listenable: Account.I,
-            builder: (context, _) => Text(Account.I.name.isEmpty ? 'G' : Account.I.initial, style: ku(20, w: FontWeight.w800, c: V.ink, h: 1.2)),
+            builder: (context, _) => VText(Account.I.name.isEmpty ? 'G' : Account.I.initial, style: ku(20, w: FontWeight.w800, c: V.ink, h: 1.2)),
           ),
         ),
         const SizedBox(width: 12),
@@ -148,13 +149,13 @@ class _HomeHeaderState extends State<HomeHeader> with SingleTickerProviderStateM
             children: [
               ListenableBuilder(
                 listenable: Account.I,
-                builder: (context, _) => Text(
+                builder: (context, _) => VText(
                     'سڵاو، ${Account.I.firstName.isEmpty ? 'ghazi' : Account.I.firstName} 👋',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: ku(19, w: FontWeight.w800, h: 1.4)),
               ),
-              Text(kurdishDate(), style: ku(12, c: V.mu)),
+              VText(kurdishDate(), style: ku(12, c: V.mu)),
             ],
           ),
         ),
@@ -192,13 +193,13 @@ class BandStatus extends StatelessWidget {
           Container(
             width: 8,
             height: 8,
-            decoration: const BoxDecoration(shape: BoxShape.circle, color: BandColors.dot),
+            decoration: BoxDecoration(shape: BoxShape.circle, color: BandColors.dot),
           ),
           const SizedBox(width: 8),
-          Text('Band پەیوەست نییە', style: ku(12, w: FontWeight.w700, c: BandColors.dot)),
+          VText('Band پەیوەست نییە', style: ku(12, w: FontWeight.w700, c: BandColors.dot)),
           const SizedBox(width: 6),
           Expanded(
-            child: Text.rich(
+            child: VText.rich(
               TextSpan(children: [
                 if (BandState.I.lastSync.isEmpty)
                   const TextSpan(text: '· هێشتا هاوکات نەکراوە')
@@ -226,14 +227,14 @@ class BandStatus extends StatelessWidget {
       decoration: box(r: 16, color: V.surf),
       child: Row(
         children: [
-          const BlinkDot(size: 8),
+          BlinkDot(size: 8),
           const SizedBox(width: 6),
-          Text('Band پەیوەستە', style: ku(12, w: FontWeight.w700, c: V.mint)),
+          VText('Band پەیوەستە', style: ku(12, w: FontWeight.w700, c: V.mint)),
           const SizedBox(width: 6),
           Expanded(
             child: ValueListenableBuilder<String>(
               valueListenable: syncTime,
-              builder: (context, t, _) => Text.rich(
+              builder: (context, t, _) => VText.rich(
                 TextSpan(children: [
                   const TextSpan(text: '· نوێکرایەوە '),
                   TextSpan(text: t, style: nu(12, w: FontWeight.w700, c: V.mu)),
@@ -246,7 +247,7 @@ class BandStatus extends StatelessWidget {
           ),
           const _Battery(level: 0.25),
           const SizedBox(width: 5),
-          Text('25%', textDirection: TextDirection.ltr, style: nu(12, w: FontWeight.w700, c: V.mu)),
+          VText('25%', textDirection: TextDirection.ltr, style: nu(12, w: FontWeight.w700, c: V.mu)),
         ],
       ),
     );

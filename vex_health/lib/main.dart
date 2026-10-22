@@ -19,29 +19,31 @@ import 'onboarding/profile_page.dart';
 import 'onboarding/reg_lang_state.dart';
 import 'onboarding/reg_flow.dart';
 import 'scan/scan_page.dart';
+import 'plus/gate.dart';
 import 'plus/plus_state.dart';
+import 'band/ble/vex_ble.dart';
+import 'vitalage/vital_age_engine.dart';
 import 'splash/splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
-    statusBarBrightness: Brightness.dark,
-    systemNavigationBarColor: V.bg,
-    systemNavigationBarIconBrightness: Brightness.light,
-  ));
+  // ڕەنگ: ڕووناک / تاریک / خۆکار (کەشی سیستەم) — پێش هەموو شتێک
+  await VexTheme.I.init();
+  VexTheme.I.hold(true); // سپلاش هەمیشە تاریکە؛ لە کۆتاییدا ئازاد دەکرێت
   // هەژمار پێش هەموو شتێک بار دەکرێت بۆ ئەوەی بزانین بەشی سەرەتا پیشان بدرێت یان نا
   await Account.I.load();
   await Store.I.load();
   await FamilyStore.I.load();
   await BandState.I.load(); // دۆخی پەیوەستبوونی Band
+  await VitalAgeEngine.I.init(); // تەمەنی ژیانی (٢١ ڕۆژ)
+  await VexBand.I.init(); // BLE ی ڕاستەقینەی Band (پەیوەستبوونەوەی خۆکار)
   await FoodDb.I.load(); // لیستی 500 خواردنەکە
   await BandAlerts.I.load(); // کاتژمێر، کاتی وەرزش و نوێژ
   await PlusState.I.load(); // VEX Plus
   await arenaStore.load(); // VEX Arena
   await LangState.I.load(); // زمانی هەڵبژێردراوی بەشی سەرەتا
   await StepNotify.I.load(); // ئاگادارکردنەوەی هەنگاو (ئەگەر کرابێتەوە)
+  Account.I.startAutoStash(); // پاشەکەوتکردنی خۆکاری هەژمار (بۆ گەڕانەوەی داتا)
   runApp(const MyApp());
 }
 
@@ -50,24 +52,34 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final base = ThemeData(brightness: Brightness.dark, useMaterial3: true);
-    return MaterialApp(
-      title: 'VEX Health',
-      debugShowCheckedModeBanner: false,
-      navigatorKey: navKey,
-      theme: base.copyWith(
-        scaffoldBackgroundColor: V.bg,
-        colorScheme: ColorScheme.fromSeed(seedColor: V.cy, brightness: Brightness.dark),
-        textTheme: GoogleFonts.notoSansArabicTextTheme(base.textTheme),
-        splashFactory: NoSplash.splashFactory,
-        highlightColor: Colors.transparent,
-      ),
-      // هەموو ئەپەکە ڕاست بۆ چەپ (کوردی)
-      builder: (context, child) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: child ?? const SizedBox.shrink(),
-      ),
-      home: const Shell(),
+    // زمان (کوردی / English) گۆڕا ← تێم، فۆنت و ئاراستە نوێ دەبنەوە
+    return ListenableBuilder(
+      listenable: Listenable.merge([LangState.I, VexTheme.I]),
+      builder: (context, _) {
+        final en = kIsLtr;
+        final base = VexTheme.I.themeData(en: en);
+        return MaterialApp(
+          title: 'VEX Health',
+          debugShowCheckedModeBanner: false,
+          navigatorKey: navKey,
+          locale: kIsTr ? const Locale('tr') : (en ? const Locale('en') : null),
+          theme: base.copyWith(
+            textTheme: en ? GoogleFonts.soraTextTheme(base.textTheme) : GoogleFonts.notoSansArabicTextTheme(base.textTheme),
+          ),
+          // کوردی = ڕاست بۆ چەپ، English = چەپ بۆ ڕاست
+          builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
+            value: VexTheme.I.chromeStyle,
+            child: LangScope(
+              code: LangState.I.code,
+              child: Directionality(
+                textDirection: kDir,
+                child: child ?? const SizedBox.shrink(),
+              ),
+            ),
+          ),
+          home: const Shell(),
+        );
+      },
     );
   }
 }
@@ -92,12 +104,19 @@ class _ShellState extends State<Shell> {
   void initState() {
     super.initState();
     Account.I.addListener(_onAccount);
+    LangState.I.addListener(_onLang);
   }
 
   @override
   void dispose() {
     Account.I.removeListener(_onAccount);
+    LangState.I.removeListener(_onLang);
     super.dispose();
+  }
+
+  /// زمان گۆڕا ← بەشی ژێرەوە (سەرەکی، تەندروستی، پرۆفایل) لە سەرەتاوە دروست دەکرێتەوە
+  void _onLang() {
+    if (mounted) setState(() {});
   }
 
   /// دوای چوونە دەرەوە بەشی سەرەتا دەگەڕێتەوە
@@ -125,7 +144,9 @@ class _ShellState extends State<Shell> {
           Positioned.fill(
             child: TickerMode(
               enabled: !_reg || _revealing,
-              child: Stack(
+              child: KeyedSubtree(
+                key: ValueKey<String>('lang-${LangState.I.code}'),
+                child: Stack(
                 children: [
                 const Positioned.fill(child: Aurora()),
                 Positioned.fill(
@@ -150,7 +171,14 @@ class _ShellState extends State<Shell> {
                             ? const HealthScreen(key: ValueKey<int>(1))
                             : tab == 4
                                 ? ProfilePage(key: const ValueKey<int>(4), onTab: (i) => setState(() => tab = i))
-                                : SoonPage(key: ValueKey<int>(tab), title: _names[tab]),
+                                : GatePage(
+                                    key: ValueKey<int>(tab),
+                                    kind: GateKind.plus,
+                                    closable: false,
+                                    id: tab == 2 ? 'ai' : 'workout',
+                                    onAlt: tab == 3 ? () => toast('ئەم بەشە لە ئەپی ڕاستەقینەدا دەکرێتەوە') : null,
+                                    child: SoonPage(title: _names[tab]),
+                                  ),
                   ),
                 ),
                 Positioned(
@@ -165,6 +193,7 @@ class _ShellState extends State<Shell> {
                   ),
                 ),
                 ],
+              ),
               ),
             ),
           ),
@@ -192,6 +221,7 @@ class _ShellState extends State<Shell> {
           if (_splash)
             Positioned.fill(
               child: VexSplash(onDone: () {
+                VexTheme.I.hold(false); // سپلاش تەواو بوو ← ڕەنگی ڕاستەقینە (ڕووناک/تاریک/خۆکار)
                 if (mounted) setState(() => _splash = false);
                 // Android: ئەگەر لە کاتی وێنەگرتندا ئەپەکە داخرابوو، وێنەکە دەگەڕێتەوە بۆ سکان
                 if (!Account.I.need) recoverLostScan();
@@ -216,11 +246,11 @@ class SoonPage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('🚧', style: TextStyle(fontSize: 48)),
+            const VText('🚧', style: TextStyle(fontSize: 48)),
             const SizedBox(height: 12),
-            Text(title, style: ku(20, w: FontWeight.w800)),
+            VText(title, style: ku(20, w: FontWeight.w800)),
             const SizedBox(height: 6),
-            Text(
+            VText(
               'ئەم بەشە لە هەنگاوی داهاتوودا بۆ Flutter دەگوازرێتەوە',
               textAlign: TextAlign.center,
               style: ku(13, c: V.mu, h: 1.8),
@@ -256,7 +286,7 @@ class VNav extends StatelessWidget {
           children: [
             svgIcon(icon, on ? '#8ff3f9' : '#8cb7bf', size: 22),
             const SizedBox(height: 4),
-            Text(label, style: ku(11, w: FontWeight.w700, c: on ? V.c2 : V.mu, h: 1.2)),
+            VText(label, style: ku(11, w: FontWeight.w700, c: on ? V.c2 : V.mu, h: 1.2)),
           ],
         ),
       ),
@@ -300,10 +330,10 @@ class VNav extends StatelessWidget {
                   height: 62,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: const LinearGradient(
+                    gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [Color(0xFF0B3A52), Color(0xFF17104A)],
+                      colors: [vk(0xFF0B3A52), vk(0xFF17104A)],
                     ),
                     border: Border.all(color: V.cy, width: 2),
                     boxShadow: [BoxShadow(color: op(V.cy, index == 2 ? 0.6 : 0.35), blurRadius: 24)],
@@ -312,7 +342,7 @@ class VNav extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       svgIcon(Ico.spark, '#8ff3f9', size: 20, fill: true),
-                      Text('AI', style: nu(12, c: Colors.white, h: 1.2)),
+                      VText('AI', style: nu(12, c: kW, h: 1.2)),
                     ],
                   ),
                 ),

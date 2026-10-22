@@ -9,6 +9,12 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart';
 
+import '../core/vx_ar.dart' show arFood;
+import '../core/vx_fa.dart' show faFood;
+import '../core/vx_tr.dart' show trFood;
+import '../core/vx_bd.dart' show bdFood;
+import '../core/vx_en.dart';
+
 class FoodUnit {
   const FoodUnit(this.name, this.g);
   final String name;
@@ -59,6 +65,9 @@ class FoodEntry {
   final List<FoodUnit> units;
 
   FoodUnit get unit0 => units.first;
+
+  /// ناوی پیشاندان: English کاتێک زمان ئینگلیزی بێت، ئەگەرنا کوردی
+  String get label => kIsEn && en.trim().isNotEmpty ? en.trim() : (kIsBd ? bdFood(ku) : (kIsAr ? arFood(ku) : (kIsFa ? faFood(ku) : (kIsTr ? trFood(ku) : ku))));
 
   /// کلیلەکانی گەڕان (ئاسایی کراو)
   late final List<String> keys = _buildKeys();

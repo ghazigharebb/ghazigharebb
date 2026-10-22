@@ -20,6 +20,7 @@ import '../alerts/band_alerts.dart';
 import '../core/icons.dart';
 import '../core/theme.dart';
 import 'band_state.dart';
+import 'ble/vex_ble.dart';
 import 'band_widgets.dart';
 
 // ============================================================
@@ -159,6 +160,25 @@ class _DevicePageState extends State<DevicePage> with SingleTickerProviderStateM
 
   void _sync() {
     if (_syncing || !BandState.I.connected) return;
+    if (VexBand.I.linked) {
+      setState(() {
+        _syncing = true;
+        _syncP = 0;
+      });
+      VexBand.I.syncAll(onProgress: (v) {
+        if (mounted) setState(() => _syncP = v);
+      }).whenComplete(() {
+        BandState.I.lastSync = _hm(DateTime.now());
+        if (mounted) {
+          setState(() {
+            _syncing = false;
+            _syncP = 0;
+          });
+          toast('هەموو داتاکان هاوکات کران ✓');
+        }
+      });
+      return;
+    }
     setState(() {
       _syncing = true;
       _syncP = 0;
@@ -188,6 +208,7 @@ class _DevicePageState extends State<DevicePage> with SingleTickerProviderStateM
     toast('Band ـەکەت دەلەرێتەوە…');
     HapticFeedback.heavyImpact();
     BandLink.vibrate();
+    if (VexBand.I.linked) VexBand.I.find().catchError((_) {});
     await Future<void>.delayed(const Duration(milliseconds: 1100));
     if (mounted) setState(() => _buzz = false);
   }
@@ -273,7 +294,7 @@ class _DevicePageState extends State<DevicePage> with SingleTickerProviderStateM
     return Row(
       children: [
         ib(Icons.chevron_right_rounded, () => Navigator.of(context).maybePop(), 'گەڕانەوە'),
-        Expanded(child: Center(child: Text('ئامێرەکانم', style: ku(18, w: FontWeight.w800)))),
+        Expanded(child: Center(child: VText('ئامێرەکانم', style: ku(18, w: FontWeight.w800)))),
         ib(Icons.edit_outlined, _rename, 'گۆڕینی ناو'),
       ],
     );
@@ -337,7 +358,7 @@ class _DevicePageState extends State<DevicePage> with SingleTickerProviderStateM
                             fit: BoxFit.contain,
                             gaplessPlayback: true,
                             filterQuality: FilterQuality.medium,
-                            errorBuilder: (c, e, s) => const Center(child: Text('VEX', style: TextStyle(fontSize: 40))),
+                            errorBuilder: (c, e, s) => const Center(child: VText('VEX', style: TextStyle(fontSize: 40))),
                           ),
                         ),
                       ),
@@ -373,8 +394,8 @@ class _DevicePageState extends State<DevicePage> with SingleTickerProviderStateM
           ),
         ),
         const SizedBox(height: 6),
-        Text(D.name, style: ku(24, w: FontWeight.w800, h: 1.3)),
-        Text.rich(
+        VText(D.name, style: ku(24, w: FontWeight.w800, h: 1.3)),
+        VText.rich(
           TextSpan(children: [
             const TextSpan(text: 'مۆدێلی '),
             TextSpan(text: 'V8', style: nu(12, w: FontWeight.w700, c: V.mu)),
@@ -394,7 +415,7 @@ class _DevicePageState extends State<DevicePage> with SingleTickerProviderStateM
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(pill, style: ku(15, w: FontWeight.w800, c: col, h: 1.3)),
+                VText(pill, style: ku(15, w: FontWeight.w800, c: col, h: 1.3)),
                 const SizedBox(width: 8),
                 Container(
                   width: 10,
@@ -430,7 +451,7 @@ class _DevicePageState extends State<DevicePage> with SingleTickerProviderStateM
         t = BandState.I.lastSync.isEmpty ? 'هێشتا هاوکات نەکراوە' : 'دوایین هاوکاتکردن: ${BandState.I.lastSync}';
         break;
     }
-    return Center(child: Text(t, textAlign: TextAlign.center, textDirection: TextDirection.rtl, style: ku(13, c: V.mu, h: 1.7)));
+    return Center(child: VText(t, textAlign: TextAlign.center, textDirection: TextDirection.rtl, style: ku(13, c: V.mu, h: 1.7)));
   }
 
   Widget _tips() {
@@ -445,15 +466,15 @@ class _DevicePageState extends State<DevicePage> with SingleTickerProviderStateM
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('بۆچی پەیوەندی نییە؟', style: ku(13, w: FontWeight.w800, h: 1.8)),
+          VText('بۆچی پەیوەندی نییە؟', style: ku(13, w: FontWeight.w800, h: 1.8)),
           for (final t in const ['Bluetooth ـی مۆبایلەکەت هەڵکراوە؟', 'Band لە 10 مەتر نزیکترە؟', 'باتری Band تەواو نەبووە؟'])
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: Row(
                 children: [
-                  Container(width: 5, height: 5, decoration: const BoxDecoration(shape: BoxShape.circle, color: V.coral)),
+                  Container(width: 5, height: 5, decoration: BoxDecoration(shape: BoxShape.circle, color: V.coral)),
                   const SizedBox(width: 8),
-                  Expanded(child: Text(t, style: ku(13, h: 1.8))),
+                  Expanded(child: VText(t, style: ku(13, h: 1.8))),
                 ],
               ),
             ),
@@ -482,7 +503,7 @@ class _DevicePageState extends State<DevicePage> with SingleTickerProviderStateM
               children: [
                 Icon(icon, size: 18, color: fg),
                 const SizedBox(width: 8),
-                Text(label, style: ku(14, w: FontWeight.w800, c: fg, h: 1.3)),
+                VText(label, style: ku(14, w: FontWeight.w800, c: fg, h: 1.3)),
               ],
             ),
           ),
@@ -538,15 +559,15 @@ class _DevicePageState extends State<DevicePage> with SingleTickerProviderStateM
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('${D.battery}%', textDirection: TextDirection.ltr, style: nu(24, h: 1.2)),
-                    Text(low ? 'باتری کەمە، بیخەرە سەر شەحن' : 'نزیکەی $days ڕۆژ ماوە', style: ku(12, c: V.mu, h: 1.5)),
+                    VText('${D.battery}%', textDirection: TextDirection.ltr, style: nu(24, h: 1.2)),
+                    VText(low ? 'باتری کەمە، بیخەرە سەر شەحن' : 'نزیکەی $days ڕۆژ ماوە', style: ku(12, c: V.mu, h: 1.5)),
                   ],
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(color: op(bc, 0.14), borderRadius: BorderRadius.circular(99)),
-                child: Text(D.battery <= 20 ? 'کەم' : D.battery <= 40 ? 'مامناوەند' : 'باش', style: ku(12, w: FontWeight.w800, c: bc, h: 1.3)),
+                child: VText(D.battery <= 20 ? 'کەم' : D.battery <= 40 ? 'مامناوەند' : 'باش', style: ku(12, w: FontWeight.w800, c: bc, h: 1.3)),
               ),
             ],
           ),
@@ -577,7 +598,7 @@ class _DevicePageState extends State<DevicePage> with SingleTickerProviderStateM
             padding: const EdgeInsets.symmetric(vertical: 13),
             alignment: Alignment.center,
             decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), border: Border.all(color: op(V.coral, 0.35))),
-            child: Text('لابردنی ئامێر', style: ku(14, w: FontWeight.w800, c: V.coral, h: 1.3)),
+            child: VText('لابردنی ئامێر', style: ku(14, w: FontWeight.w800, c: V.coral, h: 1.3)),
           ),
         ),
       ],
@@ -593,7 +614,7 @@ class _DevicePageState extends State<DevicePage> with SingleTickerProviderStateM
 
   Widget _label(String t) => Padding(
         padding: const EdgeInsets.fromLTRB(4, 20, 4, 0),
-        child: Text(t, style: ku(12, w: FontWeight.w800, c: V.mu)),
+        child: VText(t, style: ku(12, w: FontWeight.w800, c: V.mu)),
       );
 
   Widget _row(String icon, Color color, String title, String? sub,
@@ -601,7 +622,7 @@ class _DevicePageState extends State<DevicePage> with SingleTickerProviderStateM
     final hex = '#${(color.value & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}';
     final body = Container(
       padding: const EdgeInsets.symmetric(vertical: 13),
-      decoration: BoxDecoration(border: last ? null : const Border(bottom: BorderSide(color: V.line))),
+      decoration: BoxDecoration(border: last ? null : Border(bottom: BorderSide(color: V.line))),
       child: Row(
         children: [
           Container(
@@ -616,13 +637,13 @@ class _DevicePageState extends State<DevicePage> with SingleTickerProviderStateM
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: ku(14, w: FontWeight.w700, h: 1.4)),
-                if (sub != null) Text(sub, style: ku(12, c: V.mu, h: 1.4)),
+                VText(title, style: ku(14, w: FontWeight.w700, h: 1.4)),
+                if (sub != null) VText(sub, style: ku(12, c: V.mu, h: 1.4)),
               ],
             ),
           ),
           if (value != null)
-            Text(value, textDirection: valueLtr ? TextDirection.ltr : null, style: valueLtr ? nu(12.5, w: FontWeight.w700, c: V.mu) : ku(13, w: FontWeight.w700, c: V.mu)),
+            VText(value, textDirection: valueLtr ? TextDirection.ltr : null, style: valueLtr ? nu(12.5, w: FontWeight.w700, c: V.mu) : ku(13, w: FontWeight.w700, c: V.mu)),
           if (sw != null)
             AnimatedContainer(
               duration: const Duration(milliseconds: 220),
@@ -636,12 +657,12 @@ class _DevicePageState extends State<DevicePage> with SingleTickerProviderStateM
                 child: Container(
                   width: 22,
                   height: 22,
-                  decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
+                  decoration: BoxDecoration(shape: BoxShape.circle, color: kW),
                 ),
               ),
             )
           else if (onTap != null && value == null || (onTap != null && value != null && !valueLtr))
-            Padding(padding: const EdgeInsetsDirectional.only(start: 6), child: Text('‹', style: ku(18, c: V.mu))),
+            Padding(padding: const EdgeInsetsDirectional.only(start: 6), child: VText('‹', style: ku(18, c: V.mu))),
         ],
       ),
     );
@@ -654,7 +675,7 @@ class _DevicePageState extends State<DevicePage> with SingleTickerProviderStateM
       builder: (ctx) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(title, textAlign: TextAlign.center, style: ku(18, w: FontWeight.w800)),
+          VText(title, textAlign: TextAlign.center, style: ku(18, w: FontWeight.w800)),
           const SizedBox(height: 14),
           Wrap(
             alignment: WrapAlignment.center,
@@ -674,7 +695,7 @@ class _DevicePageState extends State<DevicePage> with SingleTickerProviderStateM
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(color: o == cur ? V.mint : V.line),
                     ),
-                    child: Text(o, style: ku(13, w: FontWeight.w700, c: o == cur ? V.mint : V.tx, h: 1.3)),
+                    child: VText(o, style: ku(13, w: FontWeight.w700, c: o == cur ? V.mint : V.tx, h: 1.3)),
                   ),
                 ),
             ],
@@ -690,7 +711,7 @@ class _DevicePageState extends State<DevicePage> with SingleTickerProviderStateM
       builder: (ctx) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('ناوی Band', textAlign: TextAlign.center, style: ku(18, w: FontWeight.w800)),
+          VText('ناوی Band', textAlign: TextAlign.center, style: ku(18, w: FontWeight.w800)),
           const SizedBox(height: 14),
           TextField(
             controller: ctl,
@@ -702,9 +723,9 @@ class _DevicePageState extends State<DevicePage> with SingleTickerProviderStateM
               filled: true,
               fillColor: V.surf2,
               contentPadding: const EdgeInsets.all(14),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: V.line2)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: V.line2)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: V.cy)),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: V.line2)),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: V.line2)),
+              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: V.cy)),
             ),
           ),
           const SizedBox(height: 14),
@@ -735,9 +756,9 @@ class _DevicePageState extends State<DevicePage> with SingleTickerProviderStateM
       builder: (ctx) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('لابردنی ${D.name}؟', textAlign: TextAlign.center, style: ku(18, w: FontWeight.w800)),
+          VText('لابردنی ${D.name}؟', textAlign: TextAlign.center, style: ku(18, w: FontWeight.w800)),
           const SizedBox(height: 8),
-          Text('داتا کۆنەکانت دەمێننەوە، بەڵام Band هاوکات نابێت تا دووبارە پەیوەندی بکەیتەوە.',
+          VText('داتا کۆنەکانت دەمێننەوە، بەڵام Band هاوکات نابێت تا دووبارە پەیوەندی بکەیتەوە.',
               textAlign: TextAlign.center, style: ku(13, c: V.mu, h: 1.8)),
           const SizedBox(height: 16),
           Row(children: [
@@ -754,7 +775,7 @@ class _DevicePageState extends State<DevicePage> with SingleTickerProviderStateM
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(color: V.coral, borderRadius: BorderRadius.circular(15)),
-                  child: Text('بەڵێ، لایببە', style: ku(14, w: FontWeight.w800, c: Colors.white, h: 1.3)),
+                  child: VText('بەڵێ، لایببە', style: ku(14, w: FontWeight.w800, c: Colors.white, h: 1.3)),
                 ),
               ),
             ),
@@ -771,13 +792,13 @@ class _DevicePageState extends State<DevicePage> with SingleTickerProviderStateM
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(borderRadius: BorderRadius.circular(99), border: Border.all(color: V.line2)),
-            child: Text(t, style: ku(11, w: FontWeight.w700, c: V.mu, h: 1.3)),
+            child: VText(t, style: ku(11, w: FontWeight.w700, c: V.mu, h: 1.3)),
           ),
         );
     return Padding(
       padding: const EdgeInsets.only(top: 22),
       child: Column(children: [
-        Text('دیمۆ: تاقیکردنەوەی دۆخەکان', style: ku(11, c: V.mu)),
+        VText('دیمۆ: تاقیکردنەوەی دۆخەکان', style: ku(11, c: V.mu)),
         const SizedBox(height: 6),
         Wrap(spacing: 6, runSpacing: 6, alignment: WrapAlignment.center, children: [
           chip('پەیوەندیکراو', () {

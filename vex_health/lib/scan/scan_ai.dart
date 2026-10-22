@@ -24,6 +24,7 @@ import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
+import '../core/vx_en.dart';
 import '../food/food_db.dart';
 import 'scan_model.dart';
 
@@ -92,17 +93,75 @@ class ScanFail implements Exception {
   String toString() => 'ScanFail($code)';
 }
 
-const String kSchema =
+const String _kSchemaKu =
     '{"is_food":true,"name":"meal name","emoji":"🍛","confidence":85,"items":[{"name":"…","inside":"up to 4 main ingredients, or empty","count":1,"unit":"قاپ","grams":250,"kcal":300,"protein_g":0,"carbs_g":0,"fat_g":0,"x":40,"y":55}],"fiber_g":0,"sugar_g":0,"sodium_mg":0,"digest_h_min":2,"digest_h_max":3,"meal_type":"meal","score":70,"verdict":"good","summary":"one short sentence"}';
 
-const String kRules =
+
+const String _kSchemaEn =
+    '{"is_food":true,"name":"meal name","emoji":"🍛","confidence":85,"items":[{"name":"…","inside":"up to 4 main ingredients, or empty","count":1,"unit":"plate","grams":250,"kcal":300,"protein_g":0,"carbs_g":0,"fat_g":0,"x":40,"y":55}],"fiber_g":0,"sugar_g":0,"sodium_mg":0,"digest_h_min":2,"digest_h_max":3,"meal_type":"meal","score":70,"verdict":"good","summary":"one short sentence"}';
+
+
+const String _kRulesKu =
     'Write every human-readable string in Central Kurdish (Sorani, Arabic script). Food names short (1-3 words), the common Kurdish name (e.g. برنج، شلەی فاسۆلیا، کەباب، نان، دۆڵمە، زەڵاتە، مریشک، پیتزا).\n'
     'items = each separate food or drink the way a person counts it, NOT raw ingredients (a pizza is ONE item counted in slices, a plate of rice is ONE item, bread is ONE item counted in loaves). count + unit = how much of it, in a natural Kurdish unit (پارچە، قاپ، دانە، پەرداخ، کەوچک، قوتوو، سیخ، لەفە، کاسە). grams, kcal, protein_g, carbs_g, fat_g of an item are for its WHOLE count. inside = up to 4 main ingredients in Kurdish, so the person can spot what to correct.\n'
     'fiber_g, sugar_g, sodium_mg = totals for the whole meal. digest_h_min / digest_h_max = realistic hours for the stomach to digest this meal (water 0.2-0.4, juice or soda 0.5-1, fruit 0.5-1, a rice or bread meal 2-3, meat, fried or very fatty meals 3-5).\n'
     'score = 0-100, how good this meal is for this person right now (nutrition quality, amount versus the calories left, time of day). verdict: good (score>=70), ok (45-69), bad (<45).\n'
     'summary = one warm, encouraging sentence (max 18 words). Never judgmental, never scary.\n'
     'meal_type = "snack" for a light snack, fruit, sweet, drink or small bite that is not a full meal (usually under about 250 kcal), otherwise "meal".\n'
-    'At most 6 items. Reply with ONLY this JSON (numbers as numbers):\n$kSchema';
+    'At most 6 items. Reply with ONLY this JSON (numbers as numbers):\n$_kSchemaKu';
+
+
+const String _kRulesEn =
+    'Write every human-readable string in clear, natural English. Food names short (1-3 words), the common English name (e.g. rice, bean stew, kebab, bread, dolma, salad, chicken, pizza).\n'
+    'items = each separate food or drink the way a person counts it, NOT raw ingredients (a pizza is ONE item counted in slices, a plate of rice is ONE item, bread is ONE item counted in loaves). count + unit = how much of it, in a natural English unit (slice, plate, piece, glass, tablespoon, can, skewer, flatbread, bowl). grams, kcal, protein_g, carbs_g, fat_g of an item are for its WHOLE count. inside = up to 4 main ingredients in English, so the person can spot what to correct.\n'
+    'fiber_g, sugar_g, sodium_mg = totals for the whole meal. digest_h_min / digest_h_max = realistic hours for the stomach to digest this meal (water 0.2-0.4, juice or soda 0.5-1, fruit 0.5-1, a rice or bread meal 2-3, meat, fried or very fatty meals 3-5).\n'
+    'score = 0-100, how good this meal is for this person right now (nutrition quality, amount versus the calories left, time of day). verdict: good (score>=70), ok (45-69), bad (<45).\n'
+    'summary = one warm, encouraging sentence (max 18 words). Never judgmental, never scary.\n'
+    'meal_type = "snack" for a light snack, fruit, sweet, drink or small bite that is not a full meal (usually under about 250 kcal), otherwise "meal".\n'
+    'At most 6 items. Reply with ONLY this JSON (numbers as numbers):\n$_kSchemaEn';
+
+/// ئینگلیزی یان کوردی بەپێی زمانی ئەپ
+String get kSchema => kIsEn
+    ? _kSchemaEn
+    : (kIsAr
+        ? _kSchemaKu.replaceFirst('"unit":"قاپ"', '"unit":"صحن"')
+        : (kIsFa
+            ? _kSchemaKu.replaceFirst('"unit":"قاپ"', '"unit":"بشقاب"')
+            : (kIsTr ? _kSchemaKu.replaceFirst('"unit":"قاپ"', '"unit":"tabak"') : _kSchemaKu)));
+
+String get kRules => kIsEn
+    ? _kRulesEn
+    : kIsAr
+        ? _kRulesKu
+            .replaceFirst('Central Kurdish (Sorani, Arabic script)', 'clear Modern Standard Arabic (Arabic script)')
+            .replaceFirst('the common Kurdish name (e.g. برنج، شلەی فاسۆلیا، کەباب، نان، دۆڵمە، زەڵاتە، مریشک، پیتزا)',
+                'the common Arabic name (e.g. أرز، مرق الفاصولياء، كباب، خبز، دولمة، سلطة، دجاج، بيتزا)')
+            .replaceFirst('natural Kurdish unit (پارچە، قاپ، دانە، پەرداخ، کەوچک، قوتوو، سیخ، لەفە، کاسە)',
+                'natural Arabic unit (قطعة، صحن، حبة، كوب، ملعقة، علبة، سيخ، لفة، وعاء)')
+            .replaceFirst('main ingredients in Kurdish', 'main ingredients in Arabic')
+            .replaceFirst('"unit":"قاپ"', '"unit":"صحن"')
+        : kIsFa
+            ? _kRulesKu
+                .replaceFirst('Central Kurdish (Sorani, Arabic script)', 'clear standard Persian (Farsi, Persian script)')
+                .replaceFirst('the common Kurdish name (e.g. برنج، شلەی فاسۆلیا، کەباب، نان، دۆڵمە، زەڵاتە، مریشک، پیتزا)',
+                    'the common Persian name (e.g. برنج، خورش لوبیا، کباب، نان، دلمه، سالاد، مرغ، پیتزا)')
+                .replaceFirst('natural Kurdish unit (پارچە، قاپ، دانە، پەرداخ، کەوچک، قوتوو، سیخ، لەفە، کاسە)',
+                    'natural Persian unit (تکه، بشقاب، عدد، لیوان، قاشق، قوطی، سیخ، رپ، کاسه)')
+                .replaceFirst('main ingredients in Kurdish', 'main ingredients in Persian')
+                .replaceFirst('"unit":"قاپ"', '"unit":"بشقاب"')
+        : kIsTr
+            ? _kRulesKu
+                .replaceFirst('Central Kurdish (Sorani, Arabic script)', 'clear standard Turkish (Latin script)')
+                .replaceFirst('the common Kurdish name (e.g. برنج، شلەی فاسۆلیا، کەباب، نان، دۆڵمە، زەڵاتە، مریشک، پیتزا)',
+                    'the common Turkish name (e.g. pilav, fasulye yahnisi, kebap, ekmek, dolma, salata, tavuk, pizza)')
+                .replaceFirst('natural Kurdish unit (پارچە، قاپ، دانە، پەرداخ، کەوچک، قوتوو، سیخ، لەفە، کاسە)',
+                    'natural Turkish unit (dilim, tabak, adet, bardak, kaşık, kutu, şiş, dürüm, kase)')
+                .replaceFirst('main ingredients in Kurdish', 'main ingredients in Turkish')
+                .replaceFirst('"unit":"قاپ"', '"unit":"tabak"')
+        : kIsBd
+            ? _kRulesKu.replaceFirst('Central Kurdish (Sorani, Arabic script)',
+                'Kurdish Badini (Kurmanji dialect written in Arabic script, NOT Sorani; use Badini words such as ئاڤ, خوارن, نان, برنج, هەنگاڤ, نڤستن)')
+            : _kRulesKu;
 
 String buildScanPrompt({String? text, required ScanCtx ctx}) {
   final t = text?.trim() ?? '';
@@ -122,7 +181,7 @@ String buildRecalcPrompt(ScanResult r, String note, ScanCtx ctx) {
   final n = note.length > 300 ? note.substring(0, 300) : note;
   return 'You are VEX AI, an expert dietitian inside a Kurdish health app. You analysed a meal; the person checked it and wrote a correction.\n'
       'Your previous analysis (counts already set by the person): ${jsonEncode(r.toPrevJson())}\n'
-      'The person\'s note, in Kurdish: "$n"\n'
+      'The person\'s note, in ${kIsEn ? 'English' : (kIsBd ? 'Kurdish (Badini)' : (kIsAr ? 'Arabic' : (kIsFa ? 'Persian' : (kIsTr ? 'Turkish' : 'Kurdish'))))}: "$n"\n'
       'Apply the note precisely to the nutrition: an ingredient left out removes its calories and macros, less oil lowers fat and kcal, '
       'no sugar lowers sugar and carbs, a different size rescales. Keep every item\'s name, count and unit exactly as given unless the note clearly changes them; '
       'add an item only if the note mentions extra food or drink. Update inside, score, verdict and digestion to match. '

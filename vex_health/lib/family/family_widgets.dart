@@ -101,7 +101,7 @@ class _BurstBitState extends State<_BurstBit> with SingleTickerProviderStateMixi
           },
           child: Material(
             type: MaterialType.transparency,
-            child: Text(widget.emoji, style: const TextStyle(fontSize: 28)),
+            child: VText(widget.emoji, style: const TextStyle(fontSize: 28)),
           ),
         ),
       ),
@@ -178,7 +178,7 @@ class MemberAvatar extends StatelessWidget {
                   colors: [m.grad0, m.grad1],
                 ),
               ),
-              child: Text(m.e, style: TextStyle(fontSize: 24 * s, height: 1.1)),
+              child: VText(m.e, style: TextStyle(fontSize: 24 * s, height: 1.1)),
             ),
           ),
           Positioned(
@@ -215,15 +215,15 @@ class PendingAvatar extends StatelessWidget {
               bottom: 7 * s,
               child: Container(
                 alignment: Alignment.center,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Color(0xFF445566), Color(0xFF223344)],
+                    colors: [vk(0xFF445566), vk(0xFF223344)],
                   ),
                 ),
-                child: Text('⏳', style: TextStyle(fontSize: 24 * s, height: 1.1)),
+                child: VText('⏳', style: TextStyle(fontSize: 24 * s, height: 1.1)),
               ),
             ),
             Positioned(left: 2 * s, bottom: 0, child: StatusDot(color: FK.y, size: 16 * s)),
@@ -363,7 +363,7 @@ class InviteQr extends StatelessWidget {
       width: size,
       height: size,
       padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(color: kW, borderRadius: BorderRadius.circular(14)),
       child: CustomPaint(painter: _QrPainter(seed)),
     );
   }
@@ -374,7 +374,7 @@ class _QrPainter extends CustomPainter {
   final String seed;
 
   static const int n = 21;
-  static const Color ink = Color(0xFF062832);
+  static Color get ink => vk(0xFF062832);
 
   bool _finder(int x, int y) => (x < 7 && y < 7) || (x >= n - 7 && y < 7) || (x < 7 && y >= n - 7);
 
@@ -393,7 +393,7 @@ class _QrPainter extends CustomPainter {
         if (h % 2 == 1) canvas.drawRect(Rect.fromLTWH(x * u, y * u, u + 0.3, u + 0.3), p);
       }
     }
-    final w = Paint()..color = Colors.white;
+    final w = Paint()..color = kW;
     void f(int x, int y) {
       canvas.drawRect(Rect.fromLTWH(x * u, y * u, 7 * u, 7 * u), p);
       canvas.drawRect(Rect.fromLTWH((x + 1) * u, (y + 1) * u, 5 * u, 5 * u), w);
@@ -418,7 +418,7 @@ class InviteCodeBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      foregroundPainter: const DashedRRect(radius: 20),
+      foregroundPainter: DashedRRect(radius: 20),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(color: V.surf2, borderRadius: BorderRadius.circular(20)),
@@ -430,11 +430,11 @@ class InviteCodeBox extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(caption, style: ku(11, c: V.mu, h: 1.6)),
+                  VText(caption, style: ku(11, c: V.mu, h: 1.6)),
                   const SizedBox(height: 2),
-                  Text(code, textDirection: TextDirection.ltr, style: nu(24, ls: 3)),
+                  VText(code, textDirection: TextDirection.ltr, style: nu(24, ls: 3)),
                   const SizedBox(height: 2),
-                  Text('7 ڕۆژ کارایە', style: ku(11, c: V.mu)),
+                  VText('7 ڕۆژ کارایە', style: ku(11, c: V.mu)),
                 ],
               ),
             ),
@@ -447,7 +447,7 @@ class InviteCodeBox extends StatelessWidget {
 
 /// چوارگۆشەی خاڵ خاڵ
 class DashedRRect extends CustomPainter {
-  const DashedRRect({this.radius = 20, this.color = V.line2});
+  DashedRRect({this.radius = 20, Color? color}) : color = color ?? V.line2;
   final double radius;
   final Color color;
 
@@ -507,14 +507,14 @@ class VSwitch extends StatelessWidget {
                 duration: const Duration(milliseconds: 250),
                 curve: Curves.easeOutCubic,
                 // وەک وێب: کوژاوە = ڕاست، داگیرساو = چەپ
-                alignment: on ? Alignment.centerLeft : Alignment.centerRight,
+                alignment: (on != kIsLtr) ? Alignment.centerLeft : Alignment.centerRight,
                 child: Container(
                   width: 22,
                   height: 22,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white,
-                    boxShadow: [BoxShadow(color: Color(0x33000000), blurRadius: 4, offset: Offset(0, 1))],
+                    color: kW,
+                    boxShadow: [BoxShadow(color: vk(0x33000000), blurRadius: 4, offset: Offset(0, 1))],
                   ),
                 ),
               ),
@@ -551,9 +551,9 @@ class FTitle extends StatelessWidget {
       padding: EdgeInsets.only(bottom: bottom),
       child: Row(
         children: [
-          Expanded(child: Text(title, style: ku(16, w: FontWeight.w800))),
+          Expanded(child: VText(title, style: ku(16, w: FontWeight.w800))),
           const SizedBox(width: 8),
-          Text(small, style: ku(12, c: V.mu)),
+          VText(small, style: ku(12, c: V.mu)),
         ],
       ),
     );
@@ -573,7 +573,7 @@ class SmallBtn extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: box(r: 11, border: V.line2),
-        child: Text(label, style: ku(12, w: FontWeight.w800)),
+        child: VText(label, style: ku(12, w: FontWeight.w800)),
       ),
     );
   }

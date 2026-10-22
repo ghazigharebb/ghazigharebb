@@ -387,7 +387,7 @@ class FamilyStore extends ChangeNotifier {
         a.add(FAlert('🔋', 'y', m, ': باتری Band ـەکەی ${m.bat}% ـە', 'پێی بڵێ بیخاتە سەر شەحن', 'remind'));
       }
       if (m.steps < m.goal * 0.5 && m.age > 50) {
-        a.add(FAlert('🚶', 'y', m, ' ئەمڕۆ کەمی ڕۆیشتووە', '${fmtN(m.steps)} لە ${fmtN(m.goal)} هەنگاو', 'cheer'));
+        a.add(FAlert('🚶', 'y', m, ' ئەمڕۆ کەم ڕۆیشتووە', '${fmtN(m.steps)} لە ${fmtN(m.goal)} هەنگاو', 'cheer'));
       }
       if (m.steps >= m.goal) {
         a.add(FAlert('🎉', 'g', m, ' ئامانجی ئەمڕۆی تەواو کرد!', '${fmtN(m.steps)} هەنگاو', 'cheer'));

@@ -3,15 +3,21 @@
 // • 'vexuser'      زانیارییەکانی هەژماری ئێستا (هەمان شێوەی وەشانی وێب)
 // • 'vexreg-draft' ڕەشنووسی تۆمارکردن، بۆ ئەوەی ئەگەر ئەپەکە داخرا لە هەمان شوێنەوە بەردەوام بێت
 // • 'vexaccounts'  هەژمارەکان لەسەر ئەم مۆبایلە دەمێننەوە دوای چوونە دەرەوە؛
-//                  کاتێک دووبارە بە هەمان ژمارە دێیتەوە، هەموو داتاکەت دەگەڕێتەوە
+//                  کاتێک دووبارە بە هەمان ژمارە (یان هەمان Gmail) دێیتەوە، هەموو داتاکەت دەگەڕێتەوە:
+//                  Plus، Band، خواردن، ئاو، خێزان… هەموو شتێک وەک کۆتا جار
+// • 'vxgmails'     لیستی Gmail ـەکانی ئەم مۆبایلە (بە ئەنقەست بە 'vex' دەست پێناکات، بۆ ئەوەی هەرگیز پاک نەکرێتەوە)
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../arena/arena_host.dart' show reloadArena;
+import '../band/band_state.dart';
 import '../core/store.dart';
 import '../family/family_data.dart';
+import '../plus/plus_state.dart';
+import '../arena/arena_host.dart' show reloadArena;
 import 'reg_data.dart';
 
 class Account extends ChangeNotifier {
@@ -21,6 +27,7 @@ class Account extends ChangeNotifier {
   static const String kUser = 'vexuser';
   static const String kDraft = 'vexreg-draft';
   static const String kVault = 'vexaccounts';
+  static const String kGmails = 'vxgmails';
 
   SharedPreferences? _sp;
   Map<String, dynamic>? user;
@@ -135,25 +142,106 @@ class Account extends ChangeNotifier {
     return o;
   }
 
-  /// هەژماری ئێستا لەسەر ئەم مۆبایلە پاشەکەوت دەکات
+  /// ناسنامەی هەژمارەکە: ژمارەی مۆبایل، یان Gmail (بچووک کراو)
+  static String idOf(String v) {
+    final t = v.trim();
+    return t.contains('@') ? t.toLowerCase() : t;
+  }
+
+  /// هەژماری ئێستا لەسەر ئەم مۆبایلە پاشەکەوت دەکات (بە ژمارە یان بە Gmail)
   Future<void> stash() async {
     final sp = await _prefs();
     final u = user;
     if (sp == null || u == null) return;
-    final phone = '${u['phone'] ?? ''}';
-    if (phone.isEmpty) return;
+    final phone = '${u['phone'] ?? ''}'.trim();
+    final email = idOf('${u['email'] ?? ''}');
+    final id = phone.isNotEmpty ? phone : email;
+    if (id.isEmpty) return;
     final v = _vault();
-    v[phone] = {'snap': _snap(), 'name': '${u['name'] ?? ''}', 'at': DateTime.now().millisecondsSinceEpoch};
+    v[id] = {
+      'snap': _snap(),
+      'name': '${u['name'] ?? ''}',
+      'email': email,
+      'phone': phone,
+      'at': DateTime.now().millisecondsSinceEpoch,
+    };
     await sp.setString(kVault, jsonEncode(v));
+    if (email.isNotEmpty) await rememberGmail(email, '${u['name'] ?? ''}');
   }
 
-  /// هەژمارێکی پاشەکەوتکراو بەم ژمارەیە هەیە؟
-  Map<String, dynamic>? accountFor(String phone) {
-    final a = _vault()[phone];
+  /// هەژمارێکی پاشەکەوتکراو بەم ژمارە یان Gmail ـە هەیە؟
+  Map<String, dynamic>? accountFor(String id) {
+    final a = _vault()[idOf(id)];
     if (a is Map && a['snap'] is Map && (a['snap'] as Map)[kUser] != null) {
       return Map<String, dynamic>.from(a);
     }
     return null;
+  }
+
+  // ---------- لیستی Gmail ـەکان ----------
+  List<Map<String, dynamic>> _gmailList() {
+    final s = _sp?.getString(kGmails);
+    if (s == null) return <Map<String, dynamic>>[];
+    try {
+      final o = jsonDecode(s);
+      if (o is List) {
+        return [
+          for (final e in o)
+            if (e is Map && '${e['email'] ?? ''}'.isNotEmpty) Map<String, dynamic>.from(e),
+        ];
+      }
+    } catch (_) {}
+    return <Map<String, dynamic>>[];
+  }
+
+  /// Gmail ێک بۆ لیستی ئەم مۆبایلە زیاد دەکات (ئەگەر هەبوو، ناوەکەی نوێ دەکاتەوە)
+  Future<void> rememberGmail(String email, [String name = '']) async {
+    final sp = await _prefs();
+    final e = idOf(email);
+    if (sp == null || e.isEmpty) return;
+    final l = _gmailList();
+    final i = l.indexWhere((x) => x['email'] == e);
+    if (i >= 0) {
+      if (name.trim().isNotEmpty) l[i]['name'] = name.trim();
+    } else {
+      l.add({'email': e, 'name': name.trim()});
+    }
+    await sp.setString(kGmails, jsonEncode(l));
+  }
+
+  /// هەموو Gmail ـەکانی ئەم مۆبایلە: لیستی خۆی + ئەوانەی هەژماری پاشەکەوتکراویان هەیە.
+  /// `has` = داتای پاشەکەوتکراو هەیە (تاگی «داتای هەیە»)
+  List<Map<String, dynamic>> gmails() {
+    final out = <String, Map<String, dynamic>>{};
+    for (final g in _gmailList()) {
+      out['${g['email']}'] = {'email': g['email'], 'name': '${g['name'] ?? ''}', 'has': false};
+    }
+    _vault().forEach((k, a) {
+      if (a is! Map) return;
+      final em = idOf('${a['email'] ?? ''}');
+      if (em.isEmpty || a['snap'] is! Map) return;
+      final nm = '${a['name'] ?? ''}';
+      out[em] = {'email': em, 'name': nm.isNotEmpty ? nm : '${out[em]?['name'] ?? ''}', 'has': true};
+    });
+    return out.values.toList();
+  }
+
+  // ---------- پاشەکەوتکردنی خۆکار ----------
+  Timer? _auto;
+  _LifeObs? _obs;
+
+  /// هەر 45 چرکە + کاتێک ئەپ دەچێتە باکگراوند، هەژمارەکە پاشەکەوت دەکرێت
+  /// (بۆ ئەوەی ئەگەر ئەپ داخرا، هەموو شتێک لە ئاخرین کۆنێکتدا بمێنێتەوە)
+  void startAutoStash() {
+    _auto ??= Timer.periodic(const Duration(seconds: 45), (_) {
+      if (user != null) stash();
+    });
+    if (_obs == null) {
+      _obs = _LifeObs(() {
+        if (user != null) stash();
+      });
+      WidgetsBinding.instance.addObserver(_obs!);
+    }
   }
 
   /// هەموو داتاکانی هەژمارەکە دەگەڕێنێتەوە
@@ -203,6 +291,22 @@ class Account extends ChangeNotifier {
   Future<void> reloadStores() async {
     await Store.I.load();
     await FamilyStore.I.load();
-    await reloadArena();
+    await PlusState.I.load(); // Plus ی هەژمارەکە دەگەڕێتەوە (یان free)
+    await BandState.I.load(); // Band ـی هەژمارەکە دەگەڕێتەوە
+    await reloadArena(); // VEX Arena ی هەژمارەکە
+  }
+}
+
+class _LifeObs with WidgetsBindingObserver {
+  _LifeObs(this.onLeave);
+  final VoidCallback onLeave;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.detached) {
+      onLeave();
+    }
   }
 }
