@@ -55,11 +55,11 @@ class SCard extends StatelessWidget {
   }
 }
 
-Widget lab(String t) => Text(t, style: ku(12.5, w: FontWeight.w800, c: V.mu));
+Widget lab(String t) => VText(t, style: ku(12.5, w: FontWeight.w800, c: V.mu));
 
 /// ژمارە لە ناو دەقدا
-TextSpan nspan(String s, {double size = 13, Color c = V.tx, FontWeight w = FontWeight.w800}) =>
-    TextSpan(text: ltr(s), style: nu(size, c: c, w: w));
+TextSpan nspan(String s, {double size = 13, Color? c, FontWeight w = FontWeight.w800}) { c ??= V.tx; return
+    TextSpan(text: ltr(s), style: nu(size, c: c, w: w)); }
 
 String gTxt(double v) => v < 10 ? nf((v * 10).round() / 10) : fmt(v);
 
@@ -221,7 +221,7 @@ class _ScanHeroState extends State<ScanHero> with SingleTickerProviderStateMixin
                     child: Press(
                       onTap: widget.onClose,
                       child: _glass(
-                        const SizedBox(width: 40, height: 40, child: Center(child: Text('✕', style: TextStyle(fontSize: 16, color: Colors.white)))),
+                        const SizedBox(width: 40, height: 40, child: Center(child: VText('✕', style: TextStyle(fontSize: 16, color: Colors.white)))),
                         radius: 20,
                       ),
                     ),
@@ -240,14 +240,14 @@ class _ScanHeroState extends State<ScanHero> with SingleTickerProviderStateMixin
                           Container(
                             width: 7,
                             height: 7,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: V.mint,
                               boxShadow: [BoxShadow(color: V.mint, blurRadius: 8)],
                             ),
                           ),
                           const SizedBox(width: 6),
-                          Text.rich(
+                          VText.rich(
                             TextSpan(children: [
                               const TextSpan(text: 'دڵنیایی '),
                               nspan('${r.confidence}%', size: 12),
@@ -313,7 +313,7 @@ class _ScanHeroState extends State<ScanHero> with SingleTickerProviderStateMixin
                                   height: 34,
                                   alignment: Alignment.center,
                                   decoration: BoxDecoration(shape: BoxShape.circle, color: RC2.white(0.1)),
-                                  child: Text(r.emoji, style: const TextStyle(fontSize: 19)),
+                                  child: VText(r.emoji, style: const TextStyle(fontSize: 19)),
                                 ),
                                 const SizedBox(width: 9),
                                 Flexible(
@@ -321,7 +321,7 @@ class _ScanHeroState extends State<ScanHero> with SingleTickerProviderStateMixin
                                     mainAxisSize: MainAxisSize.min,
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(r.name,
+                                      VText(r.name,
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                           style: ku(14, w: FontWeight.w800, c: Colors.white, h: 1.35)),
@@ -333,7 +333,7 @@ class _ScanHeroState extends State<ScanHero> with SingleTickerProviderStateMixin
                                             tween: Tween<double>(end: t.k),
                                             duration: const Duration(milliseconds: 900),
                                             curve: Curves.easeOutCubic,
-                                            builder: (context, v, _) => Text.rich(
+                                            builder: (context, v, _) => VText.rich(
                                               TextSpan(children: [
                                                 TextSpan(text: fmt(v), style: nu(18, c: const Color(0xFFFFE3CC), h: 1.1)),
                                                 TextSpan(text: ' kcal', style: nu(10.5, w: FontWeight.w700, c: V.mu)),
@@ -343,7 +343,7 @@ class _ScanHeroState extends State<ScanHero> with SingleTickerProviderStateMixin
                                           ),
                                           const SizedBox(width: 7),
                                           Flexible(
-                                            child: Text(sub,
+                                            child: VText(sub,
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
                                                 style: ku(11, c: kSoft, h: 1.3)),
@@ -380,7 +380,7 @@ class _ScanHeroState extends State<ScanHero> with SingleTickerProviderStateMixin
           ),
         ),
         alignment: Alignment.center,
-        child: Text(e, style: const TextStyle(fontSize: 96)),
+        child: VText(e, style: const TextStyle(fontSize: 96)),
       );
 }
 
@@ -435,18 +435,18 @@ class _Chip extends StatelessWidget {
               height: 21,
               alignment: Alignment.center,
               decoration: BoxDecoration(shape: BoxShape.circle, color: op(color, 0.22)),
-              child: Text(a.e, style: const TextStyle(fontSize: 12, height: 1)),
+              child: VText(a.e, style: const TextStyle(fontSize: 12, height: 1)),
             ),
             const SizedBox(width: 5),
             Flexible(
-              child: Text(a.t,
+              child: VText(a.t,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: ku(11.5, w: FontWeight.w800, c: Colors.white, h: 1.3)),
             ),
             if (kcal != null) ...[
               const SizedBox(width: 5),
-              Text(fmt(kcal!), style: nu(11, w: FontWeight.w700, c: color)),
+              VText(fmt(kcal!), style: nu(11, w: FontWeight.w700, c: color)),
             ],
           ],
         ),
@@ -586,7 +586,7 @@ class _ItemsCardState extends State<ItemsCard> {
             children: [
               lab('ئەوەی خواردت'),
               const Spacer(),
-              Text(one ? 'ژمارەکە ڕاست بکەرەوە' : 'بڕی هەر یەکێک ڕاست بکەرەوە',
+              VText(one ? 'ژمارەکە ڕاست بکەرەوە' : 'بڕی هەر یەکێک ڕاست بکەرەوە',
                   style: ku(11.5, w: FontWeight.w700, c: kDim)),
             ],
           ),
@@ -598,9 +598,9 @@ class _ItemsCardState extends State<ItemsCard> {
               decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), color: RC2.white(0.04), border: Border.all(color: V.line)),
               child: Row(
                 children: [
-                  Text('کۆی گشتی', style: ku(13, w: FontWeight.w800)),
+                  VText('کۆی گشتی', style: ku(13, w: FontWeight.w800)),
                   const Spacer(),
-                  Text.rich(TextSpan(children: [
+                  VText.rich(TextSpan(children: [
                     TextSpan(text: fmt(r.totals.k), style: nu(17)),
                     TextSpan(text: ' kcal', style: nu(11, w: FontWeight.w600, c: V.mu)),
                   ]), textDirection: TextDirection.ltr),
@@ -609,7 +609,7 @@ class _ItemsCardState extends State<ItemsCard> {
             ),
           // زیادکردنی خێرا
           _dash(),
-          Text('➕ شتێکی ترت لەگەڵی خوارد؟', style: ku(12, w: FontWeight.w800, c: V.mu)),
+          VText('➕ شتێکی ترت لەگەڵی خوارد؟', style: ku(12, w: FontWeight.w800, c: V.mu)),
           const SizedBox(height: 8),
           SizedBox(
             height: 36,
@@ -667,7 +667,7 @@ class _ItemsCardState extends State<ItemsCard> {
                       padding: const EdgeInsets.symmetric(horizontal: 13),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(borderRadius: BorderRadius.circular(13), gradient: V.prime),
-                      child: Text('زیادکردن', style: ku(13, w: FontWeight.w800, c: V.ink)),
+                      child: VText('زیادکردن', style: ku(13, w: FontWeight.w800, c: V.ink)),
                     ),
                   ),
                 ],
@@ -679,16 +679,16 @@ class _ItemsCardState extends State<ItemsCard> {
             onTap: () => setState(() => _noteOpen = !_noteOpen),
             child: Row(
               children: [
-                Text('📝 تێبینی', style: ku(13, w: FontWeight.w800)),
+                VText('📝 تێبینی', style: ku(13, w: FontWeight.w800)),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text('بۆ نموونە: بێ پەنیر، ڕۆنی کەم',
+                  child: VText('بۆ نموونە: بێ پەنیر، ڕۆنی کەم',
                       maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(11.5, c: kDim)),
                 ),
                 AnimatedRotation(
                   turns: _noteOpen ? 0.5 : 0,
                   duration: const Duration(milliseconds: 200),
-                  child: const Icon(Icons.keyboard_arrow_down_rounded, color: V.mu, size: 22),
+                  child: Icon(Icons.keyboard_arrow_down_rounded, color: V.mu, size: 22),
                 ),
               ],
             ),
@@ -710,7 +710,7 @@ class _ItemsCardState extends State<ItemsCard> {
                         border: Border.all(color: _noteParts.contains(c) ? V.cy : V.line2),
                         color: _noteParts.contains(c) ? const Color(0x262FE6F3) : Colors.transparent,
                       ),
-                      child: Text(c,
+                      child: VText(c,
                           style: ku(12, w: FontWeight.w700, c: _noteParts.contains(c) ? V.tx : V.mu, h: 1.3)),
                     ),
                   ),
@@ -752,7 +752,7 @@ class _ItemsCardState extends State<ItemsCard> {
                       const SizedBox(width: 15, height: 15, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
                       const SizedBox(width: 8),
                     ],
-                    Text(widget.recalcBusy ? 'AI حیسابی دەکاتەوە…' : '✨ بە پێی تێبینییەکە حیسابی بکەرەوە',
+                    VText(widget.recalcBusy ? 'AI حیسابی دەکاتەوە…' : '✨ بە پێی تێبینییەکە حیسابی بکەرەوە',
                         style: ku(13.5, w: FontWeight.w800, c: canRe || widget.recalcBusy ? Colors.white : kDim)),
                   ],
                 ),
@@ -782,21 +782,21 @@ class _ItemsCardState extends State<ItemsCard> {
               color: RC2.white(0.04),
               border: Border.all(color: accent || on ? V.cy : V.line2),
             ),
-            child: Text(t, style: ku(12.5, w: FontWeight.w700, c: accent || on ? V.c2 : V.tx, h: 1.2)),
+            child: VText(t, style: ku(12.5, w: FontWeight.w700, c: accent || on ? V.c2 : V.tx, h: 1.2)),
           ),
         ),
       );
 
   InputDecoration _deco(String hint) => InputDecoration(
-        hintText: hint,
+        hintText: vxTr(hint),
         hintStyle: ku(13.5, c: kDim),
         isDense: true,
         counterText: '',
         filled: true,
         fillColor: const Color(0x2E000000),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(13), borderSide: const BorderSide(color: V.line2)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(13), borderSide: const BorderSide(color: V.cy)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(13), borderSide: BorderSide(color: V.line2)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(13), borderSide: BorderSide(color: V.cy)),
       );
 
   Widget _row(int i, ScanItem it) {
@@ -807,7 +807,7 @@ class _ItemsCardState extends State<ItemsCard> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          border: i < widget.r.items.length - 1 ? const Border(bottom: BorderSide(color: V.line)) : null,
+          border: i < widget.r.items.length - 1 ? Border(bottom: BorderSide(color: V.line)) : null,
         ),
         child: Row(
           children: [
@@ -825,8 +825,8 @@ class _ItemsCardState extends State<ItemsCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(it.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(14, w: FontWeight.w800, h: 1.4)),
-                  Text.rich(
+                  VText(it.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(14, w: FontWeight.w800, h: 1.4)),
+                  VText.rich(
                     TextSpan(children: [
                       nspan(fmt(it.kcal * k), size: 12.5, c: const Color(0xFFDFF6F9), w: FontWeight.w700),
                       const TextSpan(text: ' kcal · '),
@@ -934,7 +934,7 @@ class _QtyStepperState extends State<QtyStepper> {
         child: SizedBox(
           width: 34,
           height: 40,
-          child: Center(child: Text(t, style: nu(20, w: FontWeight.w600, c: onTap == null ? const Color(0xFF35575E) : V.c2, h: 1))),
+          child: Center(child: VText(t, style: nu(20, w: FontWeight.w600, c: onTap == null ? const Color(0xFF35575E) : V.c2, h: 1))),
         ),
       );
 
@@ -968,7 +968,7 @@ class _QtyStepperState extends State<QtyStepper> {
                     decoration: const InputDecoration(isDense: true, border: InputBorder.none, contentPadding: EdgeInsets.zero),
                     onSubmitted: (_) => _f.unfocus(),
                   ),
-                  Text(widget.unit,
+                  VText(widget.unit,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textDirection: TextDirection.rtl,
@@ -1021,7 +1021,7 @@ class NutCard extends StatelessWidget {
               lab('پێکهاتەی خۆراک'),
               const SizedBox(width: 10),
               Expanded(
-                child: Text.rich(
+                child: VText.rich(
                   TextSpan(children: [
                     if (t.g > 0) ...[nspan('${fmt(t.g)}g', size: 12, c: V.mu, w: FontWeight.w700), const TextSpan(text: ' · ')],
                     nspan('$kp%', size: 12, c: V.mu, w: FontWeight.w700),
@@ -1092,9 +1092,9 @@ class NutCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('${x[0]} ${x[1]}', maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(12, w: FontWeight.w700, c: V.mu)),
+          VText('${x[0]} ${x[1]}', maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(12, w: FontWeight.w700, c: V.mu)),
           const SizedBox(height: 2),
-          Text.rich(
+          VText.rich(
             TextSpan(children: [
               TextSpan(text: gTxt(v), style: nu(17)),
               TextSpan(text: ' g', style: nu(11, w: FontWeight.w600, c: V.mu)),
@@ -1128,7 +1128,7 @@ class NutCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 5),
-          Text.rich(
+          VText.rich(
             TextSpan(children: [nspan('$pct%', size: 10.5, c: V.mu, w: FontWeight.w700), const TextSpan(text: ' ی ڕۆژت')]),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -1170,8 +1170,8 @@ class VerdictCard extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('${s.round()}', style: nu(19, h: 1)),
-                          Text('/100', style: nu(8.5, w: FontWeight.w600, c: V.mu, h: 1.2)),
+                          VText('${s.round()}', style: nu(19, h: 1)),
+                          VText('/100', style: nu(8.5, w: FontWeight.w600, c: V.mu, h: 1.2)),
                         ],
                       ),
                     ),
@@ -1187,7 +1187,7 @@ class VerdictCard extends StatelessWidget {
                     AnimatedDefaultTextStyle(
                       duration: const Duration(milliseconds: 300),
                       style: ku(15.5, w: FontWeight.w800, c: v.c, h: 1.5),
-                      child: Text('${v.e} ${v.t}', maxLines: 1, overflow: TextOverflow.ellipsis),
+                      child: VText('${v.e} ${v.t}', maxLines: 1, overflow: TextOverflow.ellipsis),
                     ),
                     if (r.noteOk)
                       Container(
@@ -1198,7 +1198,7 @@ class VerdictCard extends StatelessWidget {
                           color: const Color(0x1F3CF08A),
                           border: Border.all(color: const Color(0x663CF08A)),
                         ),
-                        child: Text('✓ تێبینییەکەت حیساب کرا', style: ku(11, w: FontWeight.w800, c: V.mint)),
+                        child: VText('✓ تێبینییەکەت حیساب کرا', style: ku(11, w: FontWeight.w800, c: V.mint)),
                       ),
                   ],
                 ),
@@ -1211,7 +1211,7 @@ class VerdictCard extends StatelessWidget {
               height: 1,
               child: CustomPaint(painter: _DashLine()),
             ),
-            Text(r.summary, style: ku(12.5, c: const Color(0xFFD6E8EC), h: 1.7)),
+            VText(r.summary, style: ku(12.5, c: const Color(0xFFD6E8EC), h: 1.7)),
           ],
         ],
       ),
@@ -1296,10 +1296,10 @@ class DayCard extends StatelessWidget {
                 children: [
                   Container(width: 8, height: 8, decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(3))),
                   const SizedBox(width: 5),
-                  Flexible(child: Text(t, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(11.5, w: FontWeight.w700, c: V.mu))),
+                  Flexible(child: VText(t, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(11.5, w: FontWeight.w700, c: V.mu))),
                 ],
               ),
-              Text(fmt(v), textDirection: TextDirection.ltr, style: nu(15)),
+              VText(fmt(v), textDirection: TextDirection.ltr, style: nu(15)),
             ],
           ),
         );
@@ -1314,7 +1314,7 @@ class DayCard extends StatelessWidget {
             child: SizedBox(
               height: 12,
               child: Directionality(
-                textDirection: TextDirection.rtl,
+                textDirection: kDir,
                 child: LayoutBuilder(
                   builder: (context, c) => Stack(
                     children: [
@@ -1325,7 +1325,7 @@ class DayCard extends StatelessWidget {
                         top: 0,
                         bottom: 0,
                         width: c.maxWidth * fe,
-                        child: const ColoredBox(color: V.cy),
+                        child: ColoredBox(color: V.cy),
                       ),
                       AnimatedPositioned(
                         duration: const Duration(milliseconds: 500),
@@ -1357,7 +1357,7 @@ class DayCard extends StatelessWidget {
               color: op(k, 0.08),
               border: Border.all(color: op(k, 0.3)),
             ),
-            child: Text.rich(note, style: ku(12.5, c: const Color(0xFFDCEFF2), h: 1.7)),
+            child: VText.rich(note, style: ku(12.5, c: const Color(0xFFDCEFF2), h: 1.7)),
           ),
         ],
       ),
@@ -1387,15 +1387,15 @@ class WalkCard extends StatelessWidget {
               height: 38,
               alignment: Alignment.center,
               decoration: BoxDecoration(borderRadius: BorderRadius.circular(13), color: bg),
-              child: Text(ic, style: const TextStyle(fontSize: 19)),
+              child: VText(ic, style: const TextStyle(fontSize: 19)),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: ku(11, w: FontWeight.w700, c: V.mu)),
-                  Text(value, style: ku(14.5, w: FontWeight.w800, h: 1.5)),
+                  VText(label, style: ku(11, w: FontWeight.w700, c: V.mu)),
+                  VText(value, style: ku(14.5, w: FontWeight.w800, h: 1.5)),
                 ],
               ),
             ),
@@ -1403,7 +1403,7 @@ class WalkCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 for (final m in meta)
-                  Text(m, textDirection: TextDirection.ltr, style: nu(12, w: FontWeight.w700, c: m == meta.first ? V.tx : V.mu)),
+                  VText(m, textDirection: TextDirection.ltr, style: nu(12, w: FontWeight.w700, c: m == meta.first ? V.tx : V.mu)),
               ],
             ),
           ],
@@ -1413,7 +1413,7 @@ class WalkCard extends StatelessWidget {
         children: [
           row('🚶', const Color(0x213CF08A), 'پیاسە بۆ سووتاندنی', has ? durTxt(wm) : '—',
               has ? ['👣 ${fmt((wm * 105 / 100).round() * 100)}', '${(wm * 5 / 60).toStringAsFixed(1)} km'] : []),
-          const Padding(padding: EdgeInsets.symmetric(vertical: 10), child: Divider(height: 1, color: V.line)),
+          Padding(padding: EdgeInsets.symmetric(vertical: 10), child: Divider(height: 1, color: V.line)),
           row('⏳', const Color(0x299B7BFF), 'کاتی هەرسکردن', has ? digTxt(a, b) : '—', has ? ['${clockAfter(b)} تا'] : []),
         ],
       ),

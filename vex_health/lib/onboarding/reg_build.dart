@@ -1,7 +1,6 @@
 // VEX Health — دروستکردنی پلان (بازنەی سەدی + کارتی تایبەتمەندییەکان) و کورتەی پلان
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
@@ -82,17 +81,17 @@ class _RBuildShowState extends State<RBuildShow> with TickerProviderStateMixin {
                     turns: _spin,
                     child: CustomPaint(size: Size(ring + 20, ring + 20), painter: _Dashed()),
                   ),
-                  CustomPaint(size: Size(ring, ring), painter: _Ring(e)),
+                  RepaintBoundary(child: CustomPaint(size: Size(ring + 8, ring + 8), painter: _Ring(e))),
                   Directionality(
                     textDirection: TextDirection.ltr,
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text('${(e * 100).round()}', style: nu(widget.compact ? 30 : 36, h: 1)),
+                        VText('${(e * 100).round()}', style: nu(widget.compact ? 30 : 36, h: 1)),
                         Padding(
                           padding: const EdgeInsets.only(left: 2, bottom: 3),
-                          child: Text('%', style: nu(widget.compact ? 15 : 18, c: RC.mu, h: 1)),
+                          child: VText('%', style: nu(widget.compact ? 15 : 18, c: RC.mu, h: 1)),
                         ),
                       ],
                     ),
@@ -155,7 +154,7 @@ class _RBuildShowState extends State<RBuildShow> with TickerProviderStateMixin {
               ),
             ),
             const SizedBox(height: 12),
-            Text.rich(
+            VText.rich(
               TextSpan(children: [
                 TextSpan(text: '✓ ', style: ku(13, w: FontWeight.w800, c: V.mint)),
                 TextSpan(text: '${_steps[si]}…'),
@@ -176,7 +175,7 @@ class _FeatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final k = Color(f.c);
+    final k = vk(f.c);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -208,9 +207,9 @@ class _FeatCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(f.t, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(16, w: FontWeight.w800, h: 1.45)),
+                VText(f.t, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(16, w: FontWeight.w800, h: 1.45)),
                 const SizedBox(height: 2),
-                Text(f.s, maxLines: 2, overflow: TextOverflow.ellipsis, style: ku(12.5, c: const Color(0xFFA9CFD5), h: 1.6)),
+                VText(f.s, maxLines: 2, overflow: TextOverflow.ellipsis, style: ku(12.5, c: vk(0xFFA9CFD5), h: 1.6)),
               ],
             ),
           ),
@@ -226,8 +225,9 @@ class _Ring extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // بازنەیەکی تەواو: ڕێگا + کەوانی پێشکەوتن بە یەک ناوەند و یەک تیرەوە، بێ بڕین و بێ چوارگۆشەی لێڵ
     final c = size.center(Offset.zero);
-    final r = size.width / 2 - 5;
+    final r = size.width / 2 - 6;
     final rect = Rect.fromCircle(center: c, radius: r);
     canvas.drawCircle(
       c,
@@ -235,31 +235,43 @@ class _Ring extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 7
-        ..color = const Color(0x12FFFFFF),
+        ..isAntiAlias = true
+        ..color = vk(0x1AFFFFFF),
     );
     if (p <= 0) return;
+    final sweep = math.pi * 2 * p.clamp(0.0, 1.0);
+    final grad = SweepGradient(
+      startAngle: 0,
+      endAngle: math.pi * 2,
+      colors: [vk(0xFF8FF3F9), vk(0xFF3CF08A), vk(0xFF8FF3F9)],
+      stops: const [0.0, 0.5, 1.0],
+      transform: const GradientRotation(-math.pi / 2),
+    ).createShader(rect);
+    // درەوشانەوە: هەمان کەوان، بەڵام لێڵ (لەسەر ناوەندی خۆی، بێ جێگۆڕکێ)
     canvas.drawArc(
       rect,
       -math.pi / 2,
-      math.pi * 2 * p,
+      sweep,
       false,
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 9
+        ..strokeWidth = 8
         ..strokeCap = StrokeCap.round
-        ..color = const Color(0x663CF08A)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7),
+        ..isAntiAlias = true
+        ..color = vk(0x553CF08A)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
     );
     canvas.drawArc(
       rect,
       -math.pi / 2,
-      math.pi * 2 * p,
+      sweep,
       false,
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 7
         ..strokeCap = StrokeCap.round
-        ..shader = ui.Gradient.linear(rect.topLeft, rect.bottomRight, const [Color(0xFF8FF3F9), Color(0xFF3CF08A)]),
+        ..isAntiAlias = true
+        ..shader = grad,
     );
   }
 
@@ -275,7 +287,7 @@ class _Dashed extends CustomPainter {
     final p = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5
-      ..color = const Color(0x338CEBF5);
+      ..color = vk(0x338CEBF5);
     const n = 48;
     for (int i = 0; i < n; i++) {
       canvas.drawArc(Rect.fromCircle(center: c, radius: r), i / n * math.pi * 2, math.pi * 2 / n * 0.5, false, p);
@@ -340,12 +352,12 @@ class RPlanSummary extends StatelessWidget {
             padding: EdgeInsets.all(compact ? 11 : 14),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(26),
-              gradient: const LinearGradient(
+              gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0x242FE6F3), Color(0x0F3CF08A)],
+                colors: [vk(0x242FE6F3), vk(0x0F3CF08A)],
               ),
-              border: Border.all(color: const Color(0x472FE6F3)),
+              border: Border.all(color: vk(0x472FE6F3)),
             ),
             child: Row(
               children: [
@@ -353,7 +365,7 @@ class RPlanSummary extends StatelessWidget {
                   width: 50,
                   height: 50,
                   alignment: Alignment.center,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       center: Alignment(-0.3, -0.4),
@@ -361,19 +373,19 @@ class RPlanSummary extends StatelessWidget {
                       stops: [0, 0.6, 1],
                     ),
                     boxShadow: [
-                      BoxShadow(color: Color(0x242FE6F3), spreadRadius: 5),
-                      BoxShadow(color: Color(0x732FE6F3), blurRadius: 30),
+                      BoxShadow(color: vk(0x242FE6F3), spreadRadius: 5),
+                      BoxShadow(color: vk(0x732FE6F3), blurRadius: 30),
                     ],
                   ),
-                  child: Text(ini, style: ku(21, w: FontWeight.w800, c: V.ink, h: 1.2)),
+                  child: VText(ini, style: ku(21, w: FontWeight.w800, c: V.ink, h: 1.2)),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('پلانەکەت ئامادەیە، $first!', style: ku(17.5, w: FontWeight.w800, h: 1.45)),
-                      Text.rich(
+                      VText('پلانەکەت ئامادەیە، $first!', style: ku(17.5, w: FontWeight.w800, h: 1.45)),
+                      VText.rich(
                         TextSpan(children: [
                           numSpan('${d.age}', size: 12, c: RC.p, w: FontWeight.w700),
                           const TextSpan(text: ' ساڵ · '),
@@ -418,12 +430,12 @@ class RPlanSummary extends StatelessWidget {
             padding: EdgeInsets.all(compact ? 11 : 14),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              gradient: const LinearGradient(
+              gradient: LinearGradient(
                 begin: Alignment.centerRight,
                 end: Alignment.centerLeft,
-                colors: [Color(0x1FFFBE4D), Color(0x0FFF5F7E)],
+                colors: [vk(0x1FFFBE4D), vk(0x0FFF5F7E)],
               ),
-              border: Border.all(color: const Color(0x4DFFBE4D)),
+              border: Border.all(color: vk(0x4DFFBE4D)),
             ),
             child: Row(
               children: [
@@ -433,11 +445,11 @@ class RPlanSummary extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('پلانی خواردنت لە بەشی خواردن دادەنرێت', style: ku(13.5, w: FontWeight.w800, h: 1.5)),
+                      VText('پلانی خواردنت لە بەشی خواردن دادەنرێت', style: ku(13.5, w: FontWeight.w800, h: 1.5)),
                       if (!compact)
-                        Text(
+                        VText(
                           'یەکەم جار کە دەچیتە بەشی خواردن، چەند پرسیارێکی کورتی خواردنت لێدەکەین و کالۆری ڕۆژانەت دادەنێین.',
-                          style: ku(11.5, c: const Color(0xFFD9C9A8), h: 1.6),
+                          style: ku(11.5, c: vk(0xFFD9C9A8), h: 1.6),
                         ),
                     ],
                   ),

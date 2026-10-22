@@ -12,8 +12,8 @@ import 'reg_lang_state.dart';
 import 'reg_widgets.dart';
 
 /// دەقی گونجاو بۆ زمانەکە: عەرەبی/کوردی/فارسی/ئوردو بە فۆنتی عەرەبی، ئەوانی تر بە Noto Sans
-TextStyle langStyle(RLang l, double size, {FontWeight w = FontWeight.w400, Color c = V.tx, double? h}) =>
-    l.rtl ? ku(size, w: w, c: c, h: h) : GoogleFonts.notoSans(fontSize: size, fontWeight: w, color: c, height: h);
+TextStyle langStyle(RLang l, double size, {FontWeight w = FontWeight.w400, Color? c, double? h}) { c ??= V.tx; return
+    l.rtl ? GoogleFonts.notoSansArabic(fontSize: size, fontWeight: w, color: c, height: h) : GoogleFonts.notoSans(fontSize: size, fontWeight: w, color: c, height: h); }
 
 /// ئاڵا لەناو بازنەیەک؛ ئاڵای کوردستان دەکێشرێت (ئیمۆجی نییە)
 class RFlag extends StatelessWidget {
@@ -36,7 +36,7 @@ class RFlag extends StatelessWidget {
       child: ClipOval(
         child: l.flag == 'KU'
             ? SvgPicture.string(kKuFlagSvg, width: size, height: size, fit: BoxFit.cover)
-            : Center(child: Text(l.flag, style: TextStyle(fontSize: size * 0.58, height: 1))),
+            : Center(child: VText(l.flag, style: TextStyle(fontSize: size * 0.58, height: 1))),
       ),
     );
   }
@@ -138,14 +138,14 @@ class _RLangStepState extends State<RLangStep> {
                 child: Directionality(
                   textDirection: dirOfLang(hl),
                   child: ShaderMask(
-                    shaderCallback: (r) => const LinearGradient(
-                      colors: [Color(0xFF8FF3F9), Color(0xFF3CF08A), Color(0xFFFFE29A)],
+                    shaderCallback: (r) => LinearGradient(
+                      colors: [vk(0xFF8FF3F9), vk(0xFF3CF08A), vk(0xFFFFE29A)],
                     ).createShader(r),
                     blendMode: BlendMode.srcIn,
-                    child: Text(
+                    child: VText(
                       hl.t['hello'] ?? '',
                       maxLines: 1,
-                      style: langStyle(hl, c ? 36 : 44, w: FontWeight.w800, c: Colors.white, h: 1.3),
+                      style: langStyle(hl, c ? 36 : 44, w: FontWeight.w800, c: kW, h: 1.3),
                     ),
                   ),
                 ),
@@ -156,10 +156,10 @@ class _RLangStepState extends State<RLangStep> {
             textDirection: dirOfLang(L),
             child: Column(
               children: [
-                Text(L.t['pick'] ?? '',
+                VText(L.t['pick'] ?? '',
                     textAlign: TextAlign.center, style: langStyle(L, 21, w: FontWeight.w800, h: 1.5)),
                 const SizedBox(height: 2),
-                Text(L.t['pickSub'] ?? '',
+                VText(L.t['pickSub'] ?? '',
                     textAlign: TextAlign.center, style: langStyle(L, 13, c: RC.p, h: 1.7)),
               ],
             ),
@@ -212,7 +212,7 @@ class _LangCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: on ? V.mint : RC.line(0.13), width: 1.5),
             gradient: on
-                ? const LinearGradient(
+                ? LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [Color(0x218FF3F9), Color(0x1F3CF08A)],
@@ -223,7 +223,7 @@ class _LangCard extends StatelessWidget {
                     colors: [RC.white(0.055), RC.white(0.02)],
                   ),
             boxShadow: on
-                ? const [BoxShadow(color: Color(0x663CF08A), blurRadius: 26, offset: Offset(0, 12), spreadRadius: -16)]
+                ? [BoxShadow(color: vk(0x663CF08A), blurRadius: 26, offset: Offset(0, 12), spreadRadius: -16)]
                 : null,
           ),
           child: Directionality(
@@ -240,7 +240,7 @@ class _LangCard extends StatelessWidget {
                       Text(l.native, maxLines: 2, style: langStyle(l, 13.5, w: FontWeight.w800, h: 1.4)),
                       Directionality(
                         textDirection: TextDirection.ltr,
-                        child: Text(l.english, maxLines: 1, overflow: TextOverflow.ellipsis, style: nu(10.5, w: FontWeight.w600, c: const Color(0xFF7FA6AD), h: 1.4)),
+                        child: VText(l.english, maxLines: 1, overflow: TextOverflow.ellipsis, style: nu(10.5, w: FontWeight.w600, c: vk(0xFF7FA6AD), h: 1.4)),
                       ),
                     ],
                   ),
@@ -291,10 +291,10 @@ class RBandQ extends StatelessWidget {
                     Container(
                       width: heroH * 0.92,
                       height: heroH * 0.92,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: RadialGradient(
-                          colors: [Color(0x5C2FE6F3), Color(0x1A3CF08A), Color(0x002FE6F3)],
+                          colors: [vk(0x5C2FE6F3), vk(0x1A3CF08A), vk(0x002FE6F3)],
                           stops: [0, 0.55, 0.74],
                         ),
                       ),
@@ -302,12 +302,12 @@ class RBandQ extends StatelessWidget {
                     Container(
                       width: heroH * 0.86,
                       height: heroH * 0.86,
-                      decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0x4D8FF3F9))),
+                      decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: vk(0x4D8FF3F9))),
                     ),
                     Container(
                       width: heroH * 1.02,
                       height: heroH * 1.02,
-                      decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: const Color(0x2E3CF08A))),
+                      decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: vk(0x2E3CF08A))),
                     ),
                     Image.asset(
                       'assets/brand/vex_band.webp',
@@ -323,11 +323,11 @@ class RBandQ extends StatelessWidget {
               ),
             ),
             SizedBox(height: tight ? 6 : 10),
-            Text(t['bt'] ?? '',
+            VText(t['bt'] ?? '',
                 textAlign: TextAlign.center, style: langStyle(l, tight ? 21 : (compact ? 23 : 26), w: FontWeight.w800, h: 1.4)),
             Padding(
               padding: const EdgeInsets.only(top: 4, bottom: 16),
-              child: Text(t['bp'] ?? '', textAlign: TextAlign.center, style: langStyle(l, 13.5, c: RC.p, h: 1.7)),
+              child: VText(t['bp'] ?? '', textAlign: TextAlign.center, style: langStyle(l, 13.5, c: RC.p, h: 1.7)),
             ),
             _BandOpt(
               l: l,
@@ -362,19 +362,19 @@ class RBandQ extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(99),
-          color: const Color(0xE60A2E38),
+          color: vk(0xE60A2E38),
           border: Border.all(color: RC.line(0.22)),
-          boxShadow: const [BoxShadow(color: Color(0x66000000), blurRadius: 14, offset: Offset(0, 6), spreadRadius: -6)],
+          boxShadow: [BoxShadow(color: vk(0x66000000), blurRadius: 14, offset: Offset(0, 6), spreadRadius: -6)],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             RIco(e, size: 14, tile: false),
             const SizedBox(width: 6),
-            Text(v, style: nu(13, h: 1.2)),
+            VText(v, style: nu(13, h: 1.2)),
             if (u.isNotEmpty) ...[
               const SizedBox(width: 4),
-              Text(u, style: nu(9.5, w: FontWeight.w700, c: RC.mu, h: 1.2)),
+              VText(u, style: nu(9.5, w: FontWeight.w700, c: RC.mu, h: 1.2)),
             ],
           ],
         ),
@@ -414,10 +414,10 @@ class _BandOpt extends StatelessWidget {
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: on ? V.mint : RC.line(0.16), width: 1.5),
                   gradient: on
-                      ? const LinearGradient(
+                      ? LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [Color(0x242FE6F3), Color(0x1F3CF08A)],
+                          colors: [vk(0x242FE6F3), vk(0x1F3CF08A)],
                         )
                       : LinearGradient(
                           begin: Alignment.topLeft,
@@ -425,7 +425,7 @@ class _BandOpt extends StatelessWidget {
                           colors: [RC.white(0.06), RC.white(0.02)],
                         ),
                   boxShadow: on
-                      ? const [BoxShadow(color: Color(0x663CF08A), blurRadius: 34, offset: Offset(0, 16), spreadRadius: -18)]
+                      ? [BoxShadow(color: vk(0x663CF08A), blurRadius: 34, offset: Offset(0, 16), spreadRadius: -18)]
                       : null,
                 ),
                 child: Row(
@@ -436,8 +436,8 @@ class _BandOpt extends StatelessWidget {
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(18),
-                        color: on ? const Color(0x2E3CF08A) : RC.white(0.06),
-                        border: Border.all(color: on ? const Color(0x803CF08A) : const Color(0x338FF3F9)),
+                        color: on ? vk(0x2E3CF08A) : RC.white(0.06),
+                        border: Border.all(color: on ? vk(0x803CF08A) : vk(0x338FF3F9)),
                       ),
                       child: art,
                     ),
@@ -447,8 +447,8 @@ class _BandOpt extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(title, style: langStyle(l, 16, w: FontWeight.w800, h: 1.5)),
-                          if (sub.isNotEmpty) Text(sub, style: langStyle(l, 12.5, c: RC.p, h: 1.65)),
+                          VText(title, style: langStyle(l, 16, w: FontWeight.w800, h: 1.5)),
+                          if (sub.isNotEmpty) VText(sub, style: langStyle(l, 12.5, c: RC.p, h: 1.65)),
                         ],
                       ),
                     ),
@@ -465,15 +465,15 @@ class _BandOpt extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(99),
-                      gradient: const LinearGradient(colors: [Color(0xFFFFE29A), Color(0xFFFFBE4D), Color(0xFFFF9A4D)]),
-                      boxShadow: const [BoxShadow(color: Color(0x66FFBE4D), blurRadius: 18, offset: Offset(0, 8), spreadRadius: -6)],
+                      gradient: LinearGradient(colors: [vk(0xFFFFE29A), vk(0xFFFFBE4D), vk(0xFFFF9A4D)]),
+                      boxShadow: [BoxShadow(color: vk(0x66FFBE4D), blurRadius: 18, offset: Offset(0, 8), spreadRadius: -6)],
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const RIco('🎁', size: 14, tile: false, color: Color(0xFF3B2500)),
+                        RIco('🎁', size: 14, tile: false, color: vk(0xFF3B2500)),
                         const SizedBox(width: 6),
-                        Text(ribbon!, style: langStyle(l, 11.5, w: FontWeight.w800, c: const Color(0xFF3B2500), h: 1.2)),
+                        VText(ribbon!, style: langStyle(l, 11.5, w: FontWeight.w800, c: vk(0xFF3B2500), h: 1.2)),
                       ],
                     ),
                   ),

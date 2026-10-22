@@ -12,6 +12,7 @@ import 'ai_brief.dart';
 import 'day_ribbon.dart';
 import 'hc.dart';
 import 'vitals.dart';
+import '../plus/gate.dart';
 
 class HealthScreen extends StatelessWidget {
   const HealthScreen({super.key});
@@ -36,7 +37,7 @@ class HealthScreen extends StatelessWidget {
                     BandBuilder(
                       builder: (context, on) {
                         const top = <Widget>[
-                          Rise(delayMs: 45, child: AiBriefCard()),
+                          Rise(delayMs: 45, child: Gated(kind: GateKind.plus, id: 'ai', minHeight: 400, compact: false, child: AiBriefCard())),
                           Rise(delayMs: 90, child: _LiveSec()),
                           VitalsGrid(),
                           Rise(delayMs: 135, child: HSec('چالاکی', note: 'ئامانجی ڕۆژانە')),
@@ -119,8 +120,8 @@ class _HealthHeaderState extends State<_HealthHeader> with SingleTickerProviderS
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('تەندروستی', style: ku(24, w: FontWeight.w800, c: HC.tx, h: 1.4)),
-              Text(kurdishDate(), style: ku(13, c: HC.mu)),
+              VText('تەندروستی', style: ku(24, w: FontWeight.w800, c: HC.tx, h: 1.4)),
+              VText(kurdishDate(), style: ku(13, c: HC.mu)),
             ],
           ),
         ),
@@ -138,7 +139,7 @@ class _HealthHeaderState extends State<_HealthHeader> with SingleTickerProviderS
               children: [
                 RotationTransition(turns: _spin, child: svgIcon(HI.sync, HX.c2, size: 16)),
                 const SizedBox(width: 6),
-                Text('هاوکات', style: ku(13, w: FontWeight.w600, c: HC.tx)),
+                VText('هاوکات', style: ku(13, w: FontWeight.w600, c: HC.tx)),
               ],
             ),
           ),

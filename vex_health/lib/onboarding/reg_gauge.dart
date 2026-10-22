@@ -126,18 +126,18 @@ class _RGaugeState extends State<RGauge> with SingleTickerProviderStateMixin {
                                     FittedBox(
                                       fit: BoxFit.scaleDown,
                                       child: ShaderMask(
-                                        shaderCallback: (r) => const LinearGradient(
+                                        shaderCallback: (r) => LinearGradient(
                                           begin: Alignment.topCenter,
                                           end: Alignment.bottomCenter,
-                                          colors: [Colors.white, Color(0xFFBFF7FB)],
+                                          colors: [kW, vk(0xFFBFF7FB)],
                                         ).createShader(r),
                                         blendMode: BlendMode.srcIn,
-                                        child: Text(shown,
-                                            style: nu(widget.compact ? 36 : 44, c: Colors.white, h: 1, ls: -1.5)),
+                                        child: VText(shown,
+                                            style: nu(widget.compact ? 36 : 44, c: kW, h: 1, ls: -1.5)),
                                       ),
                                     ),
                                     const SizedBox(height: 3),
-                                    Text(lb ? 'پاوەند · ئامانج' : 'کیلۆگرام · ئامانج',
+                                    VText(lb ? 'پاوەند · ئامانج' : 'کیلۆگرام · ئامانج',
                                         textDirection: TextDirection.rtl,
                                         style: ku(12, w: FontWeight.w700, c: RC.mu, h: 1.3)),
                                   ],
@@ -163,7 +163,7 @@ class _RGaugeState extends State<RGauge> with SingleTickerProviderStateMixin {
                 color: op(z.color, 0.13),
                 border: Border.all(color: op(z.color, 0.45)),
               ),
-              child: Text.rich(
+              child: VText.rich(
                 TextSpan(children: [
                   TextSpan(text: '${z.text} · BMI '),
                   TextSpan(text: ltr(_bt.toStringAsFixed(1)), style: nu(12.5, c: z.color)),
@@ -188,8 +188,8 @@ class _GaugePainter extends CustomPainter {
 
   TextPainter _text(String s, Color c, double size, FontWeight w) {
     return TextPainter(
-      text: TextSpan(text: s, style: ku(size, w: w, c: c, h: 1)),
-      textDirection: TextDirection.rtl,
+      text: TextSpan(text: vxTr(s), style: ku(size, w: w, c: c, h: 1)),
+      textDirection: kDir,
     )..layout();
   }
 
@@ -211,7 +211,7 @@ class _GaugePainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 28
         ..strokeCap = StrokeCap.round
-        ..color = const Color(0x0DFFFFFF),
+        ..color = vk(0x0DFFFFFF),
     );
 
     // ناوچەکان
@@ -259,7 +259,7 @@ class _GaugePainter extends CustomPainter {
 
     // هێڵە بچووکەکان
     final tk = Paint()
-      ..color = const Color(0x2E8CEBF5)
+      ..color = vk(0x2E8CEBF5)
       ..strokeWidth = 1.4
       ..strokeCap = StrokeCap.round;
     for (int a = 0; a <= 180; a += 6) {
@@ -298,7 +298,7 @@ class _GaugePainter extends CustomPainter {
     // دەرزی (بازنەی ئامانج)
     final kp = _gp(knob.clamp(0.0, 180.0), _gr);
     canvas.drawCircle(kp, 16, Paint()..color = op(kc, 0.22));
-    canvas.drawCircle(kp, 9.5, Paint()..color = Colors.white);
+    canvas.drawCircle(kp, 9.5, Paint()..color = kW);
     canvas.drawCircle(
       kp,
       9.5,

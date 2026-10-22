@@ -10,9 +10,9 @@ import 'band_state.dart';
 /// ڕەنگەکانی دۆخی نەپەیوەست
 class BandColors {
   BandColors._();
-  static const Color dot = Color(0xFFFF5F7E); // خاڵی سوور
-  static const Color label = Color(0xFFFFB84D); // نووسینی «پەیوەست نییە»
-  static const Color mute = Color(0xFF80B4BC);
+  static Color get dot => V.coral; // خاڵی سوور
+  static Color get label => V.amber; // نووسینی «پەیوەست نییە»
+  static Color get mute => V.mu;
 }
 
 /// بنیاتنەر: کاتێک دۆخەکە دەگۆڕێت خۆی نوێ دەبێتەوە
@@ -30,10 +30,10 @@ class BandBuilder extends StatelessWidget {
 }
 
 /// «دوایین هاوکاتکردن: 12:42»
-Widget lastSyncText({double size = 12, Color color = BandColors.mute}) {
+Widget lastSyncText({double size = 12, Color? color}) { color ??= BandColors.mute;
   final t = BandState.I.lastSync;
-  if (t.isEmpty) return Text('هێشتا هاوکات نەکراوە', style: ku(size, c: color));
-  return Text.rich(
+  if (t.isEmpty) return VText('هێشتا هاوکات نەکراوە', style: ku(size, c: color));
+  return VText.rich(
     TextSpan(children: [
       const TextSpan(text: 'دوایین هاوکاتکردن: '),
       TextSpan(text: t, style: nu(size, w: FontWeight.w700, c: color)),
@@ -59,12 +59,12 @@ class ReconnectButton extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: compact ? 11 : 14, vertical: compact ? 6 : 9),
             decoration: BoxDecoration(color: V.cy, borderRadius: BorderRadius.circular(99)),
             child: busy
-                ? const SizedBox(
+                ? SizedBox(
                     width: 14,
                     height: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: V.ink),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: kOnAcc),
                   )
-                : Text('پەیوەستکردنەوە', style: ku(compact ? 11.5 : 12.5, w: FontWeight.w800, c: V.ink, h: 1.2)),
+                : VText('پەیوەستکردنەوە', style: ku(compact ? 11.5 : 12.5, w: FontWeight.w800, c: kOnAcc, h: 1.2)),
           ),
         );
       },
@@ -95,14 +95,14 @@ class BandBanner extends StatelessWidget {
               Container(
                 width: 10,
                 height: 10,
-                decoration: const BoxDecoration(shape: BoxShape.circle, color: BandColors.dot),
+                decoration: BoxDecoration(shape: BoxShape.circle, color: BandColors.dot),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Band پەیوەست نییە', style: ku(14, w: FontWeight.w800, h: 1.5)),
+                    VText('Band پەیوەست نییە', style: ku(14, w: FontWeight.w800, h: 1.5)),
                     lastSyncText(),
                   ],
                 ),
@@ -119,7 +119,7 @@ class BandBanner extends StatelessWidget {
 
 /// هێڵی خاڵخاڵی ناوەڕاست (جێگرەوەی هێڵی ECG و ...)
 class DashedLinePainter extends CustomPainter {
-  const DashedLinePainter({this.color = BandColors.mute, this.opacity = 0.55});
+  DashedLinePainter({Color? color, this.opacity = 0.55}) : color = color ?? BandColors.mute;
   final Color color;
   final double opacity;
 
@@ -171,9 +171,9 @@ class OfflineCaption extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('پەیوەست نییە', style: ku(12, w: FontWeight.w700, c: BandColors.label, h: 1.5)),
+        VText('پەیوەست نییە', style: ku(12, w: FontWeight.w700, c: BandColors.label, h: 1.5)),
         if (last != null)
-          Text.rich(
+          VText.rich(
             TextSpan(children: [
               const TextSpan(text: 'دوایین: '),
               TextSpan(

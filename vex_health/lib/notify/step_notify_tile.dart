@@ -25,15 +25,15 @@ class StepNotifyTile extends StatelessWidget {
                     height: 40,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(color: op(V.cy, 0.12), borderRadius: BorderRadius.circular(14)),
-                    child: const Icon(Icons.directions_walk_rounded, color: V.cy, size: 22),
+                    child: Icon(Icons.directions_walk_rounded, color: V.cy, size: 22),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('ئاگادارکردنەوەی هەنگاو', style: ku(15, w: FontWeight.w800, h: 1.4)),
-                        Text(
+                        VText('ئاگادارکردنەوەی هەنگاو', style: ku(15, w: FontWeight.w800, h: 1.4)),
+                        VText(
                           'هەنگاو، کالۆری و ماوەی ئامانج هەمیشە لەسەر شاشەی مۆبایلەکەت',
                           style: ku(12, c: V.mu, h: 1.6),
                         ),
@@ -42,7 +42,7 @@ class StepNotifyTile extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   n.busy
-                      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2.4, color: V.cy))
+                      ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2.4, color: V.cy))
                       : Switch(
                           value: n.enabled,
                           activeColor: V.ink,
@@ -54,7 +54,7 @@ class StepNotifyTile extends StatelessWidget {
               if (n.message != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 10),
-                  child: Text(n.message!, style: ku(12, c: V.mu, h: 1.7)),
+                  child: VText(n.message!, style: ku(12, c: V.mu, h: 1.7)),
                 ),
             ],
           ),

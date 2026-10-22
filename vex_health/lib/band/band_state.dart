@@ -13,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../core/theme.dart';
 import '../onboarding/account.dart';
 import '../plus/plus_state.dart';
+import 'ble/vex_ble.dart';
 
 class BandState extends ChangeNotifier {
   BandState._();
@@ -24,6 +25,7 @@ class BandState extends ChangeNotifier {
   SharedPreferences? _sp;
   bool _connected = true;
   bool? _override;
+  bool _listening = false;
 
   /// کاتی دوایین هاوکاتکردن (HH:mm) — '' واتە هیچ کاتێک هاوکات نەکراوە
   String lastSync = '';
@@ -31,7 +33,25 @@ class BandState extends ChangeNotifier {
   /// لە کاتی هەوڵی پەیوەستکردنەوەدا
   bool reconnecting = false;
 
-  bool get connected => _connected;
+  /// Band ی BLE ی پەیوەستە، بەڵام لە دەستت نییە (VexBand ـەوە دیاری دەکرێت)
+  bool offWrist = false;
+
+  /// «پەیوەستە» = BLE ئامادەیە + Band لە دەستە. لە دەست نەبێت هەموو شاشەکان وەک پچڕاو (سوور و «—») نیشان دەدەن.
+  bool get connected => _connected && !offWrist;
+
+  /// ئایا BLE خۆی ئامادەیە (بێ گوێدان بە لە دەست بوون)؟
+  bool get bleUp => _connected;
+
+  void setOffWrist(bool v) {
+    if (offWrist == v) return;
+    offWrist = v;
+    if (v) {
+      final t = DateTime.now();
+      lastSync = '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+      _sp?.setString(_kLast, lastSync);
+    }
+    notifyListeners();
+  }
 
   /// ئایا ئەم هەژمارە هەرگیز Band ی پەیوەست کردووە؟ (نەخێر ← کارتی «پەیوەستکردن / کڕین»)
   bool get everPaired => _paired() || lastSync.isNotEmpty || (_override ?? false);
@@ -40,10 +60,13 @@ class BandState extends ChangeNotifier {
     try {
       final sp = await SharedPreferences.getInstance();
       _sp = sp;
-      if (sp.containsKey(_kOn)) _override = sp.getBool(_kOn);
+      _override = sp.containsKey(_kOn) ? sp.getBool(_kOn) : null;
       lastSync = sp.getString(_kLast) ?? '';
     } catch (_) {}
-    Account.I.addListener(_recalc);
+    if (!_listening) {
+      _listening = true;
+      Account.I.addListener(_recalc);
+    }
     _connected = _override ?? _paired();
     notifyListeners();
   }
@@ -66,6 +89,7 @@ class BandState extends ChangeNotifier {
   void setConnected(bool on, {String? lastSync}) {
     _override = on;
     _connected = on;
+    if (!on) offWrist = false;
     reconnecting = false;
     if (!on && lastSync != null && lastSync.isNotEmpty) this.lastSync = lastSync;
     final sp = _sp;
@@ -76,13 +100,32 @@ class BandState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// دوگمەی «پەیوەستکردنەوە». لێرەدا نموونەیە؛ لەگەڵ BLE ی ڕاستەقینە دەگۆڕدرێت بە دۆزینەوەی Band
+  /// دوگمەی «پەیوەستکردنەوە»: BLE ی ڕاستەقینە (سکان ← پەیوەستبوون).
+  /// لە debug دا ئەگەر Band نەدۆزرایەوە، نموونەی دیزاین بەکاردێت.
   Future<void> reconnect() async {
+    // BLE ئامادەیە بەڵام Band لە دەست نییە: پەیوەستکردنەوە بێسوودە
+    if (_connected && offWrist) {
+      toast('Band لە دەستت نییە — لە دەستت بکە');
+      return;
+    }
     if (reconnecting || _connected) return;
     reconnecting = true;
     notifyListeners();
-    await Future<void>.delayed(const Duration(milliseconds: 1600));
+    var ok = false;
+    try {
+      ok = await VexBand.I.quickConnect();
+    } catch (_) {}
     if (!reconnecting) return;
+    if (!ok && kDebugMode) {
+      await Future<void>.delayed(const Duration(milliseconds: 1200));
+      ok = true; // تەنها بۆ تاقیکردنەوەی دیزاین
+    }
+    if (!ok) {
+      reconnecting = false;
+      notifyListeners();
+      toast('Band نەدۆزرایەوە — Band نزیک بێنەوە و بلووتوس بکەرەوە');
+      return;
+    }
     setConnected(true);
     final gift = await PlusState.I.grantBandGift();
     toast(gift ? 'Band پەیوەست کرا 🎁 6 مانگ VEX Plus بە خۆڕایی' : 'Band پەیوەست کرا ✓');

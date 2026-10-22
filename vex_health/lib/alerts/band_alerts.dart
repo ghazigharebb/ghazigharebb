@@ -1,6 +1,6 @@
 // VEX Health — ئاگادارکەرەوەی Band (لەرین)
 //
-// سێ بەش: ١) کاتژمێری لەرەر  ٢) کاتی وەرزش (کەمبوونەوە بە میلی چرکە)  ٣) کاتەکانی نوێژ.
+// سێ بەش: ١) کاتژمێری لەرین  ٢) کاتی وەرزش (کەمبوونەوە بە میلی چرکە)  ٣) کاتەکانی نوێژ.
 //
 // چۆن کار دەکات:
 //  • کاتێک ئەپ کراوەیە، کاتژمێرێکی ناوخۆیی هەر چرکەیەک دەپشکنێت و دەلەرێتەوە + پەنجەرەی «ڕاگرتن» نیشان دەدات.
@@ -326,7 +326,7 @@ class BandAlerts extends ChangeNotifier {
       final id = '${dk}a${a.id}';
       if (a.h * 60 + a.m == nm && _fired[id] != true) {
         _fired[id] = true;
-        _ring('⏰ ${a.label.isEmpty ? 'کاتژمێر' : a.label}', '${fmt12(a.h, a.m)} ${ampm(a.h)}');
+        _ring('⏰ ${a.label.isEmpty ? (kIsEn ? 'Alarm' : (kIsAr ? 'منبّه' : (kIsFa ? 'آلارم' : (kIsTr ? 'Alarm' : 'کاتژمێر')))) : a.label}', '${fmt12(a.h, a.m)} ${ampm(a.h)}');
       }
     }
 
@@ -372,7 +372,7 @@ class BandAlerts extends ChangeNotifier {
     showDialog<void>(
       context: ctx,
       barrierDismissible: false,
-      barrierColor: const Color(0xDB021218),
+      barrierColor: vk(0xDB021218),
       builder: (c) => _RingDialog(title: title, sub: sub),
     ).whenComplete(() {
       auto.cancel();
@@ -417,8 +417,8 @@ class BandAlerts extends ChangeNotifier {
   NotificationDetails get _details => NotificationDetails(
         android: AndroidNotificationDetails(
           _chan,
-          'ئاگادارکەرەوەی Band',
-          channelDescription: 'کاتژمێر، کاتی وەرزش و کاتەکانی نوێژ',
+          vxTr('ئاگادارکەرەوەی Band'),
+          channelDescription: vxTr('کاتژمێر، کاتی وەرزش و کاتەکانی نوێژ'),
           importance: Importance.max,
           priority: Priority.high,
           category: AndroidNotificationCategory.alarm,
@@ -449,8 +449,8 @@ class BandAlerts extends ChangeNotifier {
             jobs.add((
               id: 1000 + (a.id % 100000) * 10 + d,
               at: at,
-              title: '⏰ ${a.label.isEmpty ? 'کاتژمێر' : a.label}',
-              body: '${fmt12(a.h, a.m)} ${ampm(a.h)}',
+              title: '⏰ ${a.label.isEmpty ? (kIsEn ? 'Alarm' : (kIsAr ? 'منبّه' : (kIsFa ? 'آلارم' : (kIsTr ? 'Alarm' : 'کاتژمێر')))) : a.label}',
+              body: vxTr('${fmt12(a.h, a.m)} ${ampm(a.h)}'),
             ));
           }
         }
@@ -470,8 +470,8 @@ class BandAlerts extends ChangeNotifier {
               jobs.add((
                 id: 1500000000 + d * 10 + i,
                 at: at,
-                title: lead > 0 ? '🕌 $lead خولەک بۆ بانگی ${prayerShort(k)}' : '🕌 کاتی ${prayerShort(k)} هات',
-                body: '${place.name} · ${fmt12(t[k]! ~/ 60, t[k]! % 60)} ${ampm(t[k]! ~/ 60)}',
+                title: vxTr(lead > 0 ? '🕌 $lead خولەک بۆ بانگی ${prayerShort(k)}' : '🕌 کاتی ${prayerShort(k)} هات'),
+                body: vxTr('${place.name} · ${fmt12(t[k]! ~/ 60, t[k]! % 60)} ${ampm(t[k]! ~/ 60)}'),
               ));
             }
           }
@@ -483,8 +483,8 @@ class BandAlerts extends ChangeNotifier {
         jobs.add((
           id: _timerId,
           at: DateTime.fromMillisecondsSinceEpoch(timerEndMs),
-          title: '⏱️ کاتی وەرزش تەواو بوو',
-          body: 'باش بوو!',
+          title: vxTr('⏱️ کاتی وەرزش تەواو بوو'),
+          body: vxTr('باش بوو!'),
         ));
       }
 
@@ -547,13 +547,13 @@ class _RingDialogState extends State<_RingDialog> with SingleTickerProviderState
             padding: const EdgeInsets.fromLTRB(20, 30, 20, 20),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(30),
-              gradient: const LinearGradient(
+              gradient: LinearGradient(
                 begin: Alignment.topRight,
                 end: Alignment.bottomLeft,
-                colors: [Color(0xFF0B4150), V.sheet],
+                colors: [vk(0xFF0B4150), V.sheet],
               ),
-              border: Border.all(color: const Color(0x732FE6F3)),
-              boxShadow: const [BoxShadow(color: Color(0x662FE6F3), blurRadius: 50, spreadRadius: -12)],
+              border: Border.all(color: vk(0x732FE6F3)),
+              boxShadow: [BoxShadow(color: vk(0x662FE6F3), blurRadius: 50, spreadRadius: -12)],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -564,9 +564,9 @@ class _RingDialogState extends State<_RingDialog> with SingleTickerProviderState
                   child: const BandEmblem(size: 84),
                 ),
                 const SizedBox(height: 10),
-                Text(widget.title, textAlign: TextAlign.center, style: ku(21, w: FontWeight.w800)),
+                VText(widget.title, textAlign: TextAlign.center, style: ku(21, w: FontWeight.w800)),
                 const SizedBox(height: 4),
-                Text(widget.sub, textAlign: TextAlign.center, style: ku(13, w: FontWeight.w600, c: V.mu)),
+                VText(widget.sub, textAlign: TextAlign.center, style: ku(13, w: FontWeight.w600, c: V.mu)),
                 const SizedBox(height: 22),
                 VBtn('ڕاگرتن', kind: BtnKind.prime, fontSize: 15, onTap: () => Navigator.of(context).pop()),
               ],

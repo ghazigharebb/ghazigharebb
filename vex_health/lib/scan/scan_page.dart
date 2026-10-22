@@ -21,6 +21,7 @@ import '../onboarding/reg_data.dart' show asD, asI, kThisYear;
 import 'scan_ai.dart';
 import 'scan_model.dart';
 import 'scan_widgets.dart';
+import '../plus/gate.dart';
 
 final ImagePicker _picker = ImagePicker();
 bool _picking = false;
@@ -80,6 +81,7 @@ void openFoodImage(Uint8List bytes, {String? slot}) {
 void _pushScan({Uint8List? image, String? text, String? slot}) {
   final nav = navKey.currentState;
   if (nav == null || _pageOpen) return;
+  if (!ScanQuota.take()) return; // پلانی خۆڕایی: 3 سکان لە ڕۆژێکدا
   nav.push(
     PageRouteBuilder<void>(
       transitionDuration: const Duration(milliseconds: 320),
@@ -391,7 +393,7 @@ class _ScanPageState extends State<ScanPage> with TickerProviderStateMixin {
     );
     if (ok) {
       HapticFeedback.selectionClick();
-      toast('✓ ${f.e} ${f.ku} زیادکرا بۆ ئەم ژەمە');
+      toast('✓ ${f.e} ${f.label} زیادکرا بۆ ئەم ژەمە');
     }
     return ok;
   }
@@ -507,10 +509,10 @@ class _ScanPageState extends State<ScanPage> with TickerProviderStateMixin {
                   ),
                   child: Row(
                     children: [
-                      Text(icons[e.key] ?? '🍽️', style: const TextStyle(fontSize: 20)),
+                      VText(icons[e.key] ?? '🍽️', style: const TextStyle(fontSize: 20)),
                       const SizedBox(width: 10),
-                      Expanded(child: Text(e.value, style: ku(15, w: FontWeight.w800))),
-                      if (e.key == cur) const Icon(Icons.check_rounded, color: V.cy, size: 22),
+                      Expanded(child: VText(e.value, style: ku(15, w: FontWeight.w800))),
+                      if (e.key == cur) Icon(Icons.check_rounded, color: V.cy, size: 22),
                     ],
                   ),
                 ),
@@ -576,12 +578,12 @@ class _ScanPageState extends State<ScanPage> with TickerProviderStateMixin {
                 height: 42,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(shape: BoxShape.circle, color: RC2.white(0.06), border: Border.all(color: V.line)),
-                child: const Icon(Icons.close_rounded, color: V.tx, size: 22),
+                child: Icon(Icons.close_rounded, color: V.tx, size: 22),
               ),
             ),
           ),
           const SizedBox(width: 12),
-          Expanded(child: Text(title, style: ku(17, w: FontWeight.w800))),
+          Expanded(child: VText(title, style: ku(17, w: FontWeight.w800))),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
@@ -590,7 +592,7 @@ class _ScanPageState extends State<ScanPage> with TickerProviderStateMixin {
               color: FoodAI.connected ? null : RC2.white(0.06),
               border: FoodAI.connected ? null : Border.all(color: V.line2),
             ),
-            child: Text(FoodAI.connected ? '✨ VEX AI' : '🧪 نموونە',
+            child: VText(FoodAI.connected ? '✨ VEX AI' : '🧪 نموونە',
                 style: ku(11.5, w: FontWeight.w800, c: FoodAI.connected ? Colors.white : V.mu)),
           ),
         ],
@@ -664,7 +666,7 @@ class _ScanPageState extends State<ScanPage> with TickerProviderStateMixin {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      Text(
+                      VText(
                         FoodAI.connected ? 'VEX AI شیکاری دەکات… چەند چرکەیەک' : 'شیکاری دەکرێت…',
                         textAlign: TextAlign.center,
                         style: ku(12.5, c: V.mu),
@@ -683,7 +685,7 @@ class _ScanPageState extends State<ScanPage> with TickerProviderStateMixin {
                 padding: const EdgeInsets.symmetric(vertical: 13),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(borderRadius: BorderRadius.circular(18), border: Border.all(color: V.line2)),
-                child: Text('هەڵوەشاندنەوە', style: ku(14, w: FontWeight.w800, c: V.mu)),
+                child: VText('هەڵوەشاندنەوە', style: ku(14, w: FontWeight.w800, c: V.mu)),
               ),
             ),
           ),
@@ -706,9 +708,9 @@ class _ScanPageState extends State<ScanPage> with TickerProviderStateMixin {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('✍️', style: TextStyle(fontSize: 38)),
+          const VText('✍️', style: TextStyle(fontSize: 38)),
           const SizedBox(height: 10),
-          Text(
+          VText(
             '«${_text ?? ''}»',
             textAlign: TextAlign.center,
             maxLines: 4,
@@ -736,11 +738,11 @@ class _ScanPageState extends State<ScanPage> with TickerProviderStateMixin {
               child: done
                   ? Container(
                       alignment: Alignment.center,
-                      decoration: const BoxDecoration(shape: BoxShape.circle, color: V.mint),
-                      child: const Icon(Icons.check_rounded, size: 16, color: V.ink),
+                      decoration: BoxDecoration(shape: BoxShape.circle, color: V.mint),
+                      child: Icon(Icons.check_rounded, size: 16, color: V.ink),
                     )
                   : now
-                      ? const Padding(
+                      ? Padding(
                           padding: EdgeInsets.all(3),
                           child: CircularProgressIndicator(strokeWidth: 2.2, color: V.cy),
                         )
@@ -750,7 +752,7 @@ class _ScanPageState extends State<ScanPage> with TickerProviderStateMixin {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(_steps[i],
+              child: VText(_steps[i],
                   style: ku(14, w: done || now ? FontWeight.w700 : FontWeight.w500, c: done ? V.tx : (now ? V.c2 : V.mu))),
             ),
           ],
@@ -786,15 +788,15 @@ class _ScanPageState extends State<ScanPage> with TickerProviderStateMixin {
                             color: const Color(0x1AFF5F7E),
                             border: Border.all(color: const Color(0x4DFF5F7E)),
                           ),
-                          child: Text(f.code == 'network' ? '📡' : (f.code == 'offline_text' ? '🤔' : '⚠️'),
+                          child: VText(f.code == 'network' ? '📡' : (f.code == 'offline_text' ? '🤔' : '⚠️'),
                               style: const TextStyle(fontSize: 38)),
                         ),
                       ),
                       const SizedBox(height: 16),
-                      Text(f.code == 'offline_text' ? 'نەمناسییەوە' : 'شیکاری نەکرا',
+                      VText(f.code == 'offline_text' ? 'نەمناسییەوە' : 'شیکاری نەکرا',
                           textAlign: TextAlign.center, style: ku(20, w: FontWeight.w800)),
                       const SizedBox(height: 6),
-                      Text(f.message, textAlign: TextAlign.center, style: ku(14, c: V.mu, h: 1.8)),
+                      VText(f.message, textAlign: TextAlign.center, style: ku(14, c: V.mu, h: 1.8)),
                       const SizedBox(height: 20),
                       if (isText) ...[
                         TextField(
@@ -805,16 +807,16 @@ class _ScanPageState extends State<ScanPage> with TickerProviderStateMixin {
                           style: ku(15, h: 1.5),
                           cursorColor: V.cy,
                           decoration: InputDecoration(
-                            hintText: 'بۆ نموونە: 2 هێلکە و نانێک و چا',
+                            hintText: vxTr('بۆ نموونە: 2 هێلکە و نانێک و چا'),
                             hintStyle: ku(14, c: kDim),
                             counterText: '',
                             filled: true,
                             fillColor: const Color(0x2E000000),
                             contentPadding: const EdgeInsets.all(13),
                             enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: V.line2)),
+                                borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: V.line2)),
                             focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: V.cy)),
+                                borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: V.cy)),
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -871,9 +873,9 @@ class _ScanPageState extends State<ScanPage> with TickerProviderStateMixin {
                           ),
                         ),
                       const SizedBox(height: 18),
-                      Text('🤔 ئەمە خواردن نییە', textAlign: TextAlign.center, style: ku(20, w: FontWeight.w800)),
+                      VText('🤔 ئەمە خواردن نییە', textAlign: TextAlign.center, style: ku(20, w: FontWeight.w800)),
                       const SizedBox(height: 6),
-                      Text(
+                      VText(
                         nm.isNotEmpty
                             ? 'وا دیارە ئەمە «$nm» ـە. وێنەی خواردن یان خواردنەوەیەک بگرە.'
                             : 'وێنەی خواردن یان خواردنەوەیەک بگرە، با ڕوون و نزیک بێت.',
@@ -937,7 +939,7 @@ class _ScanPageState extends State<ScanPage> with TickerProviderStateMixin {
                     Rise(delayMs: 360, child: WalkCard(r: r, t: t, kpm: _kpm)),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(6, 14, 6, 4),
-                      child: Text(
+                      child: VText(
                         'ژمارەکان خەمڵاندنن و لەوانەیە کەمێک جیاواز بن. بڕەکان و تێبینی ڕاست بکەرەوە بۆ ئەنجامی وردتر.',
                         textAlign: TextAlign.center,
                         style: ku(11.5, c: kDim, h: 1.7),
@@ -973,10 +975,10 @@ class _ScanPageState extends State<ScanPage> with TickerProviderStateMixin {
       ),
       child: Row(
         children: [
-          const Text('🧪', style: TextStyle(fontSize: 16)),
+          const VText('🧪', style: TextStyle(fontSize: 16)),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
+            child: VText(
               'ئەنجامی نموونەیە. دوای بەستنەوەی AI، هەر خواردنێک وێنەی بگریت خۆی دەناسرێتەوە.',
               style: ku(12, w: FontWeight.w600, c: const Color(0xFFFFD993), h: 1.6),
             ),
@@ -1001,7 +1003,7 @@ class _ScanPageState extends State<ScanPage> with TickerProviderStateMixin {
     }
     return Container(
       padding: EdgeInsets.fromLTRB(14, 10, 14, 10 + mq.padding.bottom),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Color(0xF203181F),
         border: Border(top: BorderSide(color: V.line)),
       ),
@@ -1026,11 +1028,11 @@ class _ScanPageState extends State<ScanPage> with TickerProviderStateMixin {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Flexible(
-                          child: Text(hint,
+                          child: VText(hint,
                               maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(12, w: FontWeight.w700, c: V.mu)),
                         ),
                         const SizedBox(width: 4),
-                        const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: V.mu),
+                        Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: V.mu),
                       ],
                     ),
                   ),
@@ -1057,7 +1059,7 @@ class _ScanPageState extends State<ScanPage> with TickerProviderStateMixin {
                     child: Row(
                       children: [
                         Expanded(
-                          child: Text(
+                          child: VText(
                             '➕ زیادکردن بۆ $name',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -1070,7 +1072,7 @@ class _ScanPageState extends State<ScanPage> with TickerProviderStateMixin {
                             borderRadius: BorderRadius.circular(14),
                             color: can ? const Color(0x2604323A) : RC2.white(0.05),
                           ),
-                          child: Text.rich(
+                          child: VText.rich(
                             TextSpan(children: [
                               TextSpan(text: fmt(t.k), style: nu(16, c: can ? V.ink : kDim)),
                               TextSpan(text: ' kcal', style: nu(11, w: FontWeight.w700, c: can ? V.ink : kDim)),
@@ -1098,7 +1100,7 @@ class _PhotoFallback extends StatelessWidget {
   Widget build(BuildContext context) {
     return const DecoratedBox(
       decoration: BoxDecoration(color: Color(0xFF0B3442)),
-      child: Center(child: Text('🍽️', style: TextStyle(fontSize: 64))),
+      child: Center(child: VText('🍽️', style: TextStyle(fontSize: 64))),
     );
   }
 }

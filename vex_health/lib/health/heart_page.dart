@@ -154,7 +154,7 @@ class _HeartPageState extends State<HeartPage> with TickerProviderStateMixin {
             children: [
               SizedBox(
                 height: 22,
-                child: Text(p.t, textDirection: TextDirection.ltr, style: ku(14, c: HC.mu)),
+                child: VText(p.t, textDirection: TextDirection.ltr, style: ku(14, c: HC.mu)),
               ),
               const SizedBox(height: 6),
               Row(
@@ -164,9 +164,9 @@ class _HeartPageState extends State<HeartPage> with TickerProviderStateMixin {
                   ScaleTransition(
                     scale: beatScale,
                     child: Container(
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: Color(0x55FF5C7A), blurRadius: 18)],
+                        boxShadow: [BoxShadow(color: vk(0x55FF5C7A), blurRadius: 18)],
                       ),
                       child: svgIcon(HI.heartFill, HX.hr, size: 46, fill: true),
                     ),
@@ -174,18 +174,18 @@ class _HeartPageState extends State<HeartPage> with TickerProviderStateMixin {
                   const SizedBox(width: 14),
                   ShaderMask(
                     blendMode: BlendMode.srcIn,
-                    shaderCallback: (r) => const LinearGradient(
+                    shaderCallback: (r) => LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [Colors.white, HC.hr2],
+                      colors: [kW, HC.hr2],
                     ).createShader(r),
-                    child: Text('$bpm',
-                        textDirection: TextDirection.ltr, style: nu(84, c: Colors.white, h: 1.0, ls: -2)),
+                    child: VText('$bpm',
+                        textDirection: TextDirection.ltr, style: nu(84, c: kW, h: 1.0, ls: -2)),
                   ),
                   const SizedBox(width: 14),
                   Padding(
                     padding: const EdgeInsets.only(top: 40),
-                    child: Text('BPM', style: ku(15, w: FontWeight.w600, c: HC.mu)),
+                    child: VText('BPM', style: ku(15, w: FontWeight.w600, c: HC.mu)),
                   ),
                 ],
               ),
@@ -203,8 +203,8 @@ class _HeartPageState extends State<HeartPage> with TickerProviderStateMixin {
                 maxWidth: cons.maxWidth + 36,
                 child: ShaderMask(
                   blendMode: BlendMode.dstIn,
-                  shaderCallback: (r) => const LinearGradient(
-                    colors: [Color(0x00000000), Color(0xFF000000), Color(0xFF000000), Color(0x00000000)],
+                  shaderCallback: (r) => LinearGradient(
+                    colors: [vk(0x00000000), vk(0xFF000000), vk(0xFF000000), vk(0x00000000)],
                     stops: [0.0, 0.18, 0.82, 1.0],
                   ).createShader(r),
                   child: SizedBox(
@@ -225,7 +225,7 @@ class _HeartPageState extends State<HeartPage> with TickerProviderStateMixin {
             children: [
               Row(
                 children: [
-                  Expanded(child: Text('ناوچەی لێدانی دڵ', style: ku(13, c: HC.mu))),
+                  Expanded(child: VText('ناوچەی لێدانی دڵ', style: ku(13, c: HC.mu))),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
@@ -233,7 +233,7 @@ class _HeartPageState extends State<HeartPage> with TickerProviderStateMixin {
                       borderRadius: BorderRadius.circular(99),
                       border: Border.all(color: HC.line),
                     ),
-                    child: Text(chip, style: ku(12, w: FontWeight.w600, c: HC.c2)),
+                    child: VText(chip, style: ku(12, w: FontWeight.w600, c: HC.c2)),
                   ),
                 ],
               ),
@@ -254,8 +254,8 @@ class _HeartPageState extends State<HeartPage> with TickerProviderStateMixin {
                           child: DecoratedBox(
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(99),
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF3A7BD5), Color(0xFF3A7BD5), HC.c, HC.c2, HC.hr, HC.hr2],
+                              gradient: LinearGradient(
+                                colors: [vk(0xFF3A7BD5), vk(0xFF3A7BD5), HC.c, HC.c2, HC.hr, HC.hr2],
                                 stops: [0.0, 0.2, 0.2, 0.6, 0.6, 1.0],
                               ),
                             ),
@@ -272,11 +272,11 @@ class _HeartPageState extends State<HeartPage> with TickerProviderStateMixin {
                             height: 18,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: Colors.white,
+                              color: kW,
                               border: Border.all(color: HC.bg, width: 3),
-                              boxShadow: const [
+                              boxShadow: [
                                 BoxShadow(color: HC.c2, spreadRadius: 2),
-                                BoxShadow(color: Color(0x66000000), blurRadius: 10, offset: Offset(0, 2)),
+                                BoxShadow(color: vk(0x66000000), blurRadius: 10, offset: Offset(0, 2)),
                               ],
                             ),
                           ),
@@ -300,7 +300,7 @@ class _HeartPageState extends State<HeartPage> with TickerProviderStateMixin {
                 'مەودا و ناوەندی لێدان',
                 '${p.l} — ${p.lo}–${p.hi} BPM',
                 tipColor: HC.hr2,
-                tipBg: const Color(0x1FFF5C7A),
+                tipBg: vk(0x1FFF5C7A),
               ),
               AspectRatio(
                 aspectRatio: 360 / 190,
@@ -326,7 +326,7 @@ class _HeartPageState extends State<HeartPage> with TickerProviderStateMixin {
           ),
         ),
         StatRow([
-          StatItem('$mn', 'کەمترین', const Color(0xFF3A7BD5)),
+          StatItem('$mn', 'کەمترین', vk(0xFF3A7BD5)),
           StatItem('$mx', 'زۆرترین', HC.hr),
           StatItem('$avg', 'ناوەند', HC.c),
         ]),
@@ -345,7 +345,7 @@ class _HeartPageState extends State<HeartPage> with TickerProviderStateMixin {
               ),
               child: Row(
                 children: [
-                  Expanded(child: Text('هەموو زانیارییەکان پیشان بدە', style: ku(15, w: FontWeight.w600, c: HC.tx))),
+                  Expanded(child: VText('هەموو زانیارییەکان پیشان بدە', style: ku(15, w: FontWeight.w600, c: HC.tx))),
                   AnimatedRotation(
                     turns: open ? -0.25 : 0,
                     duration: const Duration(milliseconds: 300),
@@ -375,15 +375,15 @@ class _HeartPageState extends State<HeartPage> with TickerProviderStateMixin {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
                           decoration: BoxDecoration(
-                            border: i < list.length - 1 ? const Border(bottom: BorderSide(color: HC.line)) : null,
+                            border: i < list.length - 1 ? Border(bottom: BorderSide(color: HC.line)) : null,
                           ),
                           child: Row(
                             children: [
-                              Text(list[i].l, style: ku(14, c: HC.tx)),
+                              VText(list[i].l, style: ku(14, c: HC.tx)),
                               const SizedBox(width: 8),
-                              Text('${list[i].avg}', style: nu(16, c: HC.hr2)),
+                              VText('${list[i].avg}', style: nu(16, c: HC.hr2)),
                               const Spacer(),
-                              Text('${list[i].lo} – ${list[i].hi} BPM',
+                              VText('${list[i].lo} – ${list[i].hi} BPM',
                                   textDirection: TextDirection.ltr, style: ku(13, c: HC.mu)),
                             ],
                           ),
@@ -425,7 +425,7 @@ class _EcgStrip extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 4
         ..strokeJoin = StrokeJoin.round
-        ..color = const Color(0x66FF5C7A)
+        ..color = vk(0x66FF5C7A)
         ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 5),
     );
     canvas.drawPath(
@@ -451,7 +451,7 @@ class _HeartChart extends CustomPainter {
   final int avg;
   final double t;
 
-  static final TextStyle _lab = ku(10, c: HC.mu);
+  static TextStyle get _lab => ku(10, c: HC.mu);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -503,14 +503,14 @@ class _HeartChart extends CustomPainter {
     if (pts.length > 1) {
       final full = smoothPath(pts, 6);
       final part = partialPath(full, ChartAnim(t).line(1.3));
-      final shader = ui.Gradient.linear(Offset(pts.first.dx, 0), Offset(pts.last.dx, 0), const [HC.hr2, HC.hr]);
+      final shader = ui.Gradient.linear(Offset(pts.first.dx, 0), Offset(pts.last.dx, 0), [HC.hr2, HC.hr]);
       canvas.drawPath(
         part,
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 5
           ..strokeCap = StrokeCap.round
-          ..color = const Color(0x55FF5C7A)
+          ..color = vk(0x55FF5C7A)
           ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 5),
       );
       canvas.drawPath(
@@ -529,7 +529,7 @@ class _HeartChart extends CustomPainter {
       if (q == null) continue;
       final c = Offset(x(i), y(q.avg));
       final s = i == sel;
-      canvas.drawCircle(c, s ? 6 : 3.5, Paint()..color = s ? Colors.white : HC.bg);
+      canvas.drawCircle(c, s ? 6 : 3.5, Paint()..color = s ? kW : HC.bg);
       canvas.drawCircle(
         c,
         s ? 6 : 3.5,

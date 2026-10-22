@@ -13,6 +13,7 @@ import 'heart_page.dart';
 import 'spo2_page.dart';
 import 'steps_page.dart';
 import 'stress_page.dart';
+import '../plus/gate.dart';
 
 enum Viz { ecg, drop, gauge, hrv, active }
 
@@ -30,9 +31,9 @@ class _Tile {
   final VoidCallback open;
 }
 
-void _openHeart() => pushPage(const HeartPage());
-void _openSpo2() => pushPage(const Spo2Page());
-void _openStress() => pushPage(const StressPage());
+void _openHeart() => pushPage(const GatePage(kind: GateKind.band, id: 'heart', child: HeartPage()));
+void _openSpo2() => pushPage(const GatePage(kind: GateKind.band, id: 'spo2', child: Spo2Page()));
+void _openStress() => pushPage(const GatePage(kind: GateKind.band, id: 'stress', child: StressPage()));
 void _openSteps() => pushPage(const StepsPage());
 
 /// تایلی نیشانەیەک
@@ -61,12 +62,12 @@ class _VitalTile extends StatelessWidget {
                   width: 34,
                   height: 34,
                   alignment: Alignment.center,
-                  decoration: BoxDecoration(color: const Color(0x0FFFFFFF), borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(color: vk(0x0FFFFFFF), borderRadius: BorderRadius.circular(12)),
                   child: svgIcon(t.icon, HX.mu, size: 19),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(t.n,
+                  child: VText(t.n,
                       maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(14, w: FontWeight.w600, c: HC.tx)),
                 ),
               ],
@@ -75,7 +76,7 @@ class _VitalTile extends StatelessWidget {
               padding: EdgeInsets.only(top: 8, bottom: 4),
               child: SizedBox(height: 34, width: double.infinity, child: CustomPaint(painter: DashedLinePainter())),
             ),
-            Text.rich(
+            VText.rich(
               TextSpan(children: [
                 TextSpan(text: '—', style: nu(30, c: HC.mu, h: 1.0)),
                 if (t.u.isNotEmpty) TextSpan(text: ' ${t.u}', style: ku(12, c: HC.mu)),
@@ -113,7 +114,7 @@ class _VitalTile extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(t.n,
+                  child: VText(t.n,
                       maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(14, w: FontWeight.w600, c: HC.tx)),
                 ),
               ],
@@ -125,7 +126,7 @@ class _VitalTile extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text.rich(
+                VText.rich(
                   TextSpan(children: [
                     TextSpan(text: t.v, style: nu(30, c: HC.tx, h: 1.0)),
                     if (t.u.isNotEmpty) TextSpan(text: ' ${t.u}', style: ku(12, c: HC.mu)),
@@ -138,7 +139,7 @@ class _VitalTile extends StatelessWidget {
                   children: [
                     svgIcon(HI.face[t.f]!, statusHex(t.f), size: 17, stroke: 1.8),
                     const SizedBox(width: 4),
-                    Text(t.st, style: ku(12, w: FontWeight.w700, c: sc)),
+                    VText(t.st, style: ku(12, w: FontWeight.w700, c: sc)),
                   ],
                 ),
               ],
@@ -223,7 +224,7 @@ class _VitalsGridState extends State<VitalsGrid> with TickerProviderStateMixin {
   ]).animate(beat);
   Timer? _t;
 
-  late final List<_Tile> tiles = [
+  List<_Tile> get tiles => [
     _Tile('لێدانی دڵ', HI.heart, '68', 'bpm', 'ok', 'باش', HC.bd, HX.bd, Viz.ecg, _openHeart),
     _Tile('ئۆکسجین', HI.drop, '95', '%', 'ok', 'باش', HC.c, HX.c, Viz.drop, _openSpo2),
     _Tile('سترێس', HI.brain, '60', '', 'wn', 'مامناوەند', HC.wn, HX.wn, Viz.gauge, _openStress),
@@ -344,17 +345,17 @@ class ActivityGrid2 extends StatelessWidget {
                             height: 34,
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
-                                color: on ? op(HC.c, 0.18) : const Color(0x0FFFFFFF),
+                                color: on ? op(HC.c, 0.18) : vk(0x0FFFFFFF),
                                 borderRadius: BorderRadius.circular(12)),
                             child: svgIcon(HI.step, on ? HX.c : HX.mu, size: 19),
                           ),
                           const SizedBox(height: 8),
-                          Text('ئامانجی هەنگاوی ئەمڕۆ', textAlign: TextAlign.center, style: ku(13, c: HC.mu)),
+                          VText('ئامانجی هەنگاوی ئەمڕۆ', textAlign: TextAlign.center, style: ku(13, c: HC.mu)),
                           const SizedBox(height: 8),
                           if (on)
-                            Text('24%', textDirection: TextDirection.ltr, style: nu(24, c: HC.tx))
+                            VText('24%', textDirection: TextDirection.ltr, style: nu(24, c: HC.tx))
                           else ...[
-                            Text('—', textDirection: TextDirection.ltr, style: nu(24, c: HC.mu)),
+                            VText('—', textDirection: TextDirection.ltr, style: nu(24, c: HC.mu)),
                             const SizedBox(height: 4),
                             const OfflineCaption(),
                           ],
@@ -398,7 +399,7 @@ class _ActivityRingsCardState extends State<ActivityRingsCard> with SingleTicker
   late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 1600));
   Timer? _t;
 
-  late final List<_Ring> rings = [
+  List<_Ring> get rings => [
     _Ring('هەنگاو', '2,416', '/ 10,000', 0.2416, HC.c, HX.c, HI.step, 62),
     _Ring('کالۆری', '70', 'kcal', 70 / 300, HC.ok, HX.ok, HI.fire, 47),
     _Ring('مەودا', '1.62', 'km', 1.62 / 5, HC.orange, HX.orange, HI.pin, 32),
@@ -427,7 +428,7 @@ class _ActivityRingsCardState extends State<ActivityRingsCard> with SingleTicker
           height: 30,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-              color: on ? op(r.k, 0.16) : const Color(0x0FFFFFFF), borderRadius: BorderRadius.circular(10)),
+              color: on ? op(r.k, 0.16) : vk(0x0FFFFFFF), borderRadius: BorderRadius.circular(10)),
           child: svgIcon(r.icon, on ? r.hex : HX.mu, size: 17),
         ),
         const SizedBox(width: 8),
@@ -438,9 +439,9 @@ class _ActivityRingsCardState extends State<ActivityRingsCard> with SingleTicker
             children: [
               Row(
                 children: [
-                  Expanded(child: Text(r.n, style: ku(13, c: HC.mu))),
+                  Expanded(child: VText(r.n, style: ku(13, c: HC.mu))),
                   if (on)
-                    Text.rich(
+                    VText.rich(
                       TextSpan(children: [
                         TextSpan(text: r.v, style: nu(16, c: HC.tx)),
                         TextSpan(text: ' ${r.g}', style: ku(11, c: HC.mu)),
@@ -448,7 +449,7 @@ class _ActivityRingsCardState extends State<ActivityRingsCard> with SingleTicker
                       textDirection: TextDirection.ltr,
                     )
                   else
-                    Text('—', textDirection: TextDirection.ltr, style: nu(16, c: HC.mu)),
+                    VText('—', textDirection: TextDirection.ltr, style: nu(16, c: HC.mu)),
                 ],
               ),
               const SizedBox(height: 4),
@@ -537,7 +538,7 @@ class _ActivityRingsCardState extends State<ActivityRingsCard> with SingleTicker
         body,
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 10, 4, 0),
-          child: Text.rich(
+          child: VText.rich(
             TextSpan(children: [
               const TextSpan(text: 'پەیوەست نییە. دوایین ژمارە: '),
               TextSpan(text: rings[0].v, style: nu(12.5, w: FontWeight.w700, c: BandColors.label)),
@@ -642,7 +643,7 @@ class HealthLegend extends StatelessWidget {
                 children: [
                   svgIcon(HI.face[it[0]]!, statusHex(it[0]), size: 16, stroke: 1.8),
                   const SizedBox(width: 5),
-                  Text(it[1], style: ku(12, w: FontWeight.w600, c: statusColor(it[0]))),
+                  VText(it[1], style: ku(12, w: FontWeight.w600, c: statusColor(it[0]))),
                 ],
               ),
             ),
@@ -724,7 +725,7 @@ class _DropViz extends CustomPainter {
   _DropViz(this.a) : super(repaint: a);
   final Animation<double> a;
 
-  static final TextStyle _o2 = ku(11, w: FontWeight.w800, c: Colors.white);
+  static TextStyle get _o2 => ku(11, w: FontWeight.w800, c: kW);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -736,7 +737,7 @@ class _DropViz extends CustomPainter {
       ..arcToPoint(const Offset(40, 36), radius: const Radius.circular(20), clockwise: true)
       ..cubicTo(40, 23, 60, 2, 60, 2)
       ..close();
-    canvas.drawPath(drop, Paint()..color = const Color(0x0FFFFFFF));
+    canvas.drawPath(drop, Paint()..color = vk(0x0FFFFFFF));
     canvas.drawPath(
       drop,
       Paint()
@@ -852,7 +853,7 @@ class _ActiveViz extends CustomPainter {
     _fit(canvas, size, 120, 50);
     canvas.drawRRect(
       RRect.fromRectAndRadius(const Rect.fromLTWH(4, 20, 112, 10), const Radius.circular(5)),
-      Paint()..color = const Color(0x14FFFFFF),
+      Paint()..color = vk(0x14FFFFFF),
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(const Rect.fromLTWH(4, 20, 4, 10), const Radius.circular(2)),

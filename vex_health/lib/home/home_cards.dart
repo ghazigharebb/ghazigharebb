@@ -12,7 +12,9 @@ import 'detail_sheets.dart';
 import '../family/family_data.dart';
 import '../family/family_page.dart';
 import '../family/family_widgets.dart';
+import '../ecg/ecg_page.dart';
 import '../health/hc.dart' show pushPage;
+import '../plus/gate.dart';
 
 const Cubic _ease = Cubic(0.2, 0.9, 0.2, 1.0);
 
@@ -22,35 +24,17 @@ const Cubic _ease = Cubic(0.2, 0.9, 0.2, 1.0);
 class ActivityCard extends StatelessWidget {
   const ActivityCard({super.key});
 
-  static const String _pin = '<path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>';
-  static const String _flame =
-      '<path d="M12 3c1 3 4 4.5 4 8.5a4 4 0 0 1-8 0c0-1.6.7-2.6 1.5-3.5C9.5 10 11 9 11 7c0-1.5.4-2.8 1-4z"/>';
-  static const String _timer = '<circle cx="12" cy="13" r="7.5"/><path d="M12 9v4l2.5 1.5M9.5 3h5"/>';
-
-  /// چیپی بچووک: ئایکۆن + ژمارە + ناونیشان
-  Widget _chip(String icon, String hex, Color color, String v, String label, bool on) => Expanded(
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(2, 7, 2, 6),
-          decoration: BoxDecoration(
-            color: op(color, 0.11),
-            borderRadius: BorderRadius.circular(13),
-            border: Border.all(color: op(color, 0.24)),
-          ),
-          child: Opacity(
-            opacity: on ? 1 : 0.5,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                svgIcon(icon, hex, size: 15),
-                const SizedBox(height: 2),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(on ? v : '—', textDirection: TextDirection.ltr, maxLines: 1, style: nu(14, c: on ? V.tx : V.mu, h: 1.2)),
-                ),
-                Text(label, style: ku(9.5, w: FontWeight.w700, c: V.mu, h: 1.3)),
-              ],
-            ),
-          ),
+  Widget _am(String e, String v, String u, bool on) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+        decoration: box(r: 14),
+        child: Row(
+          children: [
+            Opacity(opacity: on ? 1 : 0.45, child: VText(e, style: const TextStyle(fontSize: 17))),
+            const SizedBox(width: 10),
+            VText(on ? v : '—', textDirection: TextDirection.ltr, style: nu(16, c: on ? V.tx : V.mu)),
+            const Spacer(),
+            VText(u, style: ku(11, c: V.mu)),
+          ],
         ),
       );
 
@@ -59,84 +43,55 @@ class ActivityCard extends StatelessWidget {
 
   Widget _card(bool on) {
     final h = Store.I.h;
-    final pct = (clampD(h.steps / 10000, 0, 1) * 100).round();
-    final left = 10000 - h.steps;
     return VCard(
-      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           CardTitle('چالاکی ئەمڕۆ', link: 'وردەکاری ‹', onLink: openActivitySheet),
           Row(
             children: [
-              SizedBox(width: 98, height: 98, child: StepsRing(steps: h.steps, off: !on, compact: true)),
+              SizedBox(width: 132, height: 132, child: StepsRing(steps: h.steps, off: !on)),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: !on
-                              ? Text('Band پەیوەست نییە', style: ku(12, w: FontWeight.w700, c: V.mu, h: 1.5))
-                              : left > 0
-                                  ? Text.rich(
-                                      TextSpan(children: [
-                                        TextSpan(text: fmt(left), style: nu(12, c: V.tx)),
-                                        const TextSpan(text: ' هەنگاو ماوە'),
-                                      ]),
-                                      style: ku(12, w: FontWeight.w700, c: V.mu, h: 1.5),
-                                    )
-                                  : Text('ئامانج تەواو بوو 🎉', style: ku(12, w: FontWeight.w700, c: V.mu, h: 1.5)),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 2),
-                          decoration: BoxDecoration(color: op(V.mint, 0.16), borderRadius: BorderRadius.circular(99)),
-                          child: Text(on ? '$pct%' : '—', textDirection: TextDirection.ltr, style: nu(11.5, c: V.mint, h: 1.5)),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        _chip(_pin, '#2fe6f3', V.cy, h.km.toStringAsFixed(2), 'کیلۆمەتر', on),
-                        const SizedBox(width: 6),
-                        _chip(_flame, '#ff9466', V.orange, fmt(h.kcal), 'کالۆری', on),
-                        const SizedBox(width: 6),
-                        _chip(_timer, '#9b7bff', V.violet, '${h.active}', 'خولەک', on),
-                      ],
-                    ),
+                    _am('📍', h.km.toStringAsFixed(2), 'km', on),
+                    const SizedBox(height: 8),
+                    _am('🔥', '${h.kcal}', 'کالۆری سووتاو', on),
+                    const SizedBox(height: 8),
+                    _am('⏱️', '${h.active}', 'خولەکی چالاک', on),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           if (on)
-            const HourBars(height: 34)
+            const HourBars()
           else
-            const SizedBox(height: 34, child: CustomPaint(painter: DashedLinePainter())),
-          const SizedBox(height: 3),
+            const SizedBox(height: 56, child: CustomPaint(painter: DashedLinePainter())),
+          const SizedBox(height: 4),
           Directionality(
             textDirection: TextDirection.ltr,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 for (final l in const ['00', '06', '12', '18', '24'])
-                  Text(l, style: nu(9, w: FontWeight.w400, c: V.mu)),
+                  VText(l, style: nu(10, w: FontWeight.w400, c: V.mu)),
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
                 child: VBtn('🏃 دەستپێکردنی وەرزش',
-                    kind: BtnKind.prime, fontSize: 13, onTap: () => toast('ئەم بەشە لە ئەپی ڕاستەقینەدا دەکرێتەوە')),
+                    kind: BtnKind.prime, onTap: () => toast('ئەم بەشە لە ئەپی ڕاستەقینەدا دەکرێتەوە')),
               ),
               const SizedBox(width: 8),
-              VBtn('✨ پلانی AI', fontSize: 13, onTap: () => toast('ئەم بەشە لە ئەپی ڕاستەقینەدا دەکرێتەوە')),
+              Expanded(
+                child: VBtn('✨ پلانی ڕاهێنانی AI', onTap: () => toast('ئەم بەشە لە ئەپی ڕاستەقینەدا دەکرێتەوە')),
+              ),
             ],
           ),
         ],
@@ -146,11 +101,8 @@ class ActivityCard extends StatelessWidget {
 }
 
 class StepsRing extends StatelessWidget {
-  const StepsRing({super.key, required this.steps, this.off = false, this.compact = false});
+  const StepsRing({super.key, required this.steps, this.off = false});
   final int steps;
-
-  /// بچووک (کارتی سەرەکی)
-  final bool compact;
 
   /// Band پەیوەست نییە: «—» + بازنەی خاڵخاڵ
   final bool off;
@@ -168,23 +120,23 @@ class StepsRing extends StatelessWidget {
               ? Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('—', textDirection: TextDirection.ltr, style: nu(compact ? 21 : 27, c: V.mu, h: 1.0)),
+                    VText('—', textDirection: TextDirection.ltr, style: nu(27, c: V.mu, h: 1.0)),
                     const SizedBox(height: 4),
-                    Text('پەیوەست نییە', style: ku(compact ? 9.5 : 11, w: FontWeight.w700, c: BandColors.label)),
+                    VText('پەیوەست نییە', style: ku(11, w: FontWeight.w700, c: BandColors.label)),
                   ],
                 )
               : Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(fmt(steps * v), textDirection: TextDirection.ltr, style: nu(compact ? 21 : 27, c: V.mint, h: 1.0)),
-              SizedBox(height: compact ? 2 : 3),
-              Text.rich(
+              VText(fmt(steps * v), textDirection: TextDirection.ltr, style: nu(27, c: V.mint, h: 1.0)),
+              const SizedBox(height: 3),
+              VText.rich(
                 TextSpan(children: [
                   const TextSpan(text: 'لە '),
-                  TextSpan(text: '10,000', style: nu(compact ? 9.5 : 11, w: FontWeight.w600, c: V.mu)),
-                  if (!compact) const TextSpan(text: ' هەنگاو'),
+                  TextSpan(text: '10,000', style: nu(11, w: FontWeight.w600, c: V.mu)),
+                  const TextSpan(text: ' هەنگاو'),
                 ]),
-                style: ku(compact ? 9.5 : 11, c: V.mu),
+                style: ku(11, c: V.mu),
               ),
             ],
           ),
@@ -240,11 +192,7 @@ class _StepsPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 12 * s
         ..strokeCap = StrokeCap.round
-        ..shader = const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [V.c2, V.mint],
-        ).createShader(rect),
+        ..color = V.mint,
     );
   }
 
@@ -253,8 +201,7 @@ class _StepsPainter extends CustomPainter {
 }
 
 class HourBars extends StatelessWidget {
-  const HourBars({super.key, this.height = 56});
-  final double height;
+  const HourBars({super.key});
 
   static const List<int> _hr = [0, 0, 0, 0, 0, 0, 0, 40, 15, 30, 60, 100, 20, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
@@ -262,23 +209,22 @@ class HourBars extends StatelessWidget {
   Widget build(BuildContext context) {
     final now = DateTime.now().hour;
     return SizedBox(
-      height: height,
+      height: 56,
       child: Directionality(
         textDirection: TextDirection.ltr,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             for (int i = 0; i < 24; i++) ...[
-              if (i > 0) const SizedBox(width: 2),
+              if (i > 0) const SizedBox(width: 3),
               Expanded(
                 child: Opacity(
-                  opacity: i == now ? 1.0 : (i > now ? 0.08 : (_hr[i] > 0 ? 0.85 : 0.18)),
+                  opacity: i > now ? 0.08 : (_hr[i] > 0 ? 0.85 : 0.18),
                   child: Container(
-                    height: height * (_hr[i] > 0 ? math.max(8, _hr[i]) : 4) / 100,
+                    height: 56 * (_hr[i] > 0 ? math.max(8, _hr[i]) : 4) / 100,
                     decoration: BoxDecoration(
                       color: V.mint,
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(2), bottom: Radius.circular(1)),
-                      boxShadow: i == now ? [BoxShadow(color: op(V.mint, 0.6), blurRadius: 8)] : null,
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(3), bottom: Radius.circular(1)),
                     ),
                   ),
                 ),
@@ -298,7 +244,7 @@ class FamilyCard extends StatelessWidget {
   const FamilyCard({super.key});
 
   static void _open({bool add = false, String? memberId}) =>
-      pushPage(FamilyPage(openAdd: add, openMemberId: memberId));
+      pushPage(GatePage(kind: GateKind.plus, id: 'family', child: FamilyPage(openAdd: add, openMemberId: memberId)));
 
   Widget _avatar(FMember m) {
     final k = m.pend ? V.amber : m.stColor;
@@ -309,7 +255,7 @@ class FamilyCard extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           Positioned.fill(child: DecoratedBox(decoration: BoxDecoration(shape: BoxShape.circle, color: k))),
-          const Positioned(
+          Positioned(
             left: 2,
             top: 2,
             right: 2,
@@ -330,10 +276,10 @@ class FamilyCard extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: m.pend ? const [Color(0xFF445566), Color(0xFF223344)] : [m.grad0, m.grad1],
+                    colors: m.pend ? [vk(0xFF445566), vk(0xFF223344)] : [m.grad0, m.grad1],
                   ),
                 ),
-                child: Text(m.pend ? '⏳' : m.e, style: const TextStyle(fontSize: 24)),
+                child: VText(m.pend ? '⏳' : m.e, style: const TextStyle(fontSize: 24)),
               ),
             ),
           ),
@@ -361,11 +307,11 @@ class FamilyCard extends StatelessWidget {
         children: [
           _avatar(m),
           const SizedBox(height: 3),
-          Text(m.n, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(11, w: FontWeight.w700)),
+          VText(m.n, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(11, w: FontWeight.w700)),
           if (m.pend)
-            Text('چاوەڕوان', maxLines: 1, style: ku(10, c: V.amber))
+            VText('چاوەڕوان', maxLines: 1, style: ku(10, c: V.amber))
           else
-            Text('${fmt(m.steps)} 👣', textDirection: TextDirection.ltr, style: nu(10, w: FontWeight.w400, c: V.mu)),
+            VText('${fmt(m.steps)} 👣', textDirection: TextDirection.ltr, style: nu(10, w: FontWeight.w400, c: V.mu)),
         ],
       ),
     );
@@ -386,14 +332,14 @@ class FamilyCard extends StatelessWidget {
                 height: 48,
                 child: CustomPaint(
                   painter: const _DashedCircle(),
-                  child: Center(child: Text('+', style: nu(24, c: V.cy, h: 1.0))),
+                  child: Center(child: VText('+', style: nu(24, c: V.cy, h: 1.0))),
                 ),
               ),
             ),
           ),
           const SizedBox(height: 3),
-          Text('زیادکردن', style: ku(11, w: FontWeight.w700)),
-          Text(' ', style: nu(10, w: FontWeight.w400)),
+          VText('زیادکردن', style: ku(11, w: FontWeight.w700)),
+          VText(' ', style: nu(10, w: FontWeight.w400)),
         ],
       ),
     );
@@ -411,10 +357,10 @@ class FamilyCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Text(a.kind == 'r' ? '🔴' : a.kind == 'y' ? '🟡' : '🎉', style: const TextStyle(fontSize: 13)),
+          VText(a.kind == 'r' ? '🔴' : a.kind == 'y' ? '🟡' : '🎉', style: const TextStyle(fontSize: 13)),
           const SizedBox(width: 10),
           Expanded(
-            child: Text.rich(
+            child: VText.rich(
               TextSpan(children: [
                 TextSpan(text: a.m.n, style: ku(13, w: FontWeight.w800)),
                 TextSpan(text: a.text),
@@ -428,7 +374,7 @@ class FamilyCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: box(r: 11, border: V.line2),
-              child: Text(actionLabel(a.action), style: ku(12, w: FontWeight.w800)),
+              child: VText(actionLabel(a.action), style: ku(12, w: FontWeight.w800)),
             ),
           ),
         ],
@@ -533,9 +479,9 @@ class _DashedCircle extends CustomPainter {
 class ToolsRow extends StatelessWidget {
   const ToolsRow({super.key});
 
-  Widget _tool(String title, String sub, String icon, Color k, String hex) {
+  Widget _tool(String title, String sub, String icon, Color k, String hex, {VoidCallback? onTap}) {
     return Press(
-      onTap: () => toast('ئەم بەشە لە ئەپی ڕاستەقینەدا دەکرێتەوە'),
+      onTap: onTap ?? () => toast('ئەم بەشە لە ئەپی ڕاستەقینەدا دەکرێتەوە'),
       child: Container(
         padding: const EdgeInsets.all(13),
         decoration: BoxDecoration(
@@ -557,8 +503,8 @@ class ToolsRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(13, w: FontWeight.w800)),
-                  Text(sub, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(11, c: V.mu)),
+                  VText(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(13, w: FontWeight.w800)),
+                  VText(sub, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(11, c: V.mu)),
                 ],
               ),
             ),
@@ -574,7 +520,7 @@ class ToolsRow extends StatelessWidget {
       padding: const EdgeInsets.only(top: 14),
       child: Row(
         children: [
-          Expanded(child: _tool('پێوانەی ECG', 'ئێلێکترۆکاردیۆگرام', Ico.ecg, V.coral, '#ff5f7e')),
+          Expanded(child: _tool('پێوانەی ECG', 'ئێلێکترۆکاردیۆگرام', Ico.ecg, V.coral, '#ff5f7e', onTap: openEcgPage)),
           const SizedBox(width: 10),
           Expanded(child: _tool('VEX AI', 'پرسیاری تەندروستی', Ico.sparkTool, V.cy, '#2fe6f3')),
         ],

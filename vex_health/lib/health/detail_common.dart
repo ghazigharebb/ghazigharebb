@@ -62,7 +62,7 @@ class DetailHeader extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(title,
+          child: VText(title,
               maxLines: 2, overflow: TextOverflow.ellipsis, style: ku(22, w: FontWeight.w800, c: HC.tx, h: 1.3)),
         ),
         const SizedBox(width: 10),
@@ -104,12 +104,12 @@ class Seg3 extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
-                gradient: const LinearGradient(
+                gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [HC.c2, HC.c],
                 ),
-                boxShadow: const [BoxShadow(color: HC.glow, blurRadius: 16, offset: Offset(0, 4))],
+                boxShadow: [BoxShadow(color: HC.glow, blurRadius: 16, offset: Offset(0, 4))],
               ),
             ),
           ),
@@ -126,7 +126,7 @@ class Seg3 extends StatelessWidget {
                         child: AnimatedDefaultTextStyle(
                           duration: const Duration(milliseconds: 250),
                           style: ku(13, w: FontWeight.w600, c: i == index ? HC.ink : HC.mu),
-                          child: Text(labels[i]),
+                          child: VText(labels[i]),
                         ),
                       ),
                     ),
@@ -151,7 +151,7 @@ class DateRow extends StatelessWidget {
         height: 30,
         alignment: Alignment.center,
         decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: HC.line)),
-        child: Text(t, style: ku(12, c: HC.mu, h: 1.0)),
+        child: VText(t, style: ku(12, c: HC.mu, h: 1.0)),
       );
 
   @override
@@ -166,7 +166,7 @@ class DateRow extends StatelessWidget {
           Flexible(
             child: ConstrainedBox(
               constraints: const BoxConstraints(minWidth: 150),
-              child: Text(label, textAlign: TextAlign.center, style: ku(15, w: FontWeight.w600, c: HC.tx)),
+              child: VText(label, textAlign: TextAlign.center, style: ku(15, w: FontWeight.w600, c: HC.tx)),
             ),
           ),
           const SizedBox(width: 16),
@@ -202,8 +202,8 @@ class HCard extends StatelessWidget {
 
 /// سەردێڕی کارتی هێڵکاری + چیپی ڕوونکردنەوە
 class ChartHead extends StatelessWidget {
-  const ChartHead(this.title, this.tip,
-      {super.key, this.tipColor = HC.c2, this.tipBg = const Color(0x1A03EAFB), this.tipLtr = true});
+  ChartHead(this.title, this.tip,
+      {super.key, Color? tipColor, Color? tipBg, this.tipLtr = true}) : tipColor = tipColor ?? HC.c2, tipBg = tipBg ?? vk(0x1A03EAFB);
   final String title;
   final String tip;
   final Color tipColor;
@@ -216,7 +216,7 @@ class ChartHead extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          Expanded(child: Text(title, style: ku(14, c: HC.mu))),
+          Expanded(child: VText(title, style: ku(14, c: HC.mu))),
           const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
@@ -225,7 +225,7 @@ class ChartHead extends StatelessWidget {
               borderRadius: BorderRadius.circular(99),
               border: Border.all(color: HC.line),
             ),
-            child: Text(
+            child: VText(
               tip,
               textDirection: tipLtr ? TextDirection.ltr : null,
               style: ku(12, c: tipColor),
@@ -282,7 +282,7 @@ class StatRow extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Text.rich(
+                            VText.rich(
                               TextSpan(children: [
                                 TextSpan(text: items[i].value, style: nu(28, c: HC.tx, h: 1.15)),
                                 if (items[i].unit.isNotEmpty)
@@ -292,7 +292,7 @@ class StatRow extends StatelessWidget {
                               textDirection: TextDirection.ltr,
                             ),
                             const SizedBox(height: 2),
-                            Text(items[i].label, textAlign: TextAlign.center, style: ku(12, c: HC.mu)),
+                            VText(items[i].label, textAlign: TextAlign.center, style: ku(12, c: HC.mu)),
                           ],
                         ),
                       ),
@@ -334,7 +334,7 @@ class ZoneList extends StatelessWidget {
               margin: EdgeInsets.only(top: i > 0 ? 8 : 0),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
               decoration: BoxDecoration(
-                color: i == active ? const Color(0x14FFFFFF) : HC.card,
+                color: i == active ? vk(0x14FFFFFF) : HC.card,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: i == active ? items[i].k : HC.line, width: i == active ? 1.5 : 1),
                 boxShadow: i == active
@@ -353,8 +353,8 @@ class ZoneList extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Expanded(child: Text(items[i].name, style: ku(15, w: FontWeight.w600, c: HC.tx))),
-                  Text(items[i].range,
+                  Expanded(child: VText(items[i].name, style: ku(15, w: FontWeight.w600, c: HC.tx))),
+                  VText(items[i].range,
                       textDirection: TextDirection.ltr,
                       style: ku(14, c: i == active ? HC.tx : HC.mu)),
                 ],
@@ -382,7 +382,7 @@ class XLabels extends StatelessWidget {
         padding: EdgeInsets.fromLTRB(padLeft, top, padRight, 0),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [for (final l in labels) Text(l, style: ku(11, c: HC.mu))],
+          children: [for (final l in labels) VText(l, style: ku(11, c: HC.mu))],
         ),
       ),
     );
@@ -406,16 +406,16 @@ class SourcesNote extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('سەرچاوەکان', style: ku(13, w: FontWeight.w600, c: HC.mu)),
+                VText('سەرچاوەکان', style: ku(13, w: FontWeight.w600, c: HC.mu)),
                 const SizedBox(height: 4),
-                Text('1. WHO (2020) — ڕێنمایی چالاکی جەستەیی', style: ku(12, c: HC.mu, h: 1.9)),
-                Text('2. CDC — مەترسییەکانی تەندروستی لە دانیشتنی درێژخایەن', style: ku(12, c: HC.mu, h: 1.9)),
+                VText('1. WHO (2020) — ڕێنمایی چالاکی جەستەیی', style: ku(12, c: HC.mu, h: 1.9)),
+                VText('2. CDC — مەترسییەکانی تەندروستی لە دانیشتنی درێژخایەن', style: ku(12, c: HC.mu, h: 1.9)),
               ],
             ),
           ),
         Padding(
           padding: const EdgeInsets.only(top: 16),
-          child: Text(demo, textAlign: TextAlign.center, style: ku(11, c: op(HC.mu, 0.75))),
+          child: VText(demo, textAlign: TextAlign.center, style: ku(11, c: op(HC.mu, 0.75))),
         ),
       ],
     );

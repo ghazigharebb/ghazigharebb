@@ -6,39 +6,39 @@ import '../core/theme.dart';
 /// ڕەنگەکانی بەشی تەندروستی (هەمان ڕەنگەکانی وێبەکە)
 class HC {
   HC._();
-  static const Color bg = Color(0xFF062832);
-  static const Color bg2 = Color(0xFF0A3F4C);
-  static const Color card = Color(0x0BFFFFFF);
-  static const Color line = Color(0x266CF0F7);
-  static const Color c = Color(0xFF03EAFB);
-  static const Color c2 = Color(0xFF6CF0F7);
-  static const Color tx = Color(0xFFEAFFFF);
-  static const Color mu = Color(0xFF80B4BC);
-  static const Color track = Color(0x14FFFFFF);
-  static const Color glow = Color(0x4D03EAFB);
-  static const Color ok = Color(0xFF5BE3A4);
-  static const Color wn = Color(0xFFFFB84D);
-  static const Color bd = Color(0xFFFF6B7F);
-  static const Color nd = Color(0xFF6F8F96);
-  static const Color orange = Color(0xFFFF8A5C);
-  static const Color hr = Color(0xFFFF5C7A);
-  static const Color hr2 = Color(0xFFFF8FA3);
-  static const Color ink = Color(0xFF04323A);
+  static Color get bg => VexTheme.I.p.hBg;
+  static Color get bg2 => VexTheme.I.p.hBg2;
+  static Color get card => VexTheme.I.p.hCard;
+  static Color get line => VexTheme.I.p.hLine;
+  static Color get c => VexTheme.I.p.hC;
+  static Color get c2 => VexTheme.I.p.hC2;
+  static Color get tx => VexTheme.I.p.hTx;
+  static Color get mu => VexTheme.I.p.hMu;
+  static Color get track => VexTheme.I.p.hTrack;
+  static Color get glow => VexTheme.I.p.hGlow;
+  static Color get ok => VexTheme.I.p.hOk;
+  static Color get wn => VexTheme.I.p.hWn;
+  static Color get bd => VexTheme.I.p.hBd;
+  static Color get nd => VexTheme.I.p.hNd;
+  static Color get orange => VexTheme.I.p.hOrange;
+  static Color get hr => VexTheme.I.p.hHr;
+  static Color get hr2 => VexTheme.I.p.hHr2;
+  static Color get ink => VexTheme.I.p.hInk;
 }
 
 /// ڕەنگەکان بە شێوەی hex بۆ ئایکۆنەکانی SVG
 class HX {
   HX._();
-  static const String c = '#03eafb';
-  static const String c2 = '#6cf0f7';
-  static const String tx = '#eaffff';
-  static const String mu = '#80b4bc';
-  static const String ok = '#5be3a4';
-  static const String wn = '#ffb84d';
-  static const String bd = '#ff6b7f';
-  static const String nd = '#6f8f96';
-  static const String orange = '#ff8a5c';
-  static const String hr = '#ff5c7a';
+  static String get c => vexHex(HC.c);
+  static String get c2 => vexHex(HC.c2);
+  static String get tx => vexHex(HC.tx);
+  static String get mu => vexHex(HC.mu);
+  static String get ok => vexHex(HC.ok);
+  static String get wn => vexHex(HC.wn);
+  static String get bd => vexHex(HC.bd);
+  static String get nd => vexHex(HC.nd);
+  static String get orange => vexHex(HC.orange);
+  static String get hr => vexHex(HC.hr);
 }
 
 /// ئایکۆنەکان (ناوەڕۆکی SVG بە viewBox 24)
@@ -130,14 +130,14 @@ class HealthBg extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        const Positioned.fill(child: ColoredBox(color: HC.bg)),
+        Positioned.fill(child: ColoredBox(color: HC.bg)),
         Positioned.fill(
           child: DecoratedBox(
             decoration: BoxDecoration(
               gradient: RadialGradient(
                 center: const Alignment(0, -1),
                 radius: radius,
-                colors: const [HC.bg2, Color(0x000A3F4C)],
+                colors: [HC.bg2, Color(0x000A3F4C)],
                 stops: const [0.0, 0.7],
               ),
             ),
@@ -161,12 +161,12 @@ class HSec extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(4, 24, 4, 0),
       child: Row(
         children: [
-          Expanded(child: Text(title, style: ku(15.5, w: FontWeight.w800, c: HC.tx))),
+          Expanded(child: VText(title, style: ku(15.5, w: FontWeight.w800, c: HC.tx))),
           if (live) ...[
-            const BlinkDot(size: 6, color: HC.ok, glow: true),
+            BlinkDot(size: 6, color: HC.ok, glow: true),
             const SizedBox(width: 6),
           ],
-          Text(note, style: ku(11.5, w: FontWeight.w700, c: HC.mu)),
+          VText(note, style: ku(11.5, w: FontWeight.w700, c: HC.mu)),
         ],
       ),
     );
@@ -257,7 +257,7 @@ void paintText(
   bool baseline = true,
 }) {
   final tp = TextPainter(
-    text: TextSpan(text: text, style: style),
+    text: TextSpan(text: vxTr(text), style: style),
     textDirection: TextDirection.ltr,
   )..layout();
   double x = at.dx;

@@ -140,20 +140,20 @@ class _StepsPageState extends State<StepsPage> with TickerProviderStateMixin {
                           animation: numC,
                           builder: (context, _) => ShaderMask(
                             blendMode: BlendMode.srcIn,
-                            shaderCallback: (r) => const LinearGradient(
+                            shaderCallback: (r) => LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
-                              colors: [Colors.white, HC.c2],
+                              colors: [kW, HC.c2],
                             ).createShader(r),
-                            child: Text(
+                            child: VText(
                               fmt(tot * Curves.easeOutCubic.transform(numC.value)),
                               textDirection: TextDirection.ltr,
-                              style: nu(58, c: Colors.white, h: 1.0, ls: -1),
+                              style: nu(58, c: kW, h: 1.0, ls: -1),
                             ),
                           ),
                         ),
                         const SizedBox(height: 6),
-                        Text('هەنگاو', style: ku(15, c: HC.mu)),
+                        VText('هەنگاو', style: ku(15, c: HC.mu)),
                         const SizedBox(height: 10),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -162,7 +162,7 @@ class _StepsPageState extends State<StepsPage> with TickerProviderStateMixin {
                             borderRadius: BorderRadius.circular(99),
                             border: Border.all(color: HC.line),
                           ),
-                          child: Text(pctTxt, textDirection: TextDirection.ltr, style: ku(12, c: HC.c2)),
+                          child: VText(pctTxt, textDirection: TextDirection.ltr, style: ku(12, c: HC.c2)),
                         ),
                       ],
                     ),
@@ -192,7 +192,7 @@ class _StepsPageState extends State<StepsPage> with TickerProviderStateMixin {
             children: [
               Padding(
                 padding: const EdgeInsets.only(bottom: 2),
-                child: ChartHead(c.ct, tip, tipBg: const Color(0x1F03EAFB), tipLtr: false),
+                child: ChartHead(c.ct, tip, tipBg: vk(0x1F03EAFB), tipLtr: false),
               ),
               SizedBox(
                 height: 150,
@@ -228,8 +228,8 @@ class _StepsPageState extends State<StepsPage> with TickerProviderStateMixin {
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
                 children: [
-                  Expanded(child: Text(c.gl, style: ku(15, w: FontWeight.w600, c: HC.mu))),
-                  Text.rich(
+                  Expanded(child: VText(c.gl, style: ku(15, w: FontWeight.w600, c: HC.mu))),
+                  VText.rich(
                     TextSpan(children: [
                       TextSpan(text: fmt(tot), style: nu(24, c: HC.tx)),
                       TextSpan(text: '  / ${fmt(c.goal)}', style: ku(15, c: HC.mu)),
@@ -256,7 +256,7 @@ class _StepsPageState extends State<StepsPage> with TickerProviderStateMixin {
                         child: DecoratedBox(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(99),
-                            gradient: const LinearGradient(colors: [HC.c, HC.c2]),
+                            gradient: LinearGradient(colors: [HC.c, HC.c2]),
                           ),
                         ),
                       ),
@@ -264,7 +264,7 @@ class _StepsPageState extends State<StepsPage> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-              Text('ماوە ${fmt(math.max(c.goal - tot, 0))} هەنگاو تا ئامانج', style: ku(13, c: HC.mu)),
+              VText('${fmt(math.max(c.goal - tot, 0))} هەنگاو ماوە تا ئامانج', style: ku(13, c: HC.mu)),
             ],
           ),
         ),
@@ -287,8 +287,8 @@ class _StepsPageState extends State<StepsPage> with TickerProviderStateMixin {
           children: [
             svgIcon(icon, HX.c, size: 22),
             const SizedBox(height: 6),
-            Text(v, textDirection: TextDirection.ltr, style: nu(18, c: HC.tx)),
-            Text(label, style: ku(12, c: HC.mu)),
+            VText(v, textDirection: TextDirection.ltr, style: nu(18, c: HC.tx)),
+            VText(label, style: ku(12, c: HC.mu)),
           ],
         ),
       ),
@@ -325,12 +325,12 @@ class _StepsPageState extends State<StepsPage> with TickerProviderStateMixin {
                 color: zero ? HC.track : null,
                 gradient: zero
                     ? null
-                    : const LinearGradient(
+                    : LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [HC.c2, Color(0x4003EAFB)],
+                        colors: [HC.c2, vk(0x4003EAFB)],
                       ),
-                boxShadow: isSel ? const [BoxShadow(color: Color(0x5903EAFB), blurRadius: 14)] : null,
+                boxShadow: isSel ? [BoxShadow(color: vk(0x5903EAFB), blurRadius: 14)] : null,
               ),
             ),
           ),
@@ -370,7 +370,7 @@ class _StepsRing extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 16 * k
         ..strokeCap = StrokeCap.round
-        ..color = const Color(0x5903EAFB)
+        ..color = vk(0x5903EAFB)
         ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 10),
     );
     canvas.drawArc(
@@ -382,7 +382,7 @@ class _StepsRing extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 16 * k
         ..strokeCap = StrokeCap.round
-        ..shader = const LinearGradient(
+        ..shader = LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [HC.c, HC.c2],

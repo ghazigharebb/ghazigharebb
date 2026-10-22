@@ -25,7 +25,7 @@ class PlusPlan {
 }
 
 const List<PlusPlan> kPlusPlans = [
-  PlusPlan(key: 'month', name: '1 مانگ', sub: 'هەر کاتێک ڕایبگرە', oldPrice: 10000, price: 5000, days: 30, unit: 'د.ع / مانگ'),
+  PlusPlan(key: 'month', name: '1 مانگ', sub: 'هەر کاتێک بتەوێت ڕایبگرە', oldPrice: 10000, price: 5000, days: 30, unit: 'د.ع / مانگ'),
   PlusPlan(
       key: 'half',
       name: '6 مانگ',
@@ -38,7 +38,7 @@ const List<PlusPlan> kPlusPlans = [
   PlusPlan(
       key: 'year',
       name: '12 مانگ',
-      sub: 'نرخی 50٪ بۆ ساڵێک قفڵ دەبێت',
+      sub: 'نرخی 50٪ بۆ ساڵێک دەمێنێتەوە',
       oldPrice: 100000,
       price: 50000,
       days: 365,
@@ -46,18 +46,67 @@ const List<PlusPlan> kPlusPlans = [
       badge: 'باشترین بەها'),
 ];
 
+
+/// پلان لە سێرڤەرەوە بە ئینگلیزی بێت (Premium، monthly …) دەیکات بە کوردی تا VText بۆ هەموو زمانەکان وەریبگێڕێت.
+/// دەقی نەناسراو وەک خۆی دەگەڕێتەوە.
+String plusTxt(String s) {
+  final k = s.trim().toLowerCase();
+  const m = <String, String>{
+    'monthly': 'مانگانە',
+    'month': 'مانگ',
+    'yearly': 'ساڵانە',
+    'annual': 'ساڵانە',
+    'year': 'ساڵ',
+    'weekly': 'هەفتانە',
+    'premium': 'Premium',
+    'plus': 'Plus',
+    'most popular': 'باوترین',
+    'best value': 'باشترین بەها',
+    'advanced insights, reports, goals analytics, and band advanced features.': 'شیکاری پێشکەوتوو، ڕاپۆرت، شیکاری ئامانج و تایبەتمەندییە پێشکەوتووەکانی Band.',
+    'advanced insights, reports, goals analytics, and band advanced features': 'شیکاری پێشکەوتوو، ڕاپۆرت، شیکاری ئامانج و تایبەتمەندییە پێشکەوتووەکانی Band.',
+  };
+  return m[k] ?? s;
+}
+
 PlusPlan plusPlanOf(String key) => kPlusPlans.firstWhere((p) => p.key == key, orElse: () => kPlusPlans.last);
 
-/// ڕێگای پارەدان. بۆ پارەدانی ڕاستەقینە (FIB, FastPay, ZainCash, Qi Card) ئەمە بگۆڕە بە API ی خۆت.
-/// دەبێت `true` بگەڕێنێتەوە ئەگەر پارەکە بە سەرکەوتوویی وەرگیرا، و `false` یان exception ئەگەر نا.
+/// دۆخی داواکاریی پارەدان
+enum PayStatus { pending, paid, failed, expired }
+
+/// داواکارییەکی پارەدان: سێرڤەری تۆ (یان API ی FIB / Qi Card / FastPay) دروستی دەکات.
+class PayRequest {
+  const PayRequest({required this.id, required this.qrData, required this.expiresAt, this.appLink});
+  final String id; // ناسنامەی پارەدان لای سێرڤەر
+  final String qrData; // ناوەڕۆکی بارکۆد (QR) لە API ی شێوازەکە
+  final DateTime expiresAt;
+  final String? appLink; // deep link بۆ کردنەوەی ئەپی شێوازەکە (ئەگەر هەبوو)
+}
+
+/// ڕێگای پارەدان. ئێستا دیمۆیە (هیچ پارەیەک ناڕوات).
+/// بۆ پارەدانی ڕاستەقینە (FIB, Qi Card, FastPay) ئەم دوو function ـە بگۆڕە بە API ی خۆت:
+///   PlusPayment.create = (method, plan) async => ... // method: 'fib' | 'qicard' | 'fastpay'
+///   PlusPayment.status = (id) async => ...           // paid / pending / failed / expired
+///   PlusPayment.isDemo = false;
 /// ئاگاداری: چالاککردنی Plus دەبێت لەلایەن سێرڤەرەوە پشتڕاست بکرێتەوە (نەک تەنها لە مۆبایل).
 abstract class PlusPayment {
-  static Future<bool> Function(String method, PlusPlan plan) charge = _demo;
+  static bool isDemo = true;
+  static Future<PayRequest> Function(String method, PlusPlan plan) create = _demoCreate;
+  static Future<PayStatus> Function(String id) status = _demoStatus;
 
-  static Future<bool> _demo(String method, PlusPlan plan) async {
-    await Future<void>.delayed(const Duration(milliseconds: 1500));
-    return true; // دیمۆ: هیچ پارەیەک نابڕدرێت
+  static final Set<String> _demoPaid = <String>{};
+  static void demoMarkPaid(String id) => _demoPaid.add(id);
+
+  static Future<PayRequest> _demoCreate(String method, PlusPlan plan) async {
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+    final id = '${method}_${DateTime.now().microsecondsSinceEpoch}';
+    return PayRequest(
+      id: id,
+      qrData: 'VEX-PLUS-DEMO|$method|${plan.key}|$id',
+      expiresAt: DateTime.now().add(const Duration(minutes: 5)),
+    );
   }
+
+  static Future<PayStatus> _demoStatus(String id) async => _demoPaid.contains(id) ? PayStatus.paid : PayStatus.pending;
 }
 
 class PlusState extends ChangeNotifier {

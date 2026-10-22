@@ -23,7 +23,9 @@ class _SMode {
 }
 
 const double _lo = 90, _hi = 100;
-const Color _cy = Color(0xFF03EAFB), _am = Color(0xFFFFB84D), _rd = Color(0xFFFF5C7A);
+Color get _cy => vk(0xFF03EAFB);
+Color get _am => vk(0xFFFFB84D);
+Color get _rd => vk(0xFFFF5C7A);
 
 /// ڕەنگ بەپێی ئاستی ئۆکسجین
 Color _colorAt(double v) {
@@ -36,11 +38,11 @@ Color _colorAt(double v) {
 
 int _zi(double v) => v >= 95 ? 0 : (v >= 91 ? 1 : 2);
 
-const List<ZoneItem> _zones = [
+List<ZoneItem> get _zones => vexCache<List<ZoneItem>>('spo2_page.dart:_zones', () => [
   ZoneItem('ئاسایی', '≥ 95%', _cy),
   ZoneItem('کەمێک نزم', '91 – 94%', _am),
   ZoneItem('نزم', '≤ 90%', _rd),
-];
+]);
 
 List<_SMode> _spo2Data() {
   const raw = [92, 98, 100, 100, 100, 100, 100, 100, 100, 100, 98, 100, 100, 100, 100, 100, 100, 99, 100, 100, 100, 98, 97];
@@ -212,10 +214,10 @@ class _Spo2PageState extends State<Spo2Page> with TickerProviderStateMixin {
                           children: [
                             SizedBox(
                               height: 16,
-                              child: Text(
+                              child: VText(
                                 ov != null ? 'نموونەی دۆخ' : p.t,
                                 textDirection: TextDirection.ltr,
-                                style: ku(12, c: const Color(0xD9D8F7FA)),
+                                style: ku(12, c: vk(0xD9D8F7FA)),
                               ),
                             ),
                             Directionality(
@@ -224,17 +226,17 @@ class _Spo2PageState extends State<Spo2Page> with TickerProviderStateMixin {
                                 mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('${cv.round()}',
-                                      style: nu(62, c: Colors.white, h: 1.05, ls: -2)
-                                          .copyWith(shadows: const [Shadow(color: Color(0x66000000), blurRadius: 18, offset: Offset(0, 3))])),
+                                  VText('${cv.round()}',
+                                      style: nu(62, c: kW, h: 1.05, ls: -2)
+                                          .copyWith(shadows: [Shadow(color: vk(0x66000000), blurRadius: 18, offset: Offset(0, 3))])),
                                   Padding(
                                     padding: const EdgeInsets.only(top: 10, left: 2),
-                                    child: Text('%', style: ku(22, w: FontWeight.w600, c: const Color(0xFFE6FBFD))),
+                                    child: VText('%', style: ku(22, w: FontWeight.w600, c: vk(0xFFE6FBFD))),
                                   ),
                                 ],
                               ),
                             ),
-                            Text('ئۆکسجینی خوێن', style: ku(12, c: const Color(0xCCD8F7FA))),
+                            VText('ئۆکسجینی خوێن', style: ku(12, c: vk(0xCCD8F7FA))),
                           ],
                         ),
                       ),
@@ -258,7 +260,7 @@ class _Spo2PageState extends State<Spo2Page> with TickerProviderStateMixin {
                 border: Border.all(color: zc),
                 boxShadow: [BoxShadow(color: op(zc, 0.6), blurRadius: 18, spreadRadius: -4)],
               ),
-              child: Text(z.name, style: ku(14, w: FontWeight.w600, c: zc)),
+              child: VText(z.name, style: ku(14, w: FontWeight.w600, c: zc)),
             ),
           ),
         ),
@@ -301,7 +303,7 @@ class _Spo2PageState extends State<Spo2Page> with TickerProviderStateMixin {
         ZoneList(_zones, _zi(v)),
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 14, 4, 0),
-          child: Text(
+          child: VText(
             'ئەم ژمارانە تەنها بۆ زانیاری گشتین و جێگەی پشکنینی پزیشکی ناگرنەوە. ئەگەر هەستت بە سەخت هەناسەدان یان سەرگێژی کرد، سەردانی پزیشک بکە.',
             style: ku(12, c: HC.mu, h: 1.8),
           ),
@@ -333,10 +335,10 @@ class _Spo2PageState extends State<Spo2Page> with TickerProviderStateMixin {
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                         margin: const EdgeInsets.symmetric(horizontal: 3),
                         decoration: BoxDecoration(
-                          color: ov == o[0] ? const Color(0x2603EAFB) : Colors.transparent,
+                          color: ov == o[0] ? vk(0x2603EAFB) : Colors.transparent,
                           borderRadius: BorderRadius.circular(99),
                         ),
-                        child: Text(o[1] as String, style: ku(12, c: ov == o[0] ? HC.c2 : HC.mu)),
+                        child: VText(o[1] as String, style: ku(12, c: ov == o[0] ? HC.c2 : HC.mu)),
                       ),
                     ),
                 ],
@@ -378,7 +380,7 @@ class _Spo2Hero extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 5
-        ..color = const Color(0x14FFFFFF),
+        ..color = vk(0x14FFFFFF),
     );
     final f = clampD((value - _lo) / (_hi - _lo), 0, 1);
     if (f > 0.001) {
@@ -442,7 +444,7 @@ class _Spo2Hero extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.5
-        ..color = const Color(0x38FFFFFF),
+        ..color = vk(0x38FFFFFF),
     );
 
     // بڵقەکان
@@ -453,7 +455,7 @@ class _Spo2Hero extends CustomPainter {
       canvas.drawCircle(
         Offset(_bb[i][0], _bb[i][1] - 80 * e),
         1.8 + (i % 3) * 0.7,
-        Paint()..color = op(Colors.white, o),
+        Paint()..color = op(kW, o),
       );
     }
     canvas.restore();
@@ -472,7 +474,7 @@ class _Spo2Chart extends CustomPainter {
   final int mn;
   final double t;
 
-  static final TextStyle _lab = ku(10, c: HC.mu);
+  static TextStyle get _lab => ku(10, c: HC.mu);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -486,7 +488,7 @@ class _Spo2Chart extends CustomPainter {
     double x(int i) => l + (i + 0.5) * sl;
     double y(num v) => tp + (_hi - v) / (_hi - _lo) * ph;
 
-    canvas.drawRect(Rect.fromLTRB(l, y(95), l + pw, y(_lo)), Paint()..color = const Color(0x12FFB84D));
+    canvas.drawRect(Rect.fromLTRB(l, y(95), l + pw, y(_lo)), Paint()..color = vk(0x12FFB84D));
     final gl = Paint()
       ..color = HC.line
       ..strokeWidth = 1;
@@ -552,7 +554,7 @@ class _Spo2Chart extends CustomPainter {
           ..strokeWidth = 3
           ..strokeCap = StrokeCap.round
           ..strokeJoin = StrokeJoin.round
-          ..shader = ui.Gradient.linear(Offset(pts.first.dx, 0), Offset(pts.last.dx, 0), const [HC.c2, HC.c]),
+          ..shader = ui.Gradient.linear(Offset(pts.first.dx, 0), Offset(pts.last.dx, 0), [HC.c2, HC.c]),
       );
       canvas.restore();
     }
@@ -572,7 +574,7 @@ class _Spo2Chart extends CustomPainter {
         off: 4,
       );
       canvas.drawCircle(sp, 13, Paint()..color = op(zc, 0.22));
-      canvas.drawCircle(sp, 6, Paint()..color = Colors.white);
+      canvas.drawCircle(sp, 6, Paint()..color = kW);
       canvas.drawCircle(
         sp,
         6,

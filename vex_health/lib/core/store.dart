@@ -85,26 +85,6 @@ class Store extends ChangeNotifier {
   int waterGoalMl = 2000;
   SharedPreferences? _sp;
 
-  /// ئەو ڕۆژانەی خواردنیان تێدا تۆمار کراوە (بۆ «زنجیرە» لە پرۆفایل)
-  final Set<String> _logDays = <String>{};
-
-  static String _dayKey(DateTime d) => '${d.year}-${d.month}-${d.day}';
-
-  /// چەند ڕۆژ لە دوای یەک خواردنت تۆمار کردووە (ئەگەر ئەمڕۆ هێشتا نەبێت، لە دوێنێوە دەژمێردرێت)
-  int get streak {
-    int n = 0;
-    final now = DateTime.now();
-    for (int i = 0; i < 365; i++) {
-      final k = _dayKey(DateTime(now.year, now.month, now.day - i));
-      if (_logDays.contains(k)) {
-        n++;
-      } else if (i > 0) {
-        break;
-      }
-    }
-    return n;
-  }
-
   static String get today {
     final d = DateTime.now();
     return '${d.year}-${d.month}-${d.day}';
@@ -117,9 +97,6 @@ class Store extends ChangeNotifier {
       // دەستپێکردنەوە لە سفرەوە (بۆ چوونە دەرەوە / گەڕاندنەوەی هەژمار)
       food = <FoodItem>[];
       waterN = 0;
-      _logDays
-        ..clear()
-        ..addAll(sp.getStringList('vexlogdays') ?? const <String>[]);
       _applyUser(sp.getString('vexuser'));
       final s = sp.getString('vexhome-food');
       if (s != null) {
@@ -130,9 +107,6 @@ class Store extends ChangeNotifier {
               .map((m) => FoodItem.fromJson(Map<String, dynamic>.from(m)))
               .toList();
         }
-      }
-      if (food.isNotEmpty && _logDays.add(today)) {
-        sp.setStringList('vexlogdays', _logDays.toList());
       }
       final w = sp.getString('vexwater');
       if (w != null) {
@@ -173,9 +147,6 @@ class Store extends ChangeNotifier {
     final sp = _sp;
     if (sp == null) return;
     sp.setString('vexhome-food', jsonEncode({'day': today, 'items': food.map((e) => e.toJson()).toList()}));
-    if (food.isNotEmpty && _logDays.add(today)) {
-      sp.setStringList('vexlogdays', _logDays.toList());
-    }
   }
 
   Totals totals() {

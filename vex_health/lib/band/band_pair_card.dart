@@ -25,7 +25,7 @@ class _I {
       '<rect x="3" y="9" width="18" height="12" rx="2"/><path d="M12 9v12M3 13h18M12 9c-2-4-6-3-5 0M12 9c2-4 6-3 5 0"/>';
 }
 
-Color _hexC(String h) => Color(int.parse('FF${h.substring(1)}', radix: 16));
+Color _hexC(String h) => vk(int.parse('FF${h.substring(1)}', radix: 16));
 
 class _Chip extends StatelessWidget {
   const _Chip(this.label, this.color);
@@ -46,7 +46,7 @@ class _Chip extends StatelessWidget {
         children: [
           Container(width: 6, height: 6, decoration: BoxDecoration(shape: BoxShape.circle, color: color)),
           const SizedBox(width: 5),
-          Text(label, style: ku(11.5, w: FontWeight.w800, c: color, h: 1.4)),
+          VText(label, style: ku(11.5, w: FontWeight.w800, c: color, h: 1.4)),
         ],
       ),
     );
@@ -69,9 +69,9 @@ class _Btn extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
           gradient: primary ? V.prime : null,
-          color: primary ? null : const Color(0x0FFFFFFF),
+          color: primary ? null : vk(0x0FFFFFFF),
           borderRadius: BorderRadius.circular(15),
-          border: primary ? null : Border.all(color: const Color(0x388CEBF5)),
+          border: primary ? null : Border.all(color: vk(0x388CEBF5)),
           boxShadow: primary ? [BoxShadow(color: op(V.mint, 0.4), blurRadius: 18, offset: const Offset(0, 8), spreadRadius: -8)] : null,
         ),
         child: Row(
@@ -79,7 +79,7 @@ class _Btn extends StatelessWidget {
           children: [
             svgIcon(icon, primary ? '#04323a' : '#effeff', size: 17),
             const SizedBox(width: 7),
-            Text(label, style: ku(13, w: FontWeight.w800, c: fg, h: 1.3)),
+            VText(label, style: ku(13, w: FontWeight.w800, c: fg, h: 1.3)),
           ],
         ),
       ),
@@ -101,7 +101,7 @@ class BandPairCard extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xEB083440), Color(0xF204201B)],
+          colors: [vk(0xEB083440), vk(0xF204201B)],
         ),
         border: Border.all(color: op(V.cy, 0.28)),
         boxShadow: [BoxShadow(color: op(V.cy, 0.22), blurRadius: 40, offset: const Offset(0, 20), spreadRadius: -24)],
@@ -113,9 +113,9 @@ class BandPairCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(width: 8, height: 8, decoration: const BoxDecoration(shape: BoxShape.circle, color: BandColors.dot)),
+              Container(width: 8, height: 8, decoration: BoxDecoration(shape: BoxShape.circle, color: BandColors.dot)),
               const SizedBox(width: 8),
-              Text('VEX Band پەیوەست نییە', style: ku(17, w: FontWeight.w800, h: 1.5)),
+              VText('VEX Band پەیوەست نییە', style: ku(17, w: FontWeight.w800, h: 1.5)),
             ],
           ),
           const SizedBox(height: 10),
@@ -192,15 +192,15 @@ class _BandShop extends StatelessWidget {
         ),
         Center(
           child: ShaderMask(
-            shaderCallback: (r) => const LinearGradient(colors: [Color(0xFF2FE6F3), Color(0xFF3CF08A)]).createShader(r),
-            child: Text('VEX BAND V8', style: nu(13, c: Colors.white, ls: 3)),
+            shaderCallback: (r) => LinearGradient(colors: [vk(0xFF2FE6F3), vk(0xFF3CF08A)]).createShader(r),
+            child: VText('VEX BAND V8', style: nu(13, c: kW, ls: 3)),
           ),
         ),
         const SizedBox(height: 6),
-        Text('ئەم بەشە داتای VEX Band ی پێویستە',
+        VText('ئەم بەشە داتای VEX Band ی پێویستە',
             textAlign: TextAlign.center, style: ku(20, w: FontWeight.w800, h: 1.5)),
         const SizedBox(height: 4),
-        Text('دڵ، خەو و سترێس شەو و ڕۆژ خۆکارانە دەپێورێن.',
+        VText('دڵ، خەو و سترێس شەو و ڕۆژ خۆکارانە دەپێورێن.',
             textAlign: TextAlign.center, style: ku(13, c: V.mu, h: 1.7)),
         const SizedBox(height: 12),
         GridView.count(
@@ -215,7 +215,7 @@ class _BandShop extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 decoration: BoxDecoration(
-                  color: const Color(0x0AFFFFFF),
+                  color: vk(0x0AFFFFFF),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: V.line),
                 ),
@@ -233,7 +233,7 @@ class _BandShop extends StatelessWidget {
                       child: svgIcon(f[0], f[1], size: 17),
                     ),
                     const SizedBox(width: 9),
-                    Expanded(child: Text(f[2], maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(12.5, w: FontWeight.w700, h: 1.3))),
+                    Expanded(child: VText(f[2], maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(12.5, w: FontWeight.w700, h: 1.3))),
                   ],
                 ),
               ),
@@ -261,8 +261,8 @@ class _BandShop extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('6 مانگ VEX Plus بە خۆڕایی', style: ku(13.5, w: FontWeight.w800, c: const Color(0xFFFFE29A), h: 1.4)),
-                    Text('لەگەڵ پەیوەستکردنی Band', style: ku(11.5, c: const Color(0xFFC9B27A), h: 1.4)),
+                    VText('6 مانگ VEX Plus بە خۆڕایی', style: ku(13.5, w: FontWeight.w800, c: vk(0xFFFFE29A), h: 1.4)),
+                    VText('لەگەڵ پەیوەستکردنی Band', style: ku(11.5, c: vk(0xFFC9B27A), h: 1.4)),
                   ],
                 ),
               ),
@@ -305,9 +305,9 @@ class _Stat extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xD6041C24),
+        color: vk(0xD6041C24),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0x388FF3F9)),
+        border: Border.all(color: vk(0x388FF3F9)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -315,10 +315,10 @@ class _Stat extends StatelessWidget {
         children: [
           svgIcon(icon, hex, size: 14),
           const SizedBox(width: 6),
-          Text(value, style: nu(12.5)),
+          VText(value, style: nu(12.5)),
           if (unit.isNotEmpty) ...[
             const SizedBox(width: 4),
-            Text(unit, style: nu(9, c: V.mu)),
+            VText(unit, style: nu(9, c: V.mu)),
           ],
         ],
       ),
@@ -379,7 +379,7 @@ class _BandPairState extends State<_BandPair> with SingleTickerProviderStateMixi
       _Ps.intro => 'پەیوەستکردنی VEX Band',
       _Ps.scan => 'گەڕان بەدوای Band…',
       _Ps.found => 'Band دۆزرایەوە',
-      _Ps.link => 'پەیوەستدەکرێت…',
+      _Ps.link => 'پەیوەست دەکرێت…',
     };
     final sub = switch (_st) {
       _Ps.intro => 'Band ـەکەت هەڵبکە و لە تەنیشت مۆبایلەکەت دایبنێ',
@@ -404,9 +404,9 @@ class _BandPairState extends State<_BandPair> with SingleTickerProviderStateMixi
             ],
           ),
         ),
-        Center(child: Text(title, style: ku(19, w: FontWeight.w800, h: 1.5))),
+        Center(child: VText(title, style: ku(19, w: FontWeight.w800, h: 1.5))),
         const SizedBox(height: 2),
-        Text(sub, textAlign: TextAlign.center, style: ku(13, c: V.mu, h: 1.7)),
+        VText(sub, textAlign: TextAlign.center, style: ku(13, c: V.mu, h: 1.7)),
         const SizedBox(height: 14),
         if (_st == _Ps.intro) ...[
           for (final r in const [
@@ -422,10 +422,10 @@ class _BandPairState extends State<_BandPair> with SingleTickerProviderStateMixi
                   height: 28,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(shape: BoxShape.circle, color: op(V.cy, 0.14), border: Border.all(color: op(V.cy, 0.35))),
-                  child: Text(r[0], style: nu(12.5, w: FontWeight.w800, c: V.cy)),
+                  child: VText(r[0], style: nu(12.5, w: FontWeight.w800, c: V.cy)),
                 ),
                 const SizedBox(width: 10),
-                Expanded(child: Text(r[1], style: ku(13, w: FontWeight.w600, h: 1.5))),
+                Expanded(child: VText(r[1], style: ku(13, w: FontWeight.w600, h: 1.5))),
               ]),
             ),
           const SizedBox(height: 6),
@@ -451,8 +451,8 @@ class _BandPairState extends State<_BandPair> with SingleTickerProviderStateMixi
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('VEX Band V8', style: nu(15, w: FontWeight.w800)),
-                    Text('نزیک • ئامادەیە', style: ku(11.5, c: V.mu, h: 1.4)),
+                    VText('VEX Band V8', style: nu(15, w: FontWeight.w800)),
+                    VText('نزیک • ئامادەیە', style: ku(11.5, c: V.mu, h: 1.4)),
                   ]),
                 ),
                 svgIcon(_I.link, '#3cf08a', size: 22),

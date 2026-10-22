@@ -16,7 +16,7 @@ void openPrayerSheet() => showVSheet<void>(builder: (_) => const _PrayerSheet())
 // پارچە هاوبەشەکان
 // ============================================================
 Widget _ltr(String s, TextStyle st, {TextAlign? align}) =>
-    Text(s, style: st, textDirection: TextDirection.ltr, textAlign: align, maxLines: 1);
+    VText(s, style: st, textDirection: TextDirection.ltr, textAlign: align, maxLines: 1);
 
 /// کاتی 12 کاتژمێری: «6:43 PM»
 Widget _time12(int mins, {double size = 24, bool showAmPm = true}) {
@@ -27,10 +27,10 @@ Widget _time12(int mins, {double size = 24, bool showAmPm = true}) {
     crossAxisAlignment: CrossAxisAlignment.baseline,
     textBaseline: TextBaseline.alphabetic,
     children: [
-      Text(fmt12(h, m), style: nu(size, h: 1.1)),
+      VText(fmt12(h, m), style: nu(size, h: 1.1)),
       if (showAmPm) ...[
         const SizedBox(width: 4),
-        Text(ampm(h), style: nu(size * 0.45, c: V.cy)),
+        VText(ampm(h), style: nu(size * 0.45, c: V.cy)),
       ],
     ],
   );
@@ -60,10 +60,10 @@ class _Sw extends StatelessWidget {
             child: Container(
               width: 22,
               height: 22,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white,
-                boxShadow: [BoxShadow(color: Color(0x4D000000), blurRadius: 6, offset: Offset(0, 2))],
+                color: kW,
+                boxShadow: [BoxShadow(color: vk(0x4D000000), blurRadius: 6, offset: Offset(0, 2))],
               ),
             ),
           ),
@@ -134,7 +134,7 @@ class _HoldBtnState extends State<_HoldBtn> {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: V.line2),
         ),
-        child: Text(widget.label, style: nu(19)),
+        child: VText(widget.label, style: nu(19)),
       ),
     );
   }
@@ -160,7 +160,7 @@ class _Col extends StatelessWidget {
           const SizedBox(height: 6),
           _HoldBtn('−', (m) => onStep(-m)),
           const SizedBox(height: 6),
-          Text(label, style: ku(11, w: FontWeight.w700, c: V.mu)),
+          VText(label, style: ku(11, w: FontWeight.w700, c: V.mu)),
         ],
       ),
     );
@@ -193,7 +193,7 @@ class _Seg extends StatelessWidget {
                     gradient: i == index ? V.prime : null,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Text(
+                  child: VText(
                     labels[i],
                     textAlign: TextAlign.center,
                     style: ku(12, w: FontWeight.w800, c: i == index ? V.ink : V.mu, h: 1.3),
@@ -210,9 +210,9 @@ class _Seg extends StatelessWidget {
 Widget _heading(String t, String sub) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(t, style: ku(20, w: FontWeight.w800)),
+        VText(t, style: ku(20, w: FontWeight.w800)),
         const SizedBox(height: 4),
-        Text(sub, style: ku(12, w: FontWeight.w600, c: V.mu, h: 1.7)),
+        VText(sub, style: ku(12, w: FontWeight.w600, c: V.mu, h: 1.7)),
         const SizedBox(height: 12),
       ],
     );
@@ -229,7 +229,7 @@ Widget _card({required Widget child, Color? border, Color? fill, EdgeInsets? pad
     );
 
 // ============================================================
-// ١) کاتژمێری لەرەر
+// ١) کاتژمێری لەرین
 // ============================================================
 class _AlarmSheet extends StatefulWidget {
   const _AlarmSheet();
@@ -286,10 +286,10 @@ class _AlarmSheetState extends State<_AlarmSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _heading('⏰ کاتژمێری لەرەر', 'لە کاتی دیاریکراو Band دەلەرێتەوە.'),
+        _heading('⏰ کاتژمێری لەرین', 'لە کاتی دیاریکراو Band دەلەرێتەوە.'),
         if (list.isEmpty)
           _card(
-            child: Center(child: Text('هیچ کاتژمێرێک دانەنراوە', style: ku(13, w: FontWeight.w700, c: V.mu))),
+            child: Center(child: VText('هیچ کاتژمێرێک دانەنراوە', style: ku(13, w: FontWeight.w700, c: V.mu))),
           ),
         for (final a in list)
           _card(
@@ -301,9 +301,9 @@ class _AlarmSheetState extends State<_AlarmSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(a.label.isEmpty ? 'کاتژمێر' : a.label,
+                      VText(a.label.isEmpty ? 'کاتژمێر' : a.label,
                           maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(14, w: FontWeight.w800)),
-                      Text('هەموو ڕۆژێک', style: ku(11.5, w: FontWeight.w600, c: V.mu)),
+                      VText('هەموو ڕۆژێک', style: ku(11.5, w: FontWeight.w600, c: V.mu)),
                     ],
                   ),
                 ),
@@ -323,7 +323,7 @@ class _AlarmSheetState extends State<_AlarmSheet> {
                     height: 32,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(color: op(V.coral, 0.12), borderRadius: BorderRadius.circular(10)),
-                    child: Text('✕', style: ku(14, c: V.coral)),
+                    child: VText('✕', style: ku(14, c: V.coral)),
                   ),
                 ),
               ],
@@ -348,7 +348,7 @@ class _AlarmSheetState extends State<_AlarmSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('کاتژمێری نوێ', style: ku(20, w: FontWeight.w800)),
+        VText('کاتژمێری نوێ', style: ku(20, w: FontWeight.w800)),
         const SizedBox(height: 14),
         Center(child: _time12(h * 60 + m, size: 42)),
         const SizedBox(height: 12),
@@ -361,7 +361,7 @@ class _AlarmSheetState extends State<_AlarmSheet> {
             ),
             Padding(
               padding: const EdgeInsets.only(bottom: 44),
-              child: Text(':', style: nu(26, c: V.mu)),
+              child: VText(':', style: nu(26, c: V.mu)),
             ),
             _Col(
               label: 'کاتژمێر',
@@ -383,15 +383,15 @@ class _AlarmSheetState extends State<_AlarmSheet> {
           style: ku(14, w: FontWeight.w700),
           decoration: InputDecoration(
             counterText: '',
-            hintText: 'ناو (دڵخوازە) · بۆ نموونە: بەخەبەرهاتن',
+            hintText: vxTr('ناو (دڵخوازە) · بۆ نموونە: بەخەبەرهاتن'),
             hintStyle: ku(13, w: FontWeight.w600, c: V.mu),
             filled: true,
             fillColor: V.surf2,
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: V.line2)),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: V.line2)),
             enabledBorder:
-                OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: V.line2)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: V.cy)),
+                OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: V.line2)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: V.cy)),
           ),
         ),
         const SizedBox(height: 16),
@@ -465,7 +465,7 @@ class _TimerSheetState extends State<_TimerSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('⏱️ کاتی وەرزش', style: ku(20, w: FontWeight.w800)),
+        VText('⏱️ کاتی وەرزش', style: ku(20, w: FontWeight.w800)),
         const SizedBox(height: 12),
         AnimatedContainer(
           duration: const Duration(milliseconds: 200),
@@ -487,22 +487,22 @@ class _TimerSheetState extends State<_TimerSheet> {
                   crossAxisAlignment: CrossAxisAlignment.baseline,
                   textBaseline: TextBaseline.alphabetic,
                   children: [
-                    Text('${p(hh)}:${p(mm)}:${p(ss)}', style: nu(36, h: 1.1)),
-                    Text('.${x.toString().padLeft(3, '0')}', style: nu(22, c: V.cy)),
+                    VText('${p(hh)}:${p(mm)}:${p(ss)}', style: nu(36, h: 1.1)),
+                    VText('.${x.toString().padLeft(3, '0')}', style: nu(22, c: V.cy)),
                   ],
                 ),
               ),
               const SizedBox(height: 4),
-              Text('کاتژمێر : خولەک : چرکە . میلی چرکە', style: ku(11, w: FontWeight.w700, c: V.mu)),
+              VText('کاتژمێر : خولەک : چرکە . میلی چرکە', style: ku(11, w: FontWeight.w700, c: V.mu)),
               if (_fresh) ...[
                 const SizedBox(height: 12),
                 Row(
                   textDirection: TextDirection.ltr,
                   children: [
                     _Col(label: 'کاتژمێر', value: p(A.th), onStep: (d) => _step('h', d)),
-                    Padding(padding: const EdgeInsets.only(bottom: 44), child: Text(':', style: nu(24, c: V.mu))),
+                    Padding(padding: const EdgeInsets.only(bottom: 44), child: VText(':', style: nu(24, c: V.mu))),
                     _Col(label: 'خولەک', value: p(A.tmin), onStep: (d) => _step('m', d)),
-                    Padding(padding: const EdgeInsets.only(bottom: 44), child: Text(':', style: nu(24, c: V.mu))),
+                    Padding(padding: const EdgeInsets.only(bottom: 44), child: VText(':', style: nu(24, c: V.mu))),
                     _Col(label: 'چرکە', value: p(A.ts), onStep: (d) => _step('s', d)),
                   ],
                 ),
@@ -526,13 +526,13 @@ class _TimerSheetState extends State<_TimerSheet> {
                     borderRadius: BorderRadius.circular(99),
                     border: Border.all(color: V.line2),
                   ),
-                  child: Text(e[0] as String, style: ku(12, w: FontWeight.w800)),
+                  child: VText(e[0] as String, style: ku(12, w: FontWeight.w800)),
                 ),
               ),
           ],
         ),
         const SizedBox(height: 8),
-        Center(child: Text('دوگمەی + و − دابگرە بۆ گۆڕینی خێراتر', style: ku(11.5, w: FontWeight.w600, c: V.mu))),
+        Center(child: VText('دوگمەی + و − دابگرە بۆ گۆڕینی خێراتر', style: ku(11.5, w: FontWeight.w600, c: V.mu))),
         const SizedBox(height: 14),
         Row(
           children: [
@@ -605,7 +605,7 @@ class _PrayerSheetState extends State<_PrayerSheet> {
       var perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) perm = await Geolocator.requestPermission();
       if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
-        toast('ڕێپێدانی شوێن نەدرا');
+        toast('ڕێگەپێدانی شوێن نەدرا');
         return;
       }
       if (!await Geolocator.isLocationServiceEnabled()) {
@@ -659,15 +659,15 @@ class _PrayerSheetState extends State<_PrayerSheet> {
                       height: 38,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(color: op(V.mint, 0.16), borderRadius: BorderRadius.circular(12)),
-                      child: const Text('🔔', style: TextStyle(fontSize: 19)),
+                      child: const VText('🔔', style: TextStyle(fontSize: 19)),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('لەرینی کاتی نوێژ', style: ku(14, w: FontWeight.w800)),
-                          Text(A.prayerOn ? 'چالاکە' : 'ناچالاکە', style: ku(11.5, w: FontWeight.w600, c: V.mu)),
+                          VText('لەرینی کاتی نوێژ', style: ku(14, w: FontWeight.w800)),
+                          VText(A.prayerOn ? 'چالاکە' : 'ناچالاکە', style: ku(11.5, w: FontWeight.w600, c: V.mu)),
                         ],
                       ),
                     ),
@@ -688,11 +688,11 @@ class _PrayerSheetState extends State<_PrayerSheet> {
                   isExpanded: true,
                   dropdownColor: V.sheet,
                   value: gps ? 'gps' : A.city,
-                  icon: const Icon(Icons.keyboard_arrow_down_rounded, color: V.mu),
+                  icon: Icon(Icons.keyboard_arrow_down_rounded, color: V.mu),
                   style: ku(14, w: FontWeight.w700),
                   items: [
-                    for (final c in kCities) DropdownMenuItem(value: c.key, child: Text(c.name)),
-                    DropdownMenuItem(value: 'gps', child: Text(gps ? '📍 شوێنی ئێستای من' : '📍 شوێنی ئێستای من (GPS)')),
+                    for (final c in kCities) DropdownMenuItem(value: c.key, child: VText(c.name)),
+                    DropdownMenuItem(value: 'gps', child: VText(gps ? '📍 شوێنی ئێستای من' : '📍 شوێنی ئێستای من (GPS)')),
                   ],
                   onChanged: (v) async {
                     if (v == null) return;
@@ -710,7 +710,7 @@ class _PrayerSheetState extends State<_PrayerSheet> {
             if (_locating)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
-                child: Center(child: Text('شوێنەکەت دەدۆزرێتەوە…', style: ku(12, w: FontWeight.w700, c: V.cy))),
+                child: Center(child: VText('شوێنەکەت دەدۆزرێتەوە…', style: ku(12, w: FontWeight.w700, c: V.cy))),
               ),
             // داهاتوو
             Container(
@@ -723,7 +723,7 @@ class _PrayerSheetState extends State<_PrayerSheet> {
               ),
               child: Column(
                 children: [
-                  Text('داهاتوو: ${kPrayerNames[nx.key]![0]}${nextToday ? '' : ' (سبەی)'}',
+                  VText('داهاتوو: ${kPrayerNames[nx.key]![0]}${nextToday ? '' : ' (سبەی)'}',
                       style: ku(12, w: FontWeight.w700, c: V.mu)),
                   const SizedBox(height: 2),
                   _ltr(_left(nx.at.difference(now)), nu(26)),
@@ -745,14 +745,14 @@ class _PrayerSheetState extends State<_PrayerSheet> {
                 fill: k == nx.key && nextToday ? op(V.mint, 0.1) : V.surf2,
                 child: Row(
                   children: [
-                    Text(kPrayerNames[k]![1], style: const TextStyle(fontSize: 20)),
+                    VText(kPrayerNames[k]![1], style: const TextStyle(fontSize: 20)),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(kPrayerNames[k]![0], style: ku(14, w: FontWeight.w800)),
-                          if (k == 'sunrise') Text('تەنها زانیاری', style: ku(11, w: FontWeight.w600, c: V.mu)),
+                          VText(kPrayerNames[k]![0], style: ku(14, w: FontWeight.w800)),
+                          if (k == 'sunrise') VText('تەنها زانیاری', style: ku(11, w: FontWeight.w600, c: V.mu)),
                         ],
                       ),
                     ),
@@ -779,7 +779,7 @@ class _PrayerSheetState extends State<_PrayerSheet> {
               ),
               child: Column(
                 children: [
-                  Text(
+                  VText(
                     site
                         ? '✓ کاتەکان لە IslamicFinder وەرگیراون (${place.name})'
                         : (A.city == 'erbil'
@@ -801,12 +801,12 @@ class _PrayerSheetState extends State<_PrayerSheet> {
                               final ok = await A.refreshSite(force: true);
                               toast(ok ? 'کاتەکان نوێ کرانەوە ✓' : 'نەتوانرا نوێ بکرێتەوە');
                             },
-                      child: Text('↻ نوێکردنەوە لە IslamicFinder',
+                      child: VText('↻ نوێکردنەوە لە IslamicFinder',
                           style: ku(12.5, w: FontWeight.w800, c: A.siteBusy ? V.mu : V.cy)),
                     ),
                   ],
                   const SizedBox(height: 4),
-                  Text('فەجر 18° · عیشا 17° · عەسر شافیعی. هەر ڕۆژێک خۆکارانە نوێ دەبێتەوە.',
+                  VText('فەجر 18° · عیشا 17° · عەسر شافیعی. هەر ڕۆژێک خۆکارانە نوێ دەبێتەوە.',
                       textAlign: TextAlign.center, style: ku(10.5, w: FontWeight.w600, c: V.mu, h: 1.7)),
                 ],
               ),

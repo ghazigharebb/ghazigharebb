@@ -60,7 +60,7 @@ class ROpt {
 
 const List<ROpt> kActs = [
   ROpt('sed', '🛋️', 'کەم جووڵە', 'زۆربەی ڕۆژ دانیشتوویت، وەک کاری ئۆفیس'),
-  ROpt('light', '🚶', 'سووک', 'پیاسە و کاری ڕۆژانەی ئاسایی'),
+  ROpt('light', '🚶', 'کەم چالاک', 'پیاسە و کاری ڕۆژانەی ئاسایی'),
   ROpt('active', '🏃', 'چالاک', '3 بۆ 5 ڕۆژ لە هەفتەدا وەرزش دەکەیت'),
   ROpt('very', '🏋️', 'زۆر چالاک', 'وەرزشی ڕۆژانە یان کاری جەستەیی قورس'),
 ];
@@ -271,6 +271,8 @@ class RegDraft {
   String mode = 'new'; // new | login
   String name = '';
   String phone = '';
+  String auth = ''; // '' (هێشتا هەڵنەبژێردراوە) | phone | gmail
+  String email = '';
   String sex = '';
   int year = kThisYear - 30;
   int h = 0;
@@ -297,6 +299,8 @@ class RegDraft {
         'mode': mode,
         'name': name,
         'phone': phone,
+        'auth': auth,
+        'email': email,
         'sex': sex,
         'year': year,
         'h': h,
@@ -323,6 +327,8 @@ class RegDraft {
     d.mode = j['mode'] == 'login' ? 'login' : 'new';
     d.name = '${j['name'] ?? ''}';
     d.phone = cleanPhone('${j['phone'] ?? ''}');
+    d.auth = j['auth'] == 'gmail' ? 'gmail' : (j['auth'] == 'phone' ? 'phone' : '');
+    d.email = '${j['email'] ?? ''}'.trim().toLowerCase();
     d.sex = j['sex'] == 'f' ? 'f' : (j['sex'] == 'm' ? 'm' : '');
     final y = asI(j['year'], kThisYear - 30);
     d.year = y.clamp(kThisYear - 95, kThisYear - 13);
@@ -454,3 +460,7 @@ int kcalGoalFor(Map u) {
   kcal = math.max(kcal, female ? 1200.0 : 1500.0);
   return ((kcal / 10).round() * 10);
 }
+
+/// Gmail ـێکی دروستە؟ (تەنها @gmail.com یان @googlemail.com)
+bool validGmail(String v) =>
+    RegExp(r'^[a-z0-9](?:[a-z0-9.+_-]{0,62}[a-z0-9])?@(gmail|googlemail)\.com$').hasMatch(v.trim().toLowerCase());

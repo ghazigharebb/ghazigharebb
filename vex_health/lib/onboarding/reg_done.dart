@@ -131,11 +131,11 @@ class _RDoneState extends State<RDone> with SingleTickerProviderStateMixin {
     return Container(
       color: RC.bg,
       child: DecoratedBox(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: RadialGradient(
           center: Alignment(0, -0.1),
           radius: 0.8,
-          colors: [Color(0x292FE6F3), Color(0x002FE6F3)],
+          colors: [vk(0x292FE6F3), vk(0x002FE6F3)],
         ),
       ),
       child: Center(
@@ -155,7 +155,7 @@ class _RDoneState extends State<RDone> with SingleTickerProviderStateMixin {
                 offset: Offset(0, 10 * (1 - t1)),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Text(widget.title, textAlign: TextAlign.center, style: ku(25, w: FontWeight.w800, h: 1.45)),
+                  child: VText(widget.title, textAlign: TextAlign.center, style: ku(25, w: FontWeight.w800, h: 1.45)),
                 ),
               ),
             ),
@@ -164,7 +164,7 @@ class _RDoneState extends State<RDone> with SingleTickerProviderStateMixin {
               opacity: t2,
               child: Transform.translate(
                 offset: Offset(0, 10 * (1 - t2)),
-                child: Text(widget.sub, textAlign: TextAlign.center, style: ku(14, c: RC.p)),
+                child: VText(widget.sub, textAlign: TextAlign.center, style: ku(14, c: RC.p)),
               ),
             ),
           ],
@@ -193,8 +193,8 @@ class _OrbPainter extends CustomPainter {
       46 * s * (0.92 + 0.08 * pulse),
       Paint()
         ..shader = ui.Gradient.radial(c, 46 * s, [
-          Color.fromRGBO(60, 240, 138, 0.28 * (0.55 + 0.45 * pulse)),
-          const Color(0x003CF08A),
+          vkRGBO(60, 240, 138, 0.28 * (0.55 + 0.45 * pulse)),
+          vk(0x003CF08A),
         ]),
     );
 
@@ -207,7 +207,7 @@ class _OrbPainter extends CustomPainter {
       canvas.drawCircle(p, r, Paint()..color = col);
     }
 
-    sat(-math.pi / 2, 4.5, const Color(0xFF8FF3F9));
+    sat(-math.pi / 2, 4.5, vk(0xFF8FF3F9));
     sat(math.pi * 0.78, 3.5, V.mint);
     sat(math.pi * 0.22, 3, RC.lilac);
 
@@ -219,10 +219,10 @@ class _OrbPainter extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 5
-        ..color = const Color(0x12FFFFFF),
+        ..color = vk(0x12FFFFFF),
     );
     if (ring > 0) {
-      final grad = ui.Gradient.linear(rect.topLeft, rect.bottomRight, const [Color(0xFF8FF3F9), Color(0xFF3CF08A)]);
+      final grad = ui.Gradient.linear(rect.topLeft, rect.bottomRight, [vk(0xFF8FF3F9), vk(0xFF3CF08A)]);
       canvas.drawArc(
         rect,
         -math.pi / 2,
@@ -232,7 +232,7 @@ class _OrbPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 9
           ..strokeCap = StrokeCap.round
-          ..color = const Color(0x553CF08A)
+          ..color = vk(0x553CF08A)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
       );
       canvas.drawArc(
@@ -290,7 +290,7 @@ class _RevealPainter extends CustomPainter {
     canvas.drawPath(
       path,
       Paint()
-        ..shader = ui.Gradient.radial(center, gr, const [Color(0x212FE6F3), Color(0x002FE6F3)]),
+        ..shader = ui.Gradient.radial(center, gr, [vk(0x212FE6F3), vk(0x002FE6F3)]),
     );
     if (alpha > 0) {
       canvas.drawCircle(
@@ -299,7 +299,7 @@ class _RevealPainter extends CustomPainter {
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 18
-          ..color = Color.fromRGBO(47, 230, 243, 0.2 * alpha),
+          ..color = vkRGBO(47, 230, 243, 0.2 * alpha),
       );
       canvas.drawCircle(
         center,
@@ -307,7 +307,7 @@ class _RevealPainter extends CustomPainter {
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 3.2
-          ..color = Color.fromRGBO(143, 243, 249, alpha),
+          ..color = vkRGBO(143, 243, 249, alpha),
       );
     }
   }

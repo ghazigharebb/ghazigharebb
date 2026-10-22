@@ -103,7 +103,7 @@ class _FamBg extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Stack(
+    return Stack(
       children: [
         Positioned.fill(child: ColoredBox(color: V.bg)),
         Positioned.fill(
@@ -112,7 +112,7 @@ class _FamBg extends StatelessWidget {
               gradient: RadialGradient(
                 center: Alignment(0, -0.76),
                 radius: 0.75,
-                colors: [Color(0x24FF8FC8), Color(0x00FF8FC8)],
+                colors: [vk(0x24FF8FC8), vk(0x00FF8FC8)],
                 stops: [0.0, 0.7],
               ),
             ),
@@ -124,7 +124,7 @@ class _FamBg extends StatelessWidget {
               gradient: RadialGradient(
                 center: Alignment(-1, -0.2),
                 radius: 0.7,
-                colors: [Color(0x1F2FE6F3), Color(0x002FE6F3)],
+                colors: [vk(0x1F2FE6F3), vk(0x002FE6F3)],
                 stops: [0.0, 0.7],
               ),
             ),
@@ -173,9 +173,9 @@ class _TopBar extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('بازنەی خێزان و هاوڕێ',
+              VText('بازنەی خێزان و هاوڕێ',
                   maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(20, w: FontWeight.w800, h: 1.4)),
-              Text(cnt, style: ku(12, w: FontWeight.w600, c: V.mu)),
+              VText(cnt, style: ku(12, w: FontWeight.w600, c: V.mu)),
             ],
           ),
         ),
@@ -189,7 +189,7 @@ class _TopBar extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
               boxShadow: [BoxShadow(color: op(V.mint, 0.5), blurRadius: 22, spreadRadius: -12, offset: const Offset(0, 10))],
             ),
-            child: Text('+ زیادکردن', style: ku(13, w: FontWeight.w800, c: V.ink)),
+            child: VText('+ زیادکردن', style: ku(13, w: FontWeight.w800, c: V.ink)),
           ),
         ),
       ],
@@ -251,7 +251,7 @@ class _OrbitState extends State<_Orbit> with TickerProviderStateMixin {
                   padding: EdgeInsets.all(size * 0.12),
                   child: RotationTransition(
                     turns: _ringA,
-                    child: const CustomPaint(painter: _DashedCircle(V.line2)),
+                    child: CustomPaint(painter: _DashedCircle(V.line2)),
                   ),
                 ),
               ),
@@ -262,7 +262,7 @@ class _OrbitState extends State<_Orbit> with TickerProviderStateMixin {
                     opacity: 0.6,
                     child: RotationTransition(
                       turns: Tween<double>(begin: 0, end: -1).animate(_ringB),
-                      child: const CustomPaint(painter: _DashedCircle(V.line2)),
+                      child: CustomPaint(painter: _DashedCircle(V.line2)),
                     ),
                   ),
                 ),
@@ -309,7 +309,7 @@ class _MeBubble extends StatelessWidget {
     return Container(
       width: 92,
       height: 92,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: RadialGradient(
           center: Alignment(-0.3, -0.4),
@@ -318,16 +318,16 @@ class _MeBubble extends StatelessWidget {
           stops: [0.0, 0.6, 1.0],
         ),
         boxShadow: [
-          BoxShadow(color: Color(0x262FE6F3), spreadRadius: 6),
-          BoxShadow(color: Color(0x732FE6F3), blurRadius: 40),
+          BoxShadow(color: vk(0x262FE6F3), spreadRadius: 6),
+          BoxShadow(color: vk(0x732FE6F3), blurRadius: 40),
         ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(FMe.letter, style: nu(26, c: V.ink, h: 1.0)),
+          VText(FMe.letter, style: nu(26, c: V.ink, h: 1.0)),
           const SizedBox(height: 2),
-          Text(FMe.name, style: ku(10, w: FontWeight.w800, c: V.ink, h: 1.3)),
+          VText(FMe.name, style: ku(10, w: FontWeight.w800, c: V.ink, h: 1.3)),
         ],
       ),
     );
@@ -350,12 +350,12 @@ class _OrbitMember extends StatelessWidget {
           children: [
             MemberAvatar(m),
             const SizedBox(height: 3),
-            Text(m.n, maxLines: 1, softWrap: false, overflow: TextOverflow.visible, style: ku(11, w: FontWeight.w700, h: 1.4)),
+            VText(m.n, maxLines: 1, softWrap: false, overflow: TextOverflow.visible, style: ku(11, w: FontWeight.w700, h: 1.4)),
             if (m.pend)
-              Text('چاوەڕوانی ڕەزامەندی',
+              VText('چاوەڕوانی ڕەزامەندی',
                   maxLines: 1, softWrap: false, overflow: TextOverflow.visible, style: ku(10, c: V.amber, h: 1.4))
             else
-              Text('${fmtN(m.steps)} 👣', textDirection: TextDirection.ltr, style: nu(10, w: FontWeight.w400, c: V.mu, h: 1.4)),
+              VText('${fmtN(m.steps)} 👣', textDirection: TextDirection.ltr, style: nu(10, w: FontWeight.w400, c: V.mu, h: 1.4)),
           ],
         ),
       ),
@@ -480,7 +480,7 @@ class _Legend extends StatelessWidget {
         children: [
           Container(width: 8, height: 8, decoration: BoxDecoration(color: k, shape: BoxShape.circle)),
           const SizedBox(width: 5),
-          Text(t, style: ku(11, w: FontWeight.w700, c: V.mu)),
+          VText(t, style: ku(11, w: FontWeight.w700, c: V.mu)),
         ],
       );
 
@@ -517,7 +517,7 @@ class _AlertsCard extends StatelessWidget {
           if (a.isEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: Text('هەموو کەس باشن 💚', style: ku(12, c: V.mu, h: 1.8)),
+              child: VText('هەموو کەس باشن 💚', style: ku(12, c: V.mu, h: 1.8)),
             )
           else
             for (final x in a) AlertRow(x),
@@ -547,20 +547,20 @@ class AlertRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(a.emoji, style: const TextStyle(fontSize: 22)),
+          VText(a.emoji, style: const TextStyle(fontSize: 22)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text.rich(
+                VText.rich(
                   TextSpan(children: [
                     TextSpan(text: a.m.n, style: ku(13, w: FontWeight.w800, h: 1.75)),
                     TextSpan(text: a.text),
                   ]),
                   style: ku(13, h: 1.75),
                 ),
-                Text(a.sub, style: ku(11, c: V.mu, h: 1.6)),
+                VText(a.sub, style: ku(11, c: V.mu, h: 1.6)),
               ],
             ),
           ),
@@ -600,11 +600,11 @@ class _ChallengeCard extends StatelessWidget {
                 tween: Tween<double>(begin: 0, end: tot),
                 duration: const Duration(milliseconds: 1400),
                 curve: Curves.easeOutCubic,
-                builder: (context, v, _) => Text(fmtN(v), textDirection: TextDirection.ltr, style: nu(30, h: 1.2)),
+                builder: (context, v, _) => VText(fmtN(v), textDirection: TextDirection.ltr, style: nu(30, h: 1.2)),
               ),
               const SizedBox(width: 8),
               Flexible(
-                child: Text.rich(
+                child: VText.rich(
                   TextSpan(children: [
                     const TextSpan(text: 'لە '),
                     TextSpan(text: ltr(fmtN(kChallengeGoal)), style: nu(13, w: FontWeight.w600, c: V.mu)),
@@ -629,8 +629,8 @@ class _ChallengeCard extends StatelessWidget {
                     width: 24,
                     child: Center(
                       child: i < 3
-                          ? Text(medals[i], style: const TextStyle(fontSize: 16))
-                          : Text('${i + 1}', style: nu(13, w: FontWeight.w600, c: V.mu)),
+                          ? VText(medals[i], style: const TextStyle(fontSize: 16))
+                          : VText('${i + 1}', style: nu(13, w: FontWeight.w600, c: V.mu)),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -641,10 +641,10 @@ class _ChallengeCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Text(sorted[i].n,
+                    child: VText(sorted[i].n,
                         maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(13, w: FontWeight.w700)),
                   ),
-                  Text(fmtN(sorted[i].steps), textDirection: TextDirection.ltr, style: nu(15)),
+                  VText(fmtN(sorted[i].steps), textDirection: TextDirection.ltr, style: nu(15)),
                 ],
               ),
             ),
@@ -711,8 +711,8 @@ class _MembersSection extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(4, 20, 4, 0),
           child: Row(
             children: [
-              Expanded(child: Text('👥 ئەندامەکان', style: ku(16, w: FontWeight.w800))),
-              Text('پەنجە بنێ بۆ وردەکاری', style: ku(12, c: V.mu)),
+              Expanded(child: VText('👥 ئەندامەکان', style: ku(16, w: FontWeight.w800))),
+              VText('پەنجە بنێ بۆ وردەکاری', style: ku(12, c: V.mu)),
             ],
           ),
         ),
@@ -724,16 +724,16 @@ class _MembersSection extends StatelessWidget {
             child: Press(
               onTap: openAddSheet,
               child: CustomPaint(
-                foregroundPainter: const DashedRRect(radius: 22),
+                foregroundPainter: DashedRRect(radius: 22),
                 child: Container(
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(color: V.surf2, borderRadius: BorderRadius.circular(22)),
                   child: Column(
                     children: [
-                      const Text('👨‍👩‍👧', style: TextStyle(fontSize: 30)),
+                      const VText('👨‍👩‍👧', style: TextStyle(fontSize: 30)),
                       const SizedBox(height: 6),
-                      Text('هێشتا کەست زیاد نەکردووە', style: ku(14, w: FontWeight.w800)),
-                      Text('+ یەکەم کەس زیاد بکە', style: ku(12, w: FontWeight.w700, c: V.cy)),
+                      VText('هێشتا کەست زیاد نەکردووە', style: ku(14, w: FontWeight.w800)),
+                      VText('+ یەکەم کەس زیاد بکە', style: ku(12, w: FontWeight.w700, c: V.cy)),
                     ],
                   ),
                 ),
@@ -749,7 +749,7 @@ class _MemberCard extends StatelessWidget {
   const _MemberCard(this.m, {super.key});
   final FMember m;
 
-  Widget _stat(String t, {Color? c}) => Text(t, textDirection: TextDirection.ltr, style: nu(12, w: FontWeight.w700, c: c ?? V.tx));
+  Widget _stat(String t, {Color? c}) => VText(t, textDirection: TextDirection.ltr, style: nu(12, w: FontWeight.w700, c: c ?? V.tx));
 
   @override
   Widget build(BuildContext context) {
@@ -772,7 +772,7 @@ class _MemberCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text.rich(
+                    VText.rich(
                       TextSpan(children: [
                         TextSpan(text: m.n, style: ku(15, w: FontWeight.w700)),
                         TextSpan(text: ' · ${m.rel}', style: ku(11, c: V.mu)),
@@ -780,7 +780,7 @@ class _MemberCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    Text.rich(
+                    VText.rich(
                       TextSpan(children: [
                         TextSpan(text: '${FK.dot(m.st)} ${m.note} · '),
                         TextSpan(text: ltr('${m.sync}'), style: nu(11, w: FontWeight.w600, c: V.mu)),
@@ -813,7 +813,7 @@ class _MemberCard extends StatelessWidget {
                     height: 42,
                     alignment: Alignment.center,
                     decoration: box(r: 14),
-                    child: const Text('👏', style: TextStyle(fontSize: 20)),
+                    child: const VText('👏', style: TextStyle(fontSize: 20)),
                   ),
                 ),
               ),
@@ -850,7 +850,7 @@ class _PendingCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text.rich(
+                    VText.rich(
                       TextSpan(children: [
                         TextSpan(text: p.n, style: ku(15, w: FontWeight.w700)),
                         TextSpan(text: ' · ${p.rel}', style: ku(11, c: V.mu)),
@@ -858,7 +858,7 @@ class _PendingCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    Text('بانگهێشت نێردرا · چاوەڕوانی ڕەزامەندی', style: ku(11, c: V.amber, h: 1.6)),
+                    VText('بانگهێشت نێردرا · چاوەڕوانی ڕەزامەندی', style: ku(11, c: V.amber, h: 1.6)),
                   ],
                 ),
               ),
@@ -890,19 +890,19 @@ class _PrivacyCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(vertical: 6),
               decoration: BoxDecoration(
-                border: i == 0 ? null : const Border(top: BorderSide(color: V.line)),
+                border: i == 0 ? null : Border(top: BorderSide(color: V.line)),
               ),
               child: Row(
                 children: [
-                  Text(kShares[i].emoji, style: const TextStyle(fontSize: 18)),
+                  VText(kShares[i].emoji, style: const TextStyle(fontSize: 18)),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(kShares[i].label, style: ku(14, w: FontWeight.w700)),
+                        VText(kShares[i].label, style: ku(14, w: FontWeight.w700)),
                         if (kShares[i].sub != null)
-                          Text(kShares[i].sub!, style: ku(11, w: FontWeight.w600, c: V.mu)),
+                          VText(kShares[i].sub!, style: ku(11, w: FontWeight.w600, c: V.mu)),
                       ],
                     ),
                   ),
@@ -920,7 +920,7 @@ class _PrivacyCard extends StatelessWidget {
               ),
             ),
           const SizedBox(height: 10),
-          Text(
+          VText(
             'هەر کەسێک خۆی هەڵدەبژێرێت چی هاوبەش بکات، و هەر کاتێک بیەوێت دەتوانێت بیگۆڕێت یان لە بازنەکە بچێتە دەرەوە.',
             style: ku(12, c: V.mu, h: 1.8),
           ),
@@ -953,17 +953,17 @@ void openAddSheet() {
 
 Widget _lbl(String t) => Padding(
       padding: const EdgeInsets.only(top: 16, bottom: 8),
-      child: Text(t, style: ku(12, w: FontWeight.w800, c: V.mu)),
+      child: VText(t, style: ku(12, w: FontWeight.w800, c: V.mu)),
     );
 
 Widget _sheetTitle(String t) => Padding(
       padding: const EdgeInsets.only(bottom: 6),
-      child: Text(t, textAlign: TextAlign.center, style: ku(19, w: FontWeight.w800, h: 1.5)),
+      child: VText(t, textAlign: TextAlign.center, style: ku(19, w: FontWeight.w800, h: 1.5)),
     );
 
 Widget _sheetSub(String t) => Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Text(t, textAlign: TextAlign.center, style: ku(13, c: V.mu, h: 1.7)),
+      child: VText(t, textAlign: TextAlign.center, style: ku(13, c: V.mu, h: 1.7)),
     );
 
 /// دوگمەی پانی تەواو (سەرەکی / نەرم / سوور)
@@ -984,7 +984,7 @@ class _WideBtn extends StatelessWidget {
         decoration: prime
             ? BoxDecoration(gradient: V.prime, borderRadius: BorderRadius.circular(15))
             : BoxDecoration(color: V.surf2, borderRadius: BorderRadius.circular(15), border: Border.all(color: V.line)),
-        child: Text(
+        child: VText(
           label,
           textAlign: TextAlign.center,
           style: ku(14, w: FontWeight.w800, c: prime ? V.ink : danger ? V.coral : V.tx),
@@ -1035,9 +1035,9 @@ class _MemberSheetState extends State<_MemberSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: ku(12, w: FontWeight.w700, c: V.mu)),
+          VText(label, style: ku(12, w: FontWeight.w700, c: V.mu)),
           const SizedBox(height: 2),
-          Text.rich(
+          VText.rich(
             TextSpan(children: [
               TextSpan(text: value, style: nu(22)),
               if (unit.isNotEmpty) TextSpan(text: ' $unit', style: nu(12, w: FontWeight.w600, c: V.mu)),
@@ -1045,7 +1045,7 @@ class _MemberSheetState extends State<_MemberSheet> {
             textDirection: TextDirection.ltr,
           ),
           const SizedBox(height: 2),
-          Text(em, style: ku(11, w: FontWeight.w800, c: k)),
+          VText(em, style: ku(11, w: FontWeight.w800, c: k)),
         ],
       ),
     );
@@ -1059,9 +1059,9 @@ class _MemberSheetState extends State<_MemberSheet> {
             decoration: box(r: 16),
             child: Column(
               children: [
-                Text(e, style: const TextStyle(fontSize: 22)),
+                VText(e, style: const TextStyle(fontSize: 22)),
                 const SizedBox(height: 4),
-                Text(t, style: ku(11, w: FontWeight.w700)),
+                VText(t, style: ku(11, w: FontWeight.w700)),
               ],
             ),
           ),
@@ -1078,7 +1078,7 @@ class _MemberSheetState extends State<_MemberSheet> {
       children: [
         Center(child: MemberAvatar(m, size: 84)),
         const SizedBox(height: 12),
-        Text.rich(
+        VText.rich(
           TextSpan(children: [
             TextSpan(text: m.full, style: ku(19, w: FontWeight.w800)),
             TextSpan(text: ' · ${m.rel}', style: ku(12, c: V.mu)),
@@ -1086,7 +1086,7 @@ class _MemberSheetState extends State<_MemberSheet> {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 4),
-        Text.rich(
+        VText.rich(
           TextSpan(children: [
             TextSpan(text: '${FK.dot(m.st)} ${m.note} · 🔋 '),
             TextSpan(text: ltr('${m.bat}%'), style: nu(13, w: FontWeight.w600, c: m.bat < 20 ? V.amber : V.mu)),
@@ -1132,7 +1132,7 @@ class _MemberSheetState extends State<_MemberSheet> {
           ],
         ),
         const SizedBox(height: 12),
-        Text(
+        VText(
           'تەنها ئەو داتایانە دەبینیت کە ${m.n} هاوبەشی کردوون.',
           textAlign: TextAlign.center,
           style: ku(12, c: V.mu, h: 1.8),
@@ -1249,7 +1249,7 @@ class _AddSheetState extends State<_AddSheet> {
           borderRadius: BorderRadius.circular(99),
           border: Border.all(color: on ? op(V.mint, 0.55) : V.line),
         ),
-        child: Text('${r[1]} ${r[0]}', style: ku(13, w: FontWeight.w700, c: on ? V.mint : V.tx)),
+        child: VText('${r[1]} ${r[0]}', style: ku(13, w: FontWeight.w700, c: on ? V.mint : V.tx)),
       ),
     );
   }
@@ -1262,9 +1262,9 @@ class _AddSheetState extends State<_AddSheet> {
             decoration: box(r: 16),
             child: Column(
               children: [
-                Text(e, style: const TextStyle(fontSize: 22)),
+                VText(e, style: const TextStyle(fontSize: 22)),
                 const SizedBox(height: 4),
-                Text(t, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(12, w: FontWeight.w700)),
+                VText(t, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(12, w: FontWeight.w700)),
               ],
             ),
           ),
@@ -1275,7 +1275,7 @@ class _AddSheetState extends State<_AddSheet> {
   Widget build(BuildContext context) {
     final border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: V.line2),
+      borderSide: BorderSide(color: V.line2),
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1299,7 +1299,7 @@ class _AddSheetState extends State<_AddSheet> {
           style: ku(15),
           cursorColor: V.cy,
           decoration: InputDecoration(
-            hintText: _hint,
+            hintText: vxTr(_hint),
             hintStyle: ku(15, c: op(V.mu, 0.7)),
             counterText: '',
             filled: true,
@@ -1308,7 +1308,7 @@ class _AddSheetState extends State<_AddSheet> {
             contentPadding: const EdgeInsets.all(13),
             border: border,
             enabledBorder: border,
-            focusedBorder: border.copyWith(borderSide: const BorderSide(color: V.cy)),
+            focusedBorder: border.copyWith(borderSide: BorderSide(color: V.cy)),
           ),
         ),
         _lbl('بانگهێشتی بکە'),
@@ -1324,7 +1324,7 @@ class _AddSheetState extends State<_AddSheet> {
           ],
         ),
         const SizedBox(height: 12),
-        Text.rich(
+        VText.rich(
           TextSpan(children: [
             const TextSpan(text: '🔒 کەسەکە دەبێت بانگهێشتەکە '),
             TextSpan(text: 'قبوڵ بکات', style: ku(12, w: FontWeight.w800, c: V.tx, h: 1.8)),
@@ -1352,7 +1352,7 @@ Future<bool> _open(String url) async {
 
 Future<void> shareInvite(String via, String code, {bool again = false}) async {
   final link = 'https://vex.app/join/$code';
-  final msg = 'وەرە ناو بازنەی تەندروستیم لە VEX 💚\nکۆدی بانگهێشت: $code\n$link';
+  final msg = vxTr('وەرە ناو بازنەی تەندروستیم لە VEX 💚\nکۆدی بانگهێشت: $code\n$link');
   if (via == 'cp') {
     await Clipboard.setData(ClipboardData(text: link));
     toast('📋 لینک کۆپی کرا');

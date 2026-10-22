@@ -1,10 +1,10 @@
 // VEX Health — بەشی سەرەتا: بەخێرهاتن، تۆمارکردن هەنگاو بە هەنگاو، چوونە ژوورەوە
 //
 // ڕیزبەندی هەنگاوەکان:
-//   تۆمارکردنی نوێ:  بەخێرهاتن → ناو → مۆبایل → کۆد → ڕەگەز → ساڵ → بەرزی → کێش → ئامانج
+//   تۆمارکردنی نوێ:  بەخێرهاتن → ناو → شێوازی چوونەژوورەوە (مۆبایل / Gmail) → [مۆبایل → کۆد | Gmail] → ڕەگەز → ساڵ → بەرزی → کێش → ئامانج
 //                     → چالاکی → ئامانجەکان → Band → [پەیوەستکردن] → خەو → تەندروستی
 //                     → ئاگادارکردنەوە → پلان
-//   هەژمارم هەیە:    بەخێرهاتن → مۆبایل → کۆد → (ئەگەر هەژمارەکە لەم مۆبایلەدا هەبێت ڕاستەوخۆ دەکرێتەوە)
+//   هەژمارم هەیە:    بەخێرهاتن → شێواز → مۆبایل → کۆد (یان Gmail) → (ئەگەر هەژمارەکە لەم مۆبایلەدا هەبێت ڕاستەوخۆ دەکرێتەوە)
 //                     ئەگەرنا: ناو → ڕەگەز → ... (هەمان ڕیز)
 //
 // کۆدی تاقیکردنەوە: 123456
@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../band/band_emblem.dart';
+import '../core/icons.dart';
 import '../core/theme.dart';
 import 'account.dart';
 import 'reg_build.dart';
@@ -72,6 +73,10 @@ class _RegFlowState extends State<RegFlow> {
   final FocusNode phoneF = FocusNode();
   final FocusNode otpF = FocusNode();
   final FocusNode codeF = FocusNode();
+  final TextEditingController gmC = TextEditingController();
+  final FocusNode gmF = FocusNode();
+  bool gmAdding = false;
+  String gmErr = '';
 
   String otpErr = '';
   bool otpBad = false;
@@ -103,6 +108,8 @@ class _RegFlowState extends State<RegFlow> {
     phoneF.dispose();
     otpF.dispose();
     codeF.dispose();
+    gmC.dispose();
+    gmF.dispose();
     super.dispose();
   }
 
@@ -115,7 +122,7 @@ class _RegFlowState extends State<RegFlow> {
       verified = true;
       var c = '${dr['cur'] ?? ''}';
       if (c == 'sub') c = 'plan';
-      cur = _seq().contains(c) && c != 'welcome' && c != 'lang' && c != 'otp' ? c : 'sex';
+      cur = _seq().contains(c) && !const {'welcome', 'lang', 'otp', 'method', 'gmail'}.contains(c) ? c : 'sex';
       if (cur == 'pair') pairPh = d.band.paired ? 'ok' : 'scan';
     } else {
       d = RegDraft();
@@ -127,6 +134,7 @@ class _RegFlowState extends State<RegFlow> {
       if (u != null) {
         if ('${u['name'] ?? ''}'.isNotEmpty) d.name = '${u['name']}';
         if ('${u['phone'] ?? ''}'.isNotEmpty) d.phone = cleanPhone('${u['phone']}');
+        if ('${u['email'] ?? ''}'.isNotEmpty) d.email = '${u['email']}'.toLowerCase();
         if (u['sex'] == 'm' || u['sex'] == 'f') d.sex = '${u['sex']}';
         final y = asI(u['year']);
         if (y >= kThisYear - 95 && y <= kThisYear - 13) d.year = y;
@@ -152,7 +160,11 @@ class _RegFlowState extends State<RegFlow> {
 
   // ---------- هەنگاوەکان ----------
   List<String> _seq() {
-    final a = d.mode == 'login' ? ['lang', 'welcome', 'phone', 'otp', 'name'] : ['lang', 'welcome', 'name', 'phone', 'otp'];
+    // دوای هەڵبژاردنی شێواز: Gmail = یەک هەنگاو؛ مۆبایل = ژمارە + کۆد
+    final au = d.auth == 'gmail' ? ['gmail'] : ['phone', 'otp'];
+    final a = d.mode == 'login'
+        ? ['lang', 'welcome', 'method', ...au, 'name']
+        : ['lang', 'welcome', 'name', 'method', ...au];
     a.addAll(['sex', 'year', 'height', 'weight', 'target', 'act', 'goals', 'band']);
     if (d.band.has == true) a.add('pair');
     a.addAll(['sleep', 'health', 'notif', 'sub', 'plan']);
@@ -228,6 +240,15 @@ class _RegFlowState extends State<RegFlow> {
         nameC.selection = TextSelection.collapsed(offset: nameC.text.length);
         _focusSoon(nameF);
         break;
+      case 'method':
+        _hideKeyboard();
+        break;
+      case 'gmail':
+        gmC.clear();
+        gmErr = '';
+        gmAdding = Account.I.gmails().isEmpty;
+        if (gmAdding) _focusSoon(gmF); else _hideKeyboard();
+        break;
       case 'phone':
         phoneC.text = fmtPhone(d.phone);
         phoneC.selection = TextSelection.collapsed(offset: phoneC.text.length);
@@ -290,6 +311,10 @@ class _RegFlowState extends State<RegFlow> {
     switch (s) {
       case 'name':
         return d.name.trim().length >= 2;
+      case 'method':
+        return d.auth.isNotEmpty;
+      case 'gmail':
+        return validGmail(d.email);
       case 'phone':
         return validPhone(d.phone);
       case 'otp':
@@ -369,6 +394,12 @@ class _RegFlowState extends State<RegFlow> {
         d.name = d.name.trim();
         _next();
         break;
+      case 'method':
+        _next();
+        break;
+      case 'gmail':
+        _gmLogin(d.email);
+        break;
       case 'phone':
         if (verified) {
           _next();
@@ -390,7 +421,9 @@ class _RegFlowState extends State<RegFlow> {
   void _onAlt() {
     if (cur == 'welcome') {
       d.mode = 'login';
-      _go('phone');
+      d.auth = '';
+      verified = false;
+      _go('method');
     } else if (cur == 'pair') {
       _pairTo(pairPh == 'code' ? 'scan' : 'code');
     }
@@ -506,6 +539,68 @@ class _RegFlowState extends State<RegFlow> {
     });
   }
 
+  /// چوونە ژوورەوە بە Gmail: ئەگەر هەژمارەکە لەم مۆبایلەدا هەبوو هەموو داتاکانی (Plus، Band…) دەگەڕێتەوە
+  Future<void> _gmLogin(String email) async {
+    if (busy) return;
+    final e = Account.idOf(email);
+    if (!validGmail(e)) return;
+    d.email = e;
+    d.auth = 'gmail';
+    verified = true;
+    _hideKeyboard();
+    _hold('پشکنین…');
+    await Account.I.rememberGmail(e);
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+    if (!mounted) return;
+    final acc = Account.I.accountFor(e);
+    if (acc != null) {
+      _hold('هەژمارەکەت دەکرێتەوە…');
+      await Account.I.restore(acc);
+      await Future<void>.delayed(const Duration(milliseconds: 450));
+      if (!mounted) return;
+      final u = Account.I.user;
+      if (u != null && '${u['name'] ?? ''}'.trim().isNotEmpty) {
+        _welcomeBack(u);
+        return;
+      }
+      setState(() => busy = false);
+      _next();
+      return;
+    }
+    final u = Account.I.user;
+    if (u != null && Account.idOf('${u['email'] ?? ''}') == e && '${u['name'] ?? ''}'.trim().isNotEmpty && asD(u['h']) > 0) {
+      _hold('هەژمارەکەت دەکرێتەوە…');
+      await Future<void>.delayed(const Duration(milliseconds: 450));
+      if (!mounted) return;
+      _welcomeBack(u);
+      return;
+    }
+    setState(() => busy = false);
+    _next();
+  }
+
+  /// Gmail ێکی نوێ لە خانەکەوە زیاد دەکات
+  Future<void> _gmAddFromField() async {
+    final e = Account.idOf(gmC.text);
+    if (!validGmail(e)) {
+      setState(() => gmErr = 'Gmail ێکی دروست بنووسە، وەک name@gmail.com');
+      HapticFeedback.heavyImpact();
+      return;
+    }
+    await Account.I.rememberGmail(e);
+    if (!mounted) return;
+    _hideKeyboard();
+    setState(() {
+      d.email = e;
+      d.auth = 'gmail';
+      gmAdding = false;
+      gmErr = '';
+      gmC.clear();
+    });
+    buzz(1);
+    _saveDraft();
+  }
+
   // ---------- پەیوەستکردنی Band ----------
   void _pairTo(String ph) {
     _clearStepTimers();
@@ -560,7 +655,9 @@ class _RegFlowState extends State<RegFlow> {
     final p = d.plan();
     final u = <String, dynamic>{
       'name': d.name.trim().length > 30 ? d.name.trim().substring(0, 30) : d.name.trim(),
-      'phone': d.phone,
+      'phone': d.auth == 'gmail' ? '' : d.phone,
+      'email': d.auth == 'gmail' ? d.email : '',
+      'auth': d.auth == 'gmail' ? 'gmail' : 'phone',
       'sex': d.sex,
       'year': d.year,
       'age': d.age,
@@ -646,7 +743,7 @@ class _RegFlowState extends State<RegFlow> {
       return RDone(title: dt, sub: doneSub, onFinished: widget.onDone);
     }
     if (!widget.ready) {
-      return const Material(color: RC.bg, child: IgnorePointer(child: SizedBox.expand(child: _RegBg())));
+      return Material(color: RC.bg, child: IgnorePointer(child: SizedBox.expand(child: _RegBg())));
     }
     final mq = MediaQuery.of(context);
     return PopScope(
@@ -732,12 +829,12 @@ class _RegFlowState extends State<RegFlow> {
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(9),
-                        gradient: const LinearGradient(
+                        gradient: LinearGradient(
                           begin: AlignmentDirectional.centerStart,
                           end: AlignmentDirectional.centerEnd,
                           colors: [Color(0xFF8FF3F9), Color(0xFF3CF08A)],
                         ),
-                        boxShadow: const [BoxShadow(color: Color(0x8C3CF08A), blurRadius: 12)],
+                        boxShadow: [BoxShadow(color: vk(0x8C3CF08A), blurRadius: 12)],
                       ),
                     ),
                   ),
@@ -757,7 +854,7 @@ class _RegFlowState extends State<RegFlow> {
                 onTap: _canSkip ? _onSkip : null,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
-                  child: Text('تێپەڕاندن', textAlign: TextAlign.end, style: ku(13, w: FontWeight.w700, c: RC.mu)),
+                  child: VText('تێپەڕاندن', textAlign: TextAlign.end, style: ku(13, w: FontWeight.w700, c: RC.mu)),
                 ),
               ),
             ),
@@ -849,16 +946,16 @@ class _RegFlowState extends State<RegFlow> {
                     delayMs: 80,
                     child: Column(
                       children: [
-                        Text(LangState.I.t('wt'),
+                        VText(LangState.I.t('wt'),
                             textAlign: TextAlign.center,
                             style: langStyle(L, tight ? 21 : (compact ? 23 : 26), w: FontWeight.w800, h: 1.4)),
                         ShaderMask(
                           shaderCallback: (r) =>
-                              const LinearGradient(colors: [Color(0xFF8FF3F9), Color(0xFF3CF08A)]).createShader(r),
+                              LinearGradient(colors: [vk(0xFF8FF3F9), vk(0xFF3CF08A)]).createShader(r),
                           blendMode: BlendMode.srcIn,
-                          child: Text('VEX Health',
+                          child: VText('VEX Health',
                               textDirection: TextDirection.ltr,
-                              style: nu(tight ? 27 : (compact ? 30 : 34), c: Colors.white, h: 1.25)),
+                              style: nu(tight ? 27 : (compact ? 30 : 34), c: kW, h: 1.25)),
                         ),
                       ],
                     ),
@@ -869,7 +966,7 @@ class _RegFlowState extends State<RegFlow> {
                       delayMs: 140,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 34),
-                        child: Text(
+                        child: VText(
                           LangState.I.t('wp'),
                           textAlign: TextAlign.center,
                           style: langStyle(L, 13.5, c: RC.p, h: 1.75),
@@ -908,7 +1005,7 @@ class _RegFlowState extends State<RegFlow> {
           width: 4,
           height: 4,
           margin: const EdgeInsets.symmetric(horizontal: 9),
-          decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF3D6870)),
+          decoration: BoxDecoration(shape: BoxShape.circle, color: vk(0xFF3D6870)),
         );
     final st = langStyle(LangState.I.cur, 12.5, w: FontWeight.w700, c: RC.p);
     return SizedBox(
@@ -927,21 +1024,21 @@ class _RegFlowState extends State<RegFlow> {
                 width: 28,
                 child: ShaderMask(
                   shaderCallback: (r) =>
-                      const LinearGradient(colors: [Color(0xFF8FF3F9), Color(0xFF3CF08A)]).createShader(r),
+                      LinearGradient(colors: [vk(0xFF8FF3F9), vk(0xFF3CF08A)]).createShader(r),
                   blendMode: BlendMode.srcIn,
-                  child: Text('${v.round()}', textAlign: TextAlign.center, style: nu(19, c: Colors.white, h: 1.2)),
+                  child: VText('${v.round()}', textAlign: TextAlign.center, style: nu(19, c: kW, h: 1.2)),
                 ),
               ),
             ),
             const SizedBox(width: 4),
-            Text(LangState.I.t('s1'), style: st),
+            VText(LangState.I.t('s1'), style: st),
             dot(),
-            Text.rich(TextSpan(children: [
+            VText.rich(TextSpan(children: [
               TextSpan(text: 'AI', style: nu(12.5, c: V.tx)),
               TextSpan(text: ' ${LangState.I.t('s2')}'),
             ]), style: st),
             dot(),
-            Text.rich(TextSpan(children: [
+            VText.rich(TextSpan(children: [
               TextSpan(text: ltr('24/7'), style: nu(12.5, c: V.tx)),
               TextSpan(text: ' ${LangState.I.t('s3')}'),
             ]), style: st),
@@ -960,6 +1057,10 @@ class _RegFlowState extends State<RegFlow> {
         return const [SizedBox(height: 320)];
       case 'name':
         return _name(compact, tight, kb);
+      case 'method':
+        return _method(compact, tight, kb);
+      case 'gmail':
+        return _gmail(compact, tight, kb);
       case 'phone':
         return _phone(compact, tight, kb);
       case 'otp':
@@ -1012,13 +1113,136 @@ class _RegFlowState extends State<RegFlow> {
           textInputAction: TextInputAction.next,
           textCapitalization: TextCapitalization.words,
           autofillHints: const [AutofillHints.givenName],
-          style: ku(kb ? 17 : 18, w: FontWeight.w700, c: Colors.white),
+          style: ku(kb ? 17 : 18, w: FontWeight.w700, c: kW),
           cursorColor: V.cy,
           decoration: rInputDeco('بۆ نموونە: ئاری', compact: kb),
           onChanged: (v) => setState(() => d.name = v),
           onSubmitted: (_) => _onGo(),
         )),
       ];
+
+  // ---------- شێوازی چوونەژوورەوە ----------
+  List<Widget> _method(bool compact, bool tight, bool kb) => [
+        ..._head('🔒', d.mode == 'login' ? 'چۆن دەچیتە ژوورەوە؟' : 'چۆن داخیل دەبیت؟',
+            [const TextSpan(text: 'یەکێک لەمانە هەڵبژێرە. هەر کاتێک بگەڕێیتەوە، داتاکانت وەک خۆیان دەمێننەوە.')],
+            compact: compact, tight: tight, kb: kb),
+        _p(ROptTile(
+          emoji: '📱',
+          title: 'ژمارەی مۆبایل',
+          sub: 'کۆدێکی 6 ژمارەیی بە SMS دێت',
+          on: d.auth == 'phone',
+          compact: tight,
+          onTap: () {
+            setState(() {
+              d.auth = 'phone';
+              verified = false;
+            });
+            buzz(0);
+            _saveDraft();
+          },
+        )),
+        _p(Padding(
+          padding: EdgeInsets.only(top: tight ? 8 : 10),
+          child: ROptTile(
+            emoji: '✉',
+            title: 'Gmail',
+            sub: 'بە هەژماری Google ـەکەت',
+            on: d.auth == 'gmail',
+            compact: tight,
+            onTap: () {
+              setState(() {
+                d.auth = 'gmail';
+                verified = false;
+              });
+              buzz(0);
+              _saveDraft();
+            },
+          ),
+        )),
+        if (!kb)
+          _p(const RLock('هەر هەژمارێک داتاکانی خۆی هەیە (Plus، Band، خواردن، خێزان…) و بە ژمارە یان Gmail ـەکەت دەگەڕێتەوە، تەنانەت دوای چوونە دەرەوە.')),
+      ];
+
+  // ---------- Gmail ----------
+  List<Widget> _gmail(bool compact, bool tight, bool kb) {
+    final list = Account.I.gmails();
+    return [
+      ..._head('✉', 'Gmail ـەکەت هەڵبژێرە',
+          [const TextSpan(text: 'هەر Gmail ـێک داتای خۆی هەیە و لەگەڵ Band ـەکەتدا دەمێنێتەوە.')],
+          compact: compact, tight: tight, kb: kb),
+      for (final g in list)
+        _p(Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: _GmTile(
+            name: '${g['name']}',
+            email: '${g['email']}',
+            has: g['has'] == true,
+            on: d.email == g['email'],
+            onTap: () {
+              setState(() {
+                d.email = '${g['email']}';
+                d.auth = 'gmail';
+              });
+              buzz(0);
+              _saveDraft();
+            },
+          ),
+        )),
+      _p(_GmAddTile(open: gmAdding, onTap: () {
+        setState(() {
+          gmAdding = !gmAdding;
+          gmErr = '';
+        });
+        if (gmAdding) _focusSoon(gmF);
+      })),
+      if (gmAdding)
+        _p(Padding(
+          padding: const EdgeInsets.only(top: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Directionality(
+                textDirection: TextDirection.ltr,
+                child: TextField(
+                  controller: gmC,
+                  focusNode: gmF,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.done,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  textAlign: TextAlign.left,
+                  autofillHints: const [AutofillHints.email],
+                  style: nu(kb ? 16 : 17, w: FontWeight.w700, c: kW),
+                  cursorColor: V.cy,
+                  decoration: rInputDeco('name@gmail.com', compact: kb, ltrHint: true),
+                  onChanged: (_) {
+                    if (gmErr.isNotEmpty) setState(() => gmErr = '');
+                  },
+                  onSubmitted: (_) => _gmAddFromField(),
+                ),
+              ),
+              if (gmErr.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6, right: 4, left: 4),
+                  child: VText(gmErr, style: ku(12.5, w: FontWeight.w700, c: RC.err)),
+                ),
+              RLink('زیادکردنی ئەم Gmail ـە', top: 6, onTap: _gmAddFromField),
+            ],
+          ),
+        )),
+      if (!kb)
+        _p(RHint([
+          const TextSpan(text: 'وەشانی دیمۆ: Gmail ـەکە تەنها لەسەر ئەم مۆبایلە دەناسرێتەوە.'),
+        ], top: 10)),
+      _p(RLink('ژمارەی مۆبایل بەکاربهێنە', top: kb ? 2 : 6, onTap: busy
+          ? null
+          : () {
+              d.auth = 'phone';
+              verified = false;
+              _go('phone');
+            })),
+    ];
+  }
 
   List<Widget> _phone(bool compact, bool tight, bool kb) {
     final ok = validPhone(d.phone);
@@ -1049,7 +1273,7 @@ class _RegFlowState extends State<RegFlow> {
                 color: RC.white(0.06),
                 border: Border.all(color: RC.line(0.2), width: 1.5),
               ),
-              child: Text('🇮🇶 +964', style: nu(16)),
+              child: VText('🇮🇶 +964', style: nu(16)),
             ),
             const SizedBox(width: 8),
             Expanded(
@@ -1062,7 +1286,7 @@ class _RegFlowState extends State<RegFlow> {
                 textDirection: TextDirection.ltr,
                 autofillHints: const [AutofillHints.telephoneNumberNational],
                 inputFormatters: [PhoneFormatter()],
-                style: nu(kb ? 17 : 18, w: FontWeight.w700, c: Colors.white, ls: 1),
+                style: nu(kb ? 17 : 18, w: FontWeight.w700, c: kW, ls: 1),
                 cursorColor: V.cy,
                 decoration: rInputDeco('750 123 4567', compact: kb, ltrHint: true),
                 onChanged: (v) {
@@ -1081,10 +1305,17 @@ class _RegFlowState extends State<RegFlow> {
       )),
       _p(Padding(
         padding: EdgeInsets.only(top: kb ? 6 : 10, right: 4, left: 4),
-        child: Text(help, style: ku(12.5, w: FontWeight.w600, c: ok ? V.mint : RC.mu)),
+        child: VText(help, style: ku(12.5, w: FontWeight.w600, c: ok ? V.mint : RC.mu)),
       )),
       if (!kb)
         _p(const RLock('ژمارەکەت بۆ هیچ کەسێک دەرناکەوێت و تەنها بۆ چوونە ژوورەوە و پاراستنی هەژمارەکەت بەکاردێت.')),
+      _p(RLink('هەژماری Gmail بەکاربهێنە', top: kb ? 4 : 10, onTap: busy
+          ? null
+          : () {
+              d.auth = 'gmail';
+              verified = false;
+              _go('gmail');
+            })),
     ];
   }
 
@@ -1106,7 +1337,7 @@ class _RegFlowState extends State<RegFlow> {
       _p(Container(
         constraints: BoxConstraints(minHeight: kb ? 0 : 20),
         margin: EdgeInsets.only(top: kb ? 6 : 10),
-        child: Text(otpErr, textAlign: TextAlign.center, style: ku(13, w: FontWeight.w700, c: RC.err)),
+        child: VText(otpErr, textAlign: TextAlign.center, style: ku(13, w: FontWeight.w700, c: RC.err)),
       )),
       _p(RHint([
         const TextSpan(text: 'کۆدی تاقیکردنەوە: '),
@@ -1171,7 +1402,7 @@ class _RegFlowState extends State<RegFlow> {
         ),
         Padding(
           padding: const EdgeInsets.only(top: 14),
-          child: Text.rich(
+          child: VText.rich(
             TextSpan(children: [
               const TextSpan(text: 'تەمەنت: '),
               numSpan('${d.age}', size: 18, c: V.mint),
@@ -1321,7 +1552,7 @@ class _RegFlowState extends State<RegFlow> {
             color: op(c, 0.11),
             border: Border.all(color: op(c, 0.36)),
           ),
-          child: Text.rich(TextSpan(children: sp), style: ku(12.5, w: FontWeight.w800, c: c, h: 1.3)),
+          child: VText.rich(TextSpan(children: sp), style: ku(12.5, w: FontWeight.w800, c: c, h: 1.3)),
         );
 
     final InlineSpan info;
@@ -1418,7 +1649,7 @@ class _RegFlowState extends State<RegFlow> {
                     color: RC.white(0.04),
                     border: Border.all(color: RC.line(0.2)),
                   ),
-                  child: Text.rich(
+                  child: VText.rich(
                     TextSpan(children: [ricoSpan('⚖️', size: 13, color: RC.soft), const TextSpan(text: 'هەمان کێش')]),
                     style: ku(12.5, w: FontWeight.w700, c: RC.soft, h: 1.3),
                   ),
@@ -1430,7 +1661,7 @@ class _RegFlowState extends State<RegFlow> {
       if (!tight)
         _p(Padding(
           padding: const EdgeInsets.only(top: 8),
-          child: Text.rich(info, textAlign: TextAlign.center, style: ku(12, c: RC.mu, h: 1.7)),
+          child: VText.rich(info, textAlign: TextAlign.center, style: ku(12, c: RC.mu, h: 1.7)),
         )),
     ];
   }
@@ -1468,7 +1699,7 @@ class _RegFlowState extends State<RegFlow> {
           compact: compact, tight: tight, kb: kb),
       _p(Padding(
         padding: const EdgeInsets.only(bottom: 12),
-        child: Text.rich(
+        child: VText.rich(
           n > 0
               ? TextSpan(children: [
                   numSpan('$n', size: 12.5, c: V.mint),
@@ -1569,7 +1800,7 @@ class _RegFlowState extends State<RegFlow> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 color: RC.white(0.05),
-                border: Border.all(color: const Color(0x592FE6F3), width: 1.5),
+                border: Border.all(color: vk(0x592FE6F3), width: 1.5),
               ),
               child: Row(
                 children: [
@@ -1577,7 +1808,7 @@ class _RegFlowState extends State<RegFlow> {
                     width: 46,
                     height: 46,
                     alignment: Alignment.center,
-                    decoration: BoxDecoration(borderRadius: BorderRadius.circular(15), color: const Color(0x1F2FE6F3)),
+                    decoration: BoxDecoration(borderRadius: BorderRadius.circular(15), color: vk(0x1F2FE6F3)),
                     child: const BandEmblem(size: 40),
                   ),
                   const SizedBox(width: 12),
@@ -1585,8 +1816,8 @@ class _RegFlowState extends State<RegFlow> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('VEX Band V8', style: nu(15, w: FontWeight.w800)),
-                        Text.rich(
+                        VText('VEX Band V8', style: nu(15, w: FontWeight.w800)),
+                        VText.rich(
                           TextSpan(children: [
                             numSpan(d.band.code, size: 12, c: RC.mu, w: FontWeight.w600),
                             const TextSpan(text: ' · '),
@@ -1606,7 +1837,7 @@ class _RegFlowState extends State<RegFlow> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       decoration: BoxDecoration(borderRadius: BorderRadius.circular(13), gradient: V.prime),
-                      child: Text('پەیوەستکردن', style: ku(13, w: FontWeight.w800, c: V.ink)),
+                      child: VText('پەیوەستکردن', style: ku(13, w: FontWeight.w800, c: V.ink)),
                     ),
                   ),
                 ],
@@ -1635,14 +1866,14 @@ class _RegFlowState extends State<RegFlow> {
             autocorrect: false,
             enableSuggestions: false,
             textInputAction: TextInputAction.done,
-            style: nu(18, w: FontWeight.w700, c: Colors.white, ls: 2),
+            style: nu(18, w: FontWeight.w700, c: kW, ls: 2),
             cursorColor: V.cy,
             decoration: rInputDeco('VX8-1234', compact: kb, ltrHint: true).copyWith(
               enabledBorder: codeErr.isEmpty
                   ? null
                   : OutlineInputBorder(
                       borderRadius: BorderRadius.circular(18),
-                      borderSide: const BorderSide(color: V.coral, width: 1.5),
+                      borderSide: BorderSide(color: V.coral, width: 1.5),
                     ),
             ),
             onChanged: (_) {
@@ -1653,7 +1884,7 @@ class _RegFlowState extends State<RegFlow> {
           _p(Container(
             constraints: const BoxConstraints(minHeight: 20),
             margin: const EdgeInsets.only(top: 10, bottom: 10),
-            child: Text(codeErr, textAlign: TextAlign.center, style: ku(13, w: FontWeight.w700, c: RC.err)),
+            child: VText(codeErr, textAlign: TextAlign.center, style: ku(13, w: FontWeight.w700, c: RC.err)),
           )),
           _p(RGo(label: 'پەیوەستکردن', onTap: _submitCode, compact: kb)),
           _p(const RHint([TextSpan(text: 'دیمۆ: هەر کۆدێک کە بە VX دەست پێبکات کار دەکات')])),
@@ -1664,7 +1895,7 @@ class _RegFlowState extends State<RegFlow> {
           center('Band پەیوەست کرا', 'داتای دڵ، ئۆکسجین، خەو و سترێس لێرەوە دەست پێدەکات.'),
           _p(Padding(
             padding: const EdgeInsets.only(bottom: 8, right: 4, left: 4),
-            child: Text('Band لە کام دەستتە؟', style: ku(12.5, w: FontWeight.w800, c: RC.p)),
+            child: VText('Band لە کام دەستتە؟', style: ku(12.5, w: FontWeight.w800, c: RC.p)),
           )),
           _p(Row(
             children: [
@@ -1693,14 +1924,14 @@ class _RegFlowState extends State<RegFlow> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: on ? V.mint : RC.line(0.16), width: 1.5),
-            color: on ? const Color(0x1F3CF08A) : RC.white(0.04),
+            color: on ? vk(0x1F3CF08A) : RC.white(0.04),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               RIco(icon, size: 18, tile: false, color: on ? V.mint : null),
               const SizedBox(width: 7),
-              Text(label, style: ku(14, w: FontWeight.w800)),
+              VText(label, style: ku(14, w: FontWeight.w800)),
             ],
           ),
         ),
@@ -1743,12 +1974,12 @@ class _RegFlowState extends State<RegFlow> {
                   children: [
                     RIco(icon, size: 16, tile: false),
                     const SizedBox(width: 6),
-                    Text(label, style: ku(12.5, w: FontWeight.w700, c: RC.mu)),
+                    VText(label, style: ku(12.5, w: FontWeight.w700, c: RC.mu)),
                   ],
                 ),
                 Padding(
                   padding: const EdgeInsets.only(top: 6, bottom: 10),
-                  child: Text(key == 'bed' ? d.bed : d.wake, style: nu(32, h: 1.1)),
+                  child: VText(key == 'bed' ? d.bed : d.wake, style: nu(32, h: 1.1)),
                 ),
                 Directionality(
                   textDirection: TextDirection.ltr,
@@ -1788,7 +2019,7 @@ class _RegFlowState extends State<RegFlow> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text.rich(
+                  VText.rich(
                     TextSpan(children: [
                       const TextSpan(text: 'ماوەی خەو: '),
                       numSpan('$h', size: 20, c: c),
@@ -1801,7 +2032,7 @@ class _RegFlowState extends State<RegFlow> {
                     ]),
                     style: ku(16, w: FontWeight.w800, h: 1.5),
                   ),
-                  Text(t, style: ku(12.5, c: RC.p, h: 1.6)),
+                  VText(t, style: ku(12.5, c: RC.p, h: 1.6)),
                 ],
               ),
             ),
@@ -1910,8 +2141,8 @@ class _RegFlowState extends State<RegFlow> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(list[i].t, style: ku(14.5, w: FontWeight.w800, h: 1.4)),
-                          Text(list[i].s, style: ku(12, c: RC.mu, h: 1.6)),
+                          VText(list[i].t, style: ku(14.5, w: FontWeight.w800, h: 1.4)),
+                          VText(list[i].s, style: ku(12, c: RC.mu, h: 1.6)),
                         ],
                       ),
                     ),
@@ -1973,7 +2204,7 @@ class _RegFlowState extends State<RegFlow> {
           if (welcome)
             Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: Text(
+              child: VText(
                 LangState.I.t('terms'),
                 textAlign: TextAlign.center,
                 textDirection: dirOfLang(LangState.I.cur),
@@ -1993,14 +2224,14 @@ class _RegBg extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Stack(
-      children: const [
+      children: [
         Positioned.fill(
           child: DecoratedBox(
             decoration: BoxDecoration(
               gradient: RadialGradient(
                 center: Alignment(0, -1.08),
                 radius: 0.95,
-                colors: [Color(0x382FE6F3), Color(0x002FE6F3)],
+                colors: [vk(0x382FE6F3), vk(0x002FE6F3)],
               ),
             ),
           ),
@@ -2011,7 +2242,7 @@ class _RegBg extends StatelessWidget {
               gradient: RadialGradient(
                 center: Alignment(1, 1.1),
                 radius: 0.8,
-                colors: [Color(0x1F3CF08A), Color(0x003CF08A)],
+                colors: [vk(0x1F3CF08A), vk(0x003CF08A)],
               ),
             ),
           ),
@@ -2022,7 +2253,7 @@ class _RegBg extends StatelessWidget {
               gradient: RadialGradient(
                 center: Alignment(-1, 0.2),
                 radius: 0.6,
-                colors: [Color(0x129B7BFF), Color(0x009B7BFF)],
+                colors: [vk(0x129B7BFF), vk(0x009B7BFF)],
               ),
             ),
           ),
@@ -2073,12 +2304,124 @@ class _PairOk extends StatelessWidget {
         height: 92,
         margin: const EdgeInsets.only(top: 6, bottom: 14),
         alignment: Alignment.center,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           shape: BoxShape.circle,
           gradient: V.prime,
-          boxShadow: [BoxShadow(color: Color(0xB33CF08A), blurRadius: 50, spreadRadius: -6)],
+          boxShadow: [BoxShadow(color: vk(0xB33CF08A), blurRadius: 50, spreadRadius: -6)],
         ),
-        child: Text('✓', style: ku(44, w: FontWeight.w900, c: V.ink, h: 1.1)),
+        child: VText('✓', style: ku(44, w: FontWeight.w900, c: V.ink, h: 1.1)),
+      ),
+    );
+  }
+}
+
+
+// ---------- هەژماری Gmail (لیست) ----------
+class _GmTile extends StatelessWidget {
+  const _GmTile({required this.name, required this.email, required this.has, required this.on, required this.onTap});
+  final String name;
+  final String email;
+  final bool has;
+  final bool on;
+  final VoidCallback onTap;
+
+  static final List<int> _cols = [0xFF2FE6F3, 0xFF3CF08A, 0xFFFFBE4D, 0xFFB9A4FF, 0xFFFF7A8A, 0xFF6EA8FF];
+
+  @override
+  Widget build(BuildContext context) {
+    final seed = email.codeUnits.fold<int>(0, (a, b) => a + b);
+    final k = vk(_cols[seed % _cols.length]);
+    final src = name.trim().isNotEmpty ? name.trim() : email;
+    final letter = String.fromCharCode(src.runes.first).toUpperCase();
+    return Press(
+      onTap: onTap,
+      scale: 0.98,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: on ? V.mint : RC.line(0.14), width: 1.5),
+          gradient: on ? LinearGradient(colors: [Color(0x1A8FF3F9), Color(0x1A3CF08A)]) : null,
+          color: on ? null : RC.white(0.035),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [k, mix(k, vk(0xFF0B2C36), 0.45)]),
+              ),
+              child: VText(letter, style: nu(18, c: vk(0xFF04161C), h: 1)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (name.trim().isNotEmpty)
+                    VText(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(14.5, w: FontWeight.w800, c: kW, h: 1.4)),
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Text(email, maxLines: 1, overflow: TextOverflow.ellipsis, style: nu(12.5, w: FontWeight.w600, c: RC.mu, h: 1.5)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (has) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                decoration: BoxDecoration(color: op(V.mint, 0.14), borderRadius: BorderRadius.circular(99), border: Border.all(color: op(V.mint, 0.4))),
+                child: VText('داتای هەیە', style: ku(10.5, w: FontWeight.w800, c: V.mint, h: 1.4)),
+              ),
+            ],
+            const SizedBox(width: 10),
+            RCheck(on: on),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GmAddTile extends StatelessWidget {
+  const _GmAddTile({required this.open, required this.onTap});
+  final bool open;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Press(
+      onTap: onTap,
+      scale: 0.98,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: open ? V.cy : RC.line(0.22), width: 1.5),
+          color: RC.white(0.02),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: RC.white(0.06), border: Border.all(color: RC.line(0.25))),
+              child: svgIcon('<path d="M12 5v14M5 12h14"/>', '#8ff3f9', size: 20, stroke: 2.4),
+            ),
+            const SizedBox(width: 12),
+            Expanded(child: VText('Gmail ێکی تر زیاد بکە', style: ku(14.5, w: FontWeight.w800, c: kW, h: 1.4))),
+          ],
+        ),
       ),
     );
   }

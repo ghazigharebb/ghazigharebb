@@ -5,30 +5,36 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'vex_theme.dart';
+import 'vx_en.dart';
+
+export 'vex_theme.dart' show VexTheme, VexMode, VexPal, ThemeModePicker, VD, kDarkIslandChrome, vk, vkRGBO, vkARGB, kW, kOnAcc, kOnPrime, vexHex, vexMapHex, vexCache;
+export 'vx_en.dart' show VText, vxTr, vxSpan, kIsEn, kIsBd, kIsAr, kIsFa, kIsTr, kIsLtr, kDir, LangScope;
+
 /// Navigator ـی سەرەکی — بۆ کردنەوەی شیت و تۆست لە هەر شوێنێکەوە
 final GlobalKey<NavigatorState> navKey = GlobalKey<NavigatorState>();
 
 /// ڕەنگەکانی دیزاین (هەمان ڕەنگەکانی وێبەکە)
 class V {
   V._();
-  static const Color bg = Color(0xFF04202A);
-  static const Color surf = Color(0x940C3A48);
-  static const Color surf2 = Color(0x0EFFFFFF);
-  static const Color line = Color(0x218CEBF5);
-  static const Color line2 = Color(0x428CEBF5);
-  static const Color cy = Color(0xFF2FE6F3);
-  static const Color c2 = Color(0xFF8FF3F9);
-  static const Color mint = Color(0xFF3CF08A);
-  static const Color violet = Color(0xFF9B7BFF);
-  static const Color coral = Color(0xFFFF5F7E);
-  static const Color amber = Color(0xFFFFBE4D);
-  static const Color orange = Color(0xFFFF9466);
-  static const Color tx = Color(0xFFEFFEFF);
-  static const Color mu = Color(0xFF8CB7BF);
-  static const Color track = Color(0x14FFFFFF);
-  static const Color nav = Color(0xE606242E);
-  static const Color sheet = Color(0xFF062A35);
-  static const Color ink = Color(0xFF04323A);
+  static Color get bg => VexTheme.I.p.bg;
+  static Color get surf => VexTheme.I.p.surf;
+  static Color get surf2 => VexTheme.I.p.surf2;
+  static Color get line => VexTheme.I.p.line;
+  static Color get line2 => VexTheme.I.p.line2;
+  static Color get cy => VexTheme.I.p.cy;
+  static Color get c2 => VexTheme.I.p.c2;
+  static Color get mint => VexTheme.I.p.mint;
+  static Color get violet => VexTheme.I.p.violet;
+  static Color get coral => VexTheme.I.p.coral;
+  static Color get amber => VexTheme.I.p.amber;
+  static Color get orange => VexTheme.I.p.orange;
+  static Color get tx => VexTheme.I.p.tx;
+  static Color get mu => VexTheme.I.p.mu;
+  static Color get track => VexTheme.I.p.track;
+  static Color get nav => VexTheme.I.p.nav;
+  static Color get sheet => VexTheme.I.p.sheet;
+  static Color get ink => VexTheme.I.p.ink;
   static const LinearGradient prime = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
@@ -50,12 +56,14 @@ int clampI(int v, int lo, int hi) => v < lo ? lo : (v > hi ? hi : v);
 double rad(double deg) => deg * 3.141592653589793 / 180.0;
 
 /// دەقی کوردی
-TextStyle ku(double size, {FontWeight w = FontWeight.w400, Color c = V.tx, double? h, List<Shadow>? shadows}) =>
-    GoogleFonts.notoSansArabic(fontSize: size, fontWeight: w, color: c, height: h, shadows: shadows);
+TextStyle ku(double size, {FontWeight w = FontWeight.w400, Color? c, double? h, List<Shadow>? shadows}) { c ??= V.tx; return kIsLtr
+    // English: فۆنتی Sora و هێڵی نزمتر (دیزاینی کوردی بۆ پیتی عەرەبی گەورەتر بوو)
+    ? GoogleFonts.sora(fontSize: size, fontWeight: w, color: c, height: h == null ? null : h * 0.86, shadows: shadows)
+    : GoogleFonts.notoSansArabic(fontSize: size, fontWeight: w, color: c, height: h, shadows: shadows); }
 
 /// ژمارە (Sora)
-TextStyle nu(double size, {FontWeight w = FontWeight.w800, Color c = V.tx, double? h, double? ls}) =>
-    GoogleFonts.sora(fontSize: size, fontWeight: w, color: c, height: h, letterSpacing: ls);
+TextStyle nu(double size, {FontWeight w = FontWeight.w800, Color? c, double? h, double? ls}) { c ??= V.tx; return
+    GoogleFonts.sora(fontSize: size, fontWeight: w, color: c, height: h, letterSpacing: ls); }
 
 /// ژمارە لەناو دەقی کوردیدا وەک خۆی (چەپ بۆ ڕاست) دەمێنێتەوە
 String ltr(String s) => '⁦$s⁩';
@@ -81,9 +89,13 @@ const List<String> kMonths = [
   'کانوونی دووەم', 'شوبات', 'ئازار', 'نیسان', 'ئایار', 'حوزەیران',
   'تەممووز', 'ئاب', 'ئەیلوول', 'تشرینی یەکەم', 'تشرینی دووەم', 'کانوونی یەکەم'
 ];
+/// «پێنجشەممە، 22/10/2026» — ڕۆژ و بەروار لە کاتی ئامێرەکەوە (weekday: 1=دووشەممە … 7=یەکشەممە)
 String kurdishDate() {
   final t = DateTime.now();
-  return '${kDays[t.weekday % 7]}، ${t.day}ی ${kMonths[t.month - 1]}';
+  final dd = t.day.toString().padLeft(2, '0');
+  final mm = t.month.toString().padLeft(2, '0');
+  // \u2066 … \u2069 = ڕاستەوخۆ چەپ‌بۆ‌ڕاست، تا 22/10 نەگۆڕدرێت بۆ 10/22
+  return '${kDays[t.weekday % 7]}، \u2066$dd/$mm/${t.year}\u2069';
 }
 
 BoxDecoration box({double r = 14, Color? color, Color? border}) => BoxDecoration(
@@ -132,7 +144,7 @@ class _GradBorder extends CustomPainter {
     final p = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1
-      ..shader = const LinearGradient(
+      ..shader = LinearGradient(
         begin: Alignment(-0.6, -1),
         end: Alignment(0.6, 1),
         colors: [V.line2, Color(0x008CEBF5)],
@@ -158,7 +170,7 @@ class CardTitle extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          Expanded(child: Text(title, style: ku(16, w: FontWeight.w800))),
+          Expanded(child: VText(title, style: ku(16, w: FontWeight.w800))),
           if (link != null) LinkBtn(link!, onTap: onLink),
         ],
       ),
@@ -178,7 +190,7 @@ class LinkBtn extends StatelessWidget {
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.all(4),
-        child: Text(label, style: ku(12, w: FontWeight.w700, c: V.cy)),
+        child: VText(label, style: ku(12, w: FontWeight.w700, c: V.cy)),
       ),
     );
   }
@@ -248,7 +260,7 @@ class VBtn extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: d,
-        child: Text(label, textAlign: TextAlign.center, style: ku(fontSize, w: FontWeight.w800, c: fg)),
+        child: VText(label, textAlign: TextAlign.center, style: ku(fontSize, w: FontWeight.w800, c: fg)),
       ),
     );
   }
@@ -302,7 +314,7 @@ class _RiseState extends State<Rise> with SingleTickerProviderStateMixin {
 
 /// خاڵی زیندوو (چاوتروکاندن)
 class BlinkDot extends StatefulWidget {
-  const BlinkDot({super.key, this.size = 8, this.color = V.mint, this.glow = false});
+  BlinkDot({super.key, this.size = 8, Color? color, this.glow = false}) : color = color ?? V.mint;
   final double size;
   final Color color;
   final bool glow;
@@ -390,7 +402,7 @@ class _ToastView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: const [BoxShadow(color: Color(0x66000000), blurRadius: 20, offset: Offset(0, 8))],
                 ),
-                child: Text(
+                child: VText(
                   msg,
                   textAlign: TextAlign.center,
                   style: ku(13, w: FontWeight.w800, c: V.ink, h: 1.7),
@@ -405,7 +417,7 @@ class _ToastView extends StatelessWidget {
 }
 
 // ---------- شیتی خوارەوە ----------
-Future<T?> showVSheet<T>({required WidgetBuilder builder, bool plain = false, Color color = V.sheet}) {
+Future<T?> showVSheet<T>({required WidgetBuilder builder, bool plain = false, Color? color}) { color ??= V.sheet;
   final ctx = navKey.currentContext;
   if (ctx == null) return Future<T?>.value(null);
   return showModalBottomSheet<T>(
@@ -419,7 +431,7 @@ Future<T?> showVSheet<T>({required WidgetBuilder builder, bool plain = false, Co
 }
 
 class VSheet extends StatelessWidget {
-  const VSheet({super.key, required this.child, this.plain = false, this.color = V.sheet});
+  VSheet({super.key, required this.child, this.plain = false, Color? color}) : color = color ?? V.sheet;
   final Widget child;
   final bool plain;
   final Color color;
@@ -470,14 +482,14 @@ class SheetTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
-      child: Text(text, style: ku(19, w: FontWeight.w800)),
+      child: VText(text, style: ku(19, w: FontWeight.w800)),
     );
   }
 }
 
 /// ژمارەی گەورە + ڕوونکردنەوە
 class DBig extends StatelessWidget {
-  const DBig(this.value, this.sub, {super.key, this.color = V.mint});
+  DBig(this.value, this.sub, {super.key, Color? color}) : color = color ?? V.mint;
   final String value;
   final String sub;
   final Color color;
@@ -490,9 +502,9 @@ class DBig extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.baseline,
         textBaseline: TextBaseline.alphabetic,
         children: [
-          Text(value, textDirection: TextDirection.ltr, style: nu(46, c: color, h: 1.1)),
+          VText(value, textDirection: TextDirection.ltr, style: nu(46, c: color, h: 1.1)),
           const SizedBox(width: 8),
-          Flexible(child: Text(sub, style: ku(13, c: V.mu))),
+          Flexible(child: VText(sub, style: ku(13, c: V.mu))),
         ],
       ),
     );
@@ -527,11 +539,11 @@ class K3 extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(items[i].label,
+                    VText(items[i].label,
                         textAlign: TextAlign.center,
                         style: ku(11, w: FontWeight.w700, c: items[i].labelColor ?? V.mu)),
                     const SizedBox(height: 2),
-                    Text(
+                    VText(
                       items[i].value,
                       textAlign: TextAlign.center,
                       textDirection: items[i].isNum ? TextDirection.ltr : null,
@@ -607,7 +619,7 @@ class Aurora extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Stack(
+    return Stack(
       children: [
         Positioned.fill(child: ColoredBox(color: V.bg)),
         Positioned.fill(
@@ -641,7 +653,7 @@ class Aurora extends StatelessWidget {
 
 /// شووشەی تەڵخ (blur)
 class Glass extends StatelessWidget {
-  const Glass({super.key, required this.child, this.radius = 26, this.sigma = 18, this.color = V.nav, this.border = V.line});
+  Glass({super.key, required this.child, this.radius = 26, this.sigma = 18, Color? color, Color? border}) : color = color ?? V.nav, border = border ?? V.line;
   final Widget child;
   final double radius;
   final double sigma;

@@ -167,7 +167,7 @@ Widget brandLogo(Ad a, double size, {double ring = 2, double ringOpacity = 0.22}
       boxShadow: shadow,
       gradient: LinearGradient(colors: [a.b1, a.b2]),
     ),
-    child: Text(a.brand.substring(0, 1), style: nu(size * 0.46, c: Colors.white)),
+    child: VText(a.brand.substring(0, 1), style: nu(size * 0.46, c: Colors.white)),
   );
 }
 
@@ -439,7 +439,7 @@ class _SponsorCarouselState extends State<SponsorCarousel> with TickerProviderSt
                   borderRadius: BorderRadius.circular(13),
                   boxShadow: const [BoxShadow(color: Color(0x99000000), blurRadius: 18, offset: Offset(0, 10), spreadRadius: -6)],
                 ),
-                child: Text(stk, textDirection: TextDirection.ltr, style: nu(14, c: const Color(0xFF3B1D00), h: 1.1)),
+                child: VText(stk, textDirection: TextDirection.ltr, style: nu(14, c: const Color(0xFF3B1D00), h: 1.1)),
               ),
             ),
           ),
@@ -486,7 +486,7 @@ class _SponsorCarouselState extends State<SponsorCarousel> with TickerProviderSt
                   child: Transform.rotate(angle: rad(-12 + 8 * v), child: child),
                 );
               },
-              child: Text(a.emo ?? '', style: const TextStyle(fontSize: 58)),
+              child: VText(a.emo ?? '', style: const TextStyle(fontSize: 58)),
             ),
           ),
         ),
@@ -504,7 +504,7 @@ class _SponsorCarouselState extends State<SponsorCarousel> with TickerProviderSt
             brandLogo(a, 26),
             const SizedBox(width: 7),
             Flexible(
-              child: Text(a.brand, maxLines: 1, overflow: TextOverflow.ellipsis, style: nu(13, c: Colors.white)),
+              child: VText(a.brand, maxLines: 1, overflow: TextOverflow.ellipsis, style: nu(13, c: Colors.white)),
             ),
             const SizedBox(width: 7),
             Container(
@@ -513,7 +513,7 @@ class _SponsorCarouselState extends State<SponsorCarousel> with TickerProviderSt
                 borderRadius: BorderRadius.circular(99),
                 border: Border.all(color: op(Colors.white, 0.2)),
               ),
-              child: Text(
+              child: VText(
                 a.example ? 'نموونە' : 'سپۆنسەر',
                 style: ku(9.5, w: FontWeight.w700, c: op(Colors.white, 0.62), h: 1.4),
               ),
@@ -521,7 +521,7 @@ class _SponsorCarouselState extends State<SponsorCarousel> with TickerProviderSt
           ],
         ),
         const SizedBox(height: 5),
-        Text(
+        VText(
           a.title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -529,7 +529,7 @@ class _SponsorCarouselState extends State<SponsorCarousel> with TickerProviderSt
             Shadow(color: Color(0x59000000), blurRadius: 12, offset: Offset(0, 2)),
           ]),
         ),
-        Text(
+        VText(
           a.line,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -556,7 +556,7 @@ class _SponsorCarouselState extends State<SponsorCarousel> with TickerProviderSt
               Expanded(
                 child: AnimatedBuilder(
                   animation: Store.I,
-                  builder: (context, _) => Text.rich(
+                  builder: (context, _) => VText.rich(
                     _stripSpan(a),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -574,7 +574,7 @@ class _SponsorCarouselState extends State<SponsorCarousel> with TickerProviderSt
                   color: Colors.white,
                   boxShadow: [BoxShadow(color: Color(0x80000000), blurRadius: 14, offset: Offset(0, 6), spreadRadius: -4)],
                 ),
-                child: Text('‹', style: nu(16, c: a.b1, h: 1.0)),
+                child: VText('‹', style: nu(16, c: a.b1, h: 1.0)),
               ),
             ],
           ),
@@ -684,12 +684,12 @@ class _AdSheetState extends State<AdSheet> {
                   padding: const EdgeInsets.fromLTRB(2, 18, 2, 8),
                   child: Row(
                     children: [
-                      Text('🍽️ خواردنەکان', style: ku(13, w: FontWeight.w800, c: const Color(0xFF9CC4CB))),
+                      VText('🍽️ خواردنەکان', style: ku(13, w: FontWeight.w800, c: const Color(0xFF9CC4CB))),
                       const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(color: op(V.cy, 0.12), borderRadius: BorderRadius.circular(99)),
-                        child: Text('✨ زانیاری تەندروستی لە VEX', style: ku(10.5, w: FontWeight.w700, c: V.c2)),
+                        child: VText('✨ زانیاری تەندروستی لە VEX', style: ku(10.5, w: FontWeight.w700, c: V.c2)),
                       ),
                     ],
                   ),
@@ -703,7 +703,7 @@ class _AdSheetState extends State<AdSheet> {
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: const Color(0x40FFBE4D)),
                   ),
-                  child: Text.rich(
+                  child: VText.rich(
                     TextSpan(children: [
                       const TextSpan(text: '💡 ژمارەکان خەمڵاندنی VEX ن. دەست لە '),
                       TextSpan(text: '+', style: nu(12, c: const Color(0xFFFFE2A6))),
@@ -726,7 +726,7 @@ class _AdSheetState extends State<AdSheet> {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [BoxShadow(color: op(a.b1, 0.7), blurRadius: 26, offset: const Offset(0, 12), spreadRadius: -12)],
                         ),
-                        child: Text(a.cta, textAlign: TextAlign.center, style: ku(14.5, w: FontWeight.w800, c: Colors.white)),
+                        child: VText(a.cta, textAlign: TextAlign.center, style: ku(14.5, w: FontWeight.w800, c: Colors.white)),
                       ),
                     ),
                   ),
@@ -741,7 +741,7 @@ class _AdSheetState extends State<AdSheet> {
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: op(const Color(0xFF8CEBF5), 0.2)),
                         ),
-                        child: Text('📍 نزیکترین لق', textAlign: TextAlign.center, style: ku(14.5, w: FontWeight.w800)),
+                        child: VText('📍 نزیکترین لق', textAlign: TextAlign.center, style: ku(14.5, w: FontWeight.w800)),
                       ),
                     ),
                   ),
@@ -749,7 +749,7 @@ class _AdSheetState extends State<AdSheet> {
               ),
               Padding(
                 padding: const EdgeInsets.only(top: 14),
-                child: Text(
+                child: VText(
                   'ڕێکلام · VEX Ads · ئەم ڕێکلامە بە پێی کاتی ڕۆژ پیشان دەدرێت، نەک داتای تەندروستیت',
                   textAlign: TextAlign.center,
                   style: ku(10.5, c: const Color(0xFF6F969D), h: 1.6),
@@ -786,7 +786,7 @@ class _AdSheetState extends State<AdSheet> {
                           colors: [a.b1, a.b2],
                         ),
                       ),
-                      child: Center(child: Text(a.emo ?? '', style: const TextStyle(fontSize: 96))),
+                      child: Center(child: VText(a.emo ?? '', style: const TextStyle(fontSize: 96))),
                     ),
             ),
           ),
@@ -815,12 +815,12 @@ class _AdSheetState extends State<AdSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(a.brand, style: nu(21, c: Colors.white)),
+                      VText(a.brand, style: nu(21, c: Colors.white)),
                       const SizedBox(height: 2),
                       Row(
                         children: [
                           Flexible(
-                            child: Text(
+                            child: VText(
                               a.sub ?? 'سپۆنسەری VEX Health',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -831,7 +831,7 @@ class _AdSheetState extends State<AdSheet> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
                             decoration: BoxDecoration(color: op(Colors.white, 0.14), borderRadius: BorderRadius.circular(99)),
-                            child: Text(
+                            child: VText(
                               a.example ? 'سپۆنسەر · نموونە' : 'سپۆنسەر',
                               style: ku(10, w: FontWeight.w700, c: Colors.white),
                             ),
@@ -858,7 +858,7 @@ class _AdSheetState extends State<AdSheet> {
                   color: op(Colors.black, 0.4),
                   border: Border.all(color: op(Colors.white, 0.2)),
                 ),
-                child: const Text('✕', style: TextStyle(color: Colors.white, fontSize: 14)),
+                child: const VText('✕', style: TextStyle(color: Colors.white, fontSize: 14)),
               ),
             ),
           ),
@@ -878,14 +878,14 @@ class _AdSheetState extends State<AdSheet> {
       ),
       child: Row(
         children: [
-          const Text('🎁', style: TextStyle(fontSize: 30)),
+          const VText('🎁', style: TextStyle(fontSize: 30)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(a.offer[0], style: ku(14.5, w: FontWeight.w800)),
-                Text(a.offer[1], style: ku(11.5, c: const Color(0xFFCFE9EE))),
+                VText(a.offer[0], style: ku(14.5, w: FontWeight.w800)),
+                VText(a.offer[1], style: ku(11.5, c: const Color(0xFFCFE9EE))),
               ],
             ),
           ),
@@ -898,7 +898,7 @@ class _AdSheetState extends State<AdSheet> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-              child: Text(a.code, textDirection: TextDirection.ltr, style: nu(14, c: a.b1, ls: 1.5)),
+              child: VText(a.code, textDirection: TextDirection.ltr, style: nu(14, c: a.b1, ls: 1.5)),
             ),
           ),
         ],
@@ -912,7 +912,7 @@ class _AdSheetState extends State<AdSheet> {
     Widget chip(String t) => Container(
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
           decoration: BoxDecoration(color: op(Colors.white, 0.07), borderRadius: BorderRadius.circular(99)),
-          child: Text(t, style: ku(10.5, w: FontWeight.w700, c: const Color(0xFFCFE9EE))),
+          child: VText(t, style: ku(10.5, w: FontWeight.w700, c: const Color(0xFFCFE9EE))),
         );
     return Container(
       margin: EdgeInsets.only(top: i > 0 ? 9 : 0),
@@ -930,9 +930,9 @@ class _AdSheetState extends State<AdSheet> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(it.n, style: ku(14, w: FontWeight.w800)),
+                VText(it.n, style: ku(14, w: FontWeight.w800)),
                 const SizedBox(height: 2),
-                Text(
+                VText(
                   '${it.s} · ${it.k} kcal · نزیکەی ${walkMin(it.k)} خولەک پیاسە',
                   style: ku(11.5, c: const Color(0xFF9CC4CB)),
                 ),
@@ -963,7 +963,7 @@ class _AdSheetState extends State<AdSheet> {
                       ),
                 color: done ? op(V.mint, 0.25) : null,
               ),
-              child: Text(done ? '✓' : '+', style: nu(20, c: done ? V.mint : V.ink, h: 1.0)),
+              child: VText(done ? '✓' : '+', style: nu(20, c: done ? V.mint : V.ink, h: 1.0)),
             ),
           ),
         ],

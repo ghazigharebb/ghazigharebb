@@ -17,16 +17,16 @@ import 'reg_lang_state.dart';
 /// ڕەنگەکانی بەشی سەرەتا
 class RC {
   RC._();
-  static const Color bg = Color(0xFF03181F);
-  static const Color p = Color(0xFF9CC4CB);
-  static const Color mu = Color(0xFF8CB7BF);
-  static const Color dim = Color(0xFF5F8A92);
-  static const Color hint = Color(0xFF7FA6AD);
-  static const Color soft = Color(0xFFCFE6EC);
-  static const Color err = Color(0xFFFF8A9D);
-  static const Color lilac = Color(0xFFB9A4FF);
-  static Color line(double a) => Color.fromRGBO(140, 235, 245, a);
-  static Color white(double a) => Color.fromRGBO(255, 255, 255, a);
+  static Color get bg => vk(0xFF03181F);
+  static Color get p => vk(0xFF9CC4CB);
+  static Color get mu => vk(0xFF8CB7BF);
+  static Color get dim => vk(0xFF5F8A92);
+  static Color get hint => vk(0xFF7FA6AD);
+  static Color get soft => vk(0xFFCFE6EC);
+  static Color get err => vk(0xFFFF8A9D);
+  static Color get lilac => vk(0xFFB9A4FF);
+  static Color line(double a) => vkRGBO(140, 235, 245, a);
+  static Color white(double a) => vkRGBO(255, 255, 255, a);
 }
 
 /// لەرینەوەی سووک (وەک navigator.vibrate)
@@ -43,11 +43,11 @@ void buzz([int level = 1]) {
 }
 
 /// ژمارە لە ناو دەقی کوردیدا
-TextSpan numSpan(String s, {double size = 14, Color c = V.tx, FontWeight w = FontWeight.w800}) =>
-    TextSpan(text: ltr(s), style: nu(size, c: c, w: w));
+TextSpan numSpan(String s, {double size = 14, Color? c, FontWeight w = FontWeight.w800}) { c ??= V.tx; return
+    TextSpan(text: ltr(s), style: nu(size, c: c, w: w)); }
 
-TextSpan txtSpan(String s, {double size = 14, Color c = RC.p, FontWeight w = FontWeight.w400}) =>
-    TextSpan(text: s, style: ku(size, c: c, w: w));
+TextSpan txtSpan(String s, {double size = 14, Color? c, FontWeight w = FontWeight.w400}) { c ??= RC.p; return
+    TextSpan(text: s, style: ku(size, c: c, w: w)); }
 
 // ---------- سەری هەر هەنگاوێک ----------
 class RIcon extends StatelessWidget {
@@ -75,7 +75,7 @@ class RTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(bottom: compact ? 4 : 6),
-      child: Text(
+      child: VText(
         text,
         textAlign: center ? TextAlign.center : TextAlign.start,
         style: ku(compact ? 21 : 25, w: FontWeight.w800, h: 1.45),
@@ -95,7 +95,7 @@ class RPara extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(bottom: bottom ?? (compact ? 12 : 20)),
-      child: Text.rich(
+      child: VText.rich(
         TextSpan(style: ku(compact ? 13 : 14, c: RC.p, h: compact ? 1.7 : 1.85), children: spans),
         textAlign: center ? TextAlign.center : TextAlign.start,
       ),
@@ -128,10 +128,10 @@ class RGo extends StatelessWidget {
           padding: EdgeInsets.symmetric(vertical: compact ? 13 : 16, horizontal: 16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            gradient: enabled ? const LinearGradient(colors: [Color(0xFF8FF3F9), Color(0xFF3CF08A)]) : null,
+            gradient: enabled ? LinearGradient(colors: [Color(0xFF8FF3F9), Color(0xFF3CF08A)]) : null,
             color: enabled ? null : RC.white(0.07),
             boxShadow: enabled
-                ? const [BoxShadow(color: Color(0xD93CF08A), blurRadius: 34, offset: Offset(0, 16), spreadRadius: -14)]
+                ? [BoxShadow(color: vk(0xD93CF08A), blurRadius: 34, offset: Offset(0, 16), spreadRadius: -14)]
                 : null,
           ),
           child: Row(
@@ -146,7 +146,7 @@ class RGo extends StatelessWidget {
                 const SizedBox(width: 8),
               ],
               Flexible(
-                child: Text(
+                child: VText(
                   label,
                   textAlign: TextAlign.center,
                   maxLines: 1,
@@ -164,7 +164,7 @@ class RGo extends StatelessWidget {
 
 /// دوگمەی دەقی (وەک «پێشتر هەژمارم هەیە»)
 class RLink extends StatelessWidget {
-  const RLink(this.label, {super.key, this.onTap, this.color = V.c2, this.top = 12});
+  RLink(this.label, {super.key, this.onTap, Color? color, this.top = 12}) : color = color ?? V.c2;
   final String label;
   final VoidCallback? onTap;
   final Color color;
@@ -179,7 +179,7 @@ class RLink extends StatelessWidget {
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            child: Text(label, textAlign: TextAlign.center, style: ku(13.5, w: FontWeight.w700, c: color)),
+            child: VText(label, textAlign: TextAlign.center, style: ku(13.5, w: FontWeight.w700, c: color)),
           ),
         ),
       ),
@@ -226,7 +226,7 @@ class ROptTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: on ? V.mint : RC.line(0.14), width: 1.5),
             gradient: on
-                ? const LinearGradient(
+                ? LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [Color(0x1A8FF3F9), Color(0x1A3CF08A)],
@@ -234,7 +234,7 @@ class ROptTile extends StatelessWidget {
                 : null,
             color: on ? null : RC.white(0.035),
             boxShadow: on
-                ? const [BoxShadow(color: Color(0x663CF08A), blurRadius: 28, offset: Offset(0, 12), spreadRadius: -18)]
+                ? [BoxShadow(color: vk(0x663CF08A), blurRadius: 28, offset: Offset(0, 12), spreadRadius: -18)]
                 : null,
           ),
           child: Row(
@@ -246,12 +246,12 @@ class ROptTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(title,
+                    VText(title,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: ku(small ? 14 : (compact ? 14.5 : 15.5), w: FontWeight.w800, h: 1.4)),
                     if (sub.isNotEmpty)
-                      Text(sub, style: ku(compact ? 11.5 : 12.5, c: RC.mu, h: 1.6)),
+                      VText(sub, style: ku(compact ? 11.5 : 12.5, c: RC.mu, h: 1.6)),
                   ],
                 ),
               ),
@@ -286,7 +286,7 @@ class RCheck extends StatelessWidget {
       child: AnimatedOpacity(
         opacity: on ? 1 : 0,
         duration: const Duration(milliseconds: 200),
-        child: Text('✓', style: ku(13, w: FontWeight.w900, c: V.ink, h: 1)),
+        child: VText('✓', style: ku(13, w: FontWeight.w900, c: V.ink, h: 1)),
       ),
     );
   }
@@ -321,7 +321,7 @@ class RBigOpt extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: on ? V.mint : RC.line(0.14), width: 1.5),
             gradient: on
-                ? const LinearGradient(
+                ? LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [Color(0x1A8FF3F9), Color(0x1A3CF08A)],
@@ -329,7 +329,7 @@ class RBigOpt extends StatelessWidget {
                 : null,
             color: on ? null : RC.white(0.035),
             boxShadow: on
-                ? const [BoxShadow(color: Color(0x663CF08A), blurRadius: 28, offset: Offset(0, 12), spreadRadius: -18)]
+                ? [BoxShadow(color: vk(0x663CF08A), blurRadius: 28, offset: Offset(0, 12), spreadRadius: -18)]
                 : null,
           ),
           child: Stack(
@@ -347,12 +347,12 @@ class RBigOpt extends StatelessWidget {
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: on ? const Color(0x293CF08A) : RC.white(0.05),
+                        color: on ? vk(0x293CF08A) : RC.white(0.05),
                       ),
-                      child: Text(emoji, style: TextStyle(fontSize: compact ? 32 : 40)),
+                      child: VText(emoji, style: TextStyle(fontSize: compact ? 32 : 40)),
                     ),
                     const SizedBox(height: 10),
-                    Text(title, style: ku(17, w: FontWeight.w800)),
+                    VText(title, style: ku(17, w: FontWeight.w800)),
                   ],
                 ),
               ),
@@ -418,9 +418,9 @@ class _RPMState extends State<RPM> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(widget.size * 0.35),
             border: Border.all(color: RC.line(0.2)),
-            color: _down ? const Color(0x242FE6F3) : RC.white(0.05),
+            color: _down ? vk(0x242FE6F3) : RC.white(0.05),
           ),
-          child: Text(widget.plus ? '+' : '−', style: nu(widget.size * 0.5, w: FontWeight.w600, c: V.c2, h: 1)),
+          child: VText(widget.plus ? '+' : '−', style: nu(widget.size * 0.5, w: FontWeight.w600, c: V.c2, h: 1)),
         ),
       ),
     );
@@ -455,17 +455,17 @@ class RValue extends StatelessWidget {
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     child: ShaderMask(
-                      shaderCallback: (r) => const LinearGradient(
+                      shaderCallback: (r) => LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Colors.white, Color(0xFFA8F6FB)],
+                        colors: [kW, vk(0xFFA8F6FB)],
                       ).createShader(r),
                       blendMode: BlendMode.srcIn,
-                      child: Text(value, style: nu(compact ? 48 : 58, c: Colors.white, h: 1, ls: -2)),
+                      child: VText(value, style: nu(compact ? 48 : 58, c: kW, h: 1, ls: -2)),
                     ),
                   ),
                   const SizedBox(height: 6),
-                  Text(unit,
+                  VText(unit,
                       textDirection: TextDirection.rtl, style: ku(14, w: FontWeight.w700, c: RC.mu, h: 1.3)),
                 ],
               ),
@@ -518,7 +518,7 @@ class RUnitSeg extends StatelessWidget {
                       borderRadius: BorderRadius.circular(11),
                       color: u == value ? V.tx : Colors.transparent,
                     ),
-                    child: Text(u, style: nu(13, w: FontWeight.w700, c: u == value ? V.bg : RC.mu)),
+                    child: VText(u, style: nu(13, w: FontWeight.w700, c: u == value ? V.bg : RC.mu)),
                   ),
                 ),
             ],
@@ -702,13 +702,13 @@ class _TickPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     const u = 10.0;
     final major = Paint()
-      ..color = const Color(0xBF8CEBF5)
+      ..color = vk(0xBF8CEBF5)
       ..strokeWidth = 2;
     final mid = Paint()
-      ..color = const Color(0x738CEBF5)
+      ..color = vk(0x738CEBF5)
       ..strokeWidth = 2;
     final minor = Paint()
-      ..color = const Color(0x408CEBF5)
+      ..color = vk(0x408CEBF5)
       ..strokeWidth = 1.5;
     const top = 10.0;
     final k = compact ? 0.88 : 1.0;
@@ -742,16 +742,16 @@ class _MarkPainter extends CustomPainter {
     canvas.drawRRect(
       r.inflate(3),
       Paint()
-        ..color = const Color(0x803CF08A)
+        ..color = vk(0x803CF08A)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7),
     );
     canvas.drawRRect(
       r,
       Paint()
-        ..shader = const LinearGradient(
+        ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF8FF3F9), Color(0xFF3CF08A)],
+          colors: [vk(0xFF8FF3F9), vk(0xFF3CF08A)],
         ).createShader(Offset.zero & size),
     );
     final tri = Path()
@@ -759,7 +759,7 @@ class _MarkPainter extends CustomPainter {
       ..lineTo(size.width / 2 + 6, -8)
       ..lineTo(size.width / 2, -2)
       ..close();
-    canvas.drawPath(tri, Paint()..color = const Color(0xFF8FF3F9));
+    canvas.drawPath(tri, Paint()..color = vk(0xFF8FF3F9));
   }
 
   @override
@@ -790,13 +790,13 @@ class RBmiCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Expanded(child: Text('ڕێژەی کێش و بەرزی (BMI)', style: ku(12.5, w: FontWeight.w700, c: RC.mu))),
-              Text(bmi.toStringAsFixed(1), textDirection: TextDirection.ltr, style: nu(20)),
+              Expanded(child: VText('ڕێژەی کێش و بەرزی (BMI)', style: ku(12.5, w: FontWeight.w700, c: RC.mu))),
+              VText(bmi.toStringAsFixed(1), textDirection: TextDirection.ltr, style: nu(20)),
               const SizedBox(width: 6),
               AnimatedDefaultTextStyle(
                 duration: const Duration(milliseconds: 250),
                 style: ku(13, w: FontWeight.w800, c: c.color),
-                child: Text(c.label),
+                child: VText(c.label),
               ),
             ],
           ),
@@ -817,14 +817,14 @@ class RBmiCard extends StatelessWidget {
                         top: 4,
                         height: 8,
                         child: Row(
-                          children: const [
-                            _Seg(3.5, Color(0xBF6AA8FF)),
+                          children: [
+                            _Seg(3.5, vk(0xBF6AA8FF)),
                             SizedBox(width: 3),
-                            _Seg(6.5, Color(0xBF3CF08A)),
+                            _Seg(6.5, vk(0xBF3CF08A)),
                             SizedBox(width: 3),
-                            _Seg(5, Color(0xBFFFBE4D)),
+                            _Seg(5, vk(0xBFFFBE4D)),
                             SizedBox(width: 3),
-                            _Seg(10, Color(0xBFFF8A5F)),
+                            _Seg(10, vk(0xBFFF8A5F)),
                           ],
                         ),
                       ),
@@ -839,9 +839,9 @@ class RBmiCard extends StatelessWidget {
                           height: 16,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.white,
+                            color: kW,
                             border: Border.all(color: c.color, width: 3),
-                            boxShadow: const [BoxShadow(color: Color(0x1FFFFFFF), spreadRadius: 4)],
+                            boxShadow: [BoxShadow(color: vk(0x1FFFFFFF), spreadRadius: 4)],
                           ),
                         ),
                       ),
@@ -863,7 +863,7 @@ class RBmiCard extends StatelessWidget {
                         left: w * f - 20,
                         width: 40,
                         top: 0,
-                        child: Text(t, textAlign: TextAlign.center, style: nu(10.5, w: FontWeight.w600, c: RC.dim)),
+                        child: VText(t, textAlign: TextAlign.center, style: nu(10.5, w: FontWeight.w600, c: RC.dim)),
                       );
                   return Stack(clipBehavior: Clip.none, children: [lb('18.5', 0.14), lb('25', 0.40), lb('30', 0.60)]);
                 },
@@ -872,7 +872,7 @@ class RBmiCard extends StatelessWidget {
           ),
           if (!compact) ...[
             const SizedBox(height: 6),
-            Text(c.text, style: ku(12.5, c: RC.p, h: 1.7)),
+            VText(c.text, style: ku(12.5, c: RC.p, h: 1.7)),
           ],
         ],
       ),
@@ -940,8 +940,8 @@ class _RYearWheelState extends State<RYearWheel> {
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
-                    color: const Color(0x142FE6F3),
-                    border: Border.all(color: const Color(0x4D2FE6F3)),
+                    color: vk(0x142FE6F3),
+                    border: Border.all(color: vk(0x4D2FE6F3)),
                   ),
                 ),
               ),
@@ -976,9 +976,9 @@ class _RYearWheelState extends State<RYearWheel> {
                           child: AnimatedScale(
                             scale: i == _sel ? 1.25 : 1,
                             duration: const Duration(milliseconds: 150),
-                            child: Text(
+                            child: VText(
                               '${years[i]}',
-                              style: nu(22, w: FontWeight.w700, c: i == _sel ? Colors.white : RC.dim),
+                              style: nu(22, w: FontWeight.w700, c: i == _sel ? kW : RC.dim),
                             ),
                           ),
                         ),
@@ -1129,10 +1129,10 @@ class _ROtpState extends State<ROtp> with SingleTickerProviderStateMixin {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: border, width: 1.5),
-          color: cur ? const Color(0x0F2FE6F3) : RC.white(0.05),
+          color: cur ? vk(0x0F2FE6F3) : RC.white(0.05),
         ),
         child: has
-            ? Text(code[i], style: nu(24, c: Colors.white))
+            ? VText(code[i], style: nu(24, c: kW))
             : (cur ? const _Caret() : const SizedBox.shrink()),
       ),
     );
@@ -1188,7 +1188,7 @@ class RChip extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(99),
             border: Border.all(color: on ? V.mint : RC.line(0.16), width: 1.5),
-            color: on ? const Color(0x1F3CF08A) : RC.white(0.04),
+            color: on ? vk(0x1F3CF08A) : RC.white(0.04),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -1203,8 +1203,8 @@ class RChip extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
               ],
-              Text(label,
-                  style: ku(compact ? 13 : 14, w: FontWeight.w700, c: on ? const Color(0xFFC9FFE0) : V.tx, h: 1.3)),
+              VText(label,
+                  style: ku(compact ? 13 : 14, w: FontWeight.w700, c: on ? vk(0xFFC9FFE0) : V.tx, h: 1.3)),
             ],
           ),
         ),
@@ -1245,14 +1245,14 @@ class RSwitch extends StatelessWidget {
               child: AnimatedAlign(
                 duration: const Duration(milliseconds: 250),
                 curve: Curves.easeOutCubic,
-                alignment: on ? Alignment.centerLeft : Alignment.centerRight,
+                alignment: (on != kIsLtr) ? Alignment.centerLeft : Alignment.centerRight,
                 child: Container(
                   width: 22,
                   height: 22,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white,
-                    boxShadow: [BoxShadow(color: Color(0x4D000000), blurRadius: 4, offset: Offset(0, 1))],
+                    color: kW,
+                    boxShadow: [BoxShadow(color: vk(0x4D000000), blurRadius: 4, offset: Offset(0, 1))],
                   ),
                 ),
               ),
@@ -1284,7 +1284,7 @@ class RLock extends StatelessWidget {
         children: [
           const RIco('🔒', size: 34, radius: 12),
           const SizedBox(width: 10),
-          Expanded(child: Text(text, style: ku(12.5, c: RC.p, h: 1.75))),
+          Expanded(child: VText(text, style: ku(12.5, c: RC.p, h: 1.75))),
         ],
       ),
     );
@@ -1300,7 +1300,7 @@ class RHint extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(top: top),
-      child: Text.rich(
+      child: VText.rich(
         TextSpan(style: ku(12.5, c: RC.hint, h: 1.6), children: spans),
         textAlign: TextAlign.center,
       ),
@@ -1310,7 +1310,7 @@ class RHint extends StatelessWidget {
 
 // ---------- خانەی نووسین ----------
 InputDecoration rInputDeco(String hint, {bool compact = false, bool ltrHint = false}) => InputDecoration(
-      hintText: hint,
+      hintText: vxTr(hint),
       hintTextDirection: ltrHint ? TextDirection.ltr : null,
       hintStyle: ku(compact ? 16 : 17, w: FontWeight.w600, c: RC.dim),
       filled: true,
@@ -1324,15 +1324,15 @@ InputDecoration rInputDeco(String hint, {bool compact = false, bool ltrHint = fa
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(18),
-        borderSide: const BorderSide(color: V.cy, width: 1.5),
+        borderSide: BorderSide(color: V.cy, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(18),
-        borderSide: const BorderSide(color: V.coral, width: 1.5),
+        borderSide: BorderSide(color: V.coral, width: 1.5),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(18),
-        borderSide: const BorderSide(color: V.coral, width: 1.5),
+        borderSide: BorderSide(color: V.coral, width: 1.5),
       ),
     );
 
@@ -1371,7 +1371,7 @@ class RMarquee extends StatelessWidget {
                 delayMs: 150 + i * 120,
                 child: _MqRow(
                   row: kFeatRows[i],
-                  labels: LangState.I.isKu ? null : kFeatEn.sublist(i * 8, i * 8 + kFeatRows[i].length),
+                  labels: LangState.I.isKu ? null : (LangState.I.code == 'ar' ? kFeatAr : (LangState.I.code == 'fa' ? kFeatFa : (LangState.I.code == 'tr' ? kFeatTr : kFeatEn))).sublist(i * 8, i * 8 + kFeatRows[i].length),
                   seconds: secs[i],
                   reverse: i.isOdd,
                   height: compact ? 31 : 36,
@@ -1464,7 +1464,7 @@ class _MqRowState extends State<_MqRow> with SingleTickerProviderStateMixin {
   }
 
   Widget _pill(RPill p, String? label) {
-    final k = Color(p.c);
+    final k = vk(p.c);
     return Container(
       height: widget.height,
       padding: const EdgeInsets.only(left: 12, right: 13),
@@ -1478,13 +1478,13 @@ class _MqRowState extends State<_MqRow> with SingleTickerProviderStateMixin {
         border: Border.all(color: op(k, 0.40)),
       ),
       child: Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: kDir,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             RIco(p.e, size: 16, tile: false, color: k),
             const SizedBox(width: 7),
-            Text(label ?? p.t, style: ku(widget.height < 34 ? 12 : 12.5, w: FontWeight.w700, c: const Color(0xFFE9FBFD), h: 1.2)),
+            VText(label ?? p.t, style: ku(widget.height < 34 ? 12 : 12.5, w: FontWeight.w700, c: vk(0xFFE9FBFD), h: 1.2)),
           ],
         ),
       ),
@@ -1567,9 +1567,9 @@ class _RLogoState extends State<RLogo> with TickerProviderStateMixin {
                   child: Container(
                     width: w * 0.72,
                     height: h * 0.84,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: RadialGradient(colors: [Color(0x522FE6F3), Color(0x002FE6F3)], stops: [0, 0.68]),
+                      gradient: RadialGradient(colors: [vk(0x522FE6F3), vk(0x002FE6F3)], stops: [0, 0.68]),
                     ),
                   ),
                 ),
@@ -1586,7 +1586,7 @@ class _RLogoState extends State<RLogo> with TickerProviderStateMixin {
             width: w,
             height: h,
             fit: BoxFit.contain,
-            errorBuilder: (context, e, s) => Text('VX', style: nu(w * 0.32, c: V.cy)),
+            errorBuilder: (context, e, s) => VText('VX', style: nu(w * 0.32, c: V.cy)),
           ),
         ],
       ),
@@ -1600,7 +1600,7 @@ class _DashRing extends CustomPainter {
     final r = math.min(size.width, size.height) / 2;
     final c = size.center(Offset.zero);
     final p = Paint()
-      ..color = const Color(0x388CEBF5)
+      ..color = vk(0x388CEBF5)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
     const n = 54;
@@ -1656,14 +1656,14 @@ class _RRadarState extends State<RRadar> with SingleTickerProviderStateMixin {
             width: 78,
             height: 78,
             alignment: Alignment.center,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 center: Alignment(-0.3, -0.4),
                 colors: [Color(0xFF8FF3F9), Color(0xFF14B8D6), Color(0xFF0B5F73)],
                 stops: [0, 0.6, 1],
               ),
-              boxShadow: [BoxShadow(color: Color(0x802FE6F3), blurRadius: 40)],
+              boxShadow: [BoxShadow(color: vk(0x802FE6F3), blurRadius: 40)],
             ),
             child: widget.icon == '⌚'
                 ? Padding(
@@ -1671,7 +1671,7 @@ class _RRadarState extends State<RRadar> with SingleTickerProviderStateMixin {
                     child: Image.asset(
                       'assets/brand/vex_band.webp',
                       fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => const RIco('⌚', size: 36, tile: false, color: V.ink),
+                      errorBuilder: (_, __, ___) => RIco('⌚', size: 36, tile: false, color: V.ink),
                     ),
                   )
                 : RIco(widget.icon, size: 36, tile: false, color: V.ink, stroke: 2),
@@ -1702,7 +1702,7 @@ class _RadarPainter extends CustomPainter {
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2
-          ..color = Color.fromRGBO(47, 230, 243, 0.5 * a / 0.9),
+          ..color = vkRGBO(47, 230, 243, 0.5 * a / 0.9),
       );
     }
   }
@@ -1735,9 +1735,9 @@ class RBandArt extends StatelessWidget {
           Container(
             width: size,
             height: size,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: RadialGradient(colors: [Color(0x4D2FE6F3), Color(0x002FE6F3)], stops: [0, 0.65]),
+              gradient: RadialGradient(colors: [vk(0x4D2FE6F3), vk(0x002FE6F3)], stops: [0, 0.65]),
             ),
           ),
           SizedBox(
@@ -1750,11 +1750,11 @@ class RBandArt extends StatelessWidget {
                 // ژمارەکانی سەر شاشەی Band (بە فۆنتی ئەپ)
                 Positioned(
                   top: size * 0.335,
-                  child: Text('72', style: nu(size * 0.094, c: V.tx, h: 1)),
+                  child: VText('72', style: nu(size * 0.094, c: V.tx, h: 1)),
                 ),
                 Positioned(
                   top: size * 0.62,
-                  child: Text('BPM', style: nu(size * 0.05, w: FontWeight.w700, c: RC.mu, h: 1)),
+                  child: VText('BPM', style: nu(size * 0.05, w: FontWeight.w700, c: RC.mu, h: 1)),
                 ),
               ],
             ),
@@ -1802,11 +1802,11 @@ class RPlanTile extends StatelessWidget {
             children: [
               RIco(icon, size: 14, tile: false, color: color),
               const SizedBox(width: 6),
-              Expanded(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(12, w: FontWeight.w700, c: RC.mu))),
+              Expanded(child: VText(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(12, w: FontWeight.w700, c: RC.mu))),
             ],
           ),
           const SizedBox(height: 2),
-          Text.rich(
+          VText.rich(
             TextSpan(children: [
               TextSpan(text: ltr(value), style: nu(compact ? 18 : 20, c: color)),
               if (unit.isNotEmpty) TextSpan(text: ' $unit', style: ku(12, w: FontWeight.w600, c: RC.mu)),
@@ -1814,7 +1814,7 @@ class RPlanTile extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          Text(sub, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(11.5, c: RC.hint, h: 1.5)),
+          VText(sub, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(11.5, c: RC.hint, h: 1.5)),
         ],
       ),
     );

@@ -93,12 +93,12 @@ class _WaterCardState extends State<WaterCard> with SingleTickerProviderStateMix
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(14),
-                  gradient: const LinearGradient(
+                  gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [Color(0x403DB8FF), Color(0x1F2FE6F3)],
+                    colors: [vk(0x403DB8FF), vk(0x1F2FE6F3)],
                   ),
-                  border: Border.all(color: const Color(0x593DB8FF)),
+                  border: Border.all(color: vk(0x593DB8FF)),
                 ),
                 child: svgIcon(Ico.drop, '#3db8ff', size: 20, fill: true),
               ),
@@ -107,16 +107,16 @@ class _WaterCardState extends State<WaterCard> with SingleTickerProviderStateMix
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('ئاو', style: ku(16, w: FontWeight.w800)),
-                    Text(wn >= wg ? 'ئامانج تەواو بوو 💙' : 'پەرداخێک = 250ml', style: ku(12, c: V.mu)),
+                    VText('ئاو', style: ku(16, w: FontWeight.w800)),
+                    VText(wn >= wg ? 'ئامانج تەواو بوو 💙' : 'پەرداخێک = 250ml', style: ku(12, c: V.mu)),
                   ],
                 ),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(fmt(ml), textDirection: TextDirection.ltr, style: nu(19, c: const Color(0xFF8FDCFF))),
-                  Text('/ ${fmt(gm)} ml', textDirection: TextDirection.ltr, style: nu(11, w: FontWeight.w600, c: V.mu)),
+                  VText(fmt(ml), textDirection: TextDirection.ltr, style: nu(19, c: vk(0xFF8FDCFF))),
+                  VText('/ ${fmt(gm)} ml', textDirection: TextDirection.ltr, style: nu(11, w: FontWeight.w600, c: V.mu)),
                 ],
               ),
             ],
@@ -158,10 +158,10 @@ class _WaterCardState extends State<WaterCard> with SingleTickerProviderStateMix
               borderRadius: BorderRadius.circular(9),
               child: Stack(
                 children: [
-                  const Positioned.fill(child: ColoredBox(color: Color(0x12FFFFFF))),
+                  Positioned.fill(child: ColoredBox(color: vk(0x12FFFFFF))),
                   Positioned.fill(
                     child: Align(
-                      alignment: Alignment.centerRight,
+                      alignment: kIsLtr ? Alignment.centerLeft : Alignment.centerRight,
                       child: TweenAnimationBuilder<double>(
                         tween: Tween<double>(begin: pct / 100, end: pct / 100),
                         duration: const Duration(milliseconds: 700),
@@ -169,13 +169,13 @@ class _WaterCardState extends State<WaterCard> with SingleTickerProviderStateMix
                         builder: (context, v, _) => FractionallySizedBox(
                           widthFactor: clampD(v, 0, 1),
                           heightFactor: 1,
-                          child: const DecoratedBox(
+                          child: DecoratedBox(
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.all(Radius.circular(9)),
+                              borderRadius: const BorderRadius.all(Radius.circular(9)),
                               gradient: LinearGradient(
-                                begin: Alignment.centerRight,
-                                end: Alignment.centerLeft,
-                                colors: [Color(0xFF1A8CFF), Color(0xFF3DB8FF), Color(0xFF8FF3F9)],
+                                begin: kIsLtr ? Alignment.centerLeft : Alignment.centerRight,
+                                end: kIsLtr ? Alignment.centerRight : Alignment.centerLeft,
+                                colors: [vk(0xFF1A8CFF), vk(0xFF3DB8FF), vk(0xFF8FF3F9)],
                               ),
                             ),
                           ),
@@ -185,8 +185,8 @@ class _WaterCardState extends State<WaterCard> with SingleTickerProviderStateMix
                   ),
                   Positioned.fill(
                     child: Align(
-                      alignment: Alignment(1 - 2 * exp, 0),
-                      child: Container(width: 2, color: op(Colors.white, 0.55)),
+                      alignment: Alignment(kIsLtr ? 2 * exp - 1 : 1 - 2 * exp, 0),
+                      child: Container(width: 2, color: op(kW, 0.55)),
                     ),
                   ),
                 ],
@@ -197,12 +197,12 @@ class _WaterCardState extends State<WaterCard> with SingleTickerProviderStateMix
           Row(
             children: [
               Expanded(
-                child: Text('$pct% · $wn لە $wg پەرداخ', style: ku(11, w: FontWeight.w700, c: V.mu)),
+                child: VText('$pct% · $wn لە $wg پەرداخ', style: ku(11, w: FontWeight.w700, c: V.mu)),
               ),
               if (wn >= wg)
-                Text('✓ تەواو', style: ku(11, w: FontWeight.w700, c: V.mu))
+                VText('✓ تەواو', style: ku(11, w: FontWeight.w700, c: V.mu))
               else
-                Text.rich(
+                VText.rich(
                   TextSpan(children: [
                     TextSpan(text: '${fmt(gm - ml)} ml', style: nu(11, w: FontWeight.w700, c: V.mu)),
                     const TextSpan(text: ' ماوە'),
@@ -215,11 +215,11 @@ class _WaterCardState extends State<WaterCard> with SingleTickerProviderStateMix
             margin: const EdgeInsets.only(top: 12),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: ok ? const Color(0x143CF08A) : const Color(0x143DB8FF),
+              color: ok ? vk(0x143CF08A) : vk(0x143DB8FF),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: ok ? const Color(0x403CF08A) : const Color(0x383DB8FF)),
+              border: Border.all(color: ok ? vk(0x403CF08A) : vk(0x383DB8FF)),
             ),
-            child: Text.rich(tip, style: ku(12.5, h: 1.7)),
+            child: VText.rich(tip, style: ku(12.5, h: 1.7)),
           ),
           const SizedBox(height: 12),
           Row(
@@ -231,7 +231,7 @@ class _WaterCardState extends State<WaterCard> with SingleTickerProviderStateMix
                   height: 46,
                   alignment: Alignment.center,
                   decoration: box(r: 15),
-                  child: Text('−', style: nu(18, w: FontWeight.w700)),
+                  child: VText('−', style: nu(18, w: FontWeight.w700)),
                 ),
               ),
               const SizedBox(width: 8),
@@ -243,16 +243,16 @@ class _WaterCardState extends State<WaterCard> with SingleTickerProviderStateMix
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(15),
-                      gradient: const LinearGradient(
+                      gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [Color(0xFF3DB8FF), Color(0xFF1A8CFF)],
+                        colors: [vk(0xFF3DB8FF), vk(0xFF1A8CFF)],
                       ),
-                      boxShadow: const [
-                        BoxShadow(color: Color(0x991A8CFF), blurRadius: 22, offset: Offset(0, 10), spreadRadius: -10),
+                      boxShadow: [
+                        BoxShadow(color: vk(0x991A8CFF), blurRadius: 22, offset: Offset(0, 10), spreadRadius: -10),
                       ],
                     ),
-                    child: Text('💧 پەرداخێک خواردمەوە', style: ku(14, w: FontWeight.w800, c: Colors.white)),
+                    child: VText('💧 پەرداخێک خواردمەوە', style: ku(14, w: FontWeight.w800, c: Colors.white)),
                   ),
                 ),
               ),
@@ -347,7 +347,7 @@ class _GlassPainter extends CustomPainter {
   final Animation<double> wave;
   final double phase;
 
-  static final TextStyle _plusStyle = nu(16, c: const Color(0xE63DB8FF));
+  static TextStyle get _plusStyle => nu(16, c: vk(0xE63DB8FF));
 
   static Path _cup() => Path()
     ..moveTo(6, 4)
@@ -364,7 +364,7 @@ class _GlassPainter extends CustomPainter {
     canvas.scale(size.width / 40, size.height / 52);
     final cup = _cup();
 
-    canvas.drawPath(cup, Paint()..color = filled ? const Color(0x0F3DB8FF) : const Color(0x09FFFFFF));
+    canvas.drawPath(cup, Paint()..color = filled ? vk(0x0F3DB8FF) : vk(0x09FFFFFF));
 
     if (level > 0.001) {
       canvas.save();
@@ -388,7 +388,7 @@ class _GlassPainter extends CustomPainter {
           ..shader = ui.Gradient.linear(
             const Offset(0, 8),
             const Offset(0, 60),
-            const [Color(0xFF8FF3F9), Color(0xFF3DB8FF), Color(0xFF1A6DFF)],
+            [vk(0xFF8FF3F9), vk(0xFF3DB8FF), vk(0xFF1A6DFF)],
             const [0.0, 0.5, 1.0],
           ),
       );
@@ -398,7 +398,7 @@ class _GlassPainter extends CustomPainter {
         ..lineTo(14, 44)
         ..lineTo(12.5, 14)
         ..close();
-      canvas.drawPath(shine, Paint()..color = const Color(0x59FFFFFF));
+      canvas.drawPath(shine, Paint()..color = vk(0x59FFFFFF));
       canvas.restore();
     }
 
@@ -408,7 +408,7 @@ class _GlassPainter extends CustomPainter {
       ..strokeJoin = StrokeJoin.round;
     if (next) {
       final pulse = 0.675 + 0.325 * math.cos(math.pi * 2 * wave.value);
-      ol.color = op(const Color(0xFF3DB8FF), pulse);
+      ol.color = op(vk(0xFF3DB8FF), pulse);
       for (final m in cup.computeMetrics()) {
         double d = 0;
         while (d < m.length) {
@@ -423,7 +423,7 @@ class _GlassPainter extends CustomPainter {
       final base = tp.computeDistanceToActualBaseline(TextBaseline.alphabetic);
       tp.paint(canvas, Offset(20 - tp.width / 2, 33 - base));
     } else {
-      ol.color = filled ? const Color(0xBF8FDCFF) : const Color(0x478FDCFF);
+      ol.color = filled ? vk(0xBF8FDCFF) : vk(0x478FDCFF);
       canvas.drawPath(cup, ol);
     }
     canvas.restore();
