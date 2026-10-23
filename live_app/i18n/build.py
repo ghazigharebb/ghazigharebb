@@ -48,6 +48,8 @@ for kk in list(DD['kmr']):
 # extra entries found in testing
 EXTRA = {
  'داشکان': {'en': 'off', 'kmr': 'داشکاندن', 'ar': 'خصم', 'fa': 'تخفیف', 'tr': 'indirim'},
+ 'تیژ': {'en': 'spicy', 'kmr': 'تێژ', 'ar': 'حار', 'fa': 'تند', 'tr': 'acı'},
+ 'شەربەت': {'en': 'juice', 'kmr': 'شەربەت', 'ar': 'العصائر', 'fa': 'شربت', 'tr': 'şerbet'},
  'کۆکا': {'en': 'Coke', 'kmr': 'کۆکا', 'ar': 'كوكا', 'fa': 'کوکا', 'tr': 'kola'},
  'مێشک': {'en': 'Brain', 'kmr': 'مێشک', 'ar': 'مخ', 'fa': 'مغز', 'tr': 'Beyin'},
  'زەڵاتە': {'en': 'Salad', 'kmr': 'زەلاتە', 'ar': 'سلطة', 'fa': 'سالاد', 'tr': 'Salata'},
@@ -58,10 +60,14 @@ for ku, m in EXTRA.items():
     for L, v in m.items():
         if L == 'en' and ku in DD['en']: continue
         DD[L][ku] = v
-OVR = {'ar': {'پرۆفایل': 'ملفي'}}
+OVR = {'ar': {'پرۆفایل': 'ملفي'}, 'tr': {'ـە': ''}}
 for L, m in OVR.items():
     for ku, v in m.items():
         if ku in DD[L]: DD[L][ku] = v
+from ovr import O
+for ku, m in O.items():
+    for L, v in m.items():
+        if v is not None: DD[L][ku] = v
 # portion unit
 for L, v in {'en': 'Portion', 'kmr': 'بەش', 'ar': 'حصة', 'fa': 'وعده', 'tr': 'Porsiyon'}.items():
     DD[L].setdefault('بەش', v)

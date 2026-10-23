@@ -45,13 +45,22 @@ function segAll(p){
 var CAP0=/^[ء-يٱ-ۓە]/;
 var STOP=LANG==='tr'?/^(dk|sa|sn|kcal|kal|kg|km|g|ml|bpm|ms|cm|ve|veya|ile|için|kadar|önce|sonra|gibi|göre|ise|da|de|ki|mi|mı|mu|mü|kez|kere|adım|gün|hafta|ay|yıl|saat|dakika|saniye|puan|üye|kişi)(?![a-zçğıöşü])/:/^(min|mins|minute|minutes|hour|hours|h|m|sec|secs|second|seconds|day|days|week|weeks|month|months|year|years|step|steps|kcal|cal|calorie|calories|kg|km|g|ml|l|bpm|ms|cm|lb|ft|in|cup|cups|glass|glasses|item|items|meal|meals|point|points|coin|coins|member|members|left|over|of|and|or|to|at|for|with|by|from|is|are|a|an|the|vs|per|than|then|but|as|on|off|not|no|only|about|because|so|if|when|which|that|it|you|your|zone|times|time|ago|more|less|once|twice|every|each|am|pm|new|pending|sent|shared|joined|g\b|min\b)(?![a-z])/;
 var LOW=LANG==='tr'?/^[a-zçğıöşü]/:/^[a-z]/;
-var PLU=/(^|[^\d.,])((?:[2-9]|\d{2,})(?:-\d+)?) (piece|Piece|spoon|Spoon|packet|Packet|slice|Slice|cup|Cup|glass|Glass|plate|Plate|snack|Snack|meal|item|bowl|can|scoop|tablespoon|teaspoon)\b(?!s)/g;
+var PLU=/(^|[^\d.,])((?:[2-9]|\d{2,})(?:-\d+)?) (piece|Piece|spoon|Spoon|packet|Packet|slice|Slice|cup|Cup|glass|Glass|plate|Plate|snack|Snack|meal|item|bowl|can|scoop|tablespoon|teaspoon|biscuit|date|bar|serving|minute|hour|day|second|week|month|year|step|point|time|member|glass of water)\b(?!s)/g;
+
+var AR2={'بيض':'بيضتين','دقيقة':'دقيقتين','ساعة':'ساعتين','يوم':'يومين','حبة':'حبتين','خطوة':'خطوتين','مرة':'مرتين','ملعقة':'ملعقتين','كوب':'كوبين','شهر':'شهرين','أسبوع':'أسبوعين','وجبة':'وجبتين','قطعة':'قطعتين','نقطة':'نقطتين','شريحة':'شريحتين','صحن':'صحنين','ثانية':'ثانيتين','لتر':'لترين','سنة':'سنتين','عضو':'عضوين','بيضة':'بيضتين','كأس':'كأسين'};
+var AR3={'دقيقة':'دقائق','ساعة':'ساعات','يوم':'أيام','حبة':'حبات','خطوة':'خطوات','مرة':'مرات','ملعقة':'ملاعق','كوب':'أكواب','شهر':'أشهر','أسبوع':'أسابيع','وجبة':'وجبات','قطعة':'قطع','نقطة':'نقاط','شريحة':'شرائح','صحن':'صحون','ثانية':'ثوانٍ','لتر':'لترات','سنة':'سنوات','عضو':'أعضاء','بيضة':'بيضات','كأس':'كؤوس','بيض':'بيضات','شخص':'أشخاص','جائزة':'جوائز','تمرين':'تمارين','طعام':'أطعمة'};
+var ARN=/(^|[^\d٠-٩.,\/:\-–])([2-9٢-٩]|10|١٠) (دقيقة|ساعة|يوم|حبة|خطوة|مرة|ملعقة|كوب|شهر|أسبوع|وجبة|قطعة|نقطة|شريحة|صحن|ثانية|لتر|سنة|عضو|بيضة|كأس|بيض|شخص|جائزة|تمرين|طعام)(?![ء-ي])/g;
+var ARS={};for(var _k in AR3){ARS[AR3[_k]]=_k}
+var ARP=/(^|[^\d٠-٩.,\/:\-–])([\d٠-٩]+) (دقائق|ساعات|أيام|حبات|خطوات|مرات|ملاعق|أكواب|أشهر|أسابيع|وجبات|قطع|نقاط|شرائح|صحون|ثوانٍ|لترات|سنوات|أعضاء|بيضات|كؤوس|أشخاص|جوائز|تمارين|أطعمة)(?![\u0621-\u064a])/g;
+function arNum(r){
+  r=r.replace(ARP,function(m,a,n,w){var d=+n.replace(/[٠-٩]/g,function(c){return String(c.charCodeAt(0)-0x660)});var sg=ARS[w];if(!sg)return m;if(d===2&&AR2[sg])return a+AR2[sg];if(d===1||d>10)return a+n+' '+sg;return m});
+  return r.replace(ARN,function(m,a,n,w){var d=n.replace(/[٠-٩]/g,function(c){return String(c.charCodeAt(0)-0x660)});if(d==='2'){return AR2[w]?a+AR2[w]:m}return AR3[w]?a+n+' '+AR3[w]:m})}
 var SING=/(^|[^\d.,])1 (hours|days|minutes|weeks|months|years|seconds|cups|items|members|glasses|steps|portions|meals|points|coins)\b/g;
 function conv(s){
   if(!on||!s||!HAS.test(s))return s;
   if(DONE.has(s))return s;
   var i,r=s,t0=s.trim();
-  if(t0!==s||t0.indexOf(' ')>0||t0.length>1){var ex=D[t0];if(ex!==undefined&&/[()\[\]«»:،,.]/.test(t0)){r=s.replace(t0,'\ue000'+ex+'\ue001')}}
+  if(t0){var ex=D[t0];if(ex!==undefined&&ex!==''){r=s.replace(t0,'\ue000'+ex+'\ue001')}}
   for(i=0;i<OV.length;i++){r=r.replace(OV[i][0],OV[i][1])}
   if(r.indexOf('')>=0){
     r=r.split(MK).map(function(p,k){return k%2?p:segAll(p)}).join('').replace(MKG,'');
@@ -59,12 +68,17 @@ function conv(s){
   if(LTR){
     for(i=0;i<PAIRS.length;i++)r=r.replace(PAIRS[i][0],PAIRS[i][1]);
     r=r.replace(/،/g,',').replace(/؟/g,'?').replace(/؛/g,';').replace(/٪/g,'%').replace(/٫/g,'.').replace(/٬/g,',');
-    if(LANG==='tr')r=r.replace(/(^|[\s(])([\d.,]+)\s?%/g,'$1%$2');
+    if(LANG==='tr')r=r.replace(/(^|[\s(])([\d.,]+(?:[-–][\d.,]+)?)\s?%/g,'$1%$2');
   }
+  if(LANG==='ar')r=arNum(r);
+  if(LANG==='tr')r=r.replace(/, (ve|veya) /g,' $1 ');
+  if(LTR)r=r.replace(/(^|[^\d])([.!?] +)(\p{Ll})/gu,function(m,z,a,c){return z+a+c.toLocaleUpperCase(HL)});
   if(LANG==='en')r=r.replace(SING,function(m,a,u){return a+'1 '+u.slice(0,-1)});
   if(LANG==='en')r=r.replace(PLU,function(m,a,n,u){return a+n+' '+(u==='glass'?'glasses':u==='Glass'?'Glasses':u+'s')});
   if(LTR&&CAP0.test(s)&&r!==s&&LOW.test(r)&&!STOP.test(r))r=r.charAt(0).toLocaleUpperCase(HL)+r.slice(1);
+  else if(LTR&&r!==s){var mm=/^([^\p{L}\p{N}]+)(\p{Ll})/u.exec(r);if(mm&&/^[^\p{L}\p{N}]+[\u0621-\u06d5]/u.test(s)&&!STOP.test(r.slice(mm[1].length)))r=mm[1]+mm[2].toLocaleUpperCase(HL)+r.slice(mm[0].length)}
   if(r.indexOf('  ')>=0)r=r.replace(/ {2,}/g,' ');
+  r=r.replace(/([^\s]) +([,.;!?،؛](?:\s|$))/g,'$1$2');
   if(DONE.size>30000)DONE.clear();
   DONE.add(r);
   if(TR)TR.push([s,r]);
