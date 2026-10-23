@@ -150,7 +150,7 @@ const Map<String, String> kTrDict = {
   "برنج و شلەی فاسۆلیا": "pilav ve fasulye yahnisi",
   "برنج و شلەی فاسۆلیا لەگەڵ مریشک": "tavuklu pilav ve fasulye yahnisi",
   "برنجەکەی زۆرە بۆ ئەم کاتە": "bu saat için pilav fazla",
-  "برژاو": "kızarmış",
+  "برژاو": "ızgara",
   "بزانە": "biliyor muydun",
   "بندق": "fındık",
   "بنووسە": "gir",

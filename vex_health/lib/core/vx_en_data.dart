@@ -153,7 +153,7 @@ const Map<String, String> kEnDict = {
   "برنج و شلەی فاسۆلیا": "Rice and bean stew",
   "برنج و شلەی فاسۆلیا لەگەڵ مریشک": "Rice and bean stew with chicken",
   "برنجەکەی زۆرە بۆ ئەم کاتە": "There's a lot of rice for this time of day",
-  "برژاو": "fried",
+  "برژاو": "grilled",
   "بزانە": "Did you know",
   "بندق": "Hazelnut",
   "بنووسە": "Enter",
