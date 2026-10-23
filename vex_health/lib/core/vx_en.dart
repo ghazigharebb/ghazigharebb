@@ -8,7 +8,7 @@
 //   • kIsEn                = ئایا ئێستا ئینگلیزییە؟
 //   • LangScope            = لە main.dart دایە؛ کاتێک زمان دەگۆڕێت هەموو VText ـەکان نوێ دەکاتەوە
 //
-// فەرهەنگ و ڕستەکان لە vx_en_data.dart دان (خۆکار دروست کراون).
+// فەرهەنگ و ڕستەکان لە lib/lang/lang_en_english.dart دان (خۆکار دروست کراون).
 import 'package:flutter/material.dart';
 
 import '../onboarding/reg_lang_state.dart';
@@ -16,7 +16,7 @@ import 'vx_ar.dart';
 import 'vx_fa.dart';
 import 'vx_tr.dart';
 import 'vx_bd.dart';
-import 'vx_en_data.dart';
+import '../lang/lang_en_english.dart';
 
 /// ئایا ئێستا زمانی ئەپ ئینگلیزییە؟
 bool get kIsEn => LangState.I.code == 'en';

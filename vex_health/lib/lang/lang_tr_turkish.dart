@@ -1,5 +1,22 @@
-// VEX Health — داتای وەرگێڕانی تورکی (خۆکار دروست کراوە — دەستکاری مەکە)
-// ignore_for_file: prefer_single_quotes, unnecessary_string_escapes
+// ════════════════════════════════════════════════════════════════════════════
+//  🇹🇷  Turkish — Türkçe   ·   language code: 'tr'   ·   direction: LTR
+// ════════════════════════════════════════════════════════════════════════════
+//  VEX Health — فایلی زمانی Turkish
+//  هەموو دەقەکانی ئەپ بەم زمانە لەم فایلەدان. سۆرانی زمانی بنەڕەتە؛ ئەم فایلە
+//  دەقە سۆرانییەکان دەگۆڕێت بۆ Türkçe.
+//
+//  ناوەڕۆک:
+//    kTrDict  → وشە و ڕستەی کورت
+//    kTrLit   → دەقی تەواو (یەکەم ئەولەوییەت)
+//    kTrTpl   → ڕستەی خاوەن ژمارە/گۆڕاو  {0} {1}
+//    kRegTr   → دەقەکانی شاشەی سەرەتا (هەڵبژاردنی زمان، بەخێرهاتن)
+//
+//  بۆ چاککردنی وەرگێڕانێک: تەنها بەهای دوای «:» بگۆڕە، کلیلە کوردییەکە دەستکاری مەکە.
+// ════════════════════════════════════════════════════════════════════════════
+// ignore_for_file: prefer_single_quotes, unnecessary_string_escapes, constant_identifier_names
+
+import '../onboarding/reg_lang_data.dart' show RLang;
+
 
 /// وشە و ڕستەی کورتی سۆرانی ← تورکی
 const Map<String, String> kTrDict = {
@@ -1334,7 +1351,7 @@ const Map<String, String> kTrLit = {
   "2 پارچە": "2 dilim",
   "20٪ داشکاندن بۆ ئەندامانی VEX": "VEX üyelerine %20 indirim",
   "20٪ داشکاندن بۆ بەکارهێنەرانی VEX": "VEX kullanıcılarına %20 indirim",
-  "3 بۆ 5 ڕۆژ لە هەفتەدا وەرزش دەکەیت": "Haftada 3 ila 5 gün egzersiz yapıyorsun",
+  "3 بۆ 5 ڕۆژ لە هەفتەدا وەرزش دەکەیت": "Haftada 3-5 gün egzersiz yapıyorsun",
   "3 پرسیار": "3 soru",
   "30 خولەک پێش کاتی خەوتنت": "Yatma saatinden 30 dakika önce",
   "50٪ داشکان": "%50 indirim",
@@ -1356,7 +1373,7 @@ const Map<String, String> kTrLit = {
   "Band ـەکە شەحن بکە و هەڵی بکە": "Band'i şarj et ve aç",
   "Band ـەکەت دۆزرایەوە": "Band'in bulundu",
   "Band ـەکەت دەلەرێتەوە…": "Band'in titreşiyor…",
-  "Band ـەکەت نزیک مۆبایلەکە بهێڵە و Bluetooth چالاک بێت.": "Band'ini telefonuna yakın tut ve Bluetooth'un açık olduğundan emin ol.",
+  "Band ـەکەت نزیک مۆبایلەکە بهێڵە و Bluetooth چالاک بێت.": "Band'ini telefona yakın tut ve Bluetooth açık olsun.",
   "Band ـەکەت نزیک مۆبایلەکەت بهێنە": "Band'ini telefonuna yaklaştır",
   "Band ـەکەت هەڵبکە و لە تەنیشت مۆبایلەکەت دایبنێ": "Band'ini aç ve telefonunun yanına koy",
   "Band لابرا": "Band kaldırıldı",
@@ -1417,7 +1434,7 @@ const Map<String, String> kTrLit = {
   "ئەندامی VEX Health": "VEX Health üyesi",
   "ئەوەی بە Plus وەریدەگریت": "Plus ile neler alırsın",
   "ئەوەی دەتەوێت لە لیستەکەدا نییە؟": "Aradığın listede yok mu?",
-  "ئەگەر دڵ یان SpO₂ نائاسایی بوو": "Kalp atışın veya SpO₂ olağandışıysa",
+  "ئەگەر دڵ یان SpO₂ نائاسایی بوو": "Nabız veya SpO₂ olağandışıysa",
   "ئەگەر لێدانی دڵ یان SpO₂ نائاسایی بوو": "Kalp atışın veya SpO₂ olağandışıysa",
   "با ئەم QR ـە سکان بکات، یان کۆدەکە بنووسێت": "Bu QR kodunu taratsın veya kodu yazsın",
   "باتری Band تەواو نەبووە؟": "Band'in pili tam şarjlı mı?",
@@ -1489,7 +1506,7 @@ const Map<String, String> kTrLit = {
   "دایک و باوک": "Anne ve baba",
   "دوایین: ": "Son: ",
   "دووبارە هەوڵ بدەوە": "Tekrar dene",
-  "دوگمەی + و − دابگرە بۆ گۆڕینی خێراتر": "Daha hızlı değiştirmek için + veya − düğmesini basılı tut",
+  "دوگمەی + و − دابگرە بۆ گۆڕینی خێراتر": "Daha hızlı değiştirmek için + ve − düğmelerini basılı tut",
   "دوگمەی «گەڕان» بکە": "«Ara» düğmesine dokun",
   "دڵ، خەو و سترێس شەو و ڕۆژ خۆکارانە دەپێورێن.": "Kalp, uyku ve stres gece gündüz otomatik ölçülür.",
   "دڵنیایت؟ دووبارە دایبگرە بۆ لابردن": "Emin misin? Kaldırmak için tekrar basılı tut",
@@ -1599,10 +1616,10 @@ const Map<String, String> kTrLit = {
   "پلانی ژەمی AI": "Yapay zekâ öğün planı",
   "پڕۆتین": "Protein",
   "پڕۆتینی باشی هەیە، تەنها خوێ و چەورییەکەی کەمێک زۆرە.": "Proteini iyi, sadece tuzu ve yağı biraz fazla.",
-  "پیاسەیەکی 20 خولەکی یارمەتیت دەدات": "20 dakikalık bir yürüyüş sana yardımcı olur",
+  "پیاسەیەکی 20 خولەکی یارمەتیت دەدات": "20 dakikalık bir yürüyüş yardımcı olur",
   "پێستی مەچەک": "bilek cildinin",
   "پێشنیار: ئەو دەستەی کەمتر بەکاری دەهێنیت، بۆ پێوانی وردتر.": "İpucu: daha doğru ölçüm için daha az kullandığın bileğe tak.",
-  "پێشنیاری AI": "Yapay zekâ önerisi",
+  "پێشنیاری AI": "AI önerisi",
   "پێشنیاری ژەمی گونجاو لە چرکەیەکدا": "Saniyeler içinde uygun öğün önerisi al",
   "پێوانەی ECG": "EKG ölçümü",
   "پەرداخی گەورە": "büyük bardak",
@@ -1613,7 +1630,7 @@ const Map<String, String> kTrLit = {
   "پەیوەست دەکرێت…": "Bağlanıyor…",
   "پەیوەستکردنی Band": "Band bağla",
   "پەیوەستکردنی VEX Band": "VEX Band'ini bağla",
-  "پەیوەستکردنی داتای Band": "Band verilerini bağla",
+  "پەیوەستکردنی داتای Band": "Band verilerini bağlama",
   "پەیوەستکردنەوە": "Yeniden bağlan",
   "پەیوەندی بە 122": "122'yi ara",
   "پەیوەندی بە IslamicFinder دەکرێت…": "IslamicFinder'a bağlanılıyor…",
@@ -1643,7 +1660,7 @@ const Map<String, String> kTrLit = {
   "کالۆری و پڕۆتین": "Kalori ve protein",
   "کوبە و کفتە": "Kibbe ve köfte",
   "کورتەی تەندروستی AI": "Yapay zekâ sağlık özeti",
-  "کوردی (سۆرانی)": "Kürtçe (Soranice)",
+  "کوردی (سۆرانی)": "Kürtçe (Sorani)",
   "کوردی بادینی": "Kürtçe (Badinice)",
   "کڕینی Band": "Band satın al",
   "کۆدی Band بنووسە": "Band kodunu yaz",
@@ -1651,14 +1668,14 @@ const Map<String, String> kTrLit = {
   "کۆدێکی 6 ژمارەیی دەنێرین بۆ پشتڕاستکردنەوە و پاراستنی هەژمارەکەت.": "Hesabını doğrulamak ve korumak için 6 haneli bir kod göndereceğiz.",
   "کۆدێکی 6 ژمارەییمان نارد بۆ ": "6 haneli bir kod gönderdik: ",
   "کۆدەکە دەبێت بە VX دەست پێبکات، بۆ نموونە VX8-1234": "Kod VX ile başlamalı, örneğin VX8-1234",
-  "کۆدەکە لە پشتی قوتووەکە یان لە ژێر Band ـەکەدا نووسراوە.": "Kod, kutunun arkasında veya Band'in altında yazılıdır.",
+  "کۆدەکە لە پشتی قوتووەکە یان لە ژێر Band ـەکەدا نووسراوە.": "Kod kutunun arkasında veya Band'in altında yazılı.",
   "کۆدەکە هەڵەیە. دووبارە هەوڵ بدەرەوە.": "Kod yanlış. Tekrar dene.",
   "کۆن": "külah",
   "کیلۆگرام": "Kilogram",
   "کیلۆگرام · ئامانج": "kg · Hedef",
   "کێش و کالۆری دەژمێردرێت...": "Porsiyon ve kalori hesaplanıyor...",
   "کێشت لە ئاستی تەندروستدایە 👏 بەردەوام بە.": "Kilon sağlıklı aralıkta 👏 Böyle devam et.",
-  "کێشت کەمێک کەمترە لە ئاستی تەندروست. VEX یارمەتیت دەدات بە شێوەیەکی تەندروست زیادی بکەیت.": "Kilon sağlıklı aralığın biraz altında. VEX, sağlıklı bir şekilde kilo almana yardımcı olur.",
+  "کێشت کەمێک کەمترە لە ئاستی تەندروست. VEX یارمەتیت دەدات بە شێوەیەکی تەندروست زیادی بکەیت.": "Kilon sağlıklı aralığın biraz altında. VEX sağlıklı bir şekilde kilo almana yardım eder.",
   "کێک": "Kek",
   "کەوچکی گەورە": "yemek kaşığı",
   "کەوچکی گەورە (بێ توێکڵ)": "yemek kaşığı (kabuksuz)",
@@ -1692,7 +1709,7 @@ const Map<String, String> kTrLit = {
   "💡 3 خولەک هەناسەدانی هێواش (4 چرکە هەڵمژین، 6 چرکە دەرکردن) سترێس کەم دەکاتەوە.": "💡 3 dakika yavaş nefes (4 sn nefes alma, 6 sn nefes verme) stresi azaltır.",
   "💡 95-100% ئاساییە. ئەگەر بەردەوام کەمتر لە 94% بوو یان هەناسەت قورس بوو، پزیشک ببینە. جووڵەی دەست و شل لەبەرکردنی Band ژمارەکە کەم دەکەنەوە.": "💡 %95–100 normaldir. Sürekli %94'ün altında kalırsa veya nefesin daralırsa doktora git. El hareketi ve gevşek takılan Band değeri düşürebilir.",
   "💡 Band پلەی گەرمی ": "💡 Band, ",
-  "💡 خەوی قووڵت باش بوو. لە کاتژمێر 03:15 جارێک بەئاگا هاتیت، کە هاوکات بوو لەگەڵ دابەزینی SpO₂. ئەگەر دووبارە بووەوە، سەرنج بدە ئایا پرخە دەکەیت.": "💡 Derin uykun iyiydi. Saat 03:15'te bir kez uyandın; bu, SpO₂ düşüşüyle aynı ana denk geldi. Tekrarlanırsa horlayıp horlamadığına dikkat et.",
+  "💡 خەوی قووڵت باش بوو. لە کاتژمێر 03:15 جارێک بەئاگا هاتیت، کە هاوکات بوو لەگەڵ دابەزینی SpO₂. ئەگەر دووبارە بووەوە، سەرنج بدە ئایا پرخە دەکەیت.": "💡 Derin uykun iyiydi. Saat 03:15'te bir kez uyandın; bu, SpO₂ düşüşüyle aynı zamana denk geldi. Tekrarlarsa horlayıp horlamadığını kontrol et.",
   "💡 ژمارەکان خەمڵاندنی VEX ن. دەست لە ": "💡 Sayılar VEX tahminleridir. Şuna dokun: ",
   "💧 پەرداخێک خواردمەوە": "💧 Bir bardak içtim",
   "💪 پڕۆتین": "💪 Protein",
@@ -1718,6 +1735,68 @@ const Map<String, String> kTrLit = {
   "🚶 هەر پیاسەیەکی 10 خولەکی دوای ژەم یارمەتی شەکری خوێن دەدات.": "🚶 Öğünden sonra yapılan her 10 dakikalık yürüyüş kan şekerine yardımcı olur.",
   "🧠 لەم کاتانەدا 2 خولەک هەناسەی هێواش (4 چرکە هەڵمژین، 6 چرکە دەرکردن) سترێس کەم دەکاتەوە.": "🧠 Böyle zamanlarda 2 dakika yavaş nefes (4 sn nefes alma, 6 sn nefes verme) stresi azaltır.",
   "🧬 تەمەنی ژیانی": "🧬 Yaşam yaşı",
+  "خوێندنەوەی لێدانی دڵ و HRV": "Nabız ve HRV okunuyor",
+  "کوردی سۆرانی": "Kürtçe Sorani",
+  "بیرخستنەوەی ئاو، جووڵە و خەو": "Su, hareket ve uyku hatırlatıcıları",
+  "بانگهێشت نێردرا · چاوەڕوانی ڕەزامەندی": "Davet gönderildi · Onay bekleniyor",
+  "هەنگاو و چالاکی": "Adım ve aktivite",
+  "هەنگاوی Band + لێدانی دڵ": "Band adımları + nabız",
+  "خەوی Band (لێدانی دڵ + جووڵە)": "Band uykusu (nabız + hareket)",
+  "لەبەرکردنی Band لە شەودا": "Band'i gece takmak",
+  "ئەفسانەی VEX": "VEX Efsanesi",
+  "ڕاپۆرتی AI": "AI raporu",
+  "بۆ ئەوانەی 25 ڕۆژ چالاک دەبن": "25 gün aktif olanlar için",
+  "5 هاوڕێ": "5 arkadaş",
+  "بەشداربوون لە VEX Arena": "VEX Arena'ya katılım",
+  "بەڵێ، دەچمە دەرەوە": "Evet, çıkış yap",
+  "براوەکان لە کۆتایی وەرزدا، کاتی سفربوونەوەی کاتژمێرەکەی سەرەوە، ڕادەگەیەنرێن.": "Kazananlar sezon sonunda, yukarıdaki sayaç sıfıra ulaştığında açıklanır.",
+  "ژمارەکان زۆرترین خاڵی ئاسایی هەر بەشێکن. هەموویان سنووریان هەیە: خەوی 12 کاتژمێر یان وەرزشی 5 کاتژمێر خاڵی زیاتر نادات. کەمکردنەوەی کێش تەنها بە ڕێژەیەکی تەندروست دەژمێردرێت (کەمتر لە 1kg لە هەفتەیەکدا). بۆ ئۆکسجین، خاڵەکە بۆ لەبەرکردنی Band ـە، نەک بۆ ژمارەکە.": "Sayılar her kategorinin en fazla normal puanıdır. Hepsinin sınırı var: 12 saat uyku ya da 5 saat antrenman ekstra puan vermez. Kilo kaybı yalnızca sağlıklı bir hızda sayılır (haftada 1kg'dan az). Oksijen için puan, sayı için değil Band'i takmak içindir.",
+  "خاڵ لە سێرڤەر دەژمێردرێت، نەک لە مۆبایل. ئەپەکە تەنها داتای خاوی Band دەنێرێت.": "Puanlar sunucuda hesaplanır, telefonda değil. Uygulama yalnızca Band'in ham verisini gönderir.",
+  "AI شێوازی جووڵە دەناسێتەوە: پانکە، مەکینە، ئاژەڵ، یان دانی Band بە کەسێکی تر.": "AI hareket kalıplarını tanır: vantilatör, makine, hayvan veya Band'i başkasına takmak.",
+  "ڕاکردن بە GPS و خێرایی و لێدانی دڵ پشتڕاست دەکرێتەوە؛ ئۆتۆمبێل و پاسکیل جیا دەکرێنەوە.": "Koşu GPS, hız ve nabızla doğrulanır; araba ve bisiklet ayırt edilir.",
+  "100 کەسی یەکەم بە دەست پشکنینیان بۆ دەکرێت، و براوەکان بە ناسنامە و ڤیدیۆ پشتڕاست دەکرێنەوە.": "İlk 100 kişi elle kontrol edilir ve kazananlar kimlik ve videoyla doğrulanır.",
+  "بەشداربوون بەخۆڕاییە. بۆ خەڵاتە گەورەکان دەبێت لانیکەم 25 ڕۆژ لە 30 ڕۆژ چالاک بیت. Apple و Google هیچ بەشێکیان لەم پێشبڕکێیەدا نییە.": "Katılım ücretsiz. Büyük ödüller için 30 günün en az 25'inde aktif olmalısın. Apple ve Google'ın bu yarışmayla hiçbir ilgisi yoktur.",
+  "نیوە": "Yarım",
+  "شەش": "Altı",
+  "شێوازی پارەدان": "Ödeme yöntemleri",
+  "بە کارتی Qi یان ئەپی Qi": "Qi kartı veya Qi uygulamasıyla",
+  "ڕاهێنەری خۆراک بە AI": "AI beslenme koçu",
+  "پلانی ژەم بە AI": "AI öğün planı",
+  "ECG و ڕاپۆرتی AI": "ECG ve AI raporu",
+  "ڕاپۆرتی هەفتانە بە AI": "Haftalık AI raporu",
+  "پلانی ڕاهێنان بە AI": "AI antrenman planı",
+  "ئامارەکانی Band": "Band istatistikleri",
+  "پرسیار لە VEX AI": "VEX AI'a sor",
+  "AI بێسنوور": "Sınırsız AI",
+  "پلانی ڕۆژانە، لەگەڵ ڕێسێپتی کوردی": "Günlük plan, Kürt tarifleriyle",
+  "بێ بەرامبەر یان Plus؟": "Ücretsiz mi, Plus mı?",
+  "زمانەکەت هەڵبژێرە": "Dilini seç",
+  "هەر کاتێک دەتوانیت لە ڕێکخستنەکان بیگۆڕیت": "İstediğin zaman Ayarlar’dan değiştirebilirsin",
+  "تەندروستی، خواردن و وەرزش لە یەک ئەپدا، بە زیرەکی دەستکرد و بە زمانی کوردی.": "Sağlık, yemek ve antrenman tek uygulamada, yapay zekâ ile ve Kürtçe.",
+  "چاودێری": "Takip",
+  "پێشتر هەژمارم هەیە · چوونە ژوورەوە": "Zaten hesabım var · Giriş yap",
+  "VEX Band ت هەیە؟": "VEX Band’in var mı?",
+  "بۆ ئەوەی ئەپەکە بۆ تۆ ڕێکبخەین:": "Uygulamayı senin için ayarlayalım:",
+  "بەڵێ، VEX Band م هەیە": "Evet, VEX Band’im var",
+  "دڵ، خەو، سترێس + 6 مانگ Plus بە خۆڕایی": "Kalp, uyku, stres + 6 ay ücretsiz Plus",
+  "زمانێ خۆ هەلبژێرە": "Dilini seç",
+  "تو دشێی هەر دەمەکێ ژ ڕێکخستنان بگوهۆڕی": "İstediğin zaman Ayarlar’dan değiştirebilirsin",
+  "چاڤدێری": "Takip",
+  "تە VEX Band هەیە؟": "VEX Band’in var mı?",
+  "دا ئەپ بۆ تە ڕێک بێخین:": "Uygulamayı senin için ayarlayalım:",
+  "بەلێ، من VEX Band هەیە": "Evet, VEX Band’im var",
+  "دل، خەو، ستریس + 6 هەیڤێن Plus ب خۆڕایی": "Kalp, uyku, stres + 6 ay ücretsiz Plus",
+  "بخێر بێی بۆ": "Hoş geldin:",
+  "ساخلەمی، خوارن و وەرزش د ئێک ئەپێ دا، ب زیرەکیا دەستکرد.": "Sağlık, yemek ve antrenman tek uygulamada, yapay zekâ ile.",
+  "دەست پێ بکە": "Başla",
+  "ب دەستپێکرنێ، تو ڕازی دبی ب مەرجێن بکارئینانێ و سیاسەتا پاراستنا نهێنیێ یا VEX.": "Başlayarak VEX'in Kullanım Koşulları'nı ve Gizlilik Politikası'nı kabul edersin.",
+  "نەخێر، تەنێ مۆبایل": "Hayır, sadece telefon",
+  "خوارن، ئاڤ، وەرزش، پێشبرکێ و VEX AI": "Yemek, su, antrenman, yarışmalar ve VEX AI",
+  "بخێر بێی": "Hoş geldin",
+  "دڵنیابە ئەمە Band ـەکەی خۆتە، پاشان پەیوەستی بکە.": "Bu Band'in senin olduğundan emin ol, sonra bağla.",
+  "پەیوەستکردن…": "Bağlanıyor…",
+  "دیمۆ: هەر کۆدێک کە بە VX دەست پێبکات کار دەکات": "Demo: VX ile başlayan her kod çalışır",
+  "هەژماری Gmail بەکاربهێنە": "Gmail hesabı kullan",
 };
 /// ڕستەی خاوەن گۆڕاو {0} {1}
 const List<List<String>> kTrTpl = [
@@ -2336,3 +2415,9 @@ const Map<String, String> kTrFood = {
   "گەنمەشامی": "Tatlı mısır",
   "یاپراخ": "Yaprak sarma",
 };
+
+/// شاشەی سەرەتا — Turkish
+const RLang kRegTr = RLang("tr", "Türkçe", "Turkish", "🇹🇷", false, {'hello': "Merhaba", 'pick': "Dilini seç", 'pickSub': "İstediğin zaman Ayarlar'dan değiştirebilirsin", 'cont': "Devam", 'wt': "Hoş geldin", 'wp': "Sağlık, beslenme ve spor tek uygulamada, yapay zekâ ile.", 's1': "özellik", 's2': "asistanı", 's3': "takip", 'cta': "Başla", 'alt': "Zaten hesabım var · Giriş yap", 'terms': "Devam ederek VEX Kullanım Koşulları ve Gizlilik Politikası'nı kabul etmiş olursun.", 'bt': "VEX Band'in var mı?", 'bp': "Uygulamayı senin için ayarlayalım:", 'yes': "Evet, VEX Band'im var", 'yesp': "Kalp, uyku, stres + 6 ay ücretsiz Plus", 'no': "Hayır, sadece telefon", 'nop': "Beslenme, su, antrenman, yarışmalar ve VEX AI", 'w1': "Hoş geldin"});
+
+/// ناوی تایبەتمەندییەکان — Turkish
+const List<String> kFeatTr = ["7/24 kalp takibi", "EKG", "Kan oksijeni", "Stres ve HRV", "Uyku analizi", "Cilt sıcaklığı", "Vücut yaşı", "Olağandışı uyarılar", "Yapay zekâ ile yemek taraması", "Kişisel öğün planı", "Kalori ve protein", "Günlük su", "Kilo hedefi", "Beslenme koçu", "Alerji uyarıları", "Vitamin ve mineraller", "VEX AI asistanı", "Yapay zekâ sağlık özeti", "Antrenman ve zamanlayıcı", "Adım ve hareket", "Nefes ve sakinlik", "Haftalık rapor", "Akıllı hatırlatıcılar", "Sağlık geçmişi", "Aile çemberi", "Bebek maması", "VEX Arena", "Puan ve ödüller", "VEX Band", "Acil durum uyarıları", "Önce gizlilik", "Akıllı yatma saati"];

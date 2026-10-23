@@ -1,9 +1,9 @@
 // VEX Health — فارسی (Persian)
 // ----------------------------------------------------------------------------
 // کاتێک زمانی ئەپ 'fa' بێت، هەموو دەقە سۆرانییەکان لە کاتی پیشاندانەوە دەگۆڕدرێن
-// بۆ فارسی. ژمارەکان فارسی (۰-۹) ن. فەرهەنگ لە vx_fa_data.dart دایە (خۆکار دروست کراوە).
-import 'vx_fa_data.dart';
-import 'vx_en_data.dart' show kEnStatic;
+// بۆ فارسی. ژمارەکان فارسی (۰-۹) ن. فەرهەنگ لە lib/lang/lang_fa_persian.dart دایە (خۆکار دروست کراوە).
+import '../lang/lang_fa_persian.dart';
+import '../lang/lang_en_english.dart' show kEnStatic;
 
 const String _faCls = 'ء-يٱ-ۓە۰-۹‌';
 final RegExp _has = RegExp('[؀-ۿ‌]');

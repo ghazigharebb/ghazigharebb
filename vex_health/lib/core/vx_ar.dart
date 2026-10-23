@@ -2,9 +2,9 @@
 // ----------------------------------------------------------------------------
 // کاتێک زمانی ئەپ 'ar' بێت، هەموو دەقە سۆرانییەکان لە کاتی پیشاندانەوە دەگۆڕدرێن
 // بۆ عەرەبی. ئاراستە هەر ڕاست بۆ چەپە. ژمارەکان ئەوروپی (0-9) ن.
-// فەرهەنگ لە vx_ar_data.dart دایە (خۆکار دروست کراوە).
-import 'vx_ar_data.dart';
-import 'vx_en_data.dart' show kEnStatic;
+// فەرهەنگ لە lib/lang/lang_ar_arabic.dart دایە (خۆکار دروست کراوە).
+import '../lang/lang_ar_arabic.dart';
+import '../lang/lang_en_english.dart' show kEnStatic;
 
 const String _arCls = 'ء-يٱ-ۓە۰-۹‌';
 final RegExp _has = RegExp('[؀-ۿ‌]');

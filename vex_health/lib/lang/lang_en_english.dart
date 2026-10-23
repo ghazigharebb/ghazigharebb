@@ -1,5 +1,22 @@
-// VEX Health — داتای وەرگێڕانی ئینگلیزی (خۆکار دروست کراوە — دەستکاری مەکە)
-// ignore_for_file: prefer_single_quotes, unnecessary_string_escapes
+// ════════════════════════════════════════════════════════════════════════════
+//  🇬🇧  English — English   ·   language code: 'en'   ·   direction: LTR
+// ════════════════════════════════════════════════════════════════════════════
+//  VEX Health — فایلی زمانی English
+//  هەموو دەقەکانی ئەپ بەم زمانە لەم فایلەدان. سۆرانی زمانی بنەڕەتە؛ ئەم فایلە
+//  دەقە سۆرانییەکان دەگۆڕێت بۆ English.
+//
+//  ناوەڕۆک:
+//    kEnDict  → وشە و ڕستەی کورت
+//    kEnLit   → دەقی تەواو (یەکەم ئەولەوییەت)
+//    kEnTpl   → ڕستەی خاوەن ژمارە/گۆڕاو  {0} {1}
+//    kRegEn   → دەقەکانی شاشەی سەرەتا (هەڵبژاردنی زمان، بەخێرهاتن)
+//
+//  بۆ چاککردنی وەرگێڕانێک: تەنها بەهای دوای «:» بگۆڕە، کلیلە کوردییەکە دەستکاری مەکە.
+// ════════════════════════════════════════════════════════════════════════════
+// ignore_for_file: prefer_single_quotes, unnecessary_string_escapes, constant_identifier_names
+
+import '../onboarding/reg_lang_data.dart' show RLang;
+
 
 const String KEEP_PATTERN = r"""^(Band|VEX|Kurdish|Sorani|English|Iraq|Iraqi|Erbil|Kurdistan|Arena|Mon|Tue|Wed|Thu|Fri|Sat|Sun|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Oct|Nov|Dec|SpO|HRV|ECG|AI|BMI|I\b|I'|WHO|CDC|GPS|Mom|Dad|Demo|USDA|Bluetooth|iPhone|Android|Pro|Plus|Arabic|Persian|Turkish|Ramadan|Eid|Nowruz|Islam|Muslim|God|Fajr|Dhuhr|Asr|Maghrib|Isha|Mifflin|Claude|MAC|PPI|IQD|ORS)""";
 const String STOP_PATTERN = r"""^(?:(?:min|h|m|sec|kcal|cal|kg|km|g|ml|l|bpm|ms|cm|lb|ft)$|(?:left|over|of|and|or|to|at|for|with|by|from|vs|per|than|then|but|as|on|off|if|when|which|that|ago|pm|am)(?![a-z]))""";
@@ -1404,7 +1421,7 @@ const Map<String, String> kEnLit = {
   "2 پارچە": "2 pieces",
   "20٪ داشکاندن بۆ ئەندامانی VEX": "20% off for VEX members",
   "20٪ داشکاندن بۆ بەکارهێنەرانی VEX": "20% off for VEX users",
-  "3 بۆ 5 ڕۆژ لە هەفتەدا وەرزش دەکەیت": "3 to 5 days a week",
+  "3 بۆ 5 ڕۆژ لە هەفتەدا وەرزش دەکەیت": "You exercise 3 to 5 days a week",
   "3 پرسیار": "3 questions",
   "50٪ داشکان": "50% off",
   "50٪ داشکان لەسەر هەموو پلانەکان": "50% off all plans",
@@ -1497,14 +1514,14 @@ const Map<String, String> kEnLit = {
   "بێسنوور": "Unlimited",
   "بێسنوور، زیرەکتر": "Unlimited, smarter",
   "بە شێوەیەکی تر بینووسە، یان خۆت کالۆرییەکەی دابنێ:": "Try a different spelling, or set the calories yourself:",
-  "بە پیشاندانی ئەپی VEX": "Show the VEX app",
-  "بە پیشاندانی ئەپی VEX لە هۆڵ": "Show the VEX app at the gym",
+  "بە پیشاندانی ئەپی VEX": "When you show the VEX app",
+  "بە پیشاندانی ئەپی VEX لە هۆڵ": "When you show the VEX app at the gym",
   "بە پێی ئەوەی نووسیت و لیستی خواردنەکانی VEX حیساب کرا.": "Calculated from your note and VEX's food list.",
   "بەردەوام بە، پەرداخی داهاتوو نزیکەی کاتژمێرێکی تر.": "Keep going — your next glass is due in about an hour.",
   "بەشی خەو بەم زووانە دەکرێتەوە": "Sleep opens soon",
   "بەڕێوەبردن": "Manage",
   "بەڵێ، لایببە": "Yes, remove",
-  "بەیانی (فەجر)": "Morning (Fajr)",
+  "بەیانی (فەجر)": "Dawn (Fajr)",
   "تا 3 دانە هەڵبژێرە. ئەپەکە بە پێی ئەمانە بۆت ڕێکدەخەین.": "Choose up to 3. We'll set up the app around these.",
   "تایبەتمەندییەکانی Band": "Band features",
   "تکایە Band ـەکە لە مۆبایلەکە دوور مەخەرەوە.": "Please keep the Band close to your phone.",
@@ -1529,7 +1546,7 @@ const Map<String, String> kEnLit = {
   "د.ع / 6 مانگ": "IQD / 6 months",
   "د.ع / ساڵ": "IQD / year",
   "د.ع / مانگ": "IQD / month",
-  "داتا کۆنەکانت دەمێننەوە، بەڵام Band هاوکات نابێت تا دووبارە پەیوەندی بکەیتەوە.": "Your old data stays, but the Band won't sync until you reconnect.",
+  "داتا کۆنەکانت دەمێننەوە، بەڵام Band هاوکات نابێت تا دووبارە پەیوەندی بکەیتەوە.": "Your old data stays, but Band won't sync until you reconnect.",
   "داتاکانت پاشەکەوت دەکرێن. بۆ گەڕانەوە، «پێشتر هەژمارم هەیە» دابگرە و هەمان ژمارە بنووسە.": "Your data is saved. To get it back, hold “I already have an account” and enter the same number.",
   "دانە (تاک)": "piece",
   "داواکردنی Band بەم زووانە دەکرێتەوە": "Ordering a Band opens soon",
@@ -1666,9 +1683,9 @@ const Map<String, String> kEnLit = {
   "کوبە و کفتە": "Kubba and kofta",
   "کورتەی تەندروستی AI": "AI health summary",
   "کڕینی Band": "Buy a Band",
-  "کۆدی Band بنووسە": "Enter Band code",
+  "کۆدی Band بنووسە": "Enter the Band code",
   "کۆدی ناتیڤ هێشتا زیاد نەکراوە (بڕوانە NOTIFICATIONS.md).": "Native code hasn't been added yet (see NOTIFICATIONS.md).",
-  "کۆدێکی 6 ژمارەیی دەنێرین بۆ پشتڕاستکردنەوە و پاراستنی هەژمارەکەت.": "We'll send a 6-digit code to verify and secure your account.",
+  "کۆدێکی 6 ژمارەیی دەنێرین بۆ پشتڕاستکردنەوە و پاراستنی هەژمارەکەت.": "We'll send a 6-digit code to verify and protect your account.",
   "کۆدێکی 6 ژمارەییمان نارد بۆ ": "We sent a 6-digit code to ",
   "کۆدەکە دەبێت بە VX دەست پێبکات، بۆ نموونە VX8-1234": "The code must start with VX, e.g. VX8-1234",
   "کۆدەکە لە پشتی قوتووەکە یان لە ژێر Band ـەکەدا نووسراوە.": "The code is printed on the back of the box or under the Band.",
@@ -1676,7 +1693,7 @@ const Map<String, String> kEnLit = {
   "کۆن": "cone",
   "کیلۆگرام · ئامانج": "kg · Goal",
   "کێشت لە ئاستی تەندروستدایە 👏 بەردەوام بە.": "Your weight is in the healthy range 👏 Keep it up.",
-  "کێشت کەمێک کەمترە لە ئاستی تەندروست. VEX یارمەتیت دەدات بە شێوەیەکی تەندروست زیادی بکەیت.": "Your weight is slightly below the healthy range. VEX will help you gain in a healthy way.",
+  "کێشت کەمێک کەمترە لە ئاستی تەندروست. VEX یارمەتیت دەدات بە شێوەیەکی تەندروست زیادی بکەیت.": "Your weight is slightly below the healthy range. VEX will help you gain weight in a healthy way.",
   "کەوچکی گەورە": "tablespoon",
   "کەوچکی گەورە (بێ توێکڵ)": "tablespoon (peeled)",
   "گۆشت و مریشک و ماسی": "Meat, chicken and fish",
@@ -1705,7 +1722,7 @@ const Map<String, String> kEnLit = {
   "💪 پڕۆتینی باشی تێدایە": "💪 Good source of protein",
   "📈 مێژوو و ڕاپۆرتی AI": "📈 History and AI report",
   "📋 نامەی بانگهێشت کۆپی کرا، لە هەر ئەپێکدا دایبنێ": "📋 Invite message copied — paste it into any app",
-  "📝 تێبینی": "📝 Notes",
+  "📝 تێبینی": "📝 Note",
   "📷 ڕێگە بە کامێرا بدە لە ڕێکخستنەکانی مۆبایلەکەت": "📷 Allow camera access in your phone settings",
   "📷 کامێرا لەم مۆبایلەدا نەدۆزرایەوە": "📷 No camera found on this phone",
   "📸 دووبارە وێنە بگرە": "📸 Retake photo",
@@ -1718,9 +1735,75 @@ const Map<String, String> kEnLit = {
   "🖼️ ڕێگە بە وێنەکان بدە لە ڕێکخستنەکانی مۆبایلەکەت": "🖼️ Allow photo access in your phone settings",
   "🗓️ پلانی ژەم و ڕاهێنان": "🗓️ Meal and workout plan",
   "🚚 گەیاندن بۆ ماڵ لە 30 خولەکدا": "🚚 Home delivery in 30 minutes",
-  "🚶 هەر پیاسەیەکی 10 خولەکی دوای ژەم یارمەتی شەکری خوێن دەدات.": "🚶 A 10-minute walk after a meal helps blood sugar.",
+  "🚶 هەر پیاسەیەکی 10 خولەکی دوای ژەم یارمەتی شەکری خوێن دەدات.": "🚶 A 10-minute walk after each meal helps your blood sugar.",
   "🧠 لەم کاتانەدا 2 خولەک هەناسەی هێواش (4 چرکە هەڵمژین، 6 چرکە دەرکردن) سترێس کەم دەکاتەوە.": "🧠 At times like this, 2 minutes of slow breathing (4 sec inhale, 6 sec exhale) reduces stress.",
   "🧬 تەمەنی ژیانی": "🧬 VitalAge",
+  "ئامانجی کالۆری، ژەمەکان، ئاو": "Calorie goal, meals, water",
+  "بیرخستنەوەی ئاو، جووڵە و خەو": "Reminders for water, movement and sleep",
+  "📳 تاقیکردنەوە": "📳 Test",
+  "7 ڕۆژ کارایە": "Valid for 7 days",
+  "هەنگاوی Band + لێدانی دڵ": "Band steps + heart rate",
+  "خەوی Band (لێدانی دڵ + جووڵە)": "Band sleep (heart rate + movement)",
+  "لەبەرکردنی Band لە شەودا": "Wearing the Band at night",
+  "HRV + خەو + لێدانی پشوو": "HRV + sleep + resting heart rate",
+  "هەموو ڕۆژێک 10 هەزار هەنگاو": "10,000 steps every day",
+  "ئەفسانەی VEX": "VEX Legend",
+  "ڕاپۆرتی AI": "AI report",
+  "بۆ ئەوانەی 25 ڕۆژ چالاک دەبن": "For those active for 25 days",
+  "5 هاوڕێ": "5 friends",
+  "بەڵێ، دەچمە دەرەوە": "Yes, sign out",
+  "AI هەموو چالاکییەک پشتڕاست دەکاتەوە (GPS، لێدانی دڵ، کامێرای ڕاستەوخۆ). خاڵی ساختە ڕەت دەکرێتەوە.": "AI verifies every activity (GPS, heart rate, live camera). Fake points are rejected.",
+  "براوەکان لە کۆتایی وەرزدا، کاتی سفربوونەوەی کاتژمێرەکەی سەرەوە، ڕادەگەیەنرێن.": "Winners are announced at the end of the season, when the timer above reaches zero.",
+  "خاڵەکان چۆن کۆدەکرێنەوە؟": "How are points collected?",
+  "ژمارەکان زۆرترین خاڵی ئاسایی هەر بەشێکن. هەموویان سنووریان هەیە: خەوی 12 کاتژمێر یان وەرزشی 5 کاتژمێر خاڵی زیاتر نادات. کەمکردنەوەی کێش تەنها بە ڕێژەیەکی تەندروست دەژمێردرێت (کەمتر لە 1kg لە هەفتەیەکدا). بۆ ئۆکسجین، خاڵەکە بۆ لەبەرکردنی Band ـە، نەک بۆ ژمارەکە.": "The numbers are the max normal points per category. All of them have caps: 12 hours of sleep or 5 hours of exercise gives no extra points. Weight loss only counts at a healthy rate (less than 1kg per week). For oxygen, points are for wearing the Band, not for the number.",
+  "هەموو ڕۆژێک سێرڤەر بە هەڕەمەکی یەک بەش ×3 و یەکێکی تر ×1.5 دەکات. تا نیوەشەو بۆ هیچ مۆبایلێک نانێردرێت. پێش هەر ڕۆژێک کۆدێکی شاراوەی (hash) هێزەکە بڵاو دەکرێتەوە، بۆیە دوای ئاشکراکردن هەر کەسێک دەتوانێت بیپشکنێت و بزانێت هێزەکە نەگۆڕدراوە.": "Every day the server randomly sets one category to ×3 and another to ×1.5. It isn't sent to any phone until midnight. Before each day, a hidden code (hash) of the power is published, so after the reveal anyone can verify the power wasn't changed.",
+  "خاڵ لە سێرڤەر دەژمێردرێت، نەک لە مۆبایل. ئەپەکە تەنها داتای خاوی Band دەنێرێت.": "Points are calculated on the server, not on the phone. The app only sends the raw Band data.",
+  "100 کەسی یەکەم بە دەست پشکنینیان بۆ دەکرێت، و براوەکان بە ناسنامە و ڤیدیۆ پشتڕاست دەکرێنەوە.": "The top 100 are checked by hand, and winners are verified with ID and video.",
+  "بەشداربوون بەخۆڕاییە. بۆ خەڵاتە گەورەکان دەبێت لانیکەم 25 ڕۆژ لە 30 ڕۆژ چالاک بیت. Apple و Google هیچ بەشێکیان لەم پێشبڕکێیەدا نییە.": "Joining is free. For the big rewards you must be active at least 25 of 30 days. Apple and Google are not involved in this competition in any way.",
+  "نیوە": "Half",
+  "شەش": "Six",
+  "بە کارتی Qi یان ئەپی Qi": "With a Qi card or the Qi app",
+  "ڕاهێنەری خۆراک بە AI": "AI nutrition coach",
+  "پلانی ژەم بە AI": "AI meal plan",
+  "ECG و ڕاپۆرتی AI": "ECG and AI report",
+  "شیکاری AI بۆ تەندروستی": "AI health analysis",
+  "ڕاپۆرتی هەفتانە بە AI": "Weekly AI report",
+  "پلانی ڕاهێنان بە AI": "AI training plan",
+  "ئامارەکانی Band": "Band stats",
+  "AI بێسنوور": "Unlimited AI",
+  "VEX Plus چالاک بکە": "Activate VEX Plus",
+  "Band ـم هەیە، پەیوەستی بکە": "I have a Band, connect it",
+  "گەیاندنی خۆڕایی بۆ ئەندامانی VEX": "Free delivery for VEX members",
+  "زمانەکەت هەڵبژێرە": "Choose your language",
+  "هەر کاتێک دەتوانیت لە ڕێکخستنەکان بیگۆڕیت": "You can change it anytime in Settings",
+  "تەندروستی، خواردن و وەرزش لە یەک ئەپدا، بە زیرەکی دەستکرد و بە زمانی کوردی.": "Health, food and workouts in one app, with AI, in Kurdish.",
+  "چاودێری": "Monitoring",
+  "پێشتر هەژمارم هەیە · چوونە ژوورەوە": "I already have an account · Sign in",
+  "VEX Band ت هەیە؟": "Do you have a VEX Band?",
+  "بۆ ئەوەی ئەپەکە بۆ تۆ ڕێکبخەین:": "So we can set up the app for you:",
+  "بەڵێ، VEX Band م هەیە": "Yes, I have a VEX Band",
+  "دڵ، خەو، سترێس + 6 مانگ Plus بە خۆڕایی": "Heart, sleep, stress + 6 months of Plus free",
+  "زمانێ خۆ هەلبژێرە": "Choose your language",
+  "تو دشێی هەر دەمەکێ ژ ڕێکخستنان بگوهۆڕی": "You can change it anytime in Settings",
+  "چاڤدێری": "Monitoring",
+  "تە VEX Band هەیە؟": "Do you have a VEX Band?",
+  "دا ئەپ بۆ تە ڕێک بێخین:": "So we can set up the app for you:",
+  "بەلێ، من VEX Band هەیە": "Yes, I have a VEX Band",
+  "دل، خەو، ستریس + 6 هەیڤێن Plus ب خۆڕایی": "Heart, sleep, stress + 6 months of Plus free",
+  "بخێر بێی بۆ": "Welcome to",
+  "ساخلەمی، خوارن و وەرزش د ئێک ئەپێ دا، ب زیرەکیا دەستکرد.": "Health, food and workouts in one app, with AI.",
+  "دەست پێ بکە": "Start",
+  "ب دەستپێکرنێ، تو ڕازی دبی ب مەرجێن بکارئینانێ و سیاسەتا پاراستنا نهێنیێ یا VEX.": "By starting, you agree to VEX's Terms of Use and Privacy Policy.",
+  "نەخێر، تەنێ مۆبایل": "No, only my phone",
+  "خوارن، ئاڤ، وەرزش، پێشبرکێ و VEX AI": "Food, water, workouts, competitions and VEX AI",
+  "بخێر بێی": "Welcome",
+  "پەیوەستکردن…": "Connecting…",
+  "داتای دڵ، ئۆکسجین، خەو و سترێس لێرەوە دەست پێدەکات.": "Heart, SpO₂, sleep and stress data start here.",
+  "پەیوەستکردنی داتای Band": "Connecting Band data",
+  "Gmail ێکی تر زیاد بکە": "Add another Gmail",
+  "هەژماری Gmail بەکاربهێنە": "Use a Gmail account",
+  "نزیکەی کێشی ئێستات بەسە. هەر کاتێک دەتوانیت نوێی بکەیتەوە.": "Your approximate current weight is enough. You can update it any time.",
+  "بۆ شیکاری خەو و یادخستنەوەی کاتی خەوتن. نزیکەی ڕۆژانی ئاسایی بەسە.": "For sleep analysis and bedtime reminders. Roughly what you do on usual days is enough.",
 };
 
 /// ڕستەی خاوەن گۆڕاو: {0} {1}
@@ -2946,3 +3029,9 @@ const Set<String> kEnStatic = {
   "🧬 تەمەنی ژیانی",
   "🫁 ئۆکسجینی خوێن (SpO₂)",
 };
+
+/// شاشەی سەرەتا — English
+const RLang kRegEn = RLang("en", "English", "English", "🇬🇧", false, {'hello': "Hello", 'pick': "Choose your language", 'pickSub': "You can change it anytime in Settings", 'cont': "Continue", 'wt': "Welcome to", 'wp': "Health, food and fitness in one app, powered by AI.", 's1': "features", 's2': "assistant", 's3': "monitoring", 'cta': "Get started", 'alt': "I already have an account · Log in", 'terms': "By continuing, you agree to the VEX Terms of Use and Privacy Policy.", 'bt': "Do you have a VEX Band?", 'bp': "To set up the app for you:", 'yes': "Yes, I have a VEX Band", 'yesp': "Heart, sleep, stress + 6 months of Plus free", 'no': "No, phone only", 'nop': "Food, water, workouts, challenges and VEX AI", 'w1': "Welcome"});
+
+/// ناوی تایبەتمەندییەکان — English
+const List<String> kFeatEn = ["Heart monitoring 24/7", "ECG", "Blood oxygen", "Stress & HRV", "Sleep analysis", "Skin temperature", "Body age", "Abnormal alerts", "AI food scan", "Personal meal plan", "Calories & protein", "Daily water", "Weight goal", "Nutrition coach", "Allergy alerts", "Vitamins & minerals", "VEX AI assistant", "AI health summary", "Workouts & timer", "Steps & movement", "Breathing & calm", "Weekly report", "Smart reminders", "Health history", "Family circle", "Baby food", "VEX Arena", "Points & rewards", "VEX Band", "Emergency alerts", "Privacy first", "Smart bedtime"];
