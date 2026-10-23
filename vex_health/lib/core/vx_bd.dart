@@ -2,11 +2,11 @@
 // ----------------------------------------------------------------------------
 // کاتێک زمانی ئەپ 'kmr' بێت، هەموو دەقە سۆرانییەکان لە کاتی پیشاندانەوە دەگۆڕدرێن
 // بۆ بادینی. ئاراستە هەر ڕاست بۆ چەپە و فۆنتیش هەر ئەوەیە.
-// فەرهەنگ لە vx_bd_data.dart دایە (خۆکار دروست کراوە).
+// فەرهەنگ لە lib/lang/lang_kmr_kurdish_badini.dart دایە (خۆکار دروست کراوە).
 import 'package:flutter/foundation.dart';
 
-import 'vx_bd_data.dart';
-import 'vx_en_data.dart' show kEnStatic;
+import '../lang/lang_kmr_kurdish_badini.dart';
+import '../lang/lang_en_english.dart' show kEnStatic;
 
 const String _arCls = 'ء-يٱ-ۓە۰-۹‌';
 final RegExp _has = RegExp('[؀-ۿ‌]');

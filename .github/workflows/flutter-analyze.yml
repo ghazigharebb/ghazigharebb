@@ -1,0 +1,24 @@
+name: flutter-analyze
+on:
+  push:
+    paths: ['vex_health/**', '.github/workflows/flutter-analyze.yml']
+  pull_request:
+    paths: ['vex_health/**']
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: vex_health
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - name: analyze
+        run: |
+          flutter analyze --no-fatal-infos --no-fatal-warnings > out.txt 2>&1 || true
+          grep -c " • " out.txt || true
+          grep "error •" out.txt | head -45 | while IFS= read -r l; do echo "::error::$l"; done
+          ! grep -q "error •" out.txt

@@ -1,9 +1,9 @@
 // VEX Health — Türkçe (Turkish)
 // ----------------------------------------------------------------------------
 // کاتێک زمانی ئەپ 'tr' بێت، هەموو دەقە سۆرانییەکان لە کاتی پیشاندانەوە دەگۆڕدرێن
-// بۆ تورکی (لاتینی، چەپ بۆ ڕاست). فەرهەنگ لە vx_tr_data.dart دایە (خۆکار دروست کراوە).
-import 'vx_tr_data.dart';
-import 'vx_en_data.dart' show kEnStatic;
+// بۆ تورکی (لاتینی، چەپ بۆ ڕاست). فەرهەنگ لە lib/lang/lang_tr_turkish.dart دایە (خۆکار دروست کراوە).
+import '../lang/lang_tr_turkish.dart';
+import '../lang/lang_en_english.dart' show kEnStatic;
 
 const String _arCls = 'ء-يٱ-ۓە۰-۹‌';
 final RegExp _has = RegExp('[؀-ۿ]');

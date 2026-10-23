@@ -69,7 +69,7 @@ class ActivityCard extends StatelessWidget {
           if (on)
             const HourBars()
           else
-            const SizedBox(height: 56, child: CustomPaint(painter: DashedLinePainter())),
+            SizedBox(height: 56, child: CustomPaint(painter: DashedLinePainter())),
           const SizedBox(height: 4),
           Directionality(
             textDirection: TextDirection.ltr,

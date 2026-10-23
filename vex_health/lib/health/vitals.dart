@@ -72,8 +72,8 @@ class _VitalTile extends StatelessWidget {
                 ),
               ],
             ),
-            const Padding(
-              padding: EdgeInsets.only(top: 8, bottom: 4),
+            Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 4),
               child: SizedBox(height: 34, width: double.infinity, child: CustomPaint(painter: DashedLinePainter())),
             ),
             VText.rich(
@@ -454,7 +454,7 @@ class _ActivityRingsCardState extends State<ActivityRingsCard> with SingleTicker
               ),
               const SizedBox(height: 4),
               if (!on)
-                const SizedBox(height: 6, width: double.infinity, child: CustomPaint(painter: DashedLinePainter(opacity: 0.45)))
+                SizedBox(height: 6, width: double.infinity, child: CustomPaint(painter: DashedLinePainter(opacity: 0.45)))
               else
               ClipRRect(
                 borderRadius: BorderRadius.circular(99),
