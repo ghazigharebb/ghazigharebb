@@ -302,7 +302,7 @@ class VNav extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          const Positioned(top: 14, left: 0, right: 0, bottom: 0, child: Glass(child: SizedBox.expand())),
+          Positioned(top: 14, left: 0, right: 0, bottom: 0, child: Glass(child: SizedBox.expand())),
           Positioned(
             top: 14,
             left: 0,

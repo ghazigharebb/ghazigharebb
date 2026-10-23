@@ -613,7 +613,8 @@ class _PrayerSheetState extends State<_PrayerSheet> {
         return;
       }
       final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.low, timeLimit: Duration(seconds: 12)),
+        desiredAccuracy: LocationAccuracy.low,
+        timeLimit: const Duration(seconds: 12),
       );
       A.city = 'gps';
       A.gpsLat = pos.latitude;

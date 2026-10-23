@@ -16,7 +16,7 @@ import '../core/icons.dart';
 import '../core/theme.dart';
 import '../family/family_page.dart';
 import '../food/food_page.dart';
-import '../health/hc.dart' show pushPage;
+import '../health/hc.dart' show pushPage, HI;
 import '../notify/step_notify_tile.dart';
 import '../plus/plus_page.dart';
 import '../plus/plus_state.dart';
