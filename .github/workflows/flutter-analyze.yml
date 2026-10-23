@@ -6,18 +6,12 @@ on:
     paths: ['vex_health/**']
 jobs:
   analyze:
-    strategy:
-      fail-fast: false
-      matrix:
-        ref: ['', 'main']
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: vex_health
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ matrix.ref }}
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
