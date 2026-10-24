@@ -476,6 +476,38 @@ class VexBand extends ChangeNotifier {
   }
 
   Future<void> find() => send(VexFrame.find());
+
+  /// نووسینی فرمانێکی درێژ (وەک کاتژمێرەکانی 0x23). ئەگەر لە MTU گەورەتر بێت long-write بەکاردێت.
+  Future<void> sendLong(Uint8List data) {
+    final c = Completer<void>();
+    _q = _q.then((_) async {
+      try {
+        final w = _wr;
+        if (w == null || !_ready) throw StateError('Band پەیوەست نییە');
+        final room = (_dev?.mtuNow ?? mtu) - 3;
+        await w.write(data, withoutResponse: false, allowLongWrite: data.length > room);
+        await Future<void>.delayed(const Duration(milliseconds: 120));
+        c.complete();
+      } catch (e) {
+        c.completeError(e);
+      }
+    });
+    return c.future;
+  }
+
+  /// هەموو کاتژمێرەکانی ناو Band دەگۆڕێت بەم لیستە (هەتا 10). true = نێردرا.
+  Future<bool> setAlarms(List<VexAlarm> list) async {
+    if (!_ready) return false;
+    try {
+      for (final f in VexFrame.setAlarms(list)) {
+        await (f.length == 16 ? send(f) : sendLong(f));
+      }
+      return true;
+    } catch (e) {
+      if (kDebugMode) debugPrint('VexBand.setAlarms: $e');
+      return false;
+    }
+  }
   Future<void> setUser({required int sex, required int age, required int heightCm, required int weightKg, required int stepCm}) =>
       send(VexFrame.setUser(sex: sex, age: age, heightCm: heightCm, weightKg: weightKg, stepCm: stepCm));
 }

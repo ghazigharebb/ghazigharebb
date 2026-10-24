@@ -56,30 +56,8 @@ class _WaterCardState extends State<WaterCard> with SingleTickerProviderStateMix
     final now = DateTime.now();
     final hh = now.hour + now.minute / 60;
     final exp = clampD((hh - 7) / 15, 0, 1);
-    final expN = (exp * wg).round();
     final cols = wg <= 8 ? wg : (wg / 2).ceil();
     final rows = (wg / cols).ceil();
-    final ok = wn >= expN;
-
-    InlineSpan tip;
-    if (wn >= wg) {
-      tip = const TextSpan(text: '🎉 ئامانجی ئاوی ئەمڕۆت تەواو کرد! جەستەت سوپاست دەکات.');
-    } else if (ok) {
-      tip = TextSpan(
-        text: '👍 بەپێی کاتەکە لە پێشیت. '
-            '${hh < 20 ? 'بەردەوام بە، پەرداخی داهاتوو نزیکەی کاتژمێرێکی تر.' : 'ئەمشەو تەنها کەمێک بخۆرەوە بۆ ئەوەی خەوت تێک نەچێت.'}',
-      );
-    } else {
-      final behind = expN - wn;
-      tip = TextSpan(children: [
-        const TextSpan(text: '⏰ تا ئێستا دەبوو '),
-        TextSpan(text: '$expN', style: nu(12.5, c: V.tx)),
-        TextSpan(
-          text: ' پەرداخ خواردبێتەوە. ئێستا پەرداخێک بخۆرەوە، '
-              '${behind > 1 ? 'هێشتا $behind پەرداخ لە دواوەیت.' : 'تەنها یەک پەرداخ لە دواوەیت.'}',
-        ),
-      ]);
-    }
 
     return VCard(
       child: Column(
@@ -211,54 +189,57 @@ class _WaterCardState extends State<WaterCard> with SingleTickerProviderStateMix
                 ),
             ],
           ),
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: ok ? vk(0x143CF08A) : vk(0x143DB8FF),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: ok ? vk(0x403CF08A) : vk(0x383DB8FF)),
-            ),
-            child: VText.rich(tip, style: ku(12.5, h: 1.7)),
-          ),
+          // ئاگادارکردنەوەکە لابرا؛ دوگمەی «گەڕانەوەی دوایین» لە شوێنیدایە
           const SizedBox(height: 12),
-          Row(
+          _UndoBtn(enabled: wn > 0, onTap: () => setW(wn - 1)),
+        ],
+      ),
+    );
+  }
+}
+
+/// «↶ گەڕانەوەی دوایین» — دوایین پەرداخ لادەبات
+class _UndoBtn extends StatelessWidget {
+  const _UndoBtn({required this.enabled, required this.onTap});
+  final bool enabled;
+  final VoidCallback onTap;
+
+  static const Map<String, String> _t = {
+    'ckb': 'گەڕانەوەی دوایین',
+    'kmr': 'زڤڕینا دویماهیکێ',
+    'en': 'Undo last',
+    'ar': 'تراجع عن الأخير',
+    'fa': 'لغو آخرین',
+    'tr': 'Sonuncuyu geri al',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final code = LangScope.of(context);
+    final label = _t[code] ?? _t['ckb']!;
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 250),
+      opacity: enabled ? 1 : 0.4,
+      child: Press(
+        scale: 0.96,
+        onTap: enabled ? onTap : null,
+        child: Container(
+          height: 44,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: V.surf2,
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: V.line),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Press(
-                onTap: () => setW(wn - 1),
-                child: Container(
-                  width: 48,
-                  height: 46,
-                  alignment: Alignment.center,
-                  decoration: box(r: 15),
-                  child: VText('−', style: nu(18, w: FontWeight.w700)),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Press(
-                  onTap: () => setW(wn + 1),
-                  child: Container(
-                    height: 46,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(15),
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [vk(0xFF3DB8FF), vk(0xFF1A8CFF)],
-                      ),
-                      boxShadow: [
-                        BoxShadow(color: vk(0x991A8CFF), blurRadius: 22, offset: Offset(0, 10), spreadRadius: -10),
-                      ],
-                    ),
-                    child: VText('💧 پەرداخێک خواردمەوە', style: ku(14, w: FontWeight.w800, c: Colors.white)),
-                  ),
-                ),
-              ),
+              Icon(Icons.undo_rounded, size: 17, color: V.mu),
+              const SizedBox(width: 6),
+              Text(label, style: ku(13, w: FontWeight.w700, c: V.mu)),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

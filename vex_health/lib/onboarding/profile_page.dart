@@ -6,8 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../alerts/alerts_sheets.dart';
+import '../prayer/vex_prayer.dart';
 import '../alerts/band_alerts.dart';
-import '../alerts/prayer_calc.dart';
 import '../band/band_emblem.dart';
 import '../band/device_page.dart';
 import '../band/band_state.dart';
@@ -776,15 +776,16 @@ class _AlertsGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: BandAlerts.I,
+      listenable: Listenable.merge([BandAlerts.I, VexPrayer.I]),
       builder: (context, _) {
         final A = BandAlerts.I;
         final n = A.alarms.where((x) => x.on).length;
+        final P = VexPrayer.I;
         var prayerSub = 'چالاک نییە · ئارەزوومەندانە';
-        if (A.prayerOn) {
-          final nx = A.nextPrayer();
-          final mins = nx.at.hour * 60 + nx.at.minute;
-          prayerSub = 'داهاتوو: ${prayerShort(nx.key)} · ${fmt12(mins ~/ 60, mins % 60)} ${ampm(mins ~/ 60)}';
+        if (P.on) {
+          final st = P.state();
+          final x = h12(st.nextAt);
+          prayerSub = '${prayName(st.next)} · ${x.t} ${x.a}';
         }
         return _Group('ئاگادارکەرەوەی Band (لەرین)', [
           _RowItem('⏰', V.cy, 'کاتژمێری لەرین', n > 0 ? '$n کاتژمێر چالاکە' : 'کاتژمێری لەرین دابنێ',
@@ -792,7 +793,7 @@ class _AlertsGroup extends StatelessWidget {
           _RowItem('⏱️', V.orange, 'کاتی وەرزش',
               A.timerRunning ? 'ئێستا کار دەکات…' : 'کاتی کەمبوونەوە بە میلی چرکە',
               onTap: openTimerSheet),
-          _RowItem('🕌', V.mint, 'کاتەکانی نوێژ', prayerSub, onTap: openPrayerSheet),
+          _RowItem('🕌', V.mint, 'کاتەکانی نوێژ', prayerSub, onTap: openPrayerPage),
         ]);
       },
     );
