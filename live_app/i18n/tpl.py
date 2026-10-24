@@ -369,3 +369,7 @@ for ku, (en, kmr, ar, fa, tr) in WHO:
       f'چربی زیاد است (حدود $1g)؛ برای {fa} مقدار را کم کنید و از روغن زیتون/روغن گیاهی سبک استفاده کنید.',
       f'Yağı yüksek (yaklaşık $1g); {tr.replace("ın ","ın ").replace("ün","ün")} için miktarı azalt, zeytinyağı/hafif bitkisel yağ kullan.')
 t(r'📊 کالۆری «N» ڕۆژی ڕابردوو', '📊 Calories, last $1 days', '📊 کالۆری، $1 ڕۆژێن بۆری', '📊 السعرات في آخر $1 أيام', '📊 کالری $1 روز گذشته', '📊 Son $1 günün kalorisi')
+# ---- prayer alerts ----
+t(r'«N» خولەک و «N» چرکە پێش بانگ', '$1 min $2 sec before the adhan', '$1 دەقە و $2 چرکە بەری بانگێ', 'قبل الأذان بـ $1 دقيقة و$2 ثانية', '$1 دقیقه و $2 ثانیه پیش از اذان', 'Ezandan $1 dk $2 sn önce')
+t(r'«N» خولەک پێش بانگ', '$1 min before the adhan', '$1 دەقە بەری بانگێ', 'قبل الأذان بـ $1 دقيقة', '$1 دقیقه پیش از اذان', 'Ezandan $1 dk önce')
+t(r'«N» چرکە پێش بانگ', '$1 sec before the adhan', '$1 چرکە بەری بانگێ', 'قبل الأذان بـ $1 ثانية', '$1 ثانیه پیش از اذان', 'Ezandan $1 sn önce')
