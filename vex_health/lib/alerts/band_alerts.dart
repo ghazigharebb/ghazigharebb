@@ -330,18 +330,7 @@ class BandAlerts extends ChangeNotifier {
       }
     }
 
-    if (prayerOn) {
-      final t = prayerTimes(now);
-      for (final k in kPrayerKeys) {
-        if (prayerItems[k] != true) continue;
-        final id = '${dk}p$k';
-        if (t[k]! - lead == nm && _fired[id] != true) {
-          _fired[id] = true;
-          final title = lead > 0 ? '$lead خولەک بۆ بانگی ${prayerShort(k)}' : 'کاتی ${prayerShort(k)} هات';
-          _ring('🕌 $title', '${place.name} · ${fmt12(t[k]! ~/ 60, t[k]! % 60)} ${ampm(t[k]! ~/ 60)}');
-        }
-      }
-    }
+    // نوێژ: لە lib/prayer/vex_prayer.dart (VexPrayer) بەڕێوە دەبرێت
 
     if (timerRunning && timerEndMs > 0 && now.millisecondsSinceEpoch >= timerEndMs) {
       timerRunning = false;
@@ -437,7 +426,10 @@ class BandAlerts extends ChangeNotifier {
   Future<void> _reschedule() async {
     if (!_ready) return;
     try {
-      await _np.cancelAll();
+      // تەنها ئاگادارکردنەوەکانی خۆی (نەک هی بانگ کە ئایدییان ≥ 1700000000ـە)
+      for (final p in await _np.pendingNotificationRequests()) {
+        if (p.id < 1700000000) await _np.cancel(p.id);
+      }
       final now = DateTime.now();
       final jobs = <({int id, DateTime at, String title, String body})>[];
 
@@ -456,27 +448,7 @@ class BandAlerts extends ChangeNotifier {
         }
       }
 
-      // نوێژەکان: 3 ڕۆژی داهاتوو
-      if (prayerOn) {
-        for (var d = 0; d < 3; d++) {
-          final day = DateTime(now.year, now.month, now.day + d, 12);
-          final t = prayerTimes(day);
-          for (var i = 0; i < kPrayerKeys.length; i++) {
-            final k = kPrayerKeys[i];
-            if (prayerItems[k] != true) continue;
-            final mins = t[k]! - lead;
-            final at = DateTime(day.year, day.month, day.day, 0, mins);
-            if (at.isAfter(now)) {
-              jobs.add((
-                id: 1500000000 + d * 10 + i,
-                at: at,
-                title: vxTr(lead > 0 ? '🕌 $lead خولەک بۆ بانگی ${prayerShort(k)}' : '🕌 کاتی ${prayerShort(k)} هات'),
-                body: vxTr('${place.name} · ${fmt12(t[k]! ~/ 60, t[k]! % 60)} ${ampm(t[k]! ~/ 60)}'),
-              ));
-            }
-          }
-        }
-      }
+      // نوێژەکان: VexPrayer (lib/prayer/vex_prayer.dart)
 
       // کاتی وەرزش
       if (timerRunning && timerEndMs > now.millisecondsSinceEpoch) {
@@ -490,7 +462,7 @@ class BandAlerts extends ChangeNotifier {
 
       jobs.sort((a, b) => a.at.compareTo(b.at));
       // iOS تەنها 64 ئاگادارکردنەوەی خشتەکراو قبوڵ دەکات
-      final limit = defaultTargetPlatform == TargetPlatform.iOS ? 60 : 400;
+      final limit = defaultTargetPlatform == TargetPlatform.iOS ? 30 : 400; // iOS: 64 کۆی گشتی (بانگ ≤ 30)
       for (final j in jobs.take(limit)) {
         await _np.zonedSchedule(
           j.id,

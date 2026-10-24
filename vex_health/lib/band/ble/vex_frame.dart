@@ -27,6 +27,7 @@ class VexCmd {
   static const hrDynamic = 0x54, hrStatic = 0x55, hrv = 0x56;
   static const sleepDetail = 0x6b, temp = 0x62, spo2 = 0x66;
   static const ntcTemp = 0x14;
+  static const setAlarm = 0x23, getAlarm = 0x24;
 }
 
 /// مۆدی خوێندنەوەی مێژوو
@@ -151,5 +152,67 @@ class VexFrame {
   /// Band دەلەرێتەوە (دۆزینەوە)
   static Uint8List find() => _f(VexCmd.exercise, {1: 5});
 
+  // ---- کاتژمێری لەرینی ناو Band (SDK: SetAlarmClockWithAllClock / 0x23) ----
+  // هەر کاتژمێرێک 39 بایت: 0x23, کۆی ژمارە, ڕیز, کراوە, جۆر, کاتژمێر(BCD), خولەک(BCD), ڕۆژەکان, درێژیی دەق, دەق[30]
+  // کۆتایی لیست: 0x23 0xFF. Band خۆی لە کاتی خۆیدا دەلەرێتەوە، تەنانەت ئەگەر ئەپ داخرابێت.
+  // هەتا 10 کاتژمێر. هەر پاکەتێک ≤ 3 کاتژمێر (≤ 128 بایت) — ڕێک وەک SDK.
+  static const int maxAlarms = 10;
+
+  static List<Uint8List> setAlarms(List<VexAlarm> list) {
+    final a = list.take(maxAlarms).toList();
+    if (a.isEmpty) return [deleteAlarms()];
+    final recs = <List<int>>[];
+    for (var i = 0; i < a.length; i++) {
+      final x = a[i];
+      final txt = x.text.codeUnits.where((c) => c >= 0x20 && c < 0x7f).take(30).toList();
+      final r = List<int>.filled(39, 0);
+      r[0] = VexCmd.setAlarm;
+      r[1] = a.length;
+      r[2] = i;
+      r[3] = x.on ? 1 : 0;
+      r[4] = x.type;
+      r[5] = _bcd(x.hour);
+      r[6] = _bcd(x.minute);
+      r[7] = x.week & 0x7f;
+      r[8] = txt.length;
+      for (var j = 0; j < txt.length; j++) {
+        r[9 + j] = txt[j];
+      }
+      recs.add(r);
+    }
+    final out = <Uint8List>[];
+    for (var i = 0; i < recs.length; i += 3) {
+      final b = <int>[];
+      for (final r in recs.skip(i).take(3)) {
+        b.addAll(r);
+      }
+      if (i + 3 >= recs.length) b.addAll([VexCmd.setAlarm, 0xff]);
+      out.add(Uint8List.fromList(b));
+    }
+    return out;
+  }
+
+  static Uint8List getAlarms() => _f(VexCmd.getAlarm);
+  static Uint8List deleteAlarms() => _f(VexCmd.getAlarm, {1: 0x99});
+
   static String utf8Safe(List<int> b) => utf8.decode(b, allowMalformed: true);
+}
+
+/// یەک کاتژمێری ناو Band
+class VexAlarm {
+  const VexAlarm({required this.hour, required this.minute, this.on = true, this.type = 1, this.week = 0x7f, this.text = ''});
+  final int hour;
+  final int minute;
+  final bool on;
+
+  /// 1 کاتژمێر، 2 دەرمان، 3 ئاو، 4 خواردن
+  final int type;
+
+  /// بیت 0 یەکشەممە … بیت 6 شەممە (0x7f = هەموو ڕۆژێک)
+  final int week;
+
+  /// دەقی سەر شاشەی Band (ASCII، تا 30 پیت)
+  final String text;
+
+  String get sig => '$hour:$minute:${on ? 1 : 0}:$type:$week:$text';
 }

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'alerts/band_alerts.dart';
+import 'prayer/vex_prayer.dart';
 import 'arena/arena_host.dart';
 import 'band/band_state.dart';
 import 'core/icons.dart';
@@ -38,7 +39,8 @@ Future<void> main() async {
   await VitalAgeEngine.I.init(); // تەمەنی ژیانی (٢١ ڕۆژ)
   await VexBand.I.init(); // BLE ی ڕاستەقینەی Band (پەیوەستبوونەوەی خۆکار)
   await FoodDb.I.load(); // لیستی 500 خواردنەکە
-  await BandAlerts.I.load(); // کاتژمێر، کاتی وەرزش و نوێژ
+  await BandAlerts.I.load(); // کاتژمێر و کاتی وەرزش
+  await VexPrayer.I.init(); // کاتەکانی بانگ + لەرینی Band (تەنانەت کاتێک ئەپ داخراوە)
   await PlusState.I.load(); // VEX Plus
   await arenaStore.load(); // VEX Arena
   await LangState.I.load(); // زمانی هەڵبژێردراوی بەشی سەرەتا

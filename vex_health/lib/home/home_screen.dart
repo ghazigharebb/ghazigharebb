@@ -12,6 +12,7 @@ import 'health_ring.dart';
 import 'home_cards.dart';
 import 'sponsor_ad.dart';
 import 'water_card.dart';
+import '../prayer/vex_prayer.dart';
 import '../plus/gate.dart';
 
 /// کاتی دوایین هاوکاتکردن لەگەڵ Band
@@ -40,6 +41,7 @@ class HomeScreen extends StatelessWidget {
               Rise(delayMs: 250, child: Gated(kind: GateKind.plus, id: 'family', minHeight: 400, compact: false, child: FamilyCard())),
               Rise(delayMs: 300, child: ToolsRow()),
               Rise(delayMs: 350, child: WaterCard()),
+              Rise(delayMs: 400, child: PrayerCard()),
             ],
           ),
         ),
