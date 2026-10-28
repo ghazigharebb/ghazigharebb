@@ -2,6 +2,8 @@ name: report-test
 on:
   push:
     branches: [general-report]
+permissions:
+  contents: write
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -17,6 +19,12 @@ jobs:
       - name: test
         run: |
           st=0; flutter test test/report_smoke_test.dart -r expanded > t.txt 2>&1 || st=$?
-          tail -60 t.txt | while IFS= read -r l; do echo "::warning::T $l"; done
-          (grep -nE "EXCEPTION|Exception|Error|Expected|FAILED|failed|overflow|PDF bytes|\+[0-9]+.*All tests" t.txt | grep -v "^.*google_fonts" || true) | head -60 | while IFS= read -r l; do echo "::warning::$l"; done
+          echo "exit=$st" >> t.txt
+          cp t.txt /tmp/t.txt
+          cd ..
+          git config user.name ci && git config user.email ci@example.com
+          git checkout --orphan ci-out
+          git rm -rq --cached . 
+          cp /tmp/t.txt out.txt
+          git add out.txt && git commit -qm out && git push -f origin ci-out
           exit $st
