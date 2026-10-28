@@ -12,6 +12,7 @@ import '../core/icons.dart';
 import '../core/theme.dart';
 import 'family_data.dart';
 import 'family_widgets.dart';
+import 'friend_food.dart';
 
 const Cubic _ease = Cubic(0.2, 0.9, 0.2, 1.0);
 const Cubic _popCurve = Cubic(0.2, 0.9, 0.3, 1.4);
@@ -919,6 +920,7 @@ class _PrivacyCard extends StatelessWidget {
                 ],
               ),
             ),
+          const FriendFoodPreviewLink(),
           const SizedBox(height: 10),
           VText(
             'هەر کەسێک خۆی هەڵدەبژێرێت چی هاوبەش بکات، و هەر کاتێک بیەوێت دەتوانێت بیگۆڕێت یان لە بازنەکە بچێتە دەرەوە.',
@@ -1119,6 +1121,8 @@ class _MemberSheetState extends State<_MemberSheet> {
             ),
           ],
         ),
+        // 🍽️ خواردن و ئاوی ئەمڕۆ (هاوڕێ، خواردن)
+        FriendFoodCard(member: m),
         const SizedBox(height: 12),
         Row(
           children: [

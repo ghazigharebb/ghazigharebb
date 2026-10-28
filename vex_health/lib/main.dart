@@ -11,6 +11,7 @@ import 'core/icons.dart';
 import 'core/store.dart';
 import 'core/theme.dart';
 import 'family/family_data.dart';
+import 'family/friend_food.dart';
 import 'food/food_db.dart';
 import 'health/health_screen.dart';
 import 'home/home_screen.dart';
@@ -35,6 +36,7 @@ Future<void> main() async {
   await Account.I.load();
   await Store.I.load();
   await FamilyStore.I.load();
+  await FriendFood.I.init(baseUrl: kFriendFoodServer); // هاوڕێ، خواردن (خواردن و ئاوی بازنە)
   await BandState.I.load(); // دۆخی پەیوەستبوونی Band
   await VitalAgeEngine.I.init(); // تەمەنی ژیانی (٢١ ڕۆژ)
   await VexBand.I.init(); // BLE ی ڕاستەقینەی Band (پەیوەستبوونەوەی خۆکار)
