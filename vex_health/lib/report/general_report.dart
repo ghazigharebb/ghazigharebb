@@ -1046,9 +1046,23 @@ List<List<Widget>> _blocks(_Rep r, _P p, {bool print = false}) {
             child: _svg(_iPulse, const Color(0xFF0E2A33), 18, sw: 2.5),
           ),
           const SizedBox(width: 8),
-          Text('VEX HEALTH', textDirection: TextDirection.ltr, style: nu(14, c: Colors.white, ls: 1.5)),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerStart,
+              child: Text('VEX HEALTH', textDirection: TextDirection.ltr, style: nu(14, c: Colors.white, ls: 1.5)),
+            ),
+          ),
+          const SizedBox(width: 10),
           const Spacer(),
-          _nm('No. ${r.no}', 10.5, const Color(0xFFB9D6DC), w: FontWeight.w600),
+          Flexible(
+            flex: 2,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerEnd,
+              child: _nm('No. ${r.no}', 10.5, const Color(0xFFB9D6DC), w: FontWeight.w600),
+            ),
+          ),
         ]),
         _gap(10),
         _tx(_t('doc'), 20, Colors.white, w: FontWeight.w800, h: 1.4),
@@ -1724,23 +1738,18 @@ Future<Uint8List> _makePdf(_Rep r) async {
       Positioned(
         left: 0,
         top: 0,
+        width: w,
         child: IgnorePointer(
           child: MediaQuery(
             data: MediaQuery.of(c).copyWith(textScaler: TextScaler.noScaling),
             child: Directionality(
               textDirection: _dir,
-              child: OverflowBox(
-                alignment: Alignment.topLeft,
-                minWidth: w,
-                maxWidth: w,
-                maxHeight: double.infinity,
-                child: Material(
-                  color: Colors.white,
-                  child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                    for (var i = 0; i < parts.length; i++)
-                      RepaintBoundary(key: keys[i], child: ColoredBox(color: Colors.white, child: parts[i])),
-                  ]),
-                ),
+              child: Material(
+                color: Colors.white,
+                child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  for (var i = 0; i < parts.length; i++)
+                    RepaintBoundary(key: keys[i], child: ColoredBox(color: Colors.white, child: parts[i])),
+                ]),
               ),
             ),
           ),
@@ -1768,6 +1777,10 @@ Future<Uint8List> _makePdf(_Rep r) async {
     for (final k in keys) {
       final ro = k.currentContext?.findRenderObject();
       if (ro is! RenderRepaintBoundary) continue;
+      for (var t = 0; kDebugMode && t < 20 && ro.debugNeedsPaint; t++) {
+        WidgetsBinding.instance.scheduleFrame();
+        await WidgetsBinding.instance.endOfFrame;
+      }
       final img = await ro.toImage(pixelRatio: 3);
       final bd = await img.toByteData(format: ui.ImageByteFormat.png);
       img.dispose();
