@@ -1771,6 +1771,7 @@ Future<Uint8List> _makePdf(_Rep r) async {
   );
   ov.insert(entry);
   final images = <Uint8List>[];
+  final ratio = <double>[]; // بەرزی ÷ پانی
   try {
     await WidgetsBinding.instance.endOfFrame;
     await Future<void>.delayed(const Duration(milliseconds: 250));
@@ -1783,12 +1784,14 @@ Future<Uint8List> _makePdf(_Rep r) async {
         await WidgetsBinding.instance.endOfFrame;
       }
       final img = await ro.toImage(pixelRatio: 3);
-      if (kDebugMode) debugPrint('report part ${img.width}x${img.height}');
       // پارچەیەکی زۆر درێژ دەکرێتە چەند لاپەڕە
       const maxH = 2200;
       if (img.height <= maxH) {
         final bd = await img.toByteData(format: ui.ImageByteFormat.png);
-        if (bd != null) images.add(bd.buffer.asUint8List());
+        if (bd != null) {
+          images.add(bd.buffer.asUint8List());
+          ratio.add(img.height / img.width);
+        }
       } else {
         for (var y = 0; y < img.height; y += maxH) {
           final h = math.min(maxH, img.height - y);
@@ -1798,7 +1801,10 @@ Future<Uint8List> _makePdf(_Rep r) async {
           final part = await rec.endRecording().toImage(img.width, h);
           final bd = await part.toByteData(format: ui.ImageByteFormat.png);
           part.dispose();
-          if (bd != null) images.add(bd.buffer.asUint8List());
+          if (bd != null) {
+            images.add(bd.buffer.asUint8List());
+            ratio.add(h / img.width);
+          }
         }
       }
       img.dispose();
@@ -1835,7 +1841,10 @@ Future<Uint8List> _makePdf(_Rep r) async {
           pw.Text('${ctx.pageNumber} / ${ctx.pagesCount}', style: const pw.TextStyle(fontSize: 8, color: grey)),
         ]),
       ),
-      build: (ctx) => [for (final b in images) pw.Image(pw.MemoryImage(b), width: PdfPageFormat.a4.width - 52, fit: pw.BoxFit.fitWidth)],
+      build: (ctx) => [
+        for (var i = 0; i < images.length; i++)
+          pw.Image(pw.MemoryImage(images[i]), width: PdfPageFormat.a4.width - 52, height: (PdfPageFormat.a4.width - 52) * ratio[i], fit: pw.BoxFit.fill),
+      ],
     ),
   );
   return doc.save();
