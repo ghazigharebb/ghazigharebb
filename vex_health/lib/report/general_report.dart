@@ -1783,6 +1783,7 @@ Future<Uint8List> _makePdf(_Rep r) async {
         await WidgetsBinding.instance.endOfFrame;
       }
       final img = await ro.toImage(pixelRatio: 3);
+      if (kDebugMode) debugPrint('report part ${img.width}x${img.height}');
       // پارچەیەکی زۆر درێژ دەکرێتە چەند لاپەڕە
       const maxH = 2200;
       if (img.height <= maxH) {
