@@ -21,4 +21,5 @@ jobs:
           flutter analyze --no-fatal-infos --no-fatal-warnings > out.txt 2>&1 || true
           grep -c " • " out.txt || true
           grep "error •" out.txt | head -45 | while IFS= read -r l; do echo "::error::$l"; done
+          grep -E "general_report|main.dart|profile_page" out.txt | head -45 | while IFS= read -r l; do echo "::warning::$l"; done
           ! grep -q "error •" out.txt
