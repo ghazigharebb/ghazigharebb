@@ -2152,8 +2152,9 @@ class _WaterBoxState extends State<_WaterBox> with TickerProviderStateMixin {
                   TextSpan(
                     children: [
                       if (glPre.isNotEmpty) TextSpan(text: glPre),
-                      TextSpan(text: _iso('$w'), style: nu(14, c: V.tx)),
-                      TextSpan(text: _iso(' / $g'), style: nu(11.5, w: FontWeight.w700, c: V.mu)),
+                      // یەک isolate ی LTR بۆ «5 / 8» تا لە RTL پێچەوانە نەبێتەوە
+                      TextSpan(text: '\u2066$w', style: nu(14, c: V.tx)),
+                      TextSpan(text: ' / $g\u2069', style: nu(11.5, w: FontWeight.w700, c: V.mu)),
                       TextSpan(text: glPost),
                     ],
                   ),
