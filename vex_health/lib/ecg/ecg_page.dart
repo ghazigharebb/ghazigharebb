@@ -1,37 +1,196 @@
-// VEX Health — پەڕەی پێوانەی ECG (چاوەڕێی پەنجە ← پێوانەی زیندوو ← تەواو)
+// VEX Health — پێوانەی ECG (هەمان شێوازی ئەپی فەرمیی Band، وردتر)
+//
+//   1) ڕێنمایی: وێنەی دەست و Band، هەڵبژاردنی دەست (چەپ / ڕاست)، «دەستپێکردنی پێوانە»، 4 ئامۆژگاری
+//   2) پێوانە: 30 چرکە، هێڵی پێشکەوتن، تۆڕی کاغەزی ECG، شەپۆلی سوور (شێوازی مۆنیتەر)، لێدانی دڵ
+//   3) ئەنجام: تۆماری 30 چرکە (3 ڕیز × 10 چرکە)، لێدانی دڵ، کەمترین/زۆرترین، HRV، ڕیتم، کوالیتی
 //
 // بانگکردن لە هەر شوێنێک:   openEcgPage();
-// شەپۆلەکە لە Band ی ڕاستەقینەوە دێت (lib/band/ble/vex_ble.dart). تا پەنجە دانەنرێت هێڵێکی ڕاستە؛
-// دوای دانانی پەنجە شەپۆلەکە بەپێی دڵی خۆت دەجووڵێت.
+// دەقەکان بە 6 زمانن (سۆرانی، بادینی، English، عربي، فارسی، Türkçe).
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import '../core/icons.dart';
 import '../core/theme.dart';
-import '../core/vx_en.dart';
-import '../health/detail_common.dart' show HCard;
 import '../health/hc.dart';
+import '../onboarding/reg_lang_state.dart';
 import 'ecg_controller.dart';
+import 'ecg_signal.dart';
 
 void openEcgPage() => pushPage(const EcgPage());
 
-// ئایکۆنی پەنجە (viewBox 24)
-const String _kFinger =
-    '<path d="M12 11a2 2 0 0 0-2 2c0 3 .5 5.5 1.5 7.5"/><path d="M8 14c0-2.2 1.8-4 4-4s4 1.8 4 4c0 2-.3 4-1 6"/>'
-    '<path d="M5 14a7 7 0 0 1 14 0c0 2-.2 3.6-.6 5"/><path d="M8.5 5.2A7.5 7.5 0 0 1 20 11.5"/><path d="M3.5 10.5A8.5 8.5 0 0 1 6 6.5"/>';
-const String _kCheck = '<path d="M5 12l5 5 9-10"/>';
+// ───────────────────────── ڕەنگەکان (هەمیشە ڕەش، وەک ئەپی فەرمی) ─────────────────────────
+const Color _bg = Color(0xFF000000);
+const Color _tx = Color(0xFFFFFFFF);
+const Color _mu = Color(0xFF8E8E93);
+const Color _red = Color(0xFFF2463A);
+const Color _lime = Color(0xFFD6F55B);
+const Color _track = Color(0xFF1C1C1E);
+const Color _amber = Color(0xFFFFB84D);
+const LinearGradient _go = LinearGradient(colors: [Color(0xFF9EDCCB), Color(0xFF5CC68A)]);
 
-Color get _mint => vk(0xFF5BE3A4);
-Color get _amber => vk(0xFFFFB84D);
-Color get _rose => vk(0xFFFF6B7F);
+// ───────────────────────── دەقەکان ─────────────────────────
+const Map<String, Map<String, String>> _tx6 = {
+  'ckb': {
+    'guide': 'ڕێنمایی پێوانەی ECG', 'left': 'چەپ', 'right': 'ڕاست',
+    'desc': 'بۆ باشترین ئەنجام، ئامێرەکە نزیکەی بە پانی پەنجەیەک لە سەرووی ئێسکی مەچەکەوە ببەستە، با بە توندی بە پێستەوە بنووسێت، و لە کاتی پێوانەدا دەستت ئاسوودە و بێ جووڵە بێت.',
+    'start': 'دەستپێکردنی پێوانە',
+    't1': 'دانیشە و هەردوو پێت لەسەر زەوی بن', 's1': 'بە ڕێکی دانیشە بۆ ئەوەی شێوەی لەش کار نەکاتە سەر پێوانەکە.',
+    't2': 'باسکت بە ئاسایی لەسەر مێزێک دابنێ', 's2': 'باسکت ئاسوودە بێت بۆ ئەوەی گرژبوونی ماسولکە داتاکە تێک نەدات.',
+    't3': 'لە شوێنێکی بێدەنگ بە و مەجووڵێ', 's3': 'قسە مەکە و مەجووڵێ بۆ ئەوەی ئاماژەکە ڕوونتر و جێگیرتر بێت.',
+    't4': 'بە پەنجەی دەستەکەی تر (بێ ئامێر) بە نەرمی دەست لە خاڵی پێوانە بدە تا تەواو دەبێت', 's4': 'دەستلێدانێکی سووک بەسە، فشار مەخە. چاوەڕێ بکە تا تەواوبوون دیار دەبێت.',
+    'meas': 'پێوانەی ECG', 'sec': 'چرکە',
+    'instr': 'بە نەرمی پەنجەی شایەتمانی ئەو دەستەی ئامێری تێدا نییە لەسەر خاڵە کانزاییەکەی ناوەڕاستی ئامێرەکە دابنێ. کە پێوانە دەستی پێکرد، 30 چرکە بێ جووڵە بمێنەوە.',
+    'calib': 'ڕێکخستنی داتا بەردەوامە. پێوانە خۆکار دەست پێدەکات. تکایە چاوەڕێ بکە.',
+    'measuring': 'پێوانە دەکرێت… پەنجەت بێ جووڵە بهێڵەوە.',
+    'lost': 'پەنجە لابرا — لە ماوەی 3 چرکەدا بیگەڕێنەوە.',
+    'cancel': 'هەڵوەشاندنەوە', 'res': 'ئەنجامی ECG',
+    'avg': 'ناوەندی لێدان', 'range': 'کەمترین – زۆرترین', 'rhythm': 'ڕیتم', 'regular': 'ڕێک', 'irregular': 'نائاسایی',
+    'quality': 'کوالیتی ئاماژە', 'good': 'باش', 'fair': 'مامناوەند', 'weak': 'لاواز',
+    'irrNote': 'لەم تۆمارەدا ڕیتمەکە نائاسایی دەرکەوت. ئەگەر دووبارە بووەوە یان هەستت بە ناڕەحەتی کرد، سەردانی پزیشک بکە.',
+    'weakNote': 'ئاماژەکە لاواز بوو؛ بۆ ئەنجامی وردتر دووبارە پێوانە بکەرەوە.',
+    'done': 'تەواو', 'again': 'دووبارە پێوانە', 'strip': 'تۆماری 30 چرکە',
+    'disc': 'ئەم پێوانەیە بۆ شوێنکەوتنی تەندروستیی گشتییە و بۆ دەستنیشانکردنی نەخۆشی نییە.',
+    'noband': 'Band پەیوەست نییە', 'band': 'نەتوانرا فرمان بنێردرێت بۆ Band', 'nofinger': 'پەنجە نەدۆزرایەوە. دووبارە هەوڵ بدە.',
+    'failHint': 'دڵنیابە Band پەیوەستە و پەنجەت بە نەرمی لەسەر خاڵە کانزاییەکەیە.', 'retry': 'دووبارە هەوڵ بدە',
+    'demo': 'نموونە', 'wL': 'دەستی چەپ', 'wR': 'دەستی ڕاست',
+  },
+  'kmr': {
+    'guide': 'ڕێنمایا پیڤانا ECG', 'left': 'چەپ', 'right': 'ڕاست',
+    'desc': 'بۆ باشترین ئەنجام، ئامیرێ نێزیکی ب پانیا تبلەکێ ل سەر هەستیێ مەچەکێ گرێبدە، بلا ب باشی ب پێستێ ڤە بنووسیت، و د دەمێ پیڤانێ دا دەستێ خۆ ئارام و بێ لڤین بهێلە.',
+    'start': 'دەستپێکرنا پیڤانێ',
+    't1': 'ڕوینە و هەردوو پێیێن خۆ ل سەر عەردی دانە', 's1': 'ب ڕێکی ڕوینە دا کو ڕەوشا لەشی کار نەکەتە سەر پیڤانێ.',
+    't2': 'ملێ خۆ ب ئاسایی ل سەر مێزەکێ دانە', 's2': 'بلا ملێ تە ئارام بیت دا گرژبوونا ماسوولکان داتایان تێک نەدەت.',
+    't3': 'ل جهەکێ بێدەنگ بە و نەلڤە', 's3': 'ئاخفتنێ نەکە و نەلڤە دا ئاماژە ڕوونتر و جێگیرتر بیت.',
+    't4': 'ب تبلا دەستێ دی (بێ ئامیر) ب نەرمی دەستی ل خالا پیڤانێ بدە هەتا ب دوماهی دهێت', 's4': 'دەستلێدانەکا سڤک بەسە، پاڵ نەدە. چاڤەڕێ بکە هەتا ب دوماهی هاتن دیار دبیت.',
+    'meas': 'پیڤانا ECG', 'sec': 'چرکە',
+    'instr': 'ب نەرمی تبلا نیشاندانێ یا وی دەستێ ئامیر تێدا نەی ل سەر خالا کانزایی یا ناڤەڕاستا ئامیری دانە. پشتی پیڤان دەست پێدکەت، 30 چرکەیان بێ لڤین بمینە.',
+    'calib': 'ڕێکخستنا داتایان بەردەوامە. پیڤان دێ ب خۆ دەست پێکەت. هیڤییە چاڤەڕێ بکە.',
+    'measuring': 'پیڤان دهێتە کرن… تبلا خۆ بێ لڤین بهێلە.',
+    'lost': 'تبل هاتە لادان — د ماوێ 3 چرکەیان دا بزڤڕینە.',
+    'cancel': 'هەڵوەشاندن', 'res': 'ئەنجامێ ECG',
+    'avg': 'ناڤەندا لێدانێ', 'range': 'کێمترین – زێدەترین', 'rhythm': 'ڕیتم', 'regular': 'ڕێک', 'irregular': 'نە ئاسایی',
+    'quality': 'کوالیتیا ئاماژێ', 'good': 'باش', 'fair': 'ناڤینجی', 'weak': 'لاواز',
+    'irrNote': 'د ڤێ تۆماری دا ڕیتم نە ئاسایی دیار بوو. ئەگەر دووبارە بوو یان تە هەست ب نەخۆشیێ کر، سەرەدانا نوژداری بکە.',
+    'weakNote': 'ئاماژە لاواز بوو؛ بۆ ئەنجامەکێ دروستتر دووبارە بپیڤە.',
+    'done': 'تەمام', 'again': 'دووبارە پیڤان', 'strip': 'تۆمارا 30 چرکەیان',
+    'disc': 'ئەڤ پیڤانە بۆ چاڤدێریا ساخلەمیا گشتییە و نە بۆ دەستنیشانکرنا نەخۆشیێ یە.',
+    'noband': 'Band نە گرێدایە', 'band': 'نەشیا فەرمان بۆ Band بهێتە هنارتن', 'nofinger': 'تبل نەهاتە دیتن. دووبارە هەول بدە.',
+    'failHint': 'پشتڕاست بە کو Band گرێدایە و تبلا تە ب نەرمی ل سەر خالا کانزایی یە.', 'retry': 'دووبارە هەول بدە',
+    'demo': 'نموونە', 'wL': 'دەستێ چەپ', 'wR': 'دەستێ ڕاست',
+  },
+  'en': {
+    'guide': 'ECG Measurement Guide', 'left': 'Left', 'right': 'Right',
+    'desc': "For the best measurement results, wear the device about one finger's width above the wrist bone, ensure it fits snugly against the skin, and keep your hand relaxed and still during the measurement.",
+    'start': 'Start Measurement',
+    't1': 'Sit down with both feet flat on the ground', 's1': 'Maintain an upright sitting posture to help minimize interference from body position.',
+    't2': 'Place your arm naturally on a table', 's2': 'Support your arm in a relaxed position to avoid muscle tension affecting the data.',
+    't3': 'Stay in a quiet environment and remain still', 's3': 'Avoid talking or moving to ensure a clearer and more stable signal.',
+    't4': 'With the other hand (without the device), gently touch the measurement contact point until the process is complete', 's4': 'A light touch is sufficient—do not press hard. Wait until completion is indicated.',
+    'meas': 'ECG Measurement', 'sec': 's',
+    'instr': 'Please gently place the index finger of the hand without the wearable device on the metal contact at the center of the device. After the measurement starts, remain still for 30 seconds.',
+    'calib': 'Data calibration in progress. Measurement will start automatically. Please wait.',
+    'measuring': 'Measuring… keep your finger still.',
+    'lost': 'Finger lifted — place it back within 3 seconds.',
+    'cancel': 'Cancel', 'res': 'ECG Result',
+    'avg': 'Average heart rate', 'range': 'Lowest – highest', 'rhythm': 'Rhythm', 'regular': 'Regular', 'irregular': 'Irregular',
+    'quality': 'Signal quality', 'good': 'Good', 'fair': 'Fair', 'weak': 'Weak',
+    'irrNote': 'The rhythm looked irregular in this recording. If it happens again or you feel unwell, see a doctor.',
+    'weakNote': 'The signal was weak; measure again for a more accurate result.',
+    'done': 'Done', 'again': 'Measure again', 'strip': '30-second recording',
+    'disc': 'This measurement is for general wellness tracking and is not a medical diagnosis.',
+    'noband': 'Band not connected', 'band': 'Could not send the command to the Band', 'nofinger': 'No finger detected. Please try again.',
+    'failHint': 'Make sure the Band is connected and your finger rests lightly on the metal contact.', 'retry': 'Try again',
+    'demo': 'Demo', 'wL': 'Left wrist', 'wR': 'Right wrist',
+  },
+  'ar': {
+    'guide': 'دليل قياس تخطيط القلب (ECG)', 'left': 'اليسرى', 'right': 'اليمنى',
+    'desc': 'للحصول على أفضل النتائج، ارتدِ الجهاز فوق عظمة الرسغ بمسافة عرض إصبع تقريباً، وتأكد من ملامسته للجلد بإحكام، وحافظ على يدك مسترخية وثابتة أثناء القياس.',
+    'start': 'بدء القياس',
+    't1': 'اجلس مع وضع قدميك على الأرض', 's1': 'حافظ على وضعية جلوس مستقيمة لتقليل تأثير وضعية الجسم.',
+    't2': 'ضع ذراعك بشكل طبيعي على طاولة', 's2': 'اسند ذراعك في وضع مريح لتجنب تأثير توتر العضلات على البيانات.',
+    't3': 'ابقَ في مكان هادئ ولا تتحرك', 's3': 'تجنب الكلام أو الحركة للحصول على إشارة أوضح وأكثر ثباتاً.',
+    't4': 'بيدك الأخرى (التي لا ترتدي الجهاز)، المس نقطة القياس برفق حتى يكتمل القياس', 's4': 'لمسة خفيفة تكفي، لا تضغط بقوة. انتظر حتى يظهر الاكتمال.',
+    'meas': 'قياس تخطيط القلب', 'sec': 'ث',
+    'instr': 'ضع برفق إصبع السبابة لليد التي لا ترتدي الجهاز على نقطة التلامس المعدنية في وسط الجهاز. بعد بدء القياس، ابقَ ثابتاً لمدة 30 ثانية.',
+    'calib': 'جارٍ معايرة البيانات. سيبدأ القياس تلقائياً. يرجى الانتظار.',
+    'measuring': 'جارٍ القياس… أبقِ إصبعك ثابتاً.',
+    'lost': 'رُفع الإصبع — أعده خلال 3 ثوانٍ.',
+    'cancel': 'إلغاء', 'res': 'نتيجة تخطيط القلب',
+    'avg': 'متوسط النبض', 'range': 'الأدنى – الأعلى', 'rhythm': 'النظم', 'regular': 'منتظم', 'irregular': 'غير منتظم',
+    'quality': 'جودة الإشارة', 'good': 'جيدة', 'fair': 'متوسطة', 'weak': 'ضعيفة',
+    'irrNote': 'ظهر النظم غير منتظم في هذا التسجيل. إذا تكرر ذلك أو شعرت بانزعاج، فراجع الطبيب.',
+    'weakNote': 'كانت الإشارة ضعيفة؛ أعد القياس للحصول على نتيجة أدق.',
+    'done': 'تم', 'again': 'قياس مرة أخرى', 'strip': 'تسجيل 30 ثانية',
+    'disc': 'هذا القياس لمتابعة الصحة العامة وليس لتشخيص الأمراض.',
+    'noband': 'Band غير متصل', 'band': 'تعذّر إرسال الأمر إلى Band', 'nofinger': 'لم يُكتشف الإصبع. حاول مرة أخرى.',
+    'failHint': 'تأكد من اتصال Band ومن وضع إصبعك برفق على نقطة التلامس المعدنية.', 'retry': 'حاول مرة أخرى',
+    'demo': 'تجريبي', 'wL': 'اليد اليسرى', 'wR': 'اليد اليمنى',
+  },
+  'fa': {
+    'guide': 'راهنمای اندازه‌گیری نوار قلب (ECG)', 'left': 'چپ', 'right': 'راست',
+    'desc': 'برای بهترین نتیجه، دستگاه را حدود یک بند انگشت بالاتر از استخوان مچ ببندید، مطمئن شوید محکم به پوست چسبیده است و در طول اندازه‌گیری دستتان آرام و بی‌حرکت باشد.',
+    'start': 'شروع اندازه‌گیری',
+    't1': 'بنشینید و هر دو پا را صاف روی زمین بگذارید', 's1': 'صاف بنشینید تا تأثیر وضعیت بدن کمتر شود.',
+    't2': 'بازوی خود را به‌طور طبیعی روی میز بگذارید', 's2': 'بازو را در حالت آرام نگه دارید تا گرفتگی عضلات بر داده‌ها اثر نگذارد.',
+    't3': 'در محیطی آرام بمانید و حرکت نکنید', 's3': 'صحبت نکنید و حرکت نکنید تا سیگنال واضح‌تر و پایدارتر باشد.',
+    't4': 'با دست دیگر (بدون دستگاه)، نقطهٔ اندازه‌گیری را به‌آرامی لمس کنید تا فرایند کامل شود', 's4': 'لمس سبک کافی است، فشار ندهید. صبر کنید تا پایان اندازه‌گیری نمایش داده شود.',
+    'meas': 'اندازه‌گیری نوار قلب', 'sec': 'ث',
+    'instr': 'انگشت اشارهٔ دستی را که دستگاه ندارد به‌آرامی روی نقطهٔ تماس فلزی وسط دستگاه بگذارید. پس از شروع اندازه‌گیری، 30 ثانیه بی‌حرکت بمانید.',
+    'calib': 'در حال کالیبره کردن داده‌ها. اندازه‌گیری خودکار شروع می‌شود. لطفاً صبر کنید.',
+    'measuring': 'در حال اندازه‌گیری… انگشت خود را ثابت نگه دارید.',
+    'lost': 'انگشت برداشته شد — ظرف 3 ثانیه دوباره بگذارید.',
+    'cancel': 'لغو', 'res': 'نتیجهٔ نوار قلب',
+    'avg': 'میانگین ضربان', 'range': 'کمترین – بیشترین', 'rhythm': 'ریتم', 'regular': 'منظم', 'irregular': 'نامنظم',
+    'quality': 'کیفیت سیگنال', 'good': 'خوب', 'fair': 'متوسط', 'weak': 'ضعیف',
+    'irrNote': 'ریتم در این ثبت نامنظم به نظر رسید. اگر تکرار شد یا احساس ناراحتی کردید، به پزشک مراجعه کنید.',
+    'weakNote': 'سیگنال ضعیف بود؛ برای نتیجهٔ دقیق‌تر دوباره اندازه بگیرید.',
+    'done': 'تمام', 'again': 'اندازه‌گیری دوباره', 'strip': 'ثبت 30 ثانیه',
+    'disc': 'این اندازه‌گیری برای پیگیری سلامت عمومی است و برای تشخیص بیماری نیست.',
+    'noband': 'Band متصل نیست', 'band': 'ارسال فرمان به Band ممکن نشد', 'nofinger': 'انگشت شناسایی نشد. دوباره تلاش کنید.',
+    'failHint': 'مطمئن شوید Band متصل است و انگشتتان به‌آرامی روی نقطهٔ فلزی است.', 'retry': 'تلاش دوباره',
+    'demo': 'نمونه', 'wL': 'دست چپ', 'wR': 'دست راست',
+  },
+  'tr': {
+    'guide': 'EKG Ölçüm Rehberi', 'left': 'Sol', 'right': 'Sağ',
+    'desc': 'En iyi sonuç için cihazı bilek kemiğinin yaklaşık bir parmak üstüne takın, cilde iyice oturduğundan emin olun ve ölçüm sırasında elinizi gevşek ve hareketsiz tutun.',
+    'start': 'Ölçümü Başlat',
+    't1': 'İki ayağınız yere düz basacak şekilde oturun', 's1': 'Vücut pozisyonunun etkisini azaltmak için dik oturun.',
+    't2': 'Kolunuzu doğal şekilde bir masaya koyun', 's2': 'Kas gerginliğinin verileri etkilememesi için kolunuzu rahat tutun.',
+    't3': 'Sessiz bir ortamda kalın ve hareket etmeyin', 's3': 'Daha net ve kararlı bir sinyal için konuşmayın ve kıpırdamayın.',
+    't4': 'Diğer elinizle (cihaz olmayan) işlem bitene kadar ölçüm temas noktasına hafifçe dokunun', 's4': 'Hafif bir dokunuş yeterlidir, bastırmayın. Tamamlandığı gösterilene kadar bekleyin.',
+    'meas': 'EKG Ölçümü', 'sec': 'sn',
+    'instr': 'Cihaz takılı olmayan elinizin işaret parmağını cihazın ortasındaki metal temas noktasına hafifçe koyun. Ölçüm başladıktan sonra 30 saniye hareketsiz kalın.',
+    'calib': 'Veri kalibrasyonu sürüyor. Ölçüm otomatik olarak başlayacak. Lütfen bekleyin.',
+    'measuring': 'Ölçülüyor… parmağınızı sabit tutun.',
+    'lost': 'Parmak kaldırıldı — 3 saniye içinde geri koyun.',
+    'cancel': 'İptal', 'res': 'EKG Sonucu',
+    'avg': 'Ortalama nabız', 'range': 'En düşük – en yüksek', 'rhythm': 'Ritim', 'regular': 'Düzenli', 'irregular': 'Düzensiz',
+    'quality': 'Sinyal kalitesi', 'good': 'İyi', 'fair': 'Orta', 'weak': 'Zayıf',
+    'irrNote': 'Bu kayıtta ritim düzensiz göründü. Tekrarlarsa veya rahatsızlık hissederseniz bir doktora başvurun.',
+    'weakNote': 'Sinyal zayıftı; daha doğru bir sonuç için yeniden ölçün.',
+    'done': 'Bitti', 'again': 'Tekrar ölç', 'strip': '30 saniyelik kayıt',
+    'disc': 'Bu ölçüm genel sağlık takibi içindir, hastalık teşhisi için değildir.',
+    'noband': 'Band bağlı değil', 'band': "Komut Band'e gönderilemedi", 'nofinger': 'Parmak algılanmadı. Tekrar deneyin.',
+    'failHint': "Band'in bağlı olduğundan ve parmağınızın metal temas noktasına hafifçe değdiğinden emin olun.", 'retry': 'Tekrar dene',
+    'demo': 'Örnek', 'wL': 'Sol el', 'wR': 'Sağ el',
+  },
+};
 
-TextStyle _num(double size, {Color? c, FontWeight w = FontWeight.w800}) { c ??= HC.tx; return
-    GoogleFonts.sora(fontSize: size, fontWeight: w, color: c, height: 1.0, letterSpacing: -1); }
+String get _lg => _tx6.containsKey(LangState.I.code) ? LangState.I.code : 'ckb';
+bool get _rtl => _lg != 'en' && _lg != 'tr';
+String _t(String k) => _tx6[_lg]![k] ?? _tx6['en']![k] ?? k;
 
+TextStyle _f(double s, {FontWeight w = FontWeight.w700, Color c = _tx, double? h}) => ku(s, w: w, c: c, h: h);
+TextStyle _n(double s, {FontWeight w = FontWeight.w700, Color c = _tx, double? h}) =>
+    GoogleFonts.sora(fontSize: s, fontWeight: w, color: c, height: h, letterSpacing: s > 40 ? -2 : 0);
+
+enum _Step { guide, measure, result }
+
+// ═══════════════════════════════════════════════════════════════════════════
 class EcgPage extends StatefulWidget {
   const EcgPage({super.key});
   @override
@@ -39,567 +198,767 @@ class EcgPage extends StatefulWidget {
 }
 
 class _EcgPageState extends State<EcgPage> with TickerProviderStateMixin {
-  late final EcgController c = EcgController();
-  late final AnimationController _spin = AnimationController(vsync: this, duration: const Duration(seconds: 6))..repeat();
-  late final AnimationController _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 1600))..repeat(reverse: true);
+  static const String _wristKey = 'vex_ecg_wrist';
+  _Step _step = _Step.guide;
+  bool _right = false;
+  EcgController? c;
+
+  late final AnimationController _loop = AnimationController(vsync: this, duration: const Duration(milliseconds: 2600))..repeat();
+  late final AnimationController _beat = AnimationController(vsync: this, duration: const Duration(milliseconds: 380));
+  int _lastBeat = 0;
 
   @override
   void initState() {
     super.initState();
-    c.start();
+    SharedPreferences.getInstance().then((sp) {
+      if (mounted) setState(() => _right = sp.getBool(_wristKey) ?? false);
+    }).catchError((_) {});
   }
 
   @override
   void dispose() {
-    _spin.dispose();
-    _pulse.dispose();
-    c.dispose();
+    c?.frame.removeListener(_onFrame);
+    c?.dispose();
+    _loop.dispose();
+    _beat.dispose();
     super.dispose();
   }
 
-  Future<void> _close() async {
-    await c.cancel();
-    if (mounted) Navigator.of(context).maybePop();
+  void _setWrist(bool right) {
+    HapticFeedback.selectionClick();
+    setState(() => _right = right);
+    SharedPreferences.getInstance().then((sp) => sp.setBool(_wristKey, right)).catchError((_) => false);
+  }
+
+  void _start() {
+    HapticFeedback.mediumImpact();
+    c?.frame.removeListener(_onFrame);
+    c?.dispose();
+    final ctl = EcgController(rightWrist: _right, onDone: (_) {
+      if (mounted) setState(() => _step = _Step.result);
+    });
+    ctl.frame.addListener(_onFrame);
+    _lastBeat = 0;
+    setState(() {
+      c = ctl;
+      _step = _Step.measure;
+    });
+    ctl.start();
+  }
+
+  void _onFrame() {
+    final ctl = c;
+    if (ctl == null) return;
+    if (ctl.sig.beatCount != _lastBeat) {
+      _lastBeat = ctl.sig.beatCount;
+      _beat.forward(from: 0);
+    }
+  }
+
+  Future<void> _cancel() async {
+    await c?.cancel();
+    if (!mounted) return;
+    if (_step == _Step.measure) {
+      setState(() => _step = _Step.guide);
+    } else {
+      Navigator.of(context).maybePop();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final mq = MediaQuery.of(context);
-    return PopScope(
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) c.cancel();
-      },
-      child: Scaffold(
-        backgroundColor: HC.bg,
-        body: Stack(children: [
-          const Positioned.fill(child: HealthBg(radius: 1.1)),
-          Positioned.fill(
-            child: ListenableBuilder(
-              listenable: c,
-              builder: (context, _) => SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(20, mq.padding.top + 16, 20, mq.padding.bottom + 22),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: 430, minHeight: mq.size.height - mq.padding.vertical - 38),
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                      _header(),
-                      const SizedBox(height: 14),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 320),
-                        child: KeyedSubtree(key: ValueKey(c.phase == EcgPhase.waiting || c.phase == EcgPhase.failed ? 0 : 1), child: _body()),
-                      ),
-                    ]),
-                  ),
-                ),
+    LangScope.of(context);
+    return Directionality(
+      textDirection: _rtl ? TextDirection.rtl : TextDirection.ltr,
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.light,
+        child: PopScope(
+          canPop: _step != _Step.measure,
+          onPopInvokedWithResult: (didPop, _) {
+            if (!didPop && _step == _Step.measure) _cancel();
+          },
+          child: Scaffold(
+            backgroundColor: _bg,
+            body: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 420),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, a) => FadeTransition(
+                opacity: a,
+                child: SlideTransition(position: Tween(begin: const Offset(0, .03), end: Offset.zero).animate(a), child: child),
               ),
+              child: switch (_step) {
+                _Step.guide => KeyedSubtree(key: const ValueKey('g'), child: _guide()),
+                _Step.measure => KeyedSubtree(key: const ValueKey('m'), child: _measure()),
+                _Step.result => KeyedSubtree(key: const ValueKey('r'), child: _result()),
+              },
             ),
           ),
-        ]),
+        ),
       ),
     );
   }
 
-  // ───────────── سەرەوە ─────────────
-  Widget _header() {
-    final (Color col, String txt) = switch (c.phase) {
-      EcgPhase.waiting => (_amber, 'چاوەڕێی پەنجە'),
-      EcgPhase.measuring => c.fingerLost ? (_amber, 'پەنجە لابرا') : (_mint, 'تۆمار دەکرێت'),
-      EcgPhase.done => (_mint, 'تەواو بوو'),
-      EcgPhase.failed => (_rose, 'سەرنەکەوت'),
-    };
-    return Row(children: [
-      Press(
-        onTap: _close,
-        child: Container(
-          width: 40,
-          height: 40,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(color: HC.card, borderRadius: BorderRadius.circular(13), border: Border.all(color: HC.line)),
-          child: svgIcon(HI.back, HX.tx, size: 18, stroke: 2.4),
+  // ───────────────────────── 1) ڕێنمایی ─────────────────────────
+  Widget _guide() {
+    final mq = MediaQuery.of(context);
+    return CustomScrollView(slivers: [
+      SliverAppBar(
+        pinned: true,
+        backgroundColor: _bg,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        toolbarHeight: 60,
+        automaticallyImplyLeading: false,
+        leading: _Tap(
+          onTap: () => Navigator.of(context).maybePop(),
+          child: Icon(_rtl ? Icons.arrow_forward : Icons.arrow_back, color: _tx, size: 26),
         ),
       ),
-      const SizedBox(width: 12),
-      Expanded(child: VText('پێوانەی ECG', style: ku(22, w: FontWeight.w800, c: HC.tx, h: 1.4))),
-      if (c.demo)
-        Container(
-          margin: const EdgeInsetsDirectional.only(end: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(color: op(_amber, .16), borderRadius: BorderRadius.circular(99)),
-          child: VText('نموونە', style: ku(10.5, w: FontWeight.w800, c: _amber)),
+      SliverPadding(
+        padding: EdgeInsets.fromLTRB(22, 0, 22, mq.padding.bottom + 28),
+        sliver: SliverList(
+          delegate: SliverChildListDelegate([
+            Text(_t('guide'), style: _f(24, w: FontWeight.w800, h: 1.3)),
+            const SizedBox(height: 8),
+            SizedBox(height: 250, child: _Art(asset: 'assets/ecg/ecg_guide.webp', right: _right)),
+            const SizedBox(height: 18),
+            Row(children: [
+              Expanded(child: _WristBtn(label: _t('left'), on: !_right, onTap: () => _setWrist(false))),
+              const SizedBox(width: 14),
+              Expanded(child: _WristBtn(label: _t('right'), on: _right, onTap: () => _setWrist(true))),
+            ]),
+            const SizedBox(height: 18),
+            Text(_t('desc'), style: _f(13.5, w: FontWeight.w600, c: _mu, h: 1.6)),
+            const SizedBox(height: 22),
+            _GoBtn(label: _t('start'), onTap: _start),
+            const SizedBox(height: 22),
+            for (var i = 1; i <= 4; i++) _tip(_t('t$i'), _t('s$i')),
+            const SizedBox(height: 8),
+            Text(_t('disc'), textAlign: TextAlign.center, style: _f(11, w: FontWeight.w500, c: _mu.withValues(alpha: .7), h: 1.7)),
+          ]),
         ),
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-        decoration: BoxDecoration(color: op(col, .12), borderRadius: BorderRadius.circular(99), border: Border.all(color: op(col, .4))),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Container(width: 6, height: 6, decoration: BoxDecoration(color: col, shape: BoxShape.circle, boxShadow: [BoxShadow(color: op(col, .7), blurRadius: 6)])),
-          const SizedBox(width: 6),
-          VText(txt, style: ku(11.5, w: FontWeight.w700, c: col)),
-        ]),
       ),
     ]);
   }
 
-  Widget _body() => (c.phase == EcgPhase.waiting || c.phase == EcgPhase.failed) ? _waiting() : _measuring();
+  Widget _tip(String title, String sub) => Padding(
+        padding: const EdgeInsets.only(bottom: 22),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Container(
+            width: 26,
+            height: 26,
+            margin: const EdgeInsets.only(top: 4),
+            decoration: const BoxDecoration(color: _lime, shape: BoxShape.circle),
+            child: const Icon(Icons.check_rounded, size: 18, color: Colors.black),
+          ),
+          const SizedBox(width: 22),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(title, style: _f(18, w: FontWeight.w800, h: 1.45)),
+              const SizedBox(height: 8),
+              Text(sub, style: _f(14.5, w: FontWeight.w600, c: _mu, h: 1.55)),
+            ]),
+          ),
+        ]),
+      );
 
-  // ───────────── شاشەی ٢: چاوەڕێی پەنجە ─────────────
-  Widget _waiting() {
-    final failed = c.phase == EcgPhase.failed;
-    final col = failed ? _rose : _amber;
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      SizedBox(
-        height: 290,
-        child: Center(
-          child: SizedBox(
-            width: 290,
-            height: 290,
-            child: AnimatedBuilder(
-              animation: Listenable.merge([_spin, _pulse]),
-              builder: (_, __) => CustomPaint(
-                painter: _OrbPainter(_spin.value, _pulse.value, col, failed),
-                child: Center(
-                  child: Container(
-                    width: 148,
-                    height: 148,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(center: Alignment(-.3, -.4), colors: [vk(0xFF12586A), vk(0xFF082F3A)], stops: [0, .75]),
-                      border: Border.all(color: op(HC.c2, .3)),
-                      boxShadow: [BoxShadow(color: op(HC.c, .18), blurRadius: 50)],
-                    ),
-                    child: svgIcon(failed ? '<path d="M6 6l12 12M18 6L6 18"/>' : _kFinger, failed ? '#ff6b7f' : HX.c, size: 66, stroke: 1.7),
+  // ───────────────────────── 2) پێوانە ─────────────────────────
+  Widget _measure() {
+    final ctl = c!;
+    final mq = MediaQuery.of(context);
+    return ListenableBuilder(
+      listenable: ctl,
+      builder: (context, _) {
+        if (ctl.phase == EcgPhase.failed) return _failed(ctl);
+        final waiting = ctl.phase == EcgPhase.waiting;
+        final note = ctl.fingerLost ? _t('lost') : (waiting ? _t('calib') : _t('measuring'));
+        return Padding(
+          padding: EdgeInsets.fromLTRB(0, mq.padding.top + 14, 0, mq.padding.bottom + 18),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 22),
+              child: Row(children: [
+                Expanded(child: Text(_t('meas'), style: _f(24, w: FontWeight.w800, h: 1.3))),
+                if (ctl.demo)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: _amber.withValues(alpha: .6))),
+                    child: Text(_t('demo'), style: _f(10.5, c: _amber)),
                   ),
-                ),
-              ),
+              ]),
             ),
-          ),
-        ),
-      ),
-      Padding(
-        padding: const EdgeInsets.only(top: 2),
-        child: Column(children: [
-          VText(failed ? c.failReason : 'پەنجەت لەسەر ئەلیکترۆدی Band دابنێ',
-              textAlign: TextAlign.center, style: ku(19, w: FontWeight.w800, c: HC.tx, h: 1.6)),
-          const SizedBox(height: 4),
-          VText(failed ? 'دڵنیابە Band پەیوەستە و بلووتوس کراوەیە.' : 'ژماردنەوەی ${c.targetSeconds} چرکە دوای دۆزینەوەی پەنجە دەستپێدەکات.',
-              textAlign: TextAlign.center, style: ku(12.5, c: HC.mu, h: 1.8)),
-        ]),
-      ),
-      const SizedBox(height: 16),
-      _traceCard(height: 96, header: false),
-      const SizedBox(height: 14),
-      HCard(
-        top: 0,
-        radius: 20,
-        child: Column(children: [
-          _tip('Band بە توندی لەسەر دەستت بێت، نە زۆر شل نە زۆر تەنگ.'),
-          _tip('ئەگەر پەنجەکەت ساردە یان تەڕە، پێشتر وشکی بکەرەوە و گەرمی بکە.'),
-          _tip('تۆمارکردن تەنها کاتێک پەنجە دۆزرایەوە دەستپێدەکات.', last: true),
-        ]),
-      ),
-      const SizedBox(height: 16),
-      if (failed) ...[
-        _primary('دووبارە هەوڵ بدەوە', c.start),
-        const SizedBox(height: 10),
-      ],
-      _ghost('هەڵوەشاندنەوە', _close),
-      const SizedBox(height: 10),
-      _disclaimer(),
-    ]);
-  }
-
-  // ───────────── شاشەی ٣: پێوانە ─────────────
-  Widget _measuring() {
-    final done = c.phase == EcgPhase.done;
-    final lost = c.fingerLost && !done;
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      SizedBox(
-        height: 250,
-        child: Center(
-          child: SizedBox(
-            width: 250,
-            height: 250,
-            child: AnimatedBuilder(
-              animation: c.frame,
-              builder: (_, __) => CustomPaint(
-                painter: _RingPainter(done ? 1 : c.progress, lost ? _amber : _mint),
-                child: Center(child: done ? _doneCenter() : _countdown(lost)),
-              ),
-            ),
-          ),
-        ),
-      ),
-      const SizedBox(height: 14),
-      _traceCard(height: 150, header: true),
-      const SizedBox(height: 12),
-      done ? _doneTiles() : _liveTiles(),
-      const SizedBox(height: 12),
-      VText(
-        done
-            ? 'ئەم ئەنجامە بۆ شوێنکەوتنی تەندروستیی گشتییە. ئەگەر نیگەرانیت هەیە، پەیوەندی بە دکتۆر بکە.'
-            : (lost ? 'پەنجەت لەسەر ئەلیکترۆد بگەڕێنەوە. ژماردنەوە ڕاوەستاوە.' : 'بێجووڵە بمێنەوە و پەنجەکەت لەسەر ئەلیکترۆد بهێڵەوە. قسە مەکە.'),
-        textAlign: TextAlign.center,
-        style: ku(12.5, c: lost ? _amber : vk(0xFFCFEEF2), h: 1.8),
-      ),
-      const SizedBox(height: 16),
-      if (done) ...[
-        _primary('دووبارە', c.start),
-        const SizedBox(height: 10),
-        _ghost('داخستن', _close),
-      ] else
-        _danger('وەستاندنی پێوانە', _close),
-      const SizedBox(height: 10),
-      _disclaimer(),
-    ]);
-  }
-
-  Widget _countdown(bool lost) => Column(mainAxisSize: MainAxisSize.min, children: [
-        ShaderMask(
-          shaderCallback: (r) => LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [vk(0xFFEAFFFF), vk(0xFF8FF3F9)]).createShader(r),
-          child: Text('${c.secondsLeft}', style: _num(80, c: kW)),
-        ),
-        const SizedBox(height: 6),
-        VText(lost ? 'ڕاوەستاوە' : 'چرکە ماوە', style: ku(13, c: lost ? _amber : HC.mu)),
-      ]);
-
-  Widget _doneCenter() {
-    final r = c.result;
-    final b = r?.bpm;
-    return Column(mainAxisSize: MainAxisSize.min, children: [
-      Container(
-        width: 30,
-        height: 30,
-        decoration: BoxDecoration(color: op(_mint, .18), shape: BoxShape.circle, border: Border.all(color: op(_mint, .6))),
-        child: Center(child: svgIcon(_kCheck, HX.ok, size: 16, stroke: 3)),
-      ),
-      const SizedBox(height: 8),
-      Text(b == null ? '—' : '${b.round()}', style: _num(64, c: HC.tx)),
-      const SizedBox(height: 4),
-      Text('bpm', style: GoogleFonts.sora(fontSize: 13, fontWeight: FontWeight.w700, color: HC.mu)),
-    ]);
-  }
-
-  // ───────────── کارتی شەپۆل ─────────────
-  Widget _traceCard({required double height, required bool header}) {
-    return Container(
-      decoration: BoxDecoration(
-        color: vk(0xFF03141A),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: op(HC.c2, .2)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(children: [
-        if (header)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
-            child: Directionality(
-              textDirection: TextDirection.ltr,
+            const SizedBox(height: 8),
+            // ── ناوچەی شەپۆل / وێنە ──
+            Expanded(
               child: AnimatedBuilder(
-                animation: c.frame,
+                animation: Listenable.merge([ctl.frame, _loop, _beat]),
                 builder: (_, __) {
-                  final b = c.phase == EcgPhase.done ? c.result?.bpm : c.sig.bpm;
-                  return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                    Text(c.phase == EcgPhase.done ? 'RECORDED' : 'LIVE', style: GoogleFonts.sora(fontSize: 11, fontWeight: FontWeight.w700, color: HC.mu, letterSpacing: 1.2)),
-                    Row(children: [
-                      AnimatedBuilder(
-                        animation: _pulse,
-                        builder: (_, __) => Transform.scale(
-                          scale: b == null ? 1 : 1 + .22 * (c.sig.beatCount.isEven ? _pulse.value : 1 - _pulse.value),
-                          child: svgIcon(HI.heartFill, '#ff6b7f', size: 13, fill: true),
+                  final contact = ctl.sig.contact();
+                  final live = contact || ctl.phase == EcgPhase.measuring;
+                  final b = ctl.sig.bpm;
+                  return Stack(children: [
+                    // تۆڕ و شەپۆل
+                    Positioned.fill(
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 500),
+                        opacity: live ? 1 : 0,
+                        child: CustomPaint(painter: _GridPainter()),
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 500),
+                        opacity: live ? 1 : 0,
+                        child: Directionality(
+                          textDirection: TextDirection.ltr,
+                          child: CustomPaint(painter: _SweepPainter(ctl.sig, ctl.frame.value, bottomPad: 120)),
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      Text(b == null ? '-- bpm' : '${b.round()} bpm', style: GoogleFonts.sora(fontSize: 13, fontWeight: FontWeight.w800, color: _rose)),
-                    ]),
+                    ),
+                    // وێنەی دەست (پێش دانانی پەنجە)
+                    Positioned.fill(
+                      bottom: 110,
+                      child: IgnorePointer(
+                        child: AnimatedOpacity(
+                          duration: const Duration(milliseconds: 450),
+                          opacity: live ? 0 : 1,
+                          child: _Art(asset: 'assets/ecg/ecg_touch.webp', right: _right),
+                        ),
+                      ),
+                    ),
+                    // دڵ + bpm
+                    PositionedDirectional(
+                      start: 22,
+                      top: 16,
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 400),
+                        opacity: live ? 1 : 0,
+                        child: Directionality(
+                          textDirection: TextDirection.ltr,
+                          child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                            Transform.scale(
+                              scale: 1 + .22 * math.sin(math.pi * _beat.value),
+                              child: const Icon(Icons.favorite, color: _red, size: 30),
+                            ),
+                            const SizedBox(width: 10),
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 250),
+                              child: Text(b == null ? '--' : '${b.round()}', key: ValueKey(b?.round()), style: _n(24, w: FontWeight.w800)),
+                            ),
+                            const SizedBox(width: 6),
+                            Padding(padding: const EdgeInsets.only(bottom: 2), child: Text('bpm', style: _n(15, c: _mu))),
+                          ]),
+                        ),
+                      ),
+                    ),
+                    // ژمێرەر
+                    PositionedDirectional(
+                      start: 22,
+                      bottom: 6,
+                      child: Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Row(crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 220),
+                            transitionBuilder: (w, a) => FadeTransition(
+                              opacity: a,
+                              child: SlideTransition(position: Tween(begin: const Offset(0, .15), end: Offset.zero).animate(a), child: w),
+                            ),
+                            child: Text('${ctl.secondsLeft}', key: ValueKey(ctl.secondsLeft), style: _n(88, w: FontWeight.w700, h: 1)),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(_t('sec'), style: _f(20, w: FontWeight.w700, c: _mu)),
+                        ]),
+                      ),
+                    ),
                   ]);
                 },
               ),
             ),
-          ),
-        SizedBox(
-          height: height,
-          width: double.infinity,
-          child: AnimatedBuilder(
-            animation: c.frame,
-            builder: (_, __) {
-              final done = c.phase == EcgPhase.done;
-              final data = done ? (c.result?.trace ?? const <double>[]) : c.sig.disp;
-              final live = c.sig.contact() || done || (c.demo && c.phase == EcgPhase.measuring);
-              return CustomPaint(painter: _TracePainter(data, live: live, frozen: done, tick: c.frame.value));
-            },
-          ),
-        ),
-      ]),
-    );
-  }
-
-  // ───────────── کارتە بچووکەکان ─────────────
-  Widget _liveTiles() {
-    return AnimatedBuilder(
-      animation: c.frame,
-      builder: (_, __) {
-        final q = c.sig.quality;
-        final (String ql, Color qc) = q > .75 ? ('باش', _mint) : (q > .4 ? ('مامناوەند', _amber) : ('لاواز', _rose));
-        final contact = c.sig.contact();
-        return Row(children: [
-          Expanded(child: _tile('کوالیتی ئاماژە', _bars(q, qc), ql, qc)),
-          const SizedBox(width: 10),
-          Expanded(child: _tile('پەیوەندی', svgIcon('<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>', contact ? HX.c : HX.wn, size: 24, stroke: 2.2), contact ? 'جێگیر' : 'لاواز', contact ? HC.c : _amber)),
-          const SizedBox(width: 10),
-          Expanded(child: _tile('پێشکەوتن', Text('${(c.progress * 100).round()}%', style: _num(26)), '', HC.tx)),
-        ]);
+            const SizedBox(height: 18),
+            // هێڵی پێشکەوتن (ماوە)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 22),
+              child: AnimatedBuilder(
+                animation: ctl.frame,
+                builder: (_, __) => _Bar(value: 1 - ctl.progress),
+              ),
+            ),
+            const SizedBox(height: 26),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 22),
+              child: Text(_t('instr'), style: _f(18, w: FontWeight.w800, h: 1.55)),
+            ),
+            const SizedBox(height: 22),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 22),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: Text(note, key: ValueKey(note), style: _f(13, w: FontWeight.w600, c: ctl.fingerLost ? _amber : _mu, h: 1.6)),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 22),
+              child: _OutlineBtn(label: _t('cancel'), onTap: _cancel),
+            ),
+          ]),
+        );
       },
     );
   }
 
-  Widget _doneTiles() {
-    final r = c.result;
-    final q = r?.quality ?? 0;
-    final (String ql, Color qc) = q > .75 ? ('باش', _mint) : (q > .4 ? ('مامناوەند', _amber) : ('لاواز', _rose));
-    return Row(children: [
-      Expanded(child: _tile('HRV', Text(r?.hrv == null ? '—' : '${r!.hrv}', style: _num(26)), r?.hrv == null ? '' : 'ms', HC.c)),
-      const SizedBox(width: 10),
-      Expanded(child: _tile('سترێس', Text(r?.stress == null ? '—' : '${r!.stress}', style: _num(26)), '', _amber)),
-      const SizedBox(width: 10),
-      Expanded(child: _tile('کوالیتی', _bars(q, qc), ql, qc)),
-    ]);
+  Widget _failed(EcgController ctl) {
+    final mq = MediaQuery.of(context);
+    return Padding(
+      padding: EdgeInsets.fromLTRB(22, mq.padding.top + 14, 22, mq.padding.bottom + 18),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Text(_t('meas'), style: _f(24, w: FontWeight.w800, h: 1.3)),
+        const Spacer(),
+        const Icon(Icons.error_outline_rounded, size: 64, color: _amber),
+        const SizedBox(height: 18),
+        Text(_t(ctl.failReason), textAlign: TextAlign.center, style: _f(20, w: FontWeight.w800)),
+        const SizedBox(height: 10),
+        Text(_t('failHint'), textAlign: TextAlign.center, style: _f(14, w: FontWeight.w600, c: _mu, h: 1.6)),
+        const Spacer(),
+        _GoBtn(label: _t('retry'), onTap: _start),
+        const SizedBox(height: 12),
+        _OutlineBtn(label: _t('cancel'), onTap: () => setState(() => _step = _Step.guide)),
+      ]),
+    );
   }
 
-  Widget _tile(String title, Widget mid, String sub, Color subCol) => Container(
-        height: 108,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-        decoration: BoxDecoration(color: op(kW, .045), borderRadius: BorderRadius.circular(18), border: Border.all(color: HC.line)),
-        child: Column(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          VText(title, textAlign: TextAlign.center, style: ku(11, w: FontWeight.w700, c: HC.mu)),
-          SizedBox(height: 28, child: Center(child: mid)),
-          SizedBox(height: 18, child: sub.isEmpty ? null : VText(sub, style: ku(13, w: FontWeight.w800, c: subCol))),
+  // ───────────────────────── 3) ئەنجام ─────────────────────────
+  Widget _result() {
+    final r = c?.result;
+    final mq = MediaQuery.of(context);
+    if (r == null) return const SizedBox.shrink();
+    final st = r.stats;
+    final q = r.quality;
+    final (String ql, Color qc) = q > .75 ? (_t('good'), const Color(0xFF5CC68A)) : (q > .4 ? (_t('fair'), _amber) : (_t('weak'), _red));
+    String two(int v) => v.toString().padLeft(2, '0');
+    final d = r.at;
+    final h12 = (d.hour + 11) % 12 + 1;
+    final when = '${d.year}/${two(d.month)}/${two(d.day)}  $h12:${two(d.minute)} ${d.hour < 12 ? 'AM' : 'PM'}';
+    return ListView(
+      padding: EdgeInsets.fromLTRB(22, mq.padding.top + 14, 22, mq.padding.bottom + 24),
+      children: [
+        Row(children: [
+          Expanded(child: Text(_t('res'), style: _f(24, w: FontWeight.w800, h: 1.3))),
+          _Tap(onTap: () => Navigator.of(context).maybePop(), child: const Icon(Icons.close_rounded, color: _tx, size: 26)),
         ]),
-      );
-
-  Widget _bars(double q, Color col) {
-    final lv = q > .75 ? 4 : (q > .55 ? 3 : (q > .25 ? 2 : (q > 0 ? 1 : 0)));
-    return Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
-      for (var i = 0; i < 4; i++)
-        Container(
-          width: 5,
-          height: 7.0 + i * 5,
-          margin: const EdgeInsets.symmetric(horizontal: 1.5),
-          decoration: BoxDecoration(color: i < lv ? col : op(kW, .16), borderRadius: BorderRadius.circular(2)),
+        const SizedBox(height: 4),
+        Text('$when  ·  ${r.rightWrist ? _t('wR') : _t('wL')}', textDirection: TextDirection.ltr, textAlign: _rtl ? TextAlign.right : TextAlign.left, style: _f(12.5, w: FontWeight.w600, c: _mu)),
+        const SizedBox(height: 18),
+        // لێدانی دڵ
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            AnimatedBuilder(
+              animation: _loop,
+              builder: (_, child) => Transform.scale(scale: 1 + .12 * math.max(0.0, math.sin(_loop.value * math.pi * 2 * ((r.bpm ?? 60) / 60 * 2.6))), child: child),
+              child: const Icon(Icons.favorite, color: _red, size: 38),
+            ),
+            const SizedBox(width: 12),
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: r.bpm ?? 0),
+              duration: const Duration(milliseconds: 900),
+              curve: Curves.easeOutCubic,
+              builder: (_, v, __) => Text(r.bpm == null ? '--' : '${v.round()}', style: _n(72, w: FontWeight.w700, h: 1)),
+            ),
+            const SizedBox(width: 8),
+            Padding(padding: const EdgeInsets.only(bottom: 10), child: Text('bpm', style: _n(18, c: _mu))),
+          ]),
         ),
-    ]);
-  }
-
-  // ───────────── دوگمە و دەق ─────────────
-  Widget _primary(String t, VoidCallback onTap) => Press(
-        onTap: onTap,
-        scale: .98,
-        child: Container(
-          height: 54,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(gradient: V.prime, borderRadius: BorderRadius.circular(99), boxShadow: [BoxShadow(color: op(HC.c, .25), blurRadius: 26, offset: const Offset(0, 8))]),
-          child: VText(t, style: ku(16, w: FontWeight.w800, c: HC.ink)),
+        const SizedBox(height: 18),
+        // تۆماری 30 چرکە
+        Text(_t('strip'), style: _f(13, w: FontWeight.w700, c: _mu)),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            height: 3 * 92,
+            color: const Color(0xFF070707),
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: 1),
+              duration: const Duration(milliseconds: 1400),
+              curve: Curves.easeOutCubic,
+              builder: (_, v, __) => CustomPaint(painter: _StripPainter(r.trace, r.sampleRate, reveal: v)),
+            ),
+          ),
         ),
-      );
-
-  Widget _ghost(String t, VoidCallback onTap) => Press(
-        onTap: onTap,
-        scale: .98,
-        child: Container(
-          height: 52,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(color: op(kW, .05), borderRadius: BorderRadius.circular(99), border: Border.all(color: op(HC.c2, .28))),
-          child: VText(t, style: ku(16, w: FontWeight.w800, c: HC.tx)),
-        ),
-      );
-
-  Widget _danger(String t, VoidCallback onTap) => Press(
-        onTap: onTap,
-        scale: .98,
-        child: Container(
-          height: 52,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(color: op(_rose, .08), borderRadius: BorderRadius.circular(99), border: Border.all(color: op(_rose, .4))),
-          child: VText(t, style: ku(16, w: FontWeight.w800, c: vk(0xFFFF8FA0))),
-        ),
-      );
-
-  Widget _tip(String t, {bool last = false}) => Padding(
-        padding: EdgeInsets.only(bottom: last ? 0 : 10),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Padding(padding: const EdgeInsets.only(top: 5), child: svgIcon(_kCheck, HX.ok, size: 14, stroke: 2.6)),
+        const SizedBox(height: 16),
+        Row(children: [
+          Expanded(child: _Stat(title: _t('avg'), value: r.bpm == null ? '--' : '${r.bpm!.round()}', unit: 'bpm')),
           const SizedBox(width: 10),
-          Expanded(child: VText(t, style: ku(12.5, c: vk(0xFFCFEEF2), h: 1.8))),
+          Expanded(
+            child: _Stat(
+              title: _t('range'),
+              value: st.minBpm == null ? '--' : '${st.minBpm!.round()}–${st.maxBpm!.round()}',
+              unit: 'bpm',
+            ),
+          ),
+        ]),
+        const SizedBox(height: 10),
+        Row(children: [
+          Expanded(child: _Stat(title: 'HRV', value: r.hrv == null ? '--' : '${r.hrv}', unit: 'ms')),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _Stat(
+              title: _t('rhythm'),
+              value: st.bpm == null ? '--' : (st.irregular ? _t('irregular') : _t('regular')),
+              valueColor: st.irregular ? _amber : const Color(0xFF5CC68A),
+              text: true,
+            ),
+          ),
+        ]),
+        const SizedBox(height: 10),
+        _Stat(title: _t('quality'), value: ql, valueColor: qc, text: true, bars: q),
+        if (st.irregular) ...[const SizedBox(height: 14), _Note(_t('irrNote'), _amber)],
+        if (q <= .4) ...[const SizedBox(height: 14), _Note(_t('weakNote'), _red)],
+        const SizedBox(height: 24),
+        _GoBtn(label: _t('done'), onTap: () => Navigator.of(context).maybePop()),
+        const SizedBox(height: 12),
+        _OutlineBtn(label: _t('again'), onTap: _start),
+        const SizedBox(height: 18),
+        Text(_t('disc'), textAlign: TextAlign.center, style: _f(11, w: FontWeight.w500, c: _mu.withValues(alpha: .7), h: 1.7)),
+      ],
+    );
+  }
+}
+
+// ═════════════════════════ پارچەکان ═════════════════════════
+class _Tap extends StatefulWidget {
+  const _Tap({required this.child, required this.onTap, this.scale = .95});
+  final Widget child;
+  final VoidCallback onTap;
+  final double scale;
+  @override
+  State<_Tap> createState() => _TapState();
+}
+
+class _TapState extends State<_Tap> {
+  bool _d = false;
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (_) => setState(() => _d = true),
+        onTapUp: (_) => setState(() => _d = false),
+        onTapCancel: () => setState(() => _d = false),
+        onTap: widget.onTap,
+        child: AnimatedScale(
+          scale: _d ? widget.scale : 1,
+          duration: Duration(milliseconds: _d ? 90 : 300),
+          curve: _d ? Curves.easeOut : Curves.easeOutBack,
+          child: widget.child,
+        ),
+      );
+}
+
+class _WristBtn extends StatelessWidget {
+  const _WristBtn({required this.label, required this.on, required this.onTap});
+  final String label;
+  final bool on;
+  final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context) => _Tap(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeOutCubic,
+          height: 62,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(31),
+            gradient: on ? const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFFF7F8FA), Color(0xFFC9CCD2)]) : null,
+            color: on ? null : Colors.black,
+            border: Border.all(color: on ? const Color(0xFFE6E8EC) : _tx, width: 1.6),
+            boxShadow: on ? const [BoxShadow(color: Color(0x33FFFFFF), blurRadius: 18, spreadRadius: -6)] : const [],
+          ),
+          child: AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 280),
+            style: _f(20, w: FontWeight.w800, c: on ? Colors.black : _tx),
+            child: Text(label),
+          ),
+        ),
+      );
+}
+
+class _GoBtn extends StatelessWidget {
+  const _GoBtn({required this.label, required this.onTap});
+  final String label;
+  final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context) => _Tap(
+        scale: .97,
+        onTap: onTap,
+        child: Container(
+          height: 62,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            gradient: _go,
+            borderRadius: BorderRadius.circular(31),
+            boxShadow: const [BoxShadow(color: Color(0x405CC68A), blurRadius: 24, offset: Offset(0, 8), spreadRadius: -8)],
+          ),
+          child: Text(label, style: _f(18, w: FontWeight.w800, c: Colors.black)),
+        ),
+      );
+}
+
+class _OutlineBtn extends StatelessWidget {
+  const _OutlineBtn({required this.label, required this.onTap});
+  final String label;
+  final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context) => _Tap(
+        scale: .97,
+        onTap: onTap,
+        child: Container(
+          height: 60,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(30), border: Border.all(color: _tx, width: 1.6)),
+          child: Text(label, style: _f(18, w: FontWeight.w800)),
+        ),
+      );
+}
+
+/// هێڵی ماوە (پڕ ← بەتاڵ) بە ڕەنگی کەسک
+class _Bar extends StatelessWidget {
+  const _Bar({required this.value});
+  final double value;
+  @override
+  Widget build(BuildContext context) => Directionality(
+        textDirection: TextDirection.ltr,
+        child: Container(
+          height: 10,
+          decoration: BoxDecoration(color: _track, borderRadius: BorderRadius.circular(5)),
+          alignment: Alignment.centerLeft,
+          child: FractionallySizedBox(
+            widthFactor: value.clamp(0.0, 1.0),
+            child: Container(decoration: BoxDecoration(gradient: _go, borderRadius: BorderRadius.circular(5))),
+          ),
+        ),
+      );
+}
+
+class _Stat extends StatelessWidget {
+  const _Stat({required this.title, required this.value, this.unit, this.valueColor = _tx, this.text = false, this.bars});
+  final String title, value;
+  final String? unit;
+  final Color valueColor;
+  final bool text;
+  final double? bars;
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        decoration: BoxDecoration(color: const Color(0xFF0F0F10), borderRadius: BorderRadius.circular(18), border: Border.all(color: const Color(0xFF232325))),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: _f(12.5, w: FontWeight.w700, c: _mu)),
+          const SizedBox(height: 6),
+          Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            Flexible(
+              child: Text(value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textDirection: text ? null : TextDirection.ltr,
+                  style: text ? _f(20, w: FontWeight.w800, c: valueColor) : _n(26, w: FontWeight.w800, c: valueColor)),
+            ),
+            if (unit != null) ...[const SizedBox(width: 5), Padding(padding: const EdgeInsets.only(bottom: 3), child: Text(unit!, style: _n(12.5, c: _mu)))],
+            if (bars != null) ...[
+              const Spacer(),
+              for (var i = 0; i < 4; i++)
+                Container(
+                  width: 6,
+                  height: 8.0 + i * 5,
+                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                  decoration: BoxDecoration(
+                    color: i < (bars! > .75 ? 4 : bars! > .55 ? 3 : bars! > .25 ? 2 : bars! > 0 ? 1 : 0) ? valueColor : const Color(0xFF2A2A2D),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+            ],
+          ]),
         ]),
       );
+}
 
-  Widget _disclaimer() => VText(
-        'ئەم پێوانەیە بۆ شوێنکەوتنی تەندروستیی گشتییە و بۆ دەستنیشانکردنی نەخۆشی نییە.',
-        textAlign: TextAlign.center,
-        style: ku(10.5, c: HC.nd, h: 1.8),
+class _Note extends StatelessWidget {
+  const _Note(this.text, this.color);
+  final String text;
+  final Color color;
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(color: color.withValues(alpha: .08), borderRadius: BorderRadius.circular(16), border: Border.all(color: color.withValues(alpha: .4))),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(Icons.info_outline_rounded, size: 20, color: color),
+          const SizedBox(width: 10),
+          Expanded(child: Text(text, style: _f(13.5, w: FontWeight.w600, h: 1.6))),
+        ]),
       );
 }
 
-// ═════════════ پەینتەرەکان ═════════════
-
-/// بازنەی گەورەی چاوەڕێکردن
-class _OrbPainter extends CustomPainter {
-  _OrbPainter(this.rot, this.pulse, this.col, this.failed);
-  final double rot, pulse;
-  final Color col;
-  final bool failed;
-
+// ═════════════════════════ پەینتەرەکان ═════════════════════════
+/// تۆڕی کاغەزی ECG (ڕەش)
+class _GridPainter extends CustomPainter {
   @override
-  void paint(Canvas canvas, Size s) {
-    final c = Offset(s.width / 2, s.height / 2);
-    final base = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    canvas.drawCircle(c, 138, base..color = op(HC.c, .08));
-    // خاڵخاڵ
-    final dash = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
-      ..color = op(HC.c, .16);
-    const n = 64;
-    for (var i = 0; i < n; i++) {
-      final a = i * 2 * math.pi / n;
-      canvas.drawArc(Rect.fromCircle(center: c, radius: 115), a, .025, false, dash);
-    }
-    // لێدانی نەرم
-    final pr = 92 + 8 * pulse;
-    canvas.drawCircle(c, pr, Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..color = op(col, .35 * (1 - pulse) + .1));
-    canvas.drawCircle(c, 92, Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..color = op(HC.c, .28));
-    if (!failed) {
-      final arc = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3.4
-        ..strokeCap = StrokeCap.round
-        ..color = col;
-      canvas.drawArc(Rect.fromCircle(center: c, radius: 92), rot * 2 * math.pi - 1.2, 1.25, false, arc);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _OrbPainter o) => o.rot != rot || o.pulse != pulse || o.col != col || o.failed != failed;
-}
-
-/// بازنەی ژماردنەوە
-class _RingPainter extends CustomPainter {
-  _RingPainter(this.p, this.col);
-  final double p;
-  final Color col;
-
-  @override
-  void paint(Canvas canvas, Size s) {
-    final c = Offset(s.width / 2, s.height / 2);
-    final r = s.width / 2 - 16;
-    final rect = Rect.fromCircle(center: c, radius: r);
-    canvas.drawCircle(c, r, Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 12
-      ..color = op(kW, .07));
-    canvas.drawCircle(c, r - 22, Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.4
-      ..color = op(HC.c, .14));
-    if (p <= 0) return;
-    final sw = 2 * math.pi * p;
-    canvas.drawArc(rect, -math.pi / 2, sw, false, Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 20
-      ..strokeCap = StrokeCap.round
-      ..color = op(col, .28)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7));
-    canvas.drawArc(rect, -math.pi / 2, sw, false, Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 12
-      ..strokeCap = StrokeCap.round
-      ..color = col);
-  }
-
-  @override
-  bool shouldRepaint(covariant _RingPainter o) => o.p != p || o.col != col;
-}
-
-/// شەپۆلی ECG لەسەر تۆڕی کاغەز.
-/// `live` نەبێت = هێڵێکی ڕاستی ئەمبەر (هیچ ئاماژەیەک نییە).
-class _TracePainter extends CustomPainter {
-  _TracePainter(this.data, {required this.live, required this.frozen, required this.tick});
-  final List<double> data;
-  final bool live, frozen;
-  final int tick;
-
-  @override
-  void paint(Canvas canvas, Size s) {
-    // تۆڕ
+  void paint(Canvas c, Size s) {
+    const cell = 12.0;
     final minor = Paint()
-      ..color = op(HC.c2, .07)
+      ..color = const Color(0x14FFFFFF)
       ..strokeWidth = 1;
     final major = Paint()
-      ..color = op(HC.c2, .16)
+      ..color = const Color(0x24FFFFFF)
       ..strokeWidth = 1;
-    for (double x = 0; x <= s.width; x += 14) {
-      canvas.drawLine(Offset(x, 0), Offset(x, s.height), (x % 70 == 0) ? major : minor);
+    var i = 0;
+    for (double x = 0; x <= s.width; x += cell, i++) {
+      c.drawLine(Offset(x, 0), Offset(x, s.height), i % 5 == 0 ? major : minor);
     }
-    for (double y = 0; y <= s.height; y += 14) {
-      canvas.drawLine(Offset(0, y), Offset(s.width, y), (y % 70 == 0) ? major : minor);
-    }
-    final mid = s.height / 2;
-
-    if (!live || data.length < 2) {
-      // خەتێکی ڕاست
-      final p = Paint()
-        ..color = op(_amber, .85)
-        ..strokeWidth = 2
-        ..strokeCap = StrokeCap.round;
-      for (double x = 0; x < s.width; x += 11) {
-        canvas.drawLine(Offset(x, mid), Offset(math.min(x + 5, s.width), mid), p);
-      }
-      return;
-    }
-
-    final n = data.length;
-    final amp = s.height * 0.36;
-    final dx = s.width / (n - 1);
-    final path = Path();
-    for (var i = 0; i < n; i++) {
-      final x = i * dx;
-      final y = mid - data[i] * amp;
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-    }
-    final shader = ui.Gradient.linear(Offset.zero, Offset(s.width, 0), [op(_mint, 0), _mint, vk(0xFF8FF3F9)], [0, .35, 1]);
-    canvas.drawPath(path, Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 6
-      ..strokeJoin = StrokeJoin.round
-      ..shader = shader
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4)
-      ..color = op(_mint, .4));
-    canvas.drawPath(path, Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.2
-      ..strokeJoin = StrokeJoin.round
-      ..strokeCap = StrokeCap.round
-      ..shader = frozen ? null : shader
-      ..color = _mint);
-    if (!frozen) {
-      final hx = (n - 1) * dx;
-      final hy = mid - data.last * amp;
-      canvas.drawCircle(Offset(hx - 4, hy), 8, Paint()..color = op(vk(0xFF8FF3F9), .25));
-      canvas.drawCircle(Offset(hx - 4, hy), 3.6, Paint()..color = HC.tx);
+    i = 0;
+    for (double y = 0; y <= s.height; y += cell, i++) {
+      c.drawLine(Offset(0, y), Offset(s.width, y), i % 5 == 0 ? major : minor);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _TracePainter o) => o.tick != tick || o.live != live || o.frozen != frozen || !identical(o.data, data);
+  bool shouldRepaint(covariant _GridPainter o) => false;
 }
+
+/// شەپۆلی زیندوو بە شێوازی مۆنیتەر: لە چەپەوە بۆ ڕاست دەنووسرێت و بۆشاییەک لە پێش خەتەکەدا هەیە
+class _SweepPainter extends CustomPainter {
+  _SweepPainter(this.sig, this.tick, {this.bottomPad = 0});
+  final EcgSignal sig;
+  final int tick;
+  final double bottomPad;
+
+  @override
+  void paint(Canvas c, Size s) {
+    final h = s.height - bottomPad;
+    final mid = h * .52;
+    // هێڵی بنەڕەت
+    c.drawLine(Offset(0, mid), Offset(s.width, mid), Paint()
+      ..color = const Color(0x4DFFFFFF)
+      ..strokeWidth = 1);
+    final buf = sig.sweep;
+    final n = buf.length;
+    if (n < 2) return;
+    final amp = h * .30;
+    final dx = s.width / (n - 1);
+    final gap = (n * .06).round();
+    final cur = sig.cursor;
+    final paint = Paint()
+      ..color = _red
+      ..strokeWidth = 2.6
+      ..style = PaintingStyle.stroke
+      ..strokeJoin = StrokeJoin.round
+      ..strokeCap = StrokeCap.round;
+    final glow = Paint()
+      ..color = _red.withValues(alpha: .35)
+      ..strokeWidth = 7
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
+
+    Path seg(int a, int b) {
+      final p = Path();
+      for (var i = a; i < b; i++) {
+        final pt = Offset(i * dx, mid - buf[i] * amp);
+        if (i == a) {
+          p.moveTo(pt.dx, pt.dy);
+        } else {
+          p.lineTo(pt.dx, pt.dy);
+        }
+      }
+      return p;
+    }
+
+    // نوێ: 0..cursor ، کۆن: cursor+gap..n (تەنها کاتێک یەک جار پڕ بووبێت)
+    final parts = <Path>[if (cur > 1) seg(0, cur), if (sig.sweepFull && cur + gap < n - 1) seg(cur + gap, n)];
+    for (final p in parts) {
+      c.drawPath(p, glow);
+      c.drawPath(p, paint);
+    }
+    // خاڵی سەری خەتەکە
+    if (cur > 0) {
+      final head = Offset((cur - 1) * dx, mid - buf[cur - 1] * amp);
+      c.drawCircle(head, 7, Paint()
+        ..color = _red.withValues(alpha: .35)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6));
+      c.drawCircle(head, 3.2, Paint()..color = const Color(0xFFFF7A70));
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SweepPainter o) => o.tick != tick;
+}
+
+/// تۆماری 30 چرکە: 3 ڕیز × 10 چرکە لەسەر کاغەزی ECG
+class _StripPainter extends CustomPainter {
+  _StripPainter(this.trace, this.rate, {this.reveal = 1});
+  final List<double> trace;
+  final double rate;
+  final double reveal;
+
+  @override
+  void paint(Canvas c, Size s) {
+    _GridPainter().paint(c, s);
+    if (trace.length < 4) return;
+    const rows = 3;
+    final per = (trace.length / rows).ceil();
+    final rh = s.height / rows;
+    final shown = (trace.length * reveal).round();
+    final paint = Paint()
+      ..color = _red
+      ..strokeWidth = 1.6
+      ..style = PaintingStyle.stroke
+      ..strokeJoin = StrokeJoin.round;
+    final tp = TextPainter(textDirection: TextDirection.ltr);
+    for (var r = 0; r < rows; r++) {
+      final st = r * per;
+      if (st >= shown) break;
+      final en = math.min(shown, math.min(trace.length, st + per));
+      final mid = rh * r + rh * .55;
+      final dx = s.width / math.max(1, per - 1);
+      final p = Path();
+      for (var i = st; i < en; i++) {
+        final pt = Offset((i - st) * dx, mid - trace[i] * rh * .4);
+        if (i == st) {
+          p.moveTo(pt.dx, pt.dy);
+        } else {
+          p.lineTo(pt.dx, pt.dy);
+        }
+      }
+      c.drawPath(p, paint);
+      // کاتی ڕیز
+      final sec = rate > 0 ? (st / rate).round() : r * 10;
+      tp.text = TextSpan(text: '${sec}s', style: _n(9.5, w: FontWeight.w600, c: _mu));
+      tp.layout();
+      tp.paint(c, Offset(6, rh * r + 4));
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _StripPainter o) => o.reveal != reveal || o.trace != trace;
+}
+
+/// ئەنیمەیشنی 3D ی دەست و Band (لە ستۆدیۆ دروستکراوە: tools/ecg_art/EcgArt.tsx)
+/// Band لە دەستی ڕاستە ← وێنەکە وەک ئاوێنە هەڵدەگێڕدرێتەوە
+class _Art extends StatelessWidget {
+  const _Art({required this.asset, required this.right});
+  final String asset;
+  final bool right;
+  @override
+  Widget build(BuildContext context) => AnimatedSwitcher(
+        duration: const Duration(milliseconds: 380),
+        transitionBuilder: (c, a) => FadeTransition(opacity: a, child: c),
+        child: Transform.flip(
+          key: ValueKey(right),
+          flipX: right,
+          child: Image.asset(asset, fit: BoxFit.contain, gaplessPlayback: true, filterQuality: FilterQuality.medium),
+        ),
+      );
+}
+
+/// تەنها بۆ debug: کە Band نییە نموونەکە دیار بێت
+bool get ecgDemoAllowed => kDebugMode;

@@ -1,10 +1,10 @@
 // VEX Band — کۆنتڕۆڵەری پێوانەی ECG
 //
-// ڕێڕەو: چاوەڕێی پەنجە ← پێوانە (٣٠ چرکە، تەنها کاتێک پەنجە لەسەرە) ← تەواو.
+// ڕێڕەو: ڕێکخستن (calibrating، چاوەڕێی پەنجە) ← پێوانە (30 چرکە، تەنها کاتێک پەنجە لەسەرە) ← تەواو.
 // فرمانەکان (بەپێی SDK ی فرۆشیار، PPGActivity.java):
 //   1) measure(HRV, 50000, start)   — فرمانی 0x28
-//   2) ppgStream(true)              — فرمانی 0x07
-// شەپۆلی خاو لە VexBand.I.ppgStream دێت.
+//   2) ppgStream(true)              — فرمانی 0x07  (setECGRealtimeDuringHRVEnabled)
+// شەپۆلی خاو لە VexBand.I.ppgStream دێت و لە EcgSignal فلتەر و شیکار دەکرێت.
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -18,24 +18,31 @@ enum EcgPhase { waiting, measuring, done, failed }
 
 class EcgResult {
   final double? bpm; // لێدانی دڵ
-  final int? hrv, stress; // لە Band ـەوە (ئەگەر نێردرا)
+  final int? hrv, stress; // HRV (ms) و سترێس
+  final EcgStats stats; // لە شەپۆلەکەوە
   final double quality; // 0..1
-  final List<double> trace; // شەپۆلی تۆمارکراو (ئاسایی کراو)
+  final List<double> trace; // شەپۆلی تۆمارکراو (-1..1)
   final double sampleRate;
+  final bool rightWrist;
   final DateTime at;
-  const EcgResult({required this.bpm, required this.hrv, required this.stress, required this.quality, required this.trace, required this.sampleRate, required this.at});
+  const EcgResult({
+    required this.bpm, required this.hrv, required this.stress, required this.stats, required this.quality,
+    required this.trace, required this.sampleRate, required this.rightWrist, required this.at,
+  });
 }
 
 class EcgController extends ChangeNotifier {
-  EcgController({this.targetSeconds = 30, this.onDone});
+  EcgController({this.targetSeconds = 30, this.rightWrist = false, this.onDone});
 
   /// ماوەی پێوانە بە چرکە (تەنها کاتێک پەنجە لەسەر ئەلیکترۆدە دەژمێردرێت)
   final int targetSeconds;
 
-  /// کاتێک پێوانە تەواو بوو
+  /// Band لە دەستی ڕاستە؟ (ئاراستەی شەپۆل)
+  bool rightWrist;
+
   final void Function(EcgResult)? onDone;
 
-  final EcgSignal sig = EcgSignal();
+  late final EcgSignal sig = EcgSignal(invert: rightWrist);
   final ValueNotifier<int> frame = ValueNotifier<int>(0);
 
   EcgPhase phase = EcgPhase.waiting;
@@ -53,8 +60,11 @@ class EcgController extends ChangeNotifier {
   DateTime? _contactSince, _lostSince;
   VexMeasureResult? _dev;
   final List<double> _rec = <double>[];
+  int _recSeen = 0;
   double _synthT = 0;
+  DateTime? _synthLast;
   bool _stopped = false;
+  DateTime _lastKick = DateTime.now();
 
   double get progress => (elapsed.inMilliseconds / (targetSeconds * 1000)).clamp(0.0, 1.0).toDouble();
   int get secondsLeft => (targetSeconds - elapsed.inMilliseconds / 1000).ceil().clamp(0, targetSeconds).toInt();
@@ -62,15 +72,19 @@ class EcgController extends ChangeNotifier {
   // ───────────── دەستپێک ─────────────
   Future<void> start() async {
     _stopped = false;
+    sig.invert = rightWrist;
     sig.reset();
     _rec.clear();
+    _recSeen = 0;
     _dev = null;
     elapsed = Duration.zero;
     phase = EcgPhase.waiting;
     failReason = '';
     result = null;
-    _startedAt = _lastTick = DateTime.now();
+    fingerLost = false;
+    _startedAt = _lastTick = _lastKick = DateTime.now();
     _contactSince = _lostSince = null;
+    _synthLast = null;
     notifyListeners();
 
     if (VexBand.I.linked) {
@@ -78,9 +92,11 @@ class EcgController extends ChangeNotifier {
       try {
         await VexBand.I.startWaveform();
       } catch (e) {
-        _fail('نەتوانرا فرمان بنێردرێت بۆ Band');
+        _fail('band');
         return;
       }
+      await _ppg?.cancel();
+      await _raw?.cancel();
       _ppg = VexBand.I.ppgStream.stream.listen((p) => sig.addPacket(p.samples));
       _raw = VexBand.I.raw.stream.listen((m) {
         if (m is VexMeasureResult && !m.stopped) _dev = m;
@@ -88,7 +104,7 @@ class EcgController extends ChangeNotifier {
     } else if (kDebugMode) {
       demo = true; // بۆ بینینی دیزاین بەبێ Band
     } else {
-      _fail('Band پەیوەست نییە');
+      _fail('noband');
       return;
     }
     _timer?.cancel();
@@ -100,10 +116,18 @@ class EcgController extends ChangeNotifier {
     final now = DateTime.now();
     if (demo) _synth(now);
 
-    // لێدانی دۆزراوە ← لەرزینی سووک
     if (sig.beatNow) {
       sig.beatNow = false;
-      if (phase == EcgPhase.measuring) HapticFeedback.lightImpact();
+      if (phase == EcgPhase.measuring) HapticFeedback.selectionClick();
+    }
+
+    // Band پێوانەکەی ڕاگرت (بۆ نموونە دوای 50 چرکە)؟ ← دووبارە دەست پێدەکەینەوە
+    if (!demo && VexBand.I.linked && (phase == EcgPhase.waiting || phase == EcgPhase.measuring)) {
+      final lp = sig.lastPacket ?? _startedAt;
+      if (now.difference(lp).inMilliseconds > 2500 && now.difference(_lastKick).inSeconds >= 5) {
+        _lastKick = now;
+        VexBand.I.startWaveform().catchError((_) {});
+      }
     }
 
     final c = sig.contact(now);
@@ -111,30 +135,36 @@ class EcgController extends ChangeNotifier {
       case EcgPhase.waiting:
         if (c) {
           _contactSince ??= now;
-          if (now.difference(_contactSince!).inMilliseconds >= 1000) {
+          if (now.difference(_contactSince!).inMilliseconds >= 1200) {
             phase = EcgPhase.measuring;
             _lastTick = now;
             fingerLost = false;
+            sig.rrLog.clear();
+            _rec.clear();
+            _recSeen = sig.cursor;
+            HapticFeedback.lightImpact();
             notifyListeners();
           }
         } else {
           _contactSince = null;
         }
         if (now.difference(_startedAt).inSeconds > 90) {
-          _fail('پەنجە نەدۆزرایەوە. دووبارە هەوڵ بدە.');
+          _fail('nofinger');
           return;
         }
       case EcgPhase.measuring:
         final dt = now.difference(_lastTick);
         _lastTick = now;
+        _record();
         if (c) {
           if (fingerLost) {
             fingerLost = false;
             notifyListeners();
           }
           _lostSince = null;
+          final before = secondsLeft;
           elapsed += dt;
-          _rec.add(sig.disp.isEmpty ? 0 : sig.disp.last);
+          if (secondsLeft != before) notifyListeners();
           if (elapsed.inMilliseconds >= targetSeconds * 1000) {
             _finish();
             return;
@@ -143,15 +173,17 @@ class EcgController extends ChangeNotifier {
           _lostSince ??= now;
           if (!fingerLost) {
             fingerLost = true;
+            HapticFeedback.mediumImpact();
             notifyListeners();
           }
-          // ٣ چرکە بێ پەنجە ← بگەڕێتەوە بۆ چاوەڕێکردن
+          // 3 چرکە بێ پەنجە ← دووبارە لە سەرەتاوە
           if (now.difference(_lostSince!).inSeconds >= 3) {
             phase = EcgPhase.waiting;
             _contactSince = null;
             fingerLost = false;
             elapsed = Duration.zero;
             _rec.clear();
+            sig.rrLog.clear();
             _startedAt = now;
             notifyListeners();
           }
@@ -163,23 +195,44 @@ class EcgController extends ChangeNotifier {
     frame.value++;
   }
 
+  /// هەموو نموونە نوێیەکانی ناو sweep تۆمار دەکات
+  void _record() {
+    final s = sig.sweep;
+    if (s.isEmpty) return;
+    var i = _recSeen;
+    if (i >= s.length) i = 0;
+    var guard = 0;
+    while (i != sig.cursor && guard < s.length) {
+      _rec.add(s[i]);
+      i = (i + 1) % s.length;
+      guard++;
+    }
+    _recSeen = sig.cursor;
+    final cap = (sig.rate * (targetSeconds + 2)).round();
+    if (_rec.length > cap) _rec.removeRange(0, _rec.length - cap);
+  }
+
   void _synth(DateTime now) {
-    // ٥٠ نموونە لە چرکەیەکدا ← ٢ نموونە بۆ هەر 33ms
-    const dt = 1 / 50.0;
-    final n = 2;
+    // 250 نموونە لە چرکەیەکدا (وەک ECG ی ڕاستەقینە)
+    const fs = 250.0;
+    final last = _synthLast ?? now;
+    _synthLast = now;
+    final n = (now.difference(last).inMicroseconds / 1e6 * fs).round().clamp(0, 40);
     final out = <int>[];
     for (var i = 0; i < n; i++) {
-      _synthT += dt;
-      out.add((100000 + 3000 * ecgSynth(_synthT)).round());
+      _synthT += 1 / fs;
+      final v = ecgSynth(_synthT) * (rightWrist ? -1 : 1) + 0.02 * ((_synthT * 7919) % 1 - .5);
+      out.add((8000000 + 3000 * v).round());
     }
-    // لە ٢ چرکەی یەکەمدا پەنجە نییە (هێڵی ڕاست)
-    if (now.difference(_startedAt).inMilliseconds > 2500) sig.addPacket(out, now: now);
+    // 2.5 چرکەی یەکەم پەنجە نییە (هێڵی ڕاست)
+    if (out.isNotEmpty && now.difference(_startedAt).inMilliseconds > 2500) sig.addPacket(out, now: now);
   }
 
   Future<void> _finish() async {
     _timer?.cancel();
     _stopped = true;
-    HapticFeedback.mediumImpact();
+    _record();
+    HapticFeedback.heavyImpact();
     phase = EcgPhase.done;
     notifyListeners();
     await _stopDevice();
@@ -188,15 +241,19 @@ class EcgController extends ChangeNotifier {
       await Future<void>.delayed(const Duration(milliseconds: 100));
     }
     final d = _dev;
-    final live = sig.bpm;
-    final bpm = (d != null && d.hr > 0) ? d.hr.toDouble() : live;
+    final st = EcgStats.from(sig.rrLog);
+    // دڵ: لە شەپۆلەکەوە (وردترە، 30 چرکە)؛ ئەگەر کەم بوو ← ئەنجامی Band
+    final bpm = st.bpm ?? ((d != null && d.hr > 0) ? d.hr.toDouble() : sig.bpm);
+    final hrv = (d != null && d.hrv > 0) ? d.hrv : st.rmssd?.round();
     result = EcgResult(
       bpm: bpm,
-      hrv: (d != null && d.hrv > 0) ? d.hrv : null,
+      hrv: hrv,
       stress: (d != null && d.stress > 0) ? d.stress : null,
-      quality: sig.quality == 0 ? 0.6 : sig.quality,
-      trace: List<double>.of(_rec.length > 1500 ? _rec.sublist(_rec.length - 1500) : _rec),
+      stats: st,
+      quality: sig.quality == 0 ? (st.beats > 10 ? 0.7 : 0.4) : sig.quality,
+      trace: List<double>.of(_rec),
       sampleRate: sig.rate,
+      rightWrist: rightWrist,
       at: DateTime.now(),
     );
     notifyListeners();
