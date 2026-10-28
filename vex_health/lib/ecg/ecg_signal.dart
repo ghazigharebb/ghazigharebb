@@ -54,13 +54,13 @@ class _Biquad {
 }
 
 class EcgSignal {
-  EcgSignal({this.defaultRate = 50, this.seconds = 4.2, this.invert = false}) {
+  EcgSignal({this.defaultRate = 255, this.seconds = 5, this.invert = false}) {
     rate = defaultRate;
     reset();
   }
 
   // ── ڕێکخستنەکان ──
-  /// ڕێژەی نموونە پێش خەمڵاندن
+  /// ڕێژەی نموونە پێش خەمڵاندن — SDK ی V8 (iOS ppgView: 255 نموونە/چرکە، پەنجەرەی 5 چرکە)
   final double defaultRate;
 
   /// چەند چرکە لەسەر شاشە نیشان بدرێت
@@ -131,6 +131,8 @@ class EcgSignal {
     _n = 0;
     _t0 = _lastPkt = null;
     _count = 0;
+    _lastId = null;
+    lostPackets = 0;
     _resetDetector();
     rrLog.clear();
     _pol.clear();
@@ -175,9 +177,31 @@ class EcgSignal {
     if (_useNotch) _notch.set('notch', fs, 50.0, 8.0);
   }
 
-  /// پاکێتێکی نوێ لە نموونەکان
-  void addPacket(List<int> samples, {DateTime? now}) {
+  int? _lastId;
+
+  /// پاکێتە ونبووەکان (هەمان پشکنینی packetID ی SDK)
+  int lostPackets = 0;
+
+  /// پاکێتێکی نوێ لە نموونەکان. packetId: 0..255 (بۆ دۆزینەوەی پاکێتی ونبوو)
+  void addPacket(List<int> samples, {DateTime? now, int? packetId}) {
     if (samples.isEmpty) return;
+    // پاکێتی ونبوو ← نموونەی ناوەند دادەنرێت بۆ ئەوەی کات (و BPM) ڕاست بمێنێتەوە
+    if (packetId != null) {
+      final last = _lastId;
+      _lastId = packetId;
+      if (last != null) {
+        final lost = (packetId - last - 1) & 0xff;
+        if (lost > 0 && lost < 8 && _prev != null) {
+          lostPackets += lost;
+          final a = _prev!, b = samples.first;
+          final n = lost * samples.length;
+          for (var i = 1; i <= n; i++) {
+            _push((a + (b - a) * i / (n + 1)).round());
+          }
+          _count += n;
+        }
+      }
+    }
     final t = now ?? DateTime.now();
     _t0 ??= t;
     _lastPkt = t;

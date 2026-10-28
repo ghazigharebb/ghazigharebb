@@ -97,7 +97,7 @@ class EcgController extends ChangeNotifier {
       }
       await _ppg?.cancel();
       await _raw?.cancel();
-      _ppg = VexBand.I.ppgStream.stream.listen((p) => sig.addPacket(p.samples));
+      _ppg = VexBand.I.ppgStream.stream.listen((p) => sig.addPacket(p.samples, packetId: p.packetId));
       _raw = VexBand.I.raw.stream.listen((m) {
         if (m is VexMeasureResult && !m.stopped) _dev = m;
       });
