@@ -466,6 +466,8 @@ class VexBand extends ChangeNotifier {
   Future<void> startWaveform() async {
     _busy = true; // لە کاتی ECG دا پشکنینی «لە دەستە» ڕادەوەستێت
     await send(VexFrame.measure(4, start: true, seconds: 50 * 1000));
+    // SDK (iOS ppgView): شەپۆلی ECG دوای وەڵامی فرمانی پێوانە چالاک دەکرێت
+    await Future<void>.delayed(const Duration(milliseconds: 350));
     await send(VexFrame.ppgStream(true));
   }
 

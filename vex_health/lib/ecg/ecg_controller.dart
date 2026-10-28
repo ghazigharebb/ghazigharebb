@@ -6,6 +6,9 @@
 //   2) ppgStream(true)              — فرمانی 0x07  (setECGRealtimeDuringHRVEnabled)
 // شەپۆلی خاو لە VexBand.I.ppgStream دێت و لە EcgSignal فلتەر و شیکار دەکرێت.
 import 'dart:async';
+import 'dart:convert';
+import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -25,10 +28,83 @@ class EcgResult {
   final double sampleRate;
   final bool rightWrist;
   final DateTime at;
+  final List<double> beatT; // کاتی هەر لێدانێک (چرکە)
+  final List<double> beatBpm; // لێدانی دڵی ساتەکی هەر لێدانێک
   const EcgResult({
     required this.bpm, required this.hrv, required this.stress, required this.stats, required this.quality,
     required this.trace, required this.sampleRate, required this.rightWrist, required this.at,
+    this.beatT = const <double>[], this.beatBpm = const <double>[],
   });
+
+  /// بۆ هەڵگرتن لە مێژوو: شەپۆل بۆ ~85Hz کەم دەکرێتەوە و وەک بایت (-127..127) دەنووسرێت
+  Map<String, dynamic> toJson() {
+    final f = math.max(1, (sampleRate / 85).round());
+    final n = trace.length ~/ f;
+    final bytes = Uint8List(n);
+    for (var i = 0; i < n; i++) {
+      var m = 0.0;
+      for (var j = 0; j < f; j++) {
+        final v = trace[i * f + j];
+        if (v.abs() > m.abs()) m = v; // لوتکە نابڕدرێت
+      }
+      bytes[i] = ((m.clamp(-1.0, 1.0) * 127).round() + 128).clamp(0, 255).toInt();
+    }
+    return {
+      'v': 1,
+      'at': at.millisecondsSinceEpoch,
+      'r': rightWrist,
+      'bpm': bpm,
+      'hrv': hrv,
+      'st': stress,
+      'q': quality,
+      'rate': sampleRate / f,
+      'tr': base64Encode(bytes),
+      'bt': beatT.map((e) => double.parse(e.toStringAsFixed(2))).toList(),
+      'bb': beatBpm.map((e) => double.parse(e.toStringAsFixed(1))).toList(),
+      's': {
+        'bpm': stats.bpm,
+        'mn': stats.minBpm,
+        'mx': stats.maxBpm,
+        'rm': stats.rmssd,
+        'sd': stats.sdnn,
+        'ir': stats.irregular,
+        'n': stats.beats,
+      },
+    };
+  }
+
+  static EcgResult? fromJson(Object? o) {
+    try {
+      final m = o as Map;
+      final s = (m['s'] as Map?) ?? const {};
+      double? d(Object? x) => x == null ? null : (x as num).toDouble();
+      final bytes = base64Decode(m['tr'] as String);
+      final tr = List<double>.generate(bytes.length, (i) => (bytes[i] - 128) / 127.0);
+      return EcgResult(
+        bpm: d(m['bpm']),
+        hrv: (m['hrv'] as num?)?.toInt(),
+        stress: (m['st'] as num?)?.toInt(),
+        stats: EcgStats(
+          bpm: d(s['bpm']),
+          minBpm: d(s['mn']),
+          maxBpm: d(s['mx']),
+          rmssd: d(s['rm']),
+          sdnn: d(s['sd']),
+          irregular: s['ir'] == true,
+          beats: (s['n'] as num?)?.toInt() ?? 0,
+        ),
+        quality: d(m['q']) ?? 0,
+        trace: tr,
+        sampleRate: d(m['rate']) ?? 85,
+        rightWrist: m['r'] == true,
+        at: DateTime.fromMillisecondsSinceEpoch((m['at'] as num).toInt()),
+        beatT: ((m['bt'] as List?) ?? const []).map((e) => (e as num).toDouble()).toList(),
+        beatBpm: ((m['bb'] as List?) ?? const []).map((e) => (e as num).toDouble()).toList(),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
 }
 
 class EcgController extends ChangeNotifier {
@@ -97,7 +173,7 @@ class EcgController extends ChangeNotifier {
       }
       await _ppg?.cancel();
       await _raw?.cancel();
-      _ppg = VexBand.I.ppgStream.stream.listen((p) => sig.addPacket(p.samples));
+      _ppg = VexBand.I.ppgStream.stream.listen((p) => sig.addPacket(p.samples, packetId: p.packetId));
       _raw = VexBand.I.raw.stream.listen((m) {
         if (m is VexMeasureResult && !m.stopped) _dev = m;
       });
@@ -242,6 +318,14 @@ class EcgController extends ChangeNotifier {
     }
     final d = _dev;
     final st = EcgStats.from(sig.rrLog);
+    final bt = <double>[], bb = <double>[];
+    var tt = 0.0;
+    for (final x in sig.rrLog) {
+      if (x <= 0.2) continue;
+      tt += x;
+      bt.add(tt);
+      bb.add(60.0 / x);
+    }
     // دڵ: لە شەپۆلەکەوە (وردترە، 30 چرکە)؛ ئەگەر کەم بوو ← ئەنجامی Band
     final bpm = st.bpm ?? ((d != null && d.hr > 0) ? d.hr.toDouble() : sig.bpm);
     final hrv = (d != null && d.hrv > 0) ? d.hrv : st.rmssd?.round();
@@ -255,6 +339,8 @@ class EcgController extends ChangeNotifier {
       sampleRate: sig.rate,
       rightWrist: rightWrist,
       at: DateTime.now(),
+      beatT: bt,
+      beatBpm: bb,
     );
     notifyListeners();
     onDone?.call(result!);
