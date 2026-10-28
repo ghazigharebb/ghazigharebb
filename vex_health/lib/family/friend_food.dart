@@ -362,7 +362,7 @@ bool get _isLtr => _L['dir'] == 'ltr';
 TextDirection get _dir => _isLtr ? TextDirection.ltr : TextDirection.rtl;
 
 /// ژمارە و کات لەناو دەقی RTL وەک خۆی دەمێنێتەوە
-String _iso(String s) => '⁦$s⁩';
+String _iso(String s) => '\u2066$s\u2069';
 
 // ═════════════════════════════ یارمەتیدەر ═════════════════════════════
 int _i(Object? v) => v is num ? (v.isFinite ? v.round() : 0) : (int.tryParse('${v ?? ''}') ?? double.tryParse('${v ?? ''}')?.round() ?? 0);
@@ -994,7 +994,8 @@ class FriendFood extends ChangeNotifier with WidgetsBindingObserver {
   bool _uidFixed = false;
   String _lastPush = '';
   bool? _lastShare;
-  bool _pubBusy = false, _pubAgain = false, _pending = false;
+  bool _pubBusy = false, _pubAgain = false, _pubForce = false, _pending = false;
+  Completer<void>? _pubC;
   int _retryN = 0;
   Future<void>? _initF;
   bool _ready = false;
@@ -1139,12 +1140,36 @@ class FriendFood extends ChangeNotifier with WidgetsBindingObserver {
   /// ئێستا وێنەکە دروست بکە و بینێرە
   Future<void> publishNow() => _publish(force: true);
 
-  Future<void> _publish({bool force = false}) async {
-    if (_pubBusy) {
+  Future<void> _publish({bool force = false}) {
+    final c = _pubC;
+    if (_pubBusy && c != null) {
       _pubAgain = true;
-      return;
+      if (force) _pubForce = true;
+      return c.future; // تەواو دەبێت دوای ناردنی دوایین گۆڕانکاری
     }
     _pubBusy = true;
+    final n = Completer<void>();
+    _pubC = n;
+    unawaited(_runPublish(force));
+    return n.future;
+  }
+
+  Future<void> _runPublish(bool force) async {
+    var f = force;
+    while (true) {
+      await _publishOnce(f);
+      if (!_pubAgain) break;
+      _pubAgain = false;
+      f = _pubForce;
+      _pubForce = false;
+    }
+    _pubBusy = false;
+    final c = _pubC;
+    _pubC = null;
+    if (c != null && !c.isCompleted) c.complete();
+  }
+
+  Future<void> _publishOnce(bool force) async {
     try {
       final uid = myUid;
       final nm = _s(Account.I.user?['name']);
@@ -1166,12 +1191,6 @@ class FriendFood extends ChangeNotifier with WidgetsBindingObserver {
       }
     } catch (_) {
       // هیچ کاتێک ئەپەکە ناوەستێت
-    } finally {
-      _pubBusy = false;
-    }
-    if (_pubAgain) {
-      _pubAgain = false;
-      await _publish();
     }
   }
 
@@ -1395,7 +1414,7 @@ class _FriendFoodCardState extends State<FriendFoodCard> {
           switchInCurve: _kEase,
           transitionBuilder: (c, a) => FadeTransition(
             opacity: a,
-            child: SizeTransition(sizeFactor: a, axisAlignment: -1, child: c),
+            child: SizeTransition(sizeFactor: a, child: c),
           ),
           child: _body(),
         ),
@@ -2053,7 +2072,8 @@ class _WaterBoxState extends State<_WaterBox> with TickerProviderStateMixin {
     if (lit.endsWith('0')) lit = lit.substring(0, lit.length - 1);
     if (lit.endsWith('.0')) lit = lit.substring(0, lit.length - 2);
 
-    final glParts = _tf('gl', {'a': '\u0000', 'b': _iso('$g')}).split('\u0000');
+    // «5 / 8 پەرداخ»: ژمارەکان بە فۆنتی Sora، وشەکە بە فۆنتی زمانەکە
+    final glParts = _t('gl').split(RegExp(r'\{a\}\s*/\s*\{b\}'));
     final glPre = glParts.first, glPost = glParts.length > 1 ? glParts.last : '';
     final Widget pill;
     if (ex > 0) {
@@ -2131,8 +2151,9 @@ class _WaterBoxState extends State<_WaterBox> with TickerProviderStateMixin {
                 child: Text.rich(
                   TextSpan(
                     children: [
-                      TextSpan(text: glPre),
+                      if (glPre.isNotEmpty) TextSpan(text: glPre),
                       TextSpan(text: _iso('$w'), style: nu(14, c: V.tx)),
+                      TextSpan(text: _iso(' / $g'), style: nu(11.5, w: FontWeight.w700, c: V.mu)),
                       TextSpan(text: glPost),
                     ],
                   ),
@@ -2373,7 +2394,7 @@ class _WeekBox extends StatelessWidget {
     return Row(
       children: [
         SizedBox(
-          width: 92,
+          width: 112,
           child: Row(
             children: [
               Flexible(
@@ -2381,7 +2402,7 @@ class _WeekBox extends StatelessWidget {
                   name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: ku(12, w: v == null ? FontWeight.w600 : FontWeight.w800, c: today ? _ink(V.cy) : (v == null ? V.mu : V.tx)),
+                  style: ku(11.5, w: v == null ? FontWeight.w600 : FontWeight.w800, c: today ? _ink(V.cy) : (v == null ? V.mu : V.tx)),
                 ),
               ),
               if (today) ...[
@@ -2389,7 +2410,7 @@ class _WeekBox extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                   decoration: BoxDecoration(color: V.cy, borderRadius: BorderRadius.circular(99)),
-                  child: Text(_t('today'), style: ku(8.5, w: FontWeight.w800, c: const Color(0xFF04323A))),
+                  child: Text(_t('today'), style: ku(8, w: FontWeight.w800, c: const Color(0xFF04323A))),
                 ),
               ],
             ],
