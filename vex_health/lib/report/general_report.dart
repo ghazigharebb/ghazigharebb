@@ -1085,40 +1085,27 @@ List<List<Widget>> _blocks(_Rep r, _P p, {bool print = false}) {
       _gap(10),
       Directionality(
         textDirection: TextDirection.ltr,
-        child: LayoutBuilder(builder: (c, b) {
-          final x = (r.score ?? 0) / 100 * b.maxWidth;
-          return SizedBox(
-            height: 16,
-            child: Stack(clipBehavior: Clip.none, children: [
-              Positioned(
-                left: 0,
-                right: 0,
-                top: 4,
-                height: 8,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(6),
-                    gradient: const LinearGradient(colors: [Color(0xFFC2410C), Color(0xFFEAB308), Color(0xFF16A34A), Color(0xFF0E7490)], stops: [0, .45, .75, 1]),
-                  ),
+        child: SizedBox(
+          height: 16,
+          child: Stack(alignment: Alignment.center, children: [
+            Container(
+              height: 8,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(6),
+                gradient: const LinearGradient(colors: [Color(0xFFC2410C), Color(0xFFEAB308), Color(0xFF16A34A), Color(0xFF0E7490)], stops: [0, .45, .75, 1]),
+              ),
+            ),
+            if (r.score != null)
+              Align(
+                alignment: Alignment(((r.score! / 100) * 2 - 1).clamp(-1.0, 1.0).toDouble(), 0),
+                child: Container(
+                  width: 5,
+                  height: 16,
+                  decoration: BoxDecoration(color: p.ink, borderRadius: BorderRadius.circular(2), border: Border.all(color: p.paper, width: 1)),
                 ),
               ),
-              if (r.score != null)
-                Positioned(
-                  left: (x - 2).clamp(0.0, b.maxWidth - 4).toDouble(),
-                  top: 0,
-                  width: 4,
-                  height: 16,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: p.ink,
-                      borderRadius: BorderRadius.circular(2),
-                      border: Border.all(color: p.paper, width: 1),
-                    ),
-                  ),
-                ),
-            ]),
-          );
-        }),
+          ]),
+        ),
       ),
       _gap(8),
       if (r.lvl != null) _tx(lv[r.lvl!], 11.5, r.lvl! <= 1 ? p.okc : (r.lvl == 2 ? p.mu : p.hic), w: FontWeight.w800),

@@ -1,5 +1,6 @@
 // تاقیکردنەوەی ڕاپۆرتی گشتی: داتای ساختەی Band + ECG + خواردن ← پەڕە بێ هەڵە + PDF
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -83,7 +84,7 @@ void main() {
   for (final lang in ['ckb', 'en', 'ar', 'kmr', 'fa', 'tr']) {
     for (final light in [false, true]) {
       testWidgets('report $lang ${light ? 'light' : 'dark'}', (tester) async {
-        await tester.binding.setSurfaceSize(const Size(400, 900));
+        await tester.binding.setSurfaceSize(const Size(400, 4600));
         await tester.runAsync(seed);
         LangState.I.code = lang;
         await tester.runAsync(() => VexTheme.I.setMode(light ? VexMode.light : VexMode.dark));
@@ -94,14 +95,20 @@ void main() {
         }
         expect(tester.takeException(), isNull);
         expect(ReportStore.I.days.isNotEmpty, true);
+        await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 400)));
+        await tester.pump(const Duration(milliseconds: 100));
+        await expectLater(find.byType(GeneralReportPage), matchesGoldenFile('goldens/report_${lang}_${light ? 'light' : 'dark'}.png'));
         await tester.drag(find.byType(ListView), const Offset(0, -2500));
         for (var i = 0; i < 10; i++) {
           await tester.pump(const Duration(milliseconds: 100));
         }
         expect(tester.takeException(), isNull);
-        await tester.pumpWidget(const MaterialApp(home: Scaffold(body: ReportCard())));
+        await tester.binding.setSurfaceSize(const Size(400, 120));
+        await tester.pumpWidget(MaterialApp(home: Scaffold(backgroundColor: V.bg, body: const Padding(padding: EdgeInsets.all(12), child: ReportCard()))));
+        await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 300)));
         await tester.pump(const Duration(milliseconds: 200));
         expect(tester.takeException(), isNull);
+        await expectLater(find.byType(ReportCard), matchesGoldenFile('goldens/card_${lang}_${light ? 'light' : 'dark'}.png'));
       });
     }
   }
@@ -122,6 +129,8 @@ void main() {
     });
     expect(bytes, isNotNull);
     expect(String.fromCharCodes(bytes!.take(4)), '%PDF');
+    Directory('test/goldens').createSync(recursive: true);
+    File('test/goldens/report.pdf').writeAsBytesSync(bytes);
     // ignore: avoid_print
     print('PDF bytes: ${bytes.length}');
   });
