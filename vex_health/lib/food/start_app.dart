@@ -382,7 +382,7 @@ class _StartAppState extends State<StartApp> with TickerProviderStateMixin {
                 margin: const EdgeInsets.symmetric(horizontal: 4),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: op(V.cy, 0.25 + 0.75 * (0.5 + 0.5 * math.sin(loop.value * 2 * math.pi * 4 - i * 1.1)).clamp(0.0, 1.0)),
+                  color: op(V.cy, 0.25 + 0.75 * (0.5 + 0.5 * math.sin(loop.value * 2 * math.pi * 4 - i * 1.1)).clamp(0.0, 1.0).toDouble()),
                 ),
               ),
           ]),
@@ -640,7 +640,7 @@ class _StartAppState extends State<StartApp> with TickerProviderStateMixin {
               child: Stack(alignment: Alignment.center, children: [
                 CustomPaint(size: const Size(260, 260), painter: _RingOpenP(t, V.track)),
                 Opacity(
-                  opacity: t.clamp(0.0, 1.0),
+                  opacity: t.clamp(0.0, 1.0).toDouble(),
                   child: Transform.scale(
                     scale: 0.6 + 0.4 * t,
                     child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -684,7 +684,7 @@ class _RingOpenP extends CustomPainter {
     const gap = 0.22;
     final start0 = -math.pi / 2 + (1 - t) * math.pi;
     for (int i = 0; i < 3; i++) {
-      final k = ((t * 1.5 - i * 0.2) / 0.6).clamp(0.0, 1.0);
+      final double k = ((t * 1.5 - i * 0.2) / 0.6).clamp(0.0, 1.0).toDouble();
       if (k <= 0) continue;
       final a0 = start0 + i * seg;
       final sw = (seg - gap) * k;
