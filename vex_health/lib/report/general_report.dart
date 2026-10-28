@@ -1783,16 +1783,31 @@ Future<Uint8List> _makePdf(_Rep r) async {
         await WidgetsBinding.instance.endOfFrame;
       }
       final img = await ro.toImage(pixelRatio: 3);
-      final bd = await img.toByteData(format: ui.ImageByteFormat.png);
+      // پارچەیەکی زۆر درێژ دەکرێتە چەند لاپەڕە
+      const maxH = 2200;
+      if (img.height <= maxH) {
+        final bd = await img.toByteData(format: ui.ImageByteFormat.png);
+        if (bd != null) images.add(bd.buffer.asUint8List());
+      } else {
+        for (var y = 0; y < img.height; y += maxH) {
+          final h = math.min(maxH, img.height - y);
+          final rec = ui.PictureRecorder();
+          Canvas(rec).drawImageRect(img, Rect.fromLTWH(0, y.toDouble(), img.width.toDouble(), h.toDouble()),
+              Rect.fromLTWH(0, 0, img.width.toDouble(), h.toDouble()), Paint());
+          final part = await rec.endRecording().toImage(img.width, h);
+          final bd = await part.toByteData(format: ui.ImageByteFormat.png);
+          part.dispose();
+          if (bd != null) images.add(bd.buffer.asUint8List());
+        }
+      }
       img.dispose();
-      if (bd != null) images.add(bd.buffer.asUint8List());
     }
   } finally {
     entry.remove();
   }
   if (images.isEmpty) throw StateError('no images');
 
-  final doc = pw.Document(title: '${_t('doc')} — ${r.no}', author: 'VEX Health', creator: 'VEX Health');
+  final doc = pw.Document(title: 'VEX Health General Report ${r.no}', author: 'VEX Health', creator: 'VEX Health');
   final now = DateTime.now();
   const grey = PdfColor.fromInt(0xFF566D76);
   doc.addPage(

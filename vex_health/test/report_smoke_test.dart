@@ -81,6 +81,19 @@ void main() {
     ReportStore.I.ingest(b);
   }
 
+  testWidgets('warmup fonts', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(400, 4600));
+    await tester.runAsync(seed);
+    await tester.pumpWidget(MaterialApp(navigatorKey: navKey, home: const GeneralReportPage()));
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 800)));
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    final e = tester.takeException();
+    // ignore: avoid_print
+    print('WARMUP: $e');
+  });
+
   for (final lang in ['ckb', 'en', 'ar', 'kmr', 'fa', 'tr']) {
     for (final light in [false, true]) {
       testWidgets('report $lang ${light ? 'light' : 'dark'}', (tester) async {
