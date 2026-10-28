@@ -24,6 +24,7 @@ import 'plus/gate.dart';
 import 'plus/plus_state.dart';
 import 'band/ble/vex_ble.dart';
 import 'vitalage/vital_age_engine.dart';
+import 'report/general_report.dart';
 import 'splash/splash_screen.dart';
 
 Future<void> main() async {
@@ -37,6 +38,7 @@ Future<void> main() async {
   await FamilyStore.I.load();
   await BandState.I.load(); // دۆخی پەیوەستبوونی Band
   await VitalAgeEngine.I.init(); // تەمەنی ژیانی (٢١ ڕۆژ)
+  await ReportStore.I.init(); // ڕاپۆرتی گشتی: داتای Band ڕۆژانە کۆدەکاتەوە و هەڵیدەگرێت
   await VexBand.I.init(); // BLE ی ڕاستەقینەی Band (پەیوەستبوونەوەی خۆکار)
   await FoodDb.I.load(); // لیستی 500 خواردنەکە
   await BandAlerts.I.load(); // کاتژمێر و کاتی وەرزش
