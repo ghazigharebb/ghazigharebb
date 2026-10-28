@@ -16,7 +16,7 @@ jobs:
       - run: flutter pub get
       - name: test
         run: |
-          flutter test test/report_smoke_test.dart -r expanded > t.txt 2>&1; st=$?
+          st=0; flutter test test/report_smoke_test.dart -r expanded > t.txt 2>&1 || st=$?
           tail -60 t.txt | while IFS= read -r l; do echo "::warning::T $l"; done
-          grep -nE "EXCEPTION|Exception|Error|Expected|FAILED|failed|overflow|PDF bytes|\+[0-9]+.*All tests" t.txt | grep -v "^.*google_fonts" | head -60 | while IFS= read -r l; do echo "::warning::$l"; done
+          (grep -nE "EXCEPTION|Exception|Error|Expected|FAILED|failed|overflow|PDF bytes|\+[0-9]+.*All tests" t.txt | grep -v "^.*google_fonts" || true) | head -60 | while IFS= read -r l; do echo "::warning::$l"; done
           exit $st
