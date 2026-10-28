@@ -41,6 +41,7 @@ flutter:
     - assets/pay/
     - assets/chars/
     - assets/ecg/
+    - assets/food_design/
   fonts:
     - family: NotoAr
       fonts:
