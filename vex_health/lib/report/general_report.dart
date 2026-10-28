@@ -1477,6 +1477,27 @@ List<List<Widget>> _blocks(_Rep r, _P p, {bool print = false}) {
 }
 
 // ═════════════════════════════ پەڕەی ڕاپۆرت ═════════════════════════════
+/// داتای بەشی خواردن (کێش، ژەمەکان، ئاو) — ئەگەر هەبێت
+Future<Map?> _loadFood() async {
+  try {
+    final sp = await SharedPreferences.getInstance();
+    final raw = sp.getString('vexfd_v1');
+    if (raw != null && raw.isNotEmpty) {
+      final j = jsonDecode(raw);
+      if (j is Map) return j;
+    }
+  } catch (_) {}
+  return null;
+}
+
+/// PDF ی ڕاپۆرتی گشتی بە بایت (بۆ ناردن یان هەڵگرتن لە هەر شوێنێکی ئەپ)
+Future<Uint8List> generalReportPdf() async {
+  await ReportStore.I.init();
+  final e = await EcgHistory.load();
+  final fd = await _loadFood();
+  return _makePdf(_build(e, fd));
+}
+
 class GeneralReportPage extends StatefulWidget {
   const GeneralReportPage({super.key});
   @override
@@ -1499,15 +1520,7 @@ class _GeneralReportPageState extends State<GeneralReportPage> {
   Future<void> _load() async {
     await ReportStore.I.init();
     final e = await EcgHistory.load();
-    Map? fd;
-    try {
-      final sp = await SharedPreferences.getInstance();
-      final raw = sp.getString('vexfd_v1');
-      if (raw != null && raw.isNotEmpty) {
-        final j = jsonDecode(raw);
-        if (j is Map) fd = j;
-      }
-    } catch (_) {}
+    final fd = await _loadFood();
     if (!mounted) return;
     setState(() {
       _ecg = e;

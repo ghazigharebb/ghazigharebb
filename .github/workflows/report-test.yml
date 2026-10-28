@@ -1,0 +1,22 @@
+name: report-test
+on:
+  push:
+    branches: [general-report]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: vex_health
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - name: test
+        run: |
+          flutter test test/report_smoke_test.dart -r expanded > t.txt 2>&1; st=$?
+          tail -5 t.txt
+          grep -nE "EXCEPTION|Exception|Error|Expected|FAILED|failed|overflow|PDF bytes|\+[0-9]+.*All tests" t.txt | grep -v "^.*google_fonts" | head -60 | while IFS= read -r l; do echo "::warning::$l"; done
+          exit $st
