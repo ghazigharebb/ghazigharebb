@@ -321,13 +321,7 @@ class _EcgPageState extends State<EcgPage> with TickerProviderStateMixin {
           delegate: SliverChildListDelegate([
             Text(_t('guide'), style: _f(24, w: FontWeight.w800, h: 1.3)),
             const SizedBox(height: 8),
-            SizedBox(
-              height: 250,
-              child: AnimatedBuilder(
-                animation: _loop,
-                builder: (_, __) => CustomPaint(painter: _WristArt(mode: 0, t: _loop.value, right: _right)),
-              ),
-            ),
+            SizedBox(height: 250, child: _Art(asset: 'assets/ecg/ecg_guide.webp', right: _right)),
             const SizedBox(height: 18),
             Row(children: [
               Expanded(child: _WristBtn(label: _t('left'), on: !_right, onTap: () => _setWrist(false))),
@@ -429,7 +423,7 @@ class _EcgPageState extends State<EcgPage> with TickerProviderStateMixin {
                         child: AnimatedOpacity(
                           duration: const Duration(milliseconds: 450),
                           opacity: live ? 0 : 1,
-                          child: CustomPaint(painter: _WristArt(mode: 1, t: _loop.value, right: _right)),
+                          child: _Art(asset: 'assets/ecg/ecg_touch.webp', right: _right),
                         ),
                       ),
                     ),
@@ -948,155 +942,22 @@ class _StripPainter extends CustomPainter {
   bool shouldRepaint(covariant _StripPainter o) => o.reveal != reveal || o.trace != trace;
 }
 
-/// وێنەی دەست و Band (ڕەش و سپی، شێوازی تیشکی X)
-///   mode 0 = ڕێنمایی (بینینی لاوە، نیشانەی «یەک پەنجە لە سەرووی ئێسکی مەچەک»)
-///   mode 1 = پێوانە (پەنجەی دەستی تر دێت و دەست لە ئەلیکترۆد دەدات)
-class _WristArt extends CustomPainter {
-  _WristArt({required this.mode, required this.t, required this.right});
-  final int mode;
-  final double t;
+/// ئەنیمەیشنی 3D ی دەست و Band (لە ستۆدیۆ دروستکراوە: tools/ecg_art/EcgArt.tsx)
+/// Band لە دەستی ڕاستە ← وێنەکە وەک ئاوێنە هەڵدەگێڕدرێتەوە
+class _Art extends StatelessWidget {
+  const _Art({required this.asset, required this.right});
+  final String asset;
   final bool right;
-
   @override
-  void paint(Canvas c, Size s) {
-    final w = s.width, h = s.height;
-    c.save();
-    // دەستی ڕاست ← وێنەکە هەڵدەگێڕدرێتەوە
-    if (right) {
-      c.translate(w, 0);
-      c.scale(-1, 1);
-    }
-    final cy = h * (mode == 0 ? .46 : .40);
-    final armH = h * .2;
-    final wristX = w * .40;
-
-    // ── باسک ──
-    final arm = Path()
-      ..moveTo(w + 10, cy - armH * .62)
-      ..cubicTo(w * .78, cy - armH * .6, w * .58, cy - armH * .5, wristX, cy - armH * .46)
-      ..lineTo(wristX, cy + armH * .46)
-      ..cubicTo(w * .58, cy + armH * .52, w * .78, cy + armH * .62, w + 10, cy + armH * .66)
-      ..close();
-    final armShader = LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: const [Color(0xFFEDEDED), Color(0xFF9A9A9A), Color(0xFF3A3A3A)],
-      stops: const [0, .55, 1],
-    ).createShader(Rect.fromLTWH(0, cy - armH, w, armH * 2));
-    c.drawPath(arm, Paint()
-      ..color = const Color(0x33FFFFFF)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10));
-    c.drawPath(arm, Paint()..shader = armShader);
-
-    // ── مشت (دەستی پێچراو) ──
-    final hand = Path()
-      ..moveTo(wristX + 4, cy - armH * .46)
-      ..cubicTo(w * .30, cy - armH * .62, w * .22, cy - armH * .78, w * .14, cy - armH * .55)
-      ..cubicTo(w * .07, cy - armH * .35, w * .06, cy + armH * .15, w * .12, cy + armH * .42)
-      ..cubicTo(w * .17, cy + armH * .62, w * .30, cy + armH * .6, wristX + 4, cy + armH * .46)
-      ..close();
-    c.drawPath(hand, Paint()..shader = armShader);
-    // ئیسکی پەنجەکان (هێڵی کاڵ)
-    final kn = Paint()
-      ..color = const Color(0x55000000)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.4
-      ..strokeCap = StrokeCap.round;
-    for (var i = 0; i < 3; i++) {
-      final y = cy - armH * .2 + i * armH * .22;
-      c.drawPath(
-          Path()
-            ..moveTo(w * .10 + i * 1.5, y)
-            ..quadraticBezierTo(w * .16, y - 4, w * .24, y + 1),
-          kn);
-    }
-    // پەنجە گەورە
-    final thumb = Path()
-      ..moveTo(w * .30, cy + armH * .30)
-      ..quadraticBezierTo(w * .22, cy + armH * .62, w * .14, cy + armH * .50);
-    c.drawPath(thumb, kn..strokeWidth = 2);
-
-    // ── Band ──
-    final bx = wristX + w * .07;
-    final bandW = w * .085;
-    final strap = RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(bx, cy), width: bandW, height: armH * 1.32), const Radius.circular(8));
-    c.drawRRect(strap, Paint()..color = const Color(0xFF121212));
-    final tex = Paint()
-      ..color = const Color(0xFF2A2A2A)
-      ..strokeWidth = 1;
-    for (double y = strap.top + 4; y < strap.bottom - 4; y += 4) {
-      c.drawLine(Offset(strap.left + 3, y), Offset(strap.right - 3, y + 2), tex);
-    }
-    c.drawRRect(strap, Paint()
-      ..color = const Color(0xFF4A4A4A)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.4);
-
-    // ئەلیکترۆد (کانزا)
-    final el = RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(bx, cy + armH * .1), width: bandW * .72, height: armH * .34), const Radius.circular(5));
-
-    // ئەلیکترۆد
-    c.drawRRect(el, Paint()
-      ..shader = const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFFF5F5F5), Color(0xFF9C9C9C)])
-          .createShader(el.outerRect));
-    c.drawRRect(el, Paint()
-      ..color = const Color(0x66FFFFFF)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2));
-
-    if (mode == 0) {
-      // نیشانەی «یەک پەنجە» لە نێوان Band و ئێسکی مەچەک
-      final mk = Paint()
-        ..color = const Color(0xFFD6F55B)
-        ..strokeWidth = 1.6
-        ..style = PaintingStyle.stroke;
-      final y0 = cy - armH * .95;
-      final a = 0.6 + 0.4 * math.sin(t * math.pi * 2);
-      mk.color = mk.color.withValues(alpha: a);
-      c.drawLine(Offset(wristX, y0), Offset(bx - bandW / 2, y0), mk);
-      c.drawLine(Offset(wristX, y0 - 5), Offset(wristX, y0 + 5), mk);
-      c.drawLine(Offset(bx - bandW / 2, y0 - 5), Offset(bx - bandW / 2, y0 + 5), mk);
-      c.drawCircle(Offset(wristX, cy - armH * .46), 3, Paint()..color = const Color(0xFFD6F55B).withValues(alpha: a));
-    } else {
-      // پەنجە دێت ← دەست دەدات ← بازنەی پەیوەندی
-      final p = (t * 1.0) % 1.0;
-      final approach = Curves.easeInOutCubic.transform((p / .45).clamp(0.0, 1.0));
-      final touching = p > .45 && p < .9;
-      final tip = Offset(bx, el.center.dy + 2);
-      final start = Offset(bx + w * .18, h + 30);
-      final cur = Offset.lerp(start, tip + const Offset(0, 6), approach)!;
-      // پەنجە (کەپسوول)
-      final dir = (tip - start);
-      final ang = math.atan2(dir.dy, dir.dx);
-      c.save();
-      c.translate(cur.dx, cur.dy);
-      c.rotate(ang + math.pi);
-      final fw = bandW * .62;
-      final finger = RRect.fromRectAndRadius(Rect.fromLTWH(0, -fw / 2, h * .62, fw), Radius.circular(fw / 2));
-      c.drawRRect(finger, Paint()
-        ..shader = const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFFF2F2F2), Color(0xFF8C8C8C)])
-            .createShader(finger.outerRect));
-      // نینۆک
-      c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(fw * .18, -fw * .3, fw * .7, fw * .6), Radius.circular(fw * .3)), Paint()..color = const Color(0x33000000));
-      c.restore();
-      // بازنەکانی پەیوەندی
-      if (touching) {
-        final k = ((p - .45) / .45);
-        for (var i = 0; i < 2; i++) {
-          final kk = (k + i * .5) % 1.0;
-          c.drawCircle(el.center, 10 + kk * 46, Paint()
-            ..color = const Color(0xFF5CC68A).withValues(alpha: (1 - kk) * .7)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 2);
-        }
-      }
-    }
-    c.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant _WristArt o) => o.t != t || o.right != right || o.mode != mode;
+  Widget build(BuildContext context) => AnimatedSwitcher(
+        duration: const Duration(milliseconds: 380),
+        transitionBuilder: (c, a) => FadeTransition(opacity: a, child: c),
+        child: Transform.flip(
+          key: ValueKey(right),
+          flipX: right,
+          child: Image.asset(asset, fit: BoxFit.contain, gaplessPlayback: true, filterQuality: FilterQuality.medium),
+        ),
+      );
 }
 
 /// تەنها بۆ debug: کە Band نییە نموونەکە دیار بێت
