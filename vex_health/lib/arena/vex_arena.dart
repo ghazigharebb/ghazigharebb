@@ -1129,7 +1129,7 @@ class _VexArenaPageState extends State<VexArenaPage> {
         Container(height: 1, color: _al(kW, .08)),
         const SizedBox(height: 14),
         Row(children: [
-          stat(LeagueEmblem(league: lg, size: 22), Text(lg.name, style: _ts(14, w: FontWeight.w800, c: lg.accent)), 'لیگ'),
+          stat(LeagueEmblem(league: lg, size: 22), Text(lg.name, style: _ts(14, w: FontWeight.w800, c: VexTheme.I.isLight ? VA.text : lg.accent)), 'لیگ'),
           stat(Icon(Icons.trending_up_rounded, size: 22, color: VA.cyanSoft), Text(_fmt(tot), style: _ts(14, w: FontWeight.w800)), 'کۆی وەرز'),
           stat(Icon(Icons.star_rounded, size: 22, color: vk(0xFFB9A6FF)), Text('${levelOf(tot)}', style: _ts(14, w: FontWeight.w800)), 'ئاست'),
           stat(Icon(Icons.local_fire_department_rounded, size: 22, color: vk(0xFFFF8A4D)), Text('$activeDays ڕۆژ', style: _ts(14, w: FontWeight.w800)), 'بەردەوامی'),
