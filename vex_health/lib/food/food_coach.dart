@@ -1111,8 +1111,9 @@ class _CoachTabState extends State<_CoachTab> {
             decoration: BoxDecoration(color: V.surf, borderRadius: BorderRadius.circular(22), border: Border.all(color: V.line)),
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Row(children: [
-                Expanded(child: _t(l, size: 13, c: V.mu)),
-                _n(v, 15),
+                _t(l, size: 13, c: V.mu),
+                const SizedBox(width: 6),
+                Expanded(child: FittedBox(fit: BoxFit.scaleDown, alignment: AlignmentDirectional.centerEnd, child: _n(v, 15))),
               ]),
               const SizedBox(height: 10),
               ClipRRect(
@@ -1342,8 +1343,14 @@ class _CoachTabState extends State<_CoachTab> {
       padding: const EdgeInsets.fromLTRB(6, 4, 6, 0),
       child: Row(children: [
         _t('کۆی ڕۆژ', size: 14, c: V.mu),
-        const Spacer(),
-        _n('${fmt(dk)} / ${fmt(g.kcal)} kcal · P ${dp.round()}g', 14.5),
+        const SizedBox(width: 10),
+        Expanded(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: AlignmentDirectional.centerEnd,
+            child: _n('${fmt(dk)} / ${fmt(g.kcal)} kcal · P ${dp.round()}g', 14.5),
+          ),
+        ),
       ]),
     ));
     return out;
