@@ -1,17 +1,21 @@
-// VEX Band — پڕۆسێسکردنی شەپۆلی ECG ی زیندوو (وردتر)
+// VEX Band — ECG ی زیندوو (v3): پڕۆسێسکردن، دۆزینەوەی لێدان و نیشاندانی شەپۆل
 //
 // سەرچاوە: Band شەپۆلی خاو بە پاکێتی 0x07 دەنێرێت (SDK: setECGRealtimeDuringHRVEnabled).
-// هەر نموونەیەک 3 بایتە (24-bit, little-endian).
+// هەر نموونەیەک 3 بایتە (24-bit, little-endian). SDK ی V8: 255 نموونە/چرکە (iOS ppgView).
 //
-// زنجیرەی پڕۆسێس (هەمان ماتماتیکی tools/ecg_check/ecg_dsp_ref.py کە تاقیکراوەتەوە):
-//   1) چارەسەری 24-bit (ئەگەر ژمارەکە بە نیشانە بێت و لە 0 تێپەڕێت)
-//   2) فلتەری High-pass 0.5Hz (دوو جار) ← لابردنی جووڵەی هێڵی بنەڕەت (هەناسە، جووڵە)
-//   3) Notch 50Hz (کارەبای شار) ئەگەر ڕێژەی نموونە > 115Hz بێت
-//   4) Low-pass ≤ 35Hz ← شەپۆلێکی پاک بۆ نیشاندان
-//   5) دۆزینەوەی لێدان (Pan–Tompkins): باندی QRS 5–15Hz ← گۆڕان ← وزە ← پەنجەرەی 120ms ←
-//      سنووری خۆگونجێن + گەڕانەوە بۆ لێدانی ونبوو + شوێنی R بە وردی کەمتر لە نموونەیەک
-//   6) ئاراستەی شەپۆل خۆکار ڕاست دەکرێتەوە (ئەگەر Band لە دەستی ڕاستە، شەپۆلەکە پێچەوانە دەبێت)
-// تاقیکردنەوە لەسەر 50/125/250/512Hz، 45–170 bpm، نۆیز، 50Hz، جووڵەی هێڵ: هەڵەی ناوەند 0.3 bpm.
+// چاککردنەکانی v3 (بەراورد بە ئەپی ڕەسمی V8):
+//   • شەپۆلەکە لە سەرەتا گیر نامێنێت: پانیی شاشە جێگیرە و هەرگیز بە گۆڕانی بچووکی ڕێژە سفر نابێتەوە
+//     (هۆکاری کێشەکە: هەر پاکێتێک ڕێژەکەی کەمێک دەگۆڕی ← sweep لە 0 دەستی پێدەکردەوە).
+//   • پەخشی نەرم: نموونەکان لە ڕیزێکدا کۆدەبنەوە و بە خێرایی ڕاستەقینە (≈ 255/چرکە) دەنووسرێن،
+//     وەک مۆنیتەری نەخۆشخانە، نەک پارچە پارچە بە گەیشتنی پاکێتی BLE.
+//   • ڕێژەی نموونە بە regression لەسەر 3–12 چرکە دەخەمڵێنرێت و یەک جار قفڵ دەکرێت (نەک هەر پاکێتێک).
+//   • کاتێک پەنجە دادەنرێت سنوورەکان لە سەرەتاوە فێر دەبنەوە (پێشتر لەسەر نۆیز فێر دەبوون ← BPM ی 160–200).
+//   • ڕەتکردنەوەی شەپۆلی T (Pan–Tompkins) ← دڵ دوو هێندە ناژمێردرێت.
+//   • 4 RR ی یەکگرتوو کە ڕەتکرابوونەوە ← ڕیتمی نوێ قبوڵ دەکرێت (هەرگیز لەسەر ژمارەیەکی هەڵە گیر نابێت).
+//   • پاکێتی ونبوو بە قەبارەی ناوەندی پاکێت پڕدەکرێتەوە.
+// تاقیکراوەتەوە: tools/ecg_check/ecg_live_ref.py (هەمان ماتماتیک، 72 دۆخ: 128–512Hz، 50–150 bpm،
+// پاکێتی 18–81 نموونە، دواکەوتنی BLE، پاکێتی ونبوو، 50Hz، جووڵەی هێڵ، T ی بەرز، دەستی ڕاست).
+import 'dart:collection';
 import 'dart:math' as math;
 
 class _Biquad {
@@ -75,17 +79,28 @@ class EcgSignal {
   /// کەمترین قەبارە بۆ ئاسایی‌کردن — بێ پەنجە نۆیز گەورە نانوێنرێت و هێڵەکە ڕاست دەمێنێتەوە
   static const double ampFloor = 40.0;
 
+  /// ڕێژەی نموونە (لە سەرەتا 255؛ دوای ~6 چرکە قفڵ دەکرێت)
   late double rate;
-  double _designRate = 0;
 
-  // نیشاندان (شێوازی مۆنیتەر: خەتێک لە چەپەوە بۆ ڕاست دەنووسرێت، بۆشاییەک لە پێشیەوە)
+  /// ڕێژەکە پشتڕاستکراوەتەوە (BPM تەنها دوای ئەمە پیشان دەدرێت)
+  bool rateOk = false;
+  bool _locked = false, _early = false;
+
+  // ── نیشاندان (مۆنیتەر: خەتێک لە چەپەوە بۆ ڕاست دەنووسرێت، بۆشاییەک لە پێشیەوە) ──
   List<double> sweep = <double>[];
   int cursor = 0;
   bool sweepFull = false;
 
-  /// دواین شەپۆل (بۆ تۆمارکردن): هەر نموونەیەک -1..1
+  /// دواین خاڵی نووسراو لەسەر شاشە (-1..1)
   double last = 0;
 
+  final ListQueue<double> _play = ListQueue<double>();
+  bool _playing = false;
+  double _acc = 0;
+  DateTime? _lastAdv;
+  List<double> _tape = <double>[];
+
+  // ── فلتەر ──
   final _Biquad _hp1 = _Biquad(), _hp2 = _Biquad(), _lp = _Biquad(), _notch = _Biquad();
   final _Biquad _qhp = _Biquad(), _qlp = _Biquad();
   bool _useNotch = false;
@@ -94,36 +109,57 @@ class EcgSignal {
   double _off = 0;
   double? _x0;
   int _n = 0;
-  int _since = 0; // نموونە لە دوای دیزاینی فلتەر
-  final List<double> _y = <double>[]; // شەپۆلی فلتەرکراو (3 چرکە)
+  int _since = 0;
+
+  // ── دۆزینەوەی لێدان ──
+  List<double> _y = <double>[];
   final List<double> _d = <double>[0, 0];
-  final List<double> _mwi = <double>[];
+  final ListQueue<double> _mwi = ListQueue<double>();
+  final ListQueue<double> _slw = ListQueue<double>();
   double _mwiSum = 0, _m1 = 0, _m2 = 0;
   double _spki = 0, _npki = 0;
   int _lastQrs = -1000000;
+  double _lastSlope = 0;
+  final List<double> _slopes = <double>[]; // لێژیی QRS ـە پەسەندکراوەکان
   int _learn = 0;
-  final List<(int, double)> _cands = <(int, double)>[];
+  final List<(int, double, double)> _cands = <(int, double, double)>[];
   double _lastR = -1e9;
+  int _quiet = 0, _idleMark = 0, _hold = 0, _restartAt = 0;
+  double _learnE = 0, _eFast = 0;
 
   final List<double> _rr = <double>[]; // RR ی پەسەندکراو (چرکە)
+  final List<double> _rej = <double>[];
+
   /// هەموو RR ـە پەسەندکراوەکان لە کاتی پێوانە (بۆ HRV)
-  final List<double> rrLog = <double>[];
+  List<double> rrLog = <double>[];
   final List<int> _pol = <int>[];
   bool _flip = false;
 
-  double _env = 1e-6; // قەبارەی شەپۆل بۆ نیشاندان
-  final List<double> _stdWin = <double>[];
+  double _env = 1e-6;
+  final ListQueue<double> _stdWin = ListQueue<double>();
+  double _sSum = 0, _sSq = 0;
+
+  // ── کات و پاکێت ──
   DateTime? _t0, _lastPkt;
   int _count = 0;
+  final List<(double, int)> _arr = <(double, int)>[];
+  int? _lastId;
+  double _pktAvg = 0;
   bool _railing = false;
+
+  /// پاکێتە ونبووەکان (هەمان پشکنینی packetID ی SDK)
+  int lostPackets = 0;
 
   int beatCount = 0;
   bool beatNow = false;
 
-  int get window => (seconds * rate).round().clamp(60, 3000);
+  int get window => sweep.length;
+
+  int _winFor(double fs) => (seconds * fs).round().clamp(60, 3000).toInt();
 
   void reset() {
     rate = defaultRate;
+    rateOk = _locked = _early = false;
     _design(rate);
     _prev = null;
     _off = 0;
@@ -131,43 +167,74 @@ class EcgSignal {
     _n = 0;
     _t0 = _lastPkt = null;
     _count = 0;
+    _arr.clear();
     _lastId = null;
+    _pktAvg = 0;
     lostPackets = 0;
-    _resetDetector();
-    rrLog.clear();
+    rrLog = <double>[];
+    _rej.clear();
     _pol.clear();
     _flip = false;
     _env = 1e-6;
     _stdWin.clear();
+    _sSum = _sSq = 0;
     beatCount = 0;
     beatNow = false;
-    _newSweep();
-  }
-
-  void _newSweep() {
-    sweep = List<double>.filled(window, 0);
+    _play.clear();
+    _playing = false;
+    _acc = 0;
+    _lastAdv = null;
+    _tape = <double>[];
+    _railing = false;
+    sweep = List<double>.filled(_winFor(rate), 0);
     cursor = 0;
     sweepFull = false;
+    last = 0;
+    _resetDetector();
   }
 
   void _resetDetector() {
     _since = 0;
-    _y.clear();
+    _y = <double>[];
     _d
       ..clear()
       ..addAll([0, 0]);
     _mwi.clear();
+    _slw.clear();
     _mwiSum = _m1 = _m2 = 0;
     _spki = _npki = 0;
     _lastQrs = -1000000;
+    _lastSlope = 0;
+    _slopes.clear();
     _learn = 0;
     _cands.clear();
     _lastR = -1e9;
     _rr.clear();
+    _quiet = _idleMark = _hold = _restartAt = 0;
+    _learnE = _eFast = 0;
+  }
+
+  /// پەنجە تازە دانرا ← سنوورەکان لەسەر ECG ی ڕاستەقینە فێر دەبنەوە (نەک لەسەر نۆیزی پێشوو)
+  void restartLearning() {
+    // هێڵی بنەڕەت لە ئاستی ئێستاوە ← هەنگاوی دەستلێدان بە high-pass دا نالەرێتەوە
+    _design(rate);
+    _x0 = null;
+    _hold = _n + (0.5 * rate).round(); // بازدان بەسەر لەرینی دەستلێدانەکەدا
+    _env = 1e-6; // قەبارەی نیشاندان بە خێرایی لەگەڵ ECG ی ڕاستەقینە دەگونجێت
+    _learnE = 0;
+    _restartAt = _n;
+    _learn = 0;
+    _spki = _npki = 0;
+    _cands.clear();
+    _rej.clear();
+    _lastR = -1e9;
+    _lastQrs = -1000000;
+    _rr.clear();
+    _lastSlope = 0;
+    _slopes.clear();
   }
 
   void _design(double fs) {
-    _designRate = fs;
     _hp1.set('hp', fs, 0.5);
     _hp2.set('hp', fs, 0.5);
     _lp.set('lp', fs, math.min(35.0, 0.4 * fs));
@@ -177,57 +244,127 @@ class EcgSignal {
     if (_useNotch) _notch.set('notch', fs, 50.0, 8.0);
   }
 
-  int? _lastId;
-
-  /// پاکێتە ونبووەکان (هەمان پشکنینی packetID ی SDK)
-  int lostPackets = 0;
-
+  // ───────────── وەرگرتن ─────────────
   /// پاکێتێکی نوێ لە نموونەکان. packetId: 0..255 (بۆ دۆزینەوەی پاکێتی ونبوو)
   void addPacket(List<int> samples, {DateTime? now, int? packetId}) {
     if (samples.isEmpty) return;
     // پاکێتی ونبوو ← نموونەی ناوەند دادەنرێت بۆ ئەوەی کات (و BPM) ڕاست بمێنێتەوە
     if (packetId != null) {
-      final last = _lastId;
+      final lastId = _lastId;
       _lastId = packetId;
-      if (last != null) {
-        final lost = (packetId - last - 1) & 0xff;
+      if (lastId != null) {
+        final lost = (packetId - lastId - 1) & 0xff;
         if (lost > 0 && lost < 8 && _prev != null) {
           lostPackets += lost;
           final a = _prev!, b = samples.first;
-          final n = lost * samples.length;
-          for (var i = 1; i <= n; i++) {
-            _push((a + (b - a) * i / (n + 1)).round());
+          final k = (lost * (_pktAvg > 0 ? _pktAvg : samples.length)).round();
+          for (var i = 1; i <= k; i++) {
+            _push((a + (b - a) * i / (k + 1)).round());
           }
-          _count += n;
+          _count += k;
         }
       }
     }
+    _pktAvg = _pktAvg == 0 ? samples.length.toDouble() : 0.9 * _pktAvg + 0.1 * samples.length;
     final t = now ?? DateTime.now();
     _t0 ??= t;
     _lastPkt = t;
     _count += samples.length;
-    final el = t.difference(_t0!).inMicroseconds / 1e6;
-    if (el > 1.5) {
-      final r = (_count / el).clamp(20.0, 1000.0);
-      rate = rate * 0.85 + r * 0.15;
-      // ئەگەر ڕێژە بە ڕوونی گۆڕا ← فلتەرەکان دووبارە دیزاین دەکرێنەوە
-      if ((rate - _designRate).abs() / _designRate > 0.08) {
-        _design(rate);
-        _x0 = null;
-        _resetDetector();
-        _newSweep();
-      }
+    final ts = t.difference(_t0!).inMicroseconds / 1e6;
+    _arr.add((ts, _count));
+    while (_arr.isNotEmpty && ts - _arr.first.$1 > 12.0) {
+      _arr.removeAt(0);
     }
+    _estimate();
     var same = 0;
     for (final s in samples) {
       if (_prev == s) same++;
       _push(s);
     }
     // هێڵی تەواو ڕاست (0 یان 0xFFFFFF) ← ئەلیکترۆد نییە
+    final was = _railing;
     _railing = same >= samples.length - 1 && (samples.last == 0 || samples.last == 0xFFFFFF);
+    if (was && !_railing) {
+      // ئەلیکترۆد گەڕایەوە ← لە ئاستی نوێوە دەست پێبکە (بێ لەرینەوەی گەورە)
+      _design(rate);
+      _x0 = null;
+    }
+  }
+
+  /// ڕێژەی نموونە: لێژیی least-squares ی (کاتی گەیشتن، کۆی نموونەکان)؛ 0.8 چرکەی یەکەم پشتگوێ دەخرێت
+  void _estimate() {
+    final pts = _arr.where((p) => p.$1 >= 0.8).toList();
+    if (pts.length < 4) return;
+    final span = pts.last.$1 - pts.first.$1;
+    if (span < 3.0) return;
+    var mt = 0.0, mc = 0.0;
+    for (final p in pts) {
+      mt += p.$1;
+      mc += p.$2;
+    }
+    mt /= pts.length;
+    mc /= pts.length;
+    var sxx = 0.0, sxy = 0.0;
+    for (final p in pts) {
+      final dx = p.$1 - mt;
+      sxx += dx * dx;
+      sxy += dx * (p.$2 - mc);
+    }
+    if (sxx <= 0) return;
+    final est = sxy / sxx;
+    if (est < 40 || est > 1100) return;
+    final dev = (est - rate).abs() / rate;
+    if (!_locked) {
+      if (dev <= 0.12) rateOk = true;
+      if (dev > 0.35 && !_early) {
+        _early = true; // بە ڕوونی ڕێژەیەکی ترە ← ئێستا بیگۆڕە، لە 6 چرکەدا وردتری بکە
+        _relock(est.roundToDouble());
+        return;
+      }
+      if (span >= 6.0) {
+        _locked = true;
+        if (dev > 0.04) _relock(est.roundToDouble());
+        rateOk = true;
+      }
+    } else if (span >= 9.0 && dev > 0.06) {
+      _relock(est.roundToDouble());
+    }
+  }
+
+  void _relock(double fs) {
+    final k = rate / fs;
+    _rr.clear(); // بە فلتەری هەڵە دۆزرابوونەوە ← BPM دووبارە وەردەگیرێتەوە
+    rrLog = [for (final x in rrLog) x * k];
+    _lastR = -1e9;
+    final old = sweep, oc = cursor;
+    rate = fs;
+    _design(fs);
+    _x0 = null;
+    _mwi.clear();
+    _slw.clear();
+    _mwiSum = 0;
+    _cands.clear();
+    _quiet = _n + (0.6 * fs).round();
+    _learn = 0;
+    _spki = _npki = 0;
+    _lastSlope = 0;
+    _slopes.clear();
+    _rej.clear();
+    final nw = _winFor(fs);
+    if (nw != old.length) {
+      // شاشە سفر نابێتەوە: ناوەڕۆکی پێشوو بۆ پانیی نوێ دەگوازرێتەوە
+      sweep = List<double>.generate(nw, (i) => old[math.min(old.length - 1, i * old.length ~/ nw)]);
+      cursor = math.min(nw - 1, (oc * nw / old.length).round());
+    }
+    _play.clear();
   }
 
   void _push(int raw) {
+    // کۆتایی ماوەی دەستلێدان ← هێڵی بنەڕەت دووبارە لە ئاستی ئێستاوە (لەرینی دەستلێدان نامێنێت)
+    if (_hold > 0 && _n == _hold) {
+      _design(rate);
+      _x0 = null;
+    }
     // 1) 24-bit
     final p = _prev;
     if (p != null) {
@@ -251,28 +388,45 @@ class EcgSignal {
     _since++;
     _y.add(y);
     final keep = (rate * 3).round();
-    if (_y.length > keep) _y.removeRange(0, _y.length - keep);
+    if (_y.length > keep * 2) _y.removeRange(0, _y.length - keep);
     _detect(_qlp.run(_qhp.run(y)));
 
     // پەنجە: لادانی ستانداردی 1 چرکە
     _stdWin.add(y);
-    final k1 = rate.round().clamp(20, 1000);
-    if (_stdWin.length > k1) _stdWin.removeRange(0, _stdWin.length - k1);
+    _sSum += y;
+    _sSq += y * y;
+    final k1 = rate.round().clamp(20, 1000).toInt();
+    while (_stdWin.length > k1) {
+      final o = _stdWin.removeFirst();
+      _sSum -= o;
+      _sSq -= o * o;
+    }
 
     // 6) نیشاندان
     final shown = _flip ? -y : y;
     _env = math.max(_env * math.pow(0.5, 1 / (rate * 2.5)).toDouble(), shown.abs());
     final scale = math.max(_env * 1.05, ampFloor);
-    final settled = _since > rate * 1.2;
-    final v = settled ? (shown / scale).clamp(-1.0, 1.0).toDouble() : 0.0;
-    last = v;
-    if (sweep.length != window) _newSweep();
-    sweep[cursor] = v;
-    cursor++;
-    if (cursor >= sweep.length) {
-      cursor = 0;
-      sweepFull = true;
+    // سەرەتا و ماوەی دەستلێدان (0.5 چرکە) هێڵی ڕاست پیشان دەدرێت، نەک لەرینەوەی گەورە
+    final v = (_n > rate * 0.5 && _n >= _hold) ? (shown / scale).clamp(-1.0, 1.0).toDouble() : 0.0;
+    _play.addLast(v);
+    final cap = (rate * 3).round();
+    while (_play.length > cap) {
+      _play.removeFirst();
     }
+    _tape.add(v);
+  }
+
+
+  double _slopeRef() {
+    if (_slopes.length < 3) return 0;
+    final s = [..._slopes]..sort();
+    return s[s.length ~/ 2];
+  }
+
+  double? _medRr() {
+    if (_rr.length < 3) return null;
+    final s = [..._rr]..sort();
+    return s[s.length ~/ 2];
   }
 
   void _detect(double q) {
@@ -282,31 +436,58 @@ class EcgSignal {
     _d.removeAt(0);
     final s = dd * dd;
     final w = math.max(3, (0.12 * fs).round());
-    _mwi.add(s);
+    _mwi.addLast(s);
+    _slw.addLast(dd.abs());
     _mwiSum += s;
     while (_mwi.length > w) {
-      _mwiSum -= _mwi.removeAt(0);
+      _mwiSum -= _mwi.removeFirst();
+      _slw.removeFirst();
     }
     final m = math.sqrt(math.max(0.0, _mwiSum) / _mwi.length);
-    final settle = (fs * 1.2).round();
-    if (_since > 3 && _m1 > _m2 && _m1 >= m) {
+    final settle = (fs * 0.8).round();
+    final learnLen = (fs * 1.2).round();
+    // وزەی شەپۆل لەناکاو زۆر بوو (پەنجە دانرا) ← سنوورە کۆنەکان بێسوودن، دووبارە فێربە
+    _eFast += (m - _eFast) * (1.0 / (0.5 * fs));
+    if (_learn < learnLen) {
+      _learnE = math.max(_learnE, _eFast);
+    } else if (_learnE > 0 && _eFast > 5 * _learnE && _n - _restartAt > 2 * fs) {
+      restartLearning();
+    }
+    if (_since > 3 && _m1 > _m2 && _m1 >= m && _n >= math.max(_quiet, _hold)) {
       final pk = _m1;
       final idx = _n - 2;
+      var slope = 0.0;
+      for (final v in _slw) {
+        if (v > slope) slope = v;
+      }
       if (_since < settle) {
         // فلتەرەکان جێگیر دەبن
-      } else if (_learn < (fs * 2).round()) {
+      } else if (_learn < learnLen) {
         _spki = math.max(_spki, pk);
         _npki = 0.5 * _npki + 0.05 * pk;
       } else {
         final thr = _npki + 0.45 * (_spki - _npki);
-        final refr = 0.25 * fs;
-        if (pk > thr && idx - _lastQrs > refr) {
-          _spki = 0.125 * pk + 0.875 * _spki;
-          _qrs(idx);
-          _cands.clear();
+        final refr = 0.22 * fs;
+        final dt = idx - _lastQrs;
+        final sref = _slopeRef();
+        if (pk > thr && dt > refr) {
+          if (slope < 0.4 * sref) {
+            // زۆر نەرمە بۆ QRS (نۆیز، P یان T)
+            _npki = 0.125 * pk + 0.875 * _npki;
+          } else if (dt < 0.42 * fs && slope < 0.5 * _lastSlope) {
+            // شەپۆلی T (Pan–Tompkins): نزیکی QRS ی پێشوو و لێژییەکەی زۆر کەمترە
+            _npki = 0.125 * pk + 0.875 * _npki;
+          } else {
+            _spki = 0.125 * pk + 0.875 * _spki;
+            _lastSlope = slope;
+            _slopes.add(slope);
+            if (_slopes.length > 8) _slopes.removeAt(0);
+            _qrs(idx);
+            _cands.clear();
+          }
         } else {
           _npki = 0.125 * pk + 0.875 * _npki;
-          if (idx - _lastQrs > refr) _cands.add((idx, pk));
+          if (dt > 0.36 * fs) _cands.add((idx, pk, slope));
         }
       }
     }
@@ -321,13 +502,20 @@ class EcgSignal {
           if (c.$2 > best.$2) best = c;
         }
         _cands.clear();
-        if (best.$2 > 0.5 * thr) {
+        if (best.$2 > 0.5 * thr && best.$3 >= 0.4 * _slopeRef()) {
           _spki = 0.25 * best.$2 + 0.75 * _spki;
+          _lastSlope = best.$3;
           _qrs(best.$1);
         }
       }
     }
-    if (_since >= settle) _learn++;
+    // 2.5 چرکە هیچ لێدانێک نەبوو ← سنوورەکان زۆر بەرز بوون (بۆ نموونە لەرینی دەستلێدان)
+    if (_learn >= learnLen && _n - math.max(_lastQrs, _idleMark) > 2.5 * fs) {
+      _spki *= 0.5;
+      _npki *= 0.5;
+      _idleMark = _n;
+    }
+    if (_since >= settle && _n >= _hold) _learn++;
     _m2 = _m1;
     _m1 = m;
   }
@@ -352,15 +540,31 @@ class EcgSignal {
     if (_lastR > -1e8) {
       final rr = (r - _lastR) / fs;
       if (rr >= 0.27 && rr <= 2.2) {
-        double? med;
-        if (_rr.length >= 3) {
-          final s = [..._rr]..sort();
-          med = s[s.length ~/ 2];
-        }
+        final med = _medRr();
         if (med == null || (rr >= 0.65 * med && rr <= 1.5 * med)) {
           _rr.add(rr);
           if (_rr.length > 12) _rr.removeAt(0);
           rrLog.add(rr);
+          _rej.clear();
+        } else {
+          // ڕیتم بەڕاستی گۆڕا (یان RR ـە کۆنەکان هەڵە بوون): 4 ڕەتکراوەی یەکگرتوو ← وەریانبگرە
+          _rej.add(rr);
+          if (_rej.length >= 4) {
+            final tl = _rej.sublist(_rej.length - 4);
+            final mm = tl.reduce((a, b) => a + b) / 4;
+            var sd = 0.0;
+            for (final x in tl) {
+              sd += (x - mm) * (x - mm);
+            }
+            sd = math.sqrt(sd / 4);
+            if (sd / mm < 0.15) {
+              _rr
+                ..clear()
+                ..addAll(tl);
+              rrLog.addAll(tl);
+              _rej.clear();
+            }
+          }
         }
       }
     }
@@ -377,6 +581,56 @@ class EcgSignal {
     beatNow = true;
   }
 
+  // ───────────── پەخشی نەرم بۆ شاشە ─────────────
+  /// هەر فرەیمێک بانگ دەکرێت (~30/چرکە): نموونەکان بە خێرایی ڕاستەقینە لەسەر شاشە دەنووسرێن.
+  /// ~0.15 چرکە پێشبار ← BLE ـی پارچە پارچە وەک خەتێکی بەردەوام و نەرم دەردەکەوێت.
+  void advance([DateTime? now]) {
+    final t = now ?? DateTime.now();
+    final prev = _lastAdv;
+    _lastAdv = t;
+    if (prev == null) return;
+    final dt = (t.difference(prev).inMicroseconds / 1e6).clamp(0.0, 0.1).toDouble();
+    final q = _play.length / rate;
+    if (!_playing) {
+      if (q < 0.15) return;
+      _playing = true;
+    }
+    var speed = 1.0;
+    if (q > 1.2) {
+      speed = 2.0; // زۆر دواکەوت ← خێراتر بگەڕێوە
+    } else if (q > 0.5) {
+      speed = 1.15;
+    } else if (q < 0.06) {
+      speed = 0.85;
+    }
+    _acc += rate * dt * speed;
+    var k = _acc.floor();
+    _acc -= k;
+    if (k > _play.length) {
+      k = _play.length;
+      _acc = 0;
+      _playing = false; // بەتاڵ بوو ← چاوەڕێی پێشبار
+    }
+    if (sweep.isEmpty) return;
+    for (var i = 0; i < k; i++) {
+      final v = _play.removeFirst();
+      sweep[cursor] = v;
+      last = v;
+      cursor++;
+      if (cursor >= sweep.length) {
+        cursor = 0;
+        sweepFull = true;
+      }
+    }
+  }
+
+  /// هەموو نموونە پڕۆسێسکراوە نوێیەکان (بۆ تۆمارکردنی ڕاپۆرت) — دوای خوێندنەوە بەتاڵ دەبێتەوە
+  List<double> takeTape() {
+    final t = _tape;
+    _tape = <double>[];
+    return t;
+  }
+
   /// کاتی دواین پاکێت
   DateTime? get lastPacket => _lastPkt;
 
@@ -389,13 +643,17 @@ class EcgSignal {
     final lp = _lastPkt;
     if (lp == null || t.difference(lp).inMilliseconds > 1500) return false;
     if (_railing) return false;
-    if (_since < rate * 0.8) return false;
-    return _std(_stdWin) > minStd;
+    if (_n < rate * 0.8) return false;
+    final n = _stdWin.length;
+    if (n < 2) return false;
+    final m = _sSum / n;
+    final v = _sSq / n - m * m;
+    return math.sqrt(math.max(0.0, v)) > minStd;
   }
 
-  /// BPM ی زیندوو (null تا 3 لێدانی دروست)
+  /// BPM ی زیندوو (null تا ڕێژە پشتڕاست بێتەوە و 3 RR ی دروست)
   double? get bpm {
-    if (_rr.length < 3) return null;
+    if (!rateOk || _rr.length < 3) return null;
     final tail = _rr.length > 8 ? _rr.sublist(_rr.length - 8) : _rr;
     final s = [...tail]..sort();
     final b = 60.0 / s[s.length ~/ 2];
