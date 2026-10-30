@@ -100,8 +100,15 @@ void main() {
   }
 
   testWidgets('stats tab: full data, all interactions', (t) async {
+    final old = FlutterError.onError;
+    FlutterError.onError = (d) {
+      // ignore: avoid_print
+      print('FERR ${d.toString().split('\n').take(40).join('\n')}');
+      old?.call(d);
+    };
     await run(t, data: true, light: false);
     await settle(t, 700);
+    await expectLater(find.byType(FoodDesignPage), matchesGoldenFile('goldens/stats_first.png'));
     noErr(t);
     expect(find.textContaining('کالۆری 7 ڕۆژی ڕابردوو'), findsOneWidget);
     expect(find.text('6/7'), findsWidgets); // ڕۆژی تۆمارکراو
@@ -148,5 +155,6 @@ void main() {
     await settle(t);
     noErr(t);
     await t.pump(const Duration(seconds: 5));
+    FlutterError.onError = old;
   });
 }

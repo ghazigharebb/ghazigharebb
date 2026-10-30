@@ -109,7 +109,7 @@ List<String> _stKeys(int n) {
 
 String _stDate(String k) {
   final d = _fromKey(k);
-  return '${_kStDay[d.weekday % 7]} ⁦${pad2(d.day)}/${pad2(d.month)}⁩';
+  return '${_kStDay[d.weekday % 7]} \u2066${pad2(d.day)}/${pad2(d.month)}\u2069';
 }
 
 // ═════════════════════════════ شیکردنەوەی هەفتە ═════════════════════════════
