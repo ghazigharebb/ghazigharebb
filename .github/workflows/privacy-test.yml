@@ -1,0 +1,46 @@
+name: privacy-test
+on:
+  push:
+    branches: [privacy-policy]
+permissions:
+  contents: write
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: fonts for tests
+        working-directory: vex_health
+        run: |
+          mkdir -p tfonts
+          curl -sSL -o /tmp/ar.ttf "https://github.com/google/fonts/raw/main/ofl/notosansarabic/NotoSansArabic%5Bwdth,wght%5D.ttf"
+          curl -sSL -o /tmp/so.ttf "https://github.com/google/fonts/raw/main/ofl/sora/Sora%5Bwght%5D.ttf"
+          for w in Thin ExtraLight Light Regular Medium SemiBold Bold ExtraBold Black; do cp /tmp/ar.ttf tfonts/NotoSansArabic-$w.ttf; cp /tmp/so.ttf tfonts/Sora-$w.ttf; done
+          ls -la tfonts /tmp/ar.ttf /tmp/so.ttf > /tmp/fonts.txt
+          sed -i 's#    - assets/brand/#    - assets/brand/\n    - tfonts/#' pubspec.yaml
+          grep -n tfonts pubspec.yaml >> /tmp/fonts.txt
+      - working-directory: vex_health
+        run: flutter pub get
+      - name: test
+        working-directory: vex_health
+        run: |
+          mkdir -p /tmp/o
+          flutter analyze --no-fatal-infos --no-fatal-warnings > /tmp/o/analyze.txt 2>&1 || true
+          st=0; flutter test test/privacy_policy_test.dart --update-goldens -r expanded > /tmp/o/out.txt 2>&1 || st=$?
+          echo "exit=$st" >> /tmp/o/out.txt
+          cp /tmp/fonts.txt /tmp/o/ || true
+          if [ -d test/goldens ]; then cp -r test/goldens /tmp/o/; fi
+          exit $st
+      - name: publish
+        if: always()
+        run: |
+          mkdir -p /tmp/o
+          cd /tmp/o
+          git init -q
+          git config user.name ci && git config user.email ci@example.com
+          git checkout -q -b ci-out
+          git add -A && git commit -qm out
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-out
