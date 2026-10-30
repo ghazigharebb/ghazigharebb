@@ -22,6 +22,12 @@ jobs:
           ls -la tfonts /tmp/ar.ttf /tmp/so.ttf > /tmp/fonts.txt
           sed -i 's#    - assets/brand/#    - assets/brand/\n    - tfonts/#' pubspec.yaml
           grep -n tfonts pubspec.yaml >> /tmp/fonts.txt
+      - name: merged test font
+        working-directory: vex_health
+        run: |
+          pip install fonttools >/tmp/pip.txt 2>&1 || true
+          python3 ../.github/workflows/mergefonts.py > /tmp/merge.txt 2>&1 || true
+          cp /tmp/merge.txt /tmp/fonts.txt.merge || true
       - working-directory: vex_health
         run: flutter pub get
       - name: test
@@ -32,6 +38,7 @@ jobs:
           st=0; flutter test test/arena_today_test.dart --update-goldens -r expanded > /tmp/o/out.txt 2>&1 || st=$?
           echo "exit=$st" >> /tmp/o/out.txt
           cp /tmp/fonts.txt /tmp/o/ || true
+          cp /tmp/merge.txt /tmp/o/ || true
           if [ -d test/goldens ]; then cp -r test/goldens /tmp/o/; fi
           exit $st
       - name: publish

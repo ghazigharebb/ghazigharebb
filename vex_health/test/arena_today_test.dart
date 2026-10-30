@@ -17,9 +17,16 @@ void main() {
 
   setUpAll(() async {
     // فۆنتی ڕاستەقینەی ئەپ (NotoAr) و ئایکۆنەکانی Material بۆ وێنەی دروست
+    // ئەگەر فۆنتی تێکەڵکراو (عەرەبی + لاتینی) هەبێت، بۆ ئەوەی # و + و × ـیش دەربکەون
     final ar = FontLoader('NotoAr');
     for (final f in ['Regular', 'SemiBold', 'Bold']) {
-      ar.addFont(rootBundle.load('assets/fonts/NotoSansArabic-$f.ttf'));
+      final m = File('tfonts/merged/NotoAr-$f.ttf');
+      if (m.existsSync()) {
+        final b = m.readAsBytesSync();
+        ar.addFont(Future.value(ByteData.view(b.buffer)));
+      } else {
+        ar.addFont(rootBundle.load('assets/fonts/NotoSansArabic-$f.ttf'));
+      }
     }
     await ar.load();
     final root = Platform.environment['FLUTTER_ROOT'] ?? '';

@@ -1060,7 +1060,7 @@ class _VexArenaPageState extends State<VexArenaPage> {
           end: Alignment.bottomLeft,
         ),
         border: Border.all(color: _al(kW, .06)),
-        boxShadow: [BoxShadow(color: _al(Colors.black, .25), blurRadius: 40, offset: const Offset(0, 20), spreadRadius: -12)],
+        boxShadow: [BoxShadow(color: _al(Colors.black, VexTheme.I.isLight ? .06 : .25), blurRadius: 40, offset: const Offset(0, 20), spreadRadius: -12)],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
@@ -1100,7 +1100,7 @@ class _VexArenaPageState extends State<VexArenaPage> {
           borderRadius: BorderRadius.circular(99),
           child: Container(
             height: 10,
-            color: _al(Colors.black, .25),
+            color: _al(Colors.black, VexTheme.I.isLight ? .07 : .25),
             alignment: AlignmentDirectional.centerStart,
             child: TweenAnimationBuilder<double>(
               tween: Tween(begin: 0, end: frac),
@@ -1305,7 +1305,7 @@ class _VexArenaPageState extends State<VexArenaPage> {
                       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                         CatTile(cat: c, size: 40),
                         const SizedBox(height: 6),
-                        Text(c.name, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: _ts(12, w: FontWeight.w700)),
+                        FittedBox(fit: BoxFit.scaleDown, child: Text(c.name, maxLines: 1, style: _ts(12, w: FontWeight.w700))),
                       ]),
                     ),
                   ))
@@ -4325,7 +4325,14 @@ class _ActTile extends StatelessWidget {
                 ),
             ]),
             const Spacer(),
-            Text(cat.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: _ts(13, w: FontWeight.w700)),
+            SizedBox(
+              width: double.infinity,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: AlignmentDirectional.centerStart,
+                child: Text(cat.name, maxLines: 1, style: _ts(13, w: FontWeight.w700)),
+              ),
+            ),
             const SizedBox(height: 2),
             revealed
                 ? Text('+${row.pts}', style: _ts(12.5, c: active ? VA.mint : VA.muted, w: FontWeight.w800))
