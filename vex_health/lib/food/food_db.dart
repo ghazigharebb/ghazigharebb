@@ -186,6 +186,7 @@ class FoodDb {
   }
 
   Future<void> load() async {
+    if (loaded) return; // جارێکی تر بانگکردن لیستەکە بەتاڵ ناکاتەوە
     try {
       final raw = await rootBundle.loadString('assets/data/foods.json');
       final j = jsonDecode(raw);
