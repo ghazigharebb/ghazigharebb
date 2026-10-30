@@ -715,7 +715,7 @@ class _StatsTabState extends State<_StatsTab> {
             child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               const _Ic('weight', size: 24),
               const SizedBox(width: 8),
-              _t('تۆمارکردنی کێش و ئامانج', size: 14, w: FontWeight.w800),
+              Flexible(child: _t('تۆمارکردنی کێش و ئامانج', size: 14, w: FontWeight.w800, lines: 1)),
             ]),
           ),
         ),
@@ -866,7 +866,7 @@ class _StatsTabState extends State<_StatsTab> {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(color: op(c, .08), borderRadius: BorderRadius.circular(18), border: Border.all(color: op(c, .35))),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Row(children: [Icon(ic, color: c, size: 20), const SizedBox(width: 6), _t(t, size: 14, w: FontWeight.w800, c: c)]),
+            Row(children: [Icon(ic, color: c, size: 20), const SizedBox(width: 6), Expanded(child: _t(t, size: 14, w: FontWeight.w800, c: c))]),
             const SizedBox(height: 6),
             for (var i = 0; i < l.length; i++)
               Padding(
@@ -896,7 +896,7 @@ class _StatsTabState extends State<_StatsTab> {
             child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               Icon(report ? Icons.expand_less_rounded : Icons.auto_awesome_rounded, color: Colors.white, size: 20),
               const SizedBox(width: 8),
-              _t(report ? 'داخستن' : 'هەفتەکەم شی بکەرەوە', size: 14.5, w: FontWeight.w800, c: Colors.white),
+              Flexible(child: _t(report ? 'داخستن' : 'هەفتەکەم شی بکەرەوە', size: 14.5, w: FontWeight.w800, c: Colors.white, lines: 1)),
             ]),
           ),
         ),
