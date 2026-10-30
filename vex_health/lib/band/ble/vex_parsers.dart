@@ -207,7 +207,8 @@ class VexParser {
       case VexCmd.measure:
         return _measure(v);
       case VexCmd.ppg:
-        return v.length > 16 ? _ppg(v) : VexAck(VexCmd.ppg);
+        // 16 بایت = وەڵامی فرمان؛ هەر قەبارەیەکی تر (2 + 3×n) = پاکێتی شەپۆل، تەنانەت ئەگەر کورت بێت
+        return (v.length != 16 && v.length >= 5) ? _ppg(v) : VexAck(VexCmd.ppg);
       case VexCmd.getBasic:
         return VexBasic({'sportFlash': _u(v, 5), 'hrHighFlash': _u(v, 6)});
       default:

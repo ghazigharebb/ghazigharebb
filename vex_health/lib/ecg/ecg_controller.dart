@@ -136,7 +136,7 @@ class EcgController extends ChangeNotifier {
   DateTime? _contactSince, _lostSince;
   VexMeasureResult? _dev;
   final List<double> _rec = <double>[];
-  int _recSeen = 0;
+  DateTime? _noContactSince = DateTime.now();
   double _synthT = 0;
   DateTime? _synthLast;
   bool _stopped = false;
@@ -151,7 +151,7 @@ class EcgController extends ChangeNotifier {
     sig.invert = rightWrist;
     sig.reset();
     _rec.clear();
-    _recSeen = 0;
+    _noContactSince = DateTime.now();
     _dev = null;
     elapsed = Duration.zero;
     phase = EcgPhase.waiting;
@@ -192,6 +192,9 @@ class EcgController extends ChangeNotifier {
     final now = DateTime.now();
     if (demo) _synth(now);
 
+    // شەپۆل بە خێرایی ڕاستەقینە و نەرم لەسەر شاشە دەنووسرێت
+    sig.advance(now);
+
     if (sig.beatNow) {
       sig.beatNow = false;
       if (phase == EcgPhase.measuring) HapticFeedback.selectionClick();
@@ -207,6 +210,21 @@ class EcgController extends ChangeNotifier {
     }
 
     final c = sig.contact(now);
+    // پەنجە تازە دانرا (دوای ≥0.6 چرکە بێ پەنجە) ← دۆزەرەوەی لێدان لەسەر ECG ی ڕاستەقینە فێر دەبێتەوە
+    if (c) {
+      final ns = _noContactSince;
+      if (ns != null && now.difference(ns).inMilliseconds >= 600) sig.restartLearning();
+      _noContactSince = null;
+    } else {
+      _noContactSince ??= now;
+    }
+    // نموونە نوێیەکان بۆ ڕاپۆرت (تەنها لە کاتی پێوانە)
+    final tape = sig.takeTape();
+    if (phase == EcgPhase.measuring) {
+      _rec.addAll(tape);
+      final cap = (sig.rate * (targetSeconds + 2)).round();
+      if (_rec.length > cap) _rec.removeRange(0, _rec.length - cap);
+    }
     switch (phase) {
       case EcgPhase.waiting:
         if (c) {
@@ -217,7 +235,6 @@ class EcgController extends ChangeNotifier {
             fingerLost = false;
             sig.rrLog.clear();
             _rec.clear();
-            _recSeen = sig.cursor;
             HapticFeedback.lightImpact();
             notifyListeners();
           }
@@ -231,7 +248,6 @@ class EcgController extends ChangeNotifier {
       case EcgPhase.measuring:
         final dt = now.difference(_lastTick);
         _lastTick = now;
-        _record();
         if (c) {
           if (fingerLost) {
             fingerLost = false;
@@ -271,23 +287,6 @@ class EcgController extends ChangeNotifier {
     frame.value++;
   }
 
-  /// هەموو نموونە نوێیەکانی ناو sweep تۆمار دەکات
-  void _record() {
-    final s = sig.sweep;
-    if (s.isEmpty) return;
-    var i = _recSeen;
-    if (i >= s.length) i = 0;
-    var guard = 0;
-    while (i != sig.cursor && guard < s.length) {
-      _rec.add(s[i]);
-      i = (i + 1) % s.length;
-      guard++;
-    }
-    _recSeen = sig.cursor;
-    final cap = (sig.rate * (targetSeconds + 2)).round();
-    if (_rec.length > cap) _rec.removeRange(0, _rec.length - cap);
-  }
-
   void _synth(DateTime now) {
     // 250 نموونە لە چرکەیەکدا (وەک ECG ی ڕاستەقینە)
     const fs = 250.0;
@@ -307,7 +306,7 @@ class EcgController extends ChangeNotifier {
   Future<void> _finish() async {
     _timer?.cancel();
     _stopped = true;
-    _record();
+    _rec.addAll(sig.takeTape());
     HapticFeedback.heavyImpact();
     phase = EcgPhase.done;
     notifyListeners();
@@ -320,9 +319,13 @@ class EcgController extends ChangeNotifier {
     final st = EcgStats.from(sig.rrLog);
     final bt = <double>[], bb = <double>[];
     var tt = 0.0;
+    final srt = [...sig.rrLog]..sort();
+    final mrr = srt.isEmpty ? 0.0 : srt[srt.length ~/ 2];
     for (final x in sig.rrLog) {
       if (x <= 0.2) continue;
       tt += x;
+      // خاڵی نائاسایی (لێدانی ونبوو یان دووجار ژمێردراو) لە چارتی ڕیتمدا پیشان نادرێت
+      if (mrr > 0 && (x < 0.6 * mrr || x > 1.6 * mrr)) continue;
       bt.add(tt);
       bb.add(60.0 / x);
     }
