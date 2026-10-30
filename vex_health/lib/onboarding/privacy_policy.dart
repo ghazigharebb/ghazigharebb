@@ -619,14 +619,14 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
             ],
           ),
           const SizedBox(height: 8),
-          for (final line in body.split('\n')) _line(line, k),
+          for (final (j, line) in body.split('\n').indexed) _line(line, k, afterList: j > 0 && body.split('\n')[j - 1].startsWith('• ')),
         ],
       ),
     );
   }
 
   /// دێڕێک: ئەگەر بە «• » دەستی پێکرد ← خاڵ، و ئەوەی پێش «:» ئەستوور دەبێت
-  Widget _line(String line, Color k) {
+  Widget _line(String line, Color k, {bool afterList = false}) {
     final bullet = line.startsWith('• ');
     final text = bullet ? line.substring(2) : line;
     final base = ku(14.5, w: FontWeight.w500, c: V.tx, h: 1.85);
@@ -651,7 +651,7 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
       }
     }
     final rich = Text.rich(TextSpan(style: base, children: spans));
-    if (!bullet) return Padding(padding: const EdgeInsets.only(top: 2), child: rich);
+    if (!bullet) return Padding(padding: EdgeInsets.only(top: afterList ? 10 : 2), child: rich);
     return Padding(
       padding: const EdgeInsetsDirectional.only(top: 4, start: 4),
       child: Row(
