@@ -891,9 +891,11 @@ class _VexArenaPageState extends State<VexArenaPage> {
                     padding: const EdgeInsets.fromLTRB(16, 10, 16, 40),
                     children: [
                       _header(),
-                      const SizedBox(height: 12),
-                      _PrizeTicker(daysLeft: season.end.difference(DateTime.now()).inDays, onTap: _openPrizes),
-                      const SizedBox(height: 12),
+                      if (tab != 'today') ...[
+                        const SizedBox(height: 12),
+                        _PrizeTicker(daysLeft: season.end.difference(DateTime.now()).inDays, onTap: _openPrizes),
+                      ],
+                      const SizedBox(height: 14),
                       _Seg(
                         items: const [
                           ['today', 'ئەمڕۆ', Icons.bolt_rounded],
@@ -945,7 +947,7 @@ class _VexArenaPageState extends State<VexArenaPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('پێشبڕکێ', style: _ts(24, w: FontWeight.w700)),
-                  Text('وەرزی ${Season.number} · ڕۆژی ${s.day} لە ${Season.length}', style: _ts(12.5, c: VA.muted, w: FontWeight.w600)),
+                  Text('وەرزی ${Season.number} · ${math.max(0, s.end.difference(DateTime.now()).inDays)} ڕۆژ ماوە', style: _ts(12.5, c: VA.muted, w: FontWeight.w600)),
                 ],
               ),
             ),
@@ -953,21 +955,6 @@ class _VexArenaPageState extends State<VexArenaPage> {
             const SizedBox(width: 8),
             _IconBtn(icon: Icons.help_outline_rounded, onTap: () => _sheet(const _HowSheet())),
           ],
-        ),
-        const SizedBox(height: 10),
-        Align(
-          alignment: AlignmentDirectional.centerStart,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
-            decoration: BoxDecoration(color: VA.surf2, borderRadius: BorderRadius.circular(99), border: Border.all(color: VA.line)),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.groups_rounded, size: 15, color: VA.muted),
-              const SizedBox(width: 5),
-              Text(_fmt(s.total + (st.acc != null ? 1 : 0)), style: _ts(12, w: FontWeight.w700)),
-              const SizedBox(width: 4),
-              Text('بەشداربوو', style: _ts(11.5, c: VA.muted, w: FontWeight.w700)),
-            ]),
-          ),
         ),
       ],
     );
@@ -1036,215 +1023,494 @@ class _VexArenaPageState extends State<VexArenaPage> {
   Widget _todayView() {
     final t = today, tot = myTotal, lg = leagueOf(tot), r = rankOf(tot, season), yr = rankOf(tot - t.total, season);
     final g = st.guess[tk], rev = st.revealed.contains(tk);
-    final seg = (t.total / kDailyCap * 12).round();
-    final streak = activeDays;
     final p = catById(t.power);
-    final yg = st.guess[yk];
-    final pct = 23 + _fnv(yk) % 20;
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      // ---- score ----
-      _Card(
-        glow: true,
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('خاڵی ئەمڕۆ', style: _ts(13, c: VA.muted, w: FontWeight.w600)),
-                _CountUp(
-                  value: t.total,
-                  style: _ts(68, w: FontWeight.w800, h: 1.05),
-                  shader: LinearGradient(colors: [kW, VA.cyanSoft], begin: Alignment.topCenter, end: Alignment.bottomCenter),
-                ),
-              ]),
-            ),
-            Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text('پلەکەت', style: _ts(13, c: VA.muted, w: FontWeight.w600)),
-              Text('#${_fmt(r)}', style: _ts(30, w: FontWeight.w800)),
-              if (yr > r)
+      const SizedBox(height: 16),
+      _heroCard(t, tot, lg, r, yr),
+      const SizedBox(height: 16),
+      _powerCard(t, p, g, rev),
+      const SizedBox(height: 22),
+      _activities(t, rev),
+      const SizedBox(height: 16),
+      _fairPlayRow(),
+      const SizedBox(height: 22),
+      _prizes(),
+    ]);
+  }
+
+  // ---- کارتی سەرەکی: خاڵ، پلە، سنوور، لیگ/وەرز/ئاست/بەردەوامی ----
+  Widget _heroCard(DayPoints t, int tot, League lg, int r, int yr) {
+    final frac = (t.total / kDailyCap).clamp(0.0, 1.0);
+    Widget stat(Widget icon, Widget value, String label) => Expanded(
+          child: Column(children: [
+            SizedBox(height: 24, child: Center(child: icon)),
+            const SizedBox(height: 4),
+            FittedBox(fit: BoxFit.scaleDown, child: value),
+            const SizedBox(height: 2),
+            Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: _ts(11.5, c: VA.muted, w: FontWeight.w600)),
+          ]),
+        );
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 20, 18, 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        gradient: LinearGradient(
+          colors: [vk(0xFF0F4651), vk(0xFF0A3540), vk(0xFF082C35)],
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+        ),
+        border: Border.all(color: _al(kW, .06)),
+        boxShadow: [BoxShadow(color: _al(Colors.black, .25), blurRadius: 40, offset: const Offset(0, 20), spreadRadius: -12)],
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('خاڵی ئەمڕۆ', style: _ts(13, c: VA.muted, w: FontWeight.w700)),
+              _CountUp(
+                value: t.total,
+                style: _ts(72, w: FontWeight.w800, h: 1.05, ls: -1.5),
+                shader: LinearGradient(colors: [kW, vk(0xFF9FF6E6)], begin: Alignment.topCenter, end: Alignment.bottomCenter),
+              ),
+            ]),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+              Text('پلەکەت', style: _ts(13, c: VA.muted, w: FontWeight.w700)),
+              const SizedBox(height: 2),
+              Text('#${_fmt(r)}', style: _ts(26, w: FontWeight.w800, h: 1.1)),
+              if (yr > r) ...[
+                const SizedBox(height: 6),
                 Container(
-                  margin: const EdgeInsets.only(top: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                  decoration: BoxDecoration(color: _al(VA.mint, .14), borderRadius: BorderRadius.circular(99)),
+                  padding: const EdgeInsetsDirectional.fromSTEB(6, 2, 10, 2),
+                  decoration: BoxDecoration(color: _al(VA.mint, .16), borderRadius: BorderRadius.circular(99)),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.arrow_drop_up_rounded, color: VA.mint, size: 18),
-                    Text(_fmt(yr - r), style: _ts(14, c: VA.mint, w: FontWeight.w800)),
+                    Icon(Icons.arrow_upward_rounded, color: VA.mint, size: 13),
+                    const SizedBox(width: 3),
+                    Text(_fmt(yr - r), style: _ts(12.5, c: VA.mint, w: FontWeight.w800)),
                   ]),
                 ),
+              ],
             ]),
-          ]),
-          const SizedBox(height: 12),
-          Row(
-            children: List.generate(
-              12,
-              (i) => Expanded(
-                child: Container(
-                  height: 9,
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
-                  decoration: BoxDecoration(
-                    gradient: i < seg ? VA.prime : null,
-                    color: i < seg ? null : _al(kW, .08),
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                ),
+          ),
+        ]),
+        const SizedBox(height: 16),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(99),
+          child: Container(
+            height: 10,
+            color: _al(Colors.black, .25),
+            alignment: AlignmentDirectional.centerStart,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: frac),
+              duration: const Duration(milliseconds: 1100),
+              curve: Curves.easeOutCubic,
+              builder: (_, v, __) => FractionallySizedBox(
+                widthFactor: v,
+                heightFactor: 1,
+                child: DecoratedBox(decoration: BoxDecoration(gradient: VA.prime, borderRadius: BorderRadius.circular(99))),
               ),
             ),
           ),
-          const SizedBox(height: 6),
-          Row(children: [
-            Expanded(child: Text('سنووری ڕۆژانە', style: _ts(12.5, c: VA.muted, w: FontWeight.w600))),
-            Text('${t.total} / $kDailyCap', style: _ts(12.5, c: VA.muted, w: FontWeight.w700)),
-          ]),
-          const SizedBox(height: 12),
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            childAspectRatio: 3.1,
-            children: [
-              _StatTile(label: 'کۆی وەرز', value: Text(_fmt(tot), style: _ts(19, w: FontWeight.w800))),
-              _StatTile(
-                  label: 'لیگ',
-                  value: Row(mainAxisSize: MainAxisSize.min, children: [
-                    LeagueEmblem(league: lg, size: 18),
-                    const SizedBox(width: 6),
-                    Text(lg.name, style: _ts(15, w: FontWeight.w800)),
-                  ])),
-              _StatTile(label: 'ئاست', value: Text('${levelOf(tot)}', style: _ts(19, w: FontWeight.w800))),
-              _StatTile(
-                  label: 'بەردەوامی',
-                  value: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.local_fire_department_rounded, color: vk(0xFFFF9466), size: 18),
-                    const SizedBox(width: 4),
-                    Text('$streak', style: _ts(19, w: FontWeight.w800)),
-                  ])),
-            ],
+        ),
+        const SizedBox(height: 8),
+        Row(children: [
+          Expanded(child: Text('سنووری ڕۆژانە', style: _ts(12.5, c: VA.muted, w: FontWeight.w600))),
+          Text.rich(
+            TextSpan(children: [
+              TextSpan(text: _fmt(t.total), style: _ts(12.5, w: FontWeight.w800)),
+              TextSpan(text: ' لە ', style: _ts(12.5, c: VA.muted)),
+              TextSpan(text: '$kDailyCap', style: _ts(12.5, c: VA.muted, w: FontWeight.w700)),
+            ]),
           ),
         ]),
-      ),
+        const SizedBox(height: 14),
+        Container(height: 1, color: _al(kW, .08)),
+        const SizedBox(height: 14),
+        Row(children: [
+          stat(LeagueEmblem(league: lg, size: 22), Text(lg.name, style: _ts(14, w: FontWeight.w800, c: lg.accent)), 'لیگ'),
+          stat(Icon(Icons.trending_up_rounded, size: 22, color: VA.cyanSoft), Text(_fmt(tot), style: _ts(14, w: FontWeight.w800)), 'کۆی وەرز'),
+          stat(Icon(Icons.star_rounded, size: 22, color: vk(0xFFB9A6FF)), Text('${levelOf(tot)}', style: _ts(14, w: FontWeight.w800)), 'ئاست'),
+          stat(Icon(Icons.local_fire_department_rounded, size: 22, color: vk(0xFFFF8A4D)), Text('$activeDays ڕۆژ', style: _ts(14, w: FontWeight.w800)), 'بەردەوامی'),
+        ]),
+      ]),
+    );
+  }
 
-      // ---- mystery power ----
-      _MysteryCard(
-        power: t.power,
-        guess: g,
-        revealed: rev,
-        onGuess: (id) {
-          if (st.guess[tk] != null || rev) return;
-          HapticFeedback.mediumImpact();
-          st.guess[tk] = id;
-          st.save();
-          _toast(context, 'پێشبینییەکەت تۆمار کرا', Icons.lock_rounded);
-        },
-        onDemoReveal: () {
-          st.revealed.add(tk);
-          if (st.guess[tk] == today.power) {
-            st.coins += 30;
-            st.bestPower += 1;
-            showConfetti(context);
-            _toast(context, 'ڕاستت پێکا! +50 خاڵ و 30 سکە', Icons.star_rounded);
-          } else {
-            _toast(context, 'هێزی ئەمڕۆ ${p.name} بوو', Icons.lightbulb_rounded);
-          }
-          st.save();
-        },
-      ),
-
-      // ---- yesterday ----
-      _Card(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Row(children: [
-            CatTile(cat: catById(yest.power), size: 52),
-            const SizedBox(width: 12),
+  // ---- هێزی نهێنی: ئاماژە، پێشبینی، ئەنجام، دوێنێ ----
+  Widget _powerCard(DayPoints t, ArenaCat p, String? g, bool rev) {
+    final won = rev && g == t.power;
+    Widget action;
+    if (rev) {
+      action = _Note(
+        color: won ? VA.mint : VA.amber,
+        icon: won ? Icons.check_rounded : Icons.lightbulb_rounded,
+        text: won ? 'ڕاستت پێکا! هێزی ئەمڕۆ ${p.name} بوو · +50 خاڵ' : 'هێزی ئەمڕۆ ${p.name} بوو · سبەینێ هێزێکی نوێ دەبێت',
+      );
+    } else if (g != null) {
+      action = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(color: _al(kW, .07), borderRadius: BorderRadius.circular(16)),
+          child: Row(children: [
+            CatTile(cat: catById(g), size: 34),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('ئاشکرا کرا · هێزی دوێنێ', style: _ts(12, c: VA.muted)),
-                Text('${catById(yest.power).name} ×3 · ${catById(yest.second).name} ×1.5', style: _ts(15, w: FontWeight.w800)),
-                Text('$pct%ی خەڵک ڕاستیان پێکا${yg != null && yg == yest.power ? ' · تۆش یەکێک بوویت' : ''}',
-                    style: _ts(12, c: VA.muted)),
+                Text('پێشبینییەکەت: ${catById(g).name}', style: _ts(14, w: FontWeight.w800)),
+                Text('ئەنجام لە نیوەشەو ئاشکرا دەبێت', style: _ts(12, c: vk(0xFFCBBFFF))),
               ]),
             ),
+            Icon(Icons.lock_rounded, size: 18, color: vk(0xFFCBBFFF)),
           ]),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: (yest.rows.where((x) => x.pts > 0).toList()..sort((a, b) => b.pts.compareTo(a.pts)))
-                .map((x) => Container(
-                      padding: const EdgeInsetsDirectional.fromSTEB(4, 4, 10, 4),
-                      decoration: BoxDecoration(
-                          color: _al(x.cat.color, .12),
-                          borderRadius: BorderRadius.circular(99),
-                          border: Border.all(color: _al(x.cat.color, .3))),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        CatTile(cat: x.cat, size: 20),
-                        const SizedBox(width: 5),
-                        Text('${x.pts}', style: _ts(12.5, w: FontWeight.w800)),
-                        if (x.mul > 1) ...[
-                          const SizedBox(width: 4),
-                          Text('×${x.mul == 3 ? 3 : 1.5}', style: _ts(11, c: x.cat.color, w: FontWeight.w800)),
-                        ],
+        ),
+        TextButton(
+          onPressed: _demoReveal,
+          child: Text('تاقیکردنەوە: نیوەشەو ئاشکرا بکە (دیمۆ)', style: _ts(12, c: _al(VA.text, .65))),
+        ),
+      ]);
+    } else {
+      action = _Press(
+        onTap: _openGuess,
+        child: Container(
+          height: 50,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(color: VexTheme.I.isLight ? VA.violet : kW, borderRadius: BorderRadius.circular(16)),
+          child: Text('پێشبینی بکە و +50 خاڵ ببەوە',
+              style: _ts(15.5, w: FontWeight.w800, c: VexTheme.I.isLight ? Colors.white : vk(0xFF2B1A6B))),
+        ),
+      );
+    }
+    final yp = catById(yest.power), ys = catById(yest.second);
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(26),
+        gradient: LinearGradient(
+          colors: [vk(0xFF2B1A6B), vk(0xFF1D1450), vk(0xFF150F3A)],
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+        ),
+        border: Border.all(color: _al(VA.violet, .25)),
+        boxShadow: [BoxShadow(color: _al(VA.violet, .22), blurRadius: 30, offset: const Offset(0, 12), spreadRadius: -8)],
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(children: [
+          Container(
+            width: 64,
+            height: 64,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(center: const Alignment(-.3, -.4), colors: [vk(0xFFB9A6FF), vk(0xFF6B3FF0), vk(0xFF3A1D9E)]),
+              boxShadow: [
+                BoxShadow(color: _al(VA.violet, .18), spreadRadius: 6),
+                BoxShadow(color: _al(vk(0xFF6B3FF0), .55), blurRadius: 30, offset: const Offset(0, 10)),
+              ],
+            ),
+            child: rev ? Icon(p.icon, size: 28, color: Colors.white) : Text('?', style: _ts(30, c: Colors.white, w: FontWeight.w900)),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('هێزی نهێنیی ئەمڕۆ', style: _ts(18, w: FontWeight.w800)),
+              const SizedBox(height: 2),
+              Text.rich(
+                TextSpan(children: [
+                  const TextSpan(text: 'یەکێک لە بەشەکان ئەمڕۆ خاڵەکەی '),
+                  TextSpan(text: '×3', style: _ts(13, w: FontWeight.w900)),
+                  const TextSpan(text: ' دەبێت. تا نیوەشەو کەس نازانێت.'),
+                ]),
+                style: _ts(13, c: vk(0xFFCBBFFF), h: 1.6),
+              ),
+            ]),
+          ),
+        ]),
+        const SizedBox(height: 14),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(color: _al(kW, .07), borderRadius: BorderRadius.circular(14)),
+          child: Row(children: [
+            Icon(Icons.lightbulb_outline_rounded, size: 18, color: VA.gold),
+            const SizedBox(width: 8),
+            Expanded(child: Text('ئاماژە: ${kHints[t.power]}', style: _ts(13.5, w: FontWeight.w600, c: vk(0xFFE4DDFF)))),
+          ]),
+        ),
+        const SizedBox(height: 14),
+        action,
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: _openYesterday,
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(children: [
+              Expanded(
+                child: Text(
+                  'دوێنێ: ${yp.name} ×3 · ${ys.name} ×1.5 · خاڵی دوێنێت ${_fmt(yest.total)}',
+                  style: _ts(12.5, c: vk(0xFFA99CE0), w: FontWeight.w600),
+                ),
+              ),
+              Icon(Icons.chevron_left_rounded, size: 18, color: vk(0xFFA99CE0)),
+            ]),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  void _demoReveal() {
+    st.revealed.add(tk);
+    if (st.guess[tk] == today.power) {
+      st.coins += 30;
+      st.bestPower += 1;
+      showConfetti(context);
+      _toast(context, 'ڕاستت پێکا! +50 خاڵ و 30 سکە', Icons.star_rounded);
+    } else {
+      _toast(context, 'هێزی ئەمڕۆ ${catById(today.power).name} بوو', Icons.lightbulb_rounded);
+    }
+    st.save();
+  }
+
+  /// پێشبینی: یەکێک لە 11 بەشەکە هەڵبژێرە
+  void _openGuess() {
+    if (st.guess[tk] != null || st.revealed.contains(tk)) return;
+    _sheet<void>(Builder(
+      builder: (ctx) => Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Text('کامیان هێزی ئەمڕۆیە؟', textAlign: TextAlign.center, style: _ts(18, w: FontWeight.w800)),
+        const SizedBox(height: 4),
+        Text('ئاماژە: ${kHints[today.power]}', textAlign: TextAlign.center, style: _ts(13, c: VA.muted, h: 1.6)),
+        const SizedBox(height: 14),
+        GridView.count(
+          crossAxisCount: 4,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 8,
+          childAspectRatio: .82,
+          children: kArenaCats
+              .map((c) => _Press(
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      if (st.guess[tk] != null || st.revealed.contains(tk)) return;
+                      HapticFeedback.mediumImpact();
+                      st.guess[tk] = c.id;
+                      st.save();
+                      _toast(context, 'پێشبینییەکەت تۆمار کرا: ${c.name}', Icons.lock_rounded);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                      decoration: BoxDecoration(color: _al(kW, .05), borderRadius: BorderRadius.circular(18), border: Border.all(color: VA.line)),
+                      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        CatTile(cat: c, size: 40),
+                        const SizedBox(height: 6),
+                        Text(c.name, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: _ts(12, w: FontWeight.w700)),
                       ]),
-                    ))
-                .toList(),
-          ),
-          const SizedBox(height: 10),
-          Text('خاڵی دوێنێت: ${_fmt(yest.total)} · ڕاپۆرتی هێزی ڕۆژ هەموو بەیانییەک دێت.', style: _ts(12.5, c: VA.muted)),
-        ]),
-      ),
+                    ),
+                  ))
+              .toList(),
+        ),
+        const SizedBox(height: 12),
+        Text('ئەگەر ڕاست بێت +50 خاڵ و 30 سکە وەردەگریت. تەنها یەک جار دەتوانیت پێشبینی بکەیت.',
+            textAlign: TextAlign.center, style: _ts(12, c: VA.muted, h: 1.6)),
+      ]),
+    ));
+  }
 
-      // ---- activities ----
-      _Card(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const _Title(icon: Icons.bar_chart_rounded, text: 'چالاکییەکانی ئەمڕۆ', note: 'AI پشتڕاستی کردوونەتەوە'),
-          const SizedBox(height: 10),
-          GridView.count(
-            crossAxisCount: 4,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            childAspectRatio: .58,
-            children: kArenaCats.map((c) {
-              final d = data[c.id]!, row = t.row(c.id);
-              return _ActivityTile(
-                cat: c,
-                value: d.v,
-                active: d.f > 0,
-                points: rev ? '+${row.pts}' : '؟؟',
-                onTap: () => _openCat(c),
-              );
-            }).toList(),
+  /// ئەنجامی دوێنێ: هێزەکان و خاڵی هەر بەشێک
+  void _openYesterday() {
+    final yg = st.guess[yk];
+    final pct = 23 + _fnv(yk) % 20;
+    final rows = yest.rows.where((x) => x.pts > 0).toList()..sort((a, b) => b.pts.compareTo(a.pts));
+    _sheet<void>(Builder(
+      builder: (ctx) => Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(children: [
+          CatTile(cat: catById(yest.power), size: 52),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('ئاشکرا کرا · هێزی دوێنێ', style: _ts(12, c: VA.muted)),
+              Text('${catById(yest.power).name} ×3 · ${catById(yest.second).name} ×1.5', style: _ts(16, w: FontWeight.w800)),
+              Text('$pct%ی خەڵک ڕاستیان پێکا${yg != null && yg == yest.power ? ' · تۆش یەکێک بوویت' : ''}', style: _ts(12, c: VA.muted)),
+            ]),
           ),
         ]),
-      ),
+        const SizedBox(height: 14),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: rows
+              .map((x) => Container(
+                    padding: const EdgeInsetsDirectional.fromSTEB(4, 4, 10, 4),
+                    decoration: BoxDecoration(
+                        color: _al(x.cat.color, .12), borderRadius: BorderRadius.circular(99), border: Border.all(color: _al(x.cat.color, .3))),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      CatTile(cat: x.cat, size: 22),
+                      const SizedBox(width: 5),
+                      Text(x.cat.name, style: _ts(12, w: FontWeight.w600)),
+                      const SizedBox(width: 5),
+                      Text('${x.pts}', style: _ts(12.5, w: FontWeight.w800)),
+                      if (x.mul > 1) ...[
+                        const SizedBox(width: 4),
+                        Text('×${x.mul == 3 ? 3 : 1.5}', style: _ts(11, c: x.cat.color, w: FontWeight.w800)),
+                      ],
+                    ]),
+                  ))
+              .toList(),
+        ),
+        const SizedBox(height: 14),
+        Text('خاڵی دوێنێت: ${_fmt(yest.total)} · ڕاپۆرتی هێزی ڕۆژ هەموو بەیانییەک دێت.', style: _ts(13, c: VA.muted)),
+        const SizedBox(height: 14),
+        _Btn(label: 'داخستن', secondary: true, onTap: () => Navigator.of(ctx).pop()),
+      ]),
+    ));
+  }
 
-      // ---- AI report ----
-      _Card(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+  // ---- چالاکییەکانی ئەمڕۆ (11 بەش + کۆ) ----
+  Widget _activities(DayPoints t, bool rev) {
+    final tiles = <Widget>[
+      for (final c in kArenaCats)
+        _ActTile(
+          cat: c,
+          row: t.row(c.id),
+          active: (data[c.id]?.f ?? 0) > 0,
+          revealed: rev,
+          onTap: () => _openCat(c),
+        ),
+      Container(
+        decoration: BoxDecoration(color: _al(VA.mint, .08), borderRadius: BorderRadius.circular(18)),
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          FittedBox(fit: BoxFit.scaleDown, child: Text(_fmt(t.total), style: _ts(22, c: VA.mint, w: FontWeight.w800))),
+          const SizedBox(height: 2),
+          Text('کۆی ئەمڕۆ', style: _ts(12, c: VA.mint, w: FontWeight.w700)),
+        ]),
+      ),
+    ];
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Row(children: [
+        Expanded(child: Text('چالاکییەکانی ئەمڕۆ', style: _ts(17, w: FontWeight.w800))),
+        Icon(Icons.verified_user_rounded, size: 15, color: VA.mint),
+        const SizedBox(width: 5),
+        Text('AI پشتڕاستی کردوونەتەوە', style: _ts(12, c: VA.mint, w: FontWeight.w700)),
+      ]),
+      const SizedBox(height: 12),
+      GridView(
+        shrinkWrap: true,
+        padding: EdgeInsets.zero,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, mainAxisSpacing: 8, crossAxisSpacing: 8, mainAxisExtent: 122),
+        children: tiles,
+      ),
+    ]);
+  }
+
+  // ---- یاریی پاک ----
+  List<_AiRow> _aiRows() => [
+        _AiRow(ok: true, title: '${data['walk']!.v} پشتڕاست کرایەوە', sub: 'لێدانی دڵ لەگەڵ ڕۆیشتن بەرز بووەوە'),
+        _AiRow(ok: true, title: 'خەوی ${data['sleep']!.v}', sub: 'لێدانی دڵ و جووڵەی شەو لەگەڵ یەک گونجان'),
+        _AiRow(ok: true, title: 'خۆراک: ${data['food']!.v}', sub: 'تۆمارکراو لە بەشی خواردن · وێنەی ڕاستەوخۆ'),
+        const _AiRow(ok: false, title: '1,180 هەنگاو ڕەتکرایەوە', sub: 'جووڵەی دەست بێ بەرزبوونەوەی لێدانی دڵ · 22:15'),
+        const _AiRow(ok: false, title: 'وێنەی ژەم ڕەتکرایەوە', sub: 'وێنەکە لە گەلەرییەوە بوو، نەک لە کامێرای ڕاستەوخۆ'),
+      ];
+
+  Widget _fairPlayRow() {
+    final rejected = _aiRows().where((x) => !x.ok).length;
+    return _Press(
+      onTap: () => _sheet<void>(Builder(
+        builder: (ctx) => Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           const _Title(icon: Icons.verified_user_rounded, text: 'ڕاپۆرتی AI', note: 'یاریی پاک'),
-          const SizedBox(height: 8),
-          _AiRow(ok: true, title: '${data['walk']!.v} پشتڕاست کرایەوە', sub: 'لێدانی دڵ لەگەڵ ڕۆیشتن بەرز بووەوە'),
-          _AiRow(ok: true, title: 'خەوی ${data['sleep']!.v}', sub: 'لێدانی دڵ و جووڵەی شەو لەگەڵ یەک گونجان'),
-          _AiRow(ok: true, title: 'خۆراک: ${data['food']!.v}', sub: 'تۆمارکراو لە بەشی خواردن · وێنەی ڕاستەوخۆ'),
-          const _AiRow(ok: false, title: '1,180 هەنگاو ڕەتکرایەوە', sub: 'جووڵەی دەست بێ بەرزبوونەوەی لێدانی دڵ · 22:15'),
-          const _AiRow(ok: false, title: 'وێنەی ژەم ڕەتکرایەوە', sub: 'وێنەکە لە گەلەرییەوە بوو، نەک لە کامێرای ڕاستەوخۆ'),
+          const SizedBox(height: 6),
+          ..._aiRows(),
+          const SizedBox(height: 14),
+          _Btn(label: 'داخستن', secondary: true, onTap: () => Navigator.of(ctx).pop()),
+        ]),
+      )),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(color: _al(VA.mint, .07), borderRadius: BorderRadius.circular(20)),
+        child: Row(children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(color: _al(VA.mint, .16), borderRadius: BorderRadius.circular(13)),
+            child: Icon(Icons.verified_user_rounded, size: 20, color: VA.mint),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('یاریی پاک', style: _ts(15, w: FontWeight.w800)),
+              Text(rejected == 0 ? 'هەموو تۆمارەکانت پشتڕاست کرانەوە' : '$rejected تۆمار ڕەتکرایەوە · بزانە بۆچی',
+                  style: _ts(12.5, c: VA.muted, w: FontWeight.w600)),
+            ]),
+          ),
+          Icon(Icons.chevron_left_rounded, color: VA.muted),
         ]),
       ),
+    );
+  }
 
-      // ---- prizes ----
-      _Card(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const _Title(icon: Icons.card_giftcard_rounded, text: 'خەڵاتەکانی وەرز', note: 'بۆ ئەوانەی 25 ڕۆژ چالاک دەبن'),
-          const SizedBox(height: 12),
-          GestureDetector(onTap: _openPrizes, child: const _PrizeRow()),
-          const SizedBox(height: 12),
-          _Btn(
-              label: 'خاڵەکان چۆن کۆدەکرێنەوە و بۆچی کەس ناتوانێت فێڵ بکات؟',
-              icon: Icons.shield_rounded,
-              secondary: true,
-              onTap: () => _sheet(const _HowSheet())),
+  // ---- خەڵاتەکانی وەرز ----
+  Widget _prizes() {
+    Widget prize(IconData icon, String name, String place, Color c, {bool big = false}) => Expanded(
+          child: Container(
+            padding: EdgeInsets.fromLTRB(6, big ? 20 : 14, 6, big ? 16 : 14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(colors: [_al(c, big ? .18 : .08), _al(c, big ? .05 : .04)], begin: Alignment.topCenter, end: Alignment.bottomCenter),
+              border: big ? Border.all(color: _al(c, .4)) : null,
+            ),
+            child: Column(children: [
+              Container(
+                width: big ? 48 : 40,
+                height: big ? 48 : 40,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(big ? 15 : 13),
+                  gradient: big ? VA.goldG : null,
+                  color: big ? null : _al(c, .16),
+                ),
+                child: Icon(icon, size: big ? 26 : 21, color: big ? vk(0xFF4A3200) : c),
+              ),
+              const SizedBox(height: 6),
+              FittedBox(fit: BoxFit.scaleDown, child: Text(name, style: _ts(big ? 14 : 13, w: FontWeight.w800, c: big ? VA.gold : VA.text))),
+              Text(place, style: _ts(11.5, c: VA.muted)),
+            ]),
+          ),
+        );
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Row(children: [
+        Expanded(child: Text('خەڵاتەکانی وەرز', style: _ts(17, w: FontWeight.w800))),
+        Text('بۆ ${Season.needDays} ڕۆژی چالاک', style: _ts(12, c: VA.muted)),
+      ]),
+      const SizedBox(height: 12),
+      GestureDetector(
+        onTap: _openPrizes,
+        child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          prize(Icons.phone_iphone_rounded, 'iPhone 17 Pro', 'پلەی دووەم', VA.silver),
+          const SizedBox(width: 8),
+          prize(Icons.directions_car_filled_rounded, 'ئۆتۆمبێل', 'پلەی یەکەم', VA.gold, big: true),
+          const SizedBox(width: 8),
+          prize(Icons.payments_rounded, '1,000,000 د.ع', 'پلەی سێیەم', VA.bronze),
         ]),
+      ),
+      const SizedBox(height: 12),
+      Text(
+        '${_fmt(season.total + (st.acc != null ? 1 : 0))} کەس بەشدارن · هەموو ئەوانەی ${Season.length} ڕۆژ تەواو دەکەن خەڵاتیان هەیە',
+        textAlign: TextAlign.center,
+        style: _ts(12.5, c: VA.muted, h: 1.6),
+      ),
+      const SizedBox(height: 14),
+      _Press(
+        onTap: () => _sheet(const _HowSheet()),
+        child: Container(
+          height: 50,
+          decoration: BoxDecoration(color: _al(kW, .06), borderRadius: BorderRadius.circular(16)),
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(Icons.help_outline_rounded, size: 18, color: VA.text),
+            const SizedBox(width: 8),
+            Flexible(child: Text('خاڵەکان چۆن کۆدەکرێنەوە؟', maxLines: 1, overflow: TextOverflow.ellipsis, style: _ts(14.5, w: FontWeight.w700))),
+          ]),
+        ),
       ),
     ]);
   }
@@ -3508,13 +3774,12 @@ class _IconBtn extends StatelessWidget {
   final VoidCallback onTap;
   const _IconBtn({required this.icon, required this.onTap});
   @override
-  Widget build(BuildContext context) => InkWell(
+  Widget build(BuildContext context) => _Press(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
         child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(color: VA.surf, borderRadius: BorderRadius.circular(14), border: Border.all(color: VA.line)),
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(color: _al(kW, .06), borderRadius: BorderRadius.circular(14)),
           child: Icon(icon, size: 21, color: VA.text),
         ),
       );
@@ -3525,20 +3790,21 @@ class _CoinPill extends StatelessWidget {
   const _CoinPill({required this.coins});
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsetsDirectional.fromSTEB(12, 7, 10, 7),
-        decoration: BoxDecoration(color: VA.surf, borderRadius: BorderRadius.circular(99), border: Border.all(color: VA.line)),
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(color: _al(VA.gold, .1), borderRadius: BorderRadius.circular(14)),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(shape: BoxShape.circle, gradient: VA.goldG),
+            child: Icon(Icons.star_rounded, size: 13, color: vk(0xFF6B4300)),
+          ),
+          const SizedBox(width: 7),
           TweenAnimationBuilder<double>(
             tween: Tween(end: coins.toDouble()),
             duration: const Duration(milliseconds: 700),
-            builder: (_, v, __) => Text(_fmt(v), style: _ts(13, w: FontWeight.w800)),
-          ),
-          const SizedBox(width: 6),
-          Container(
-            width: 19,
-            height: 19,
-            decoration: BoxDecoration(shape: BoxShape.circle, gradient: VA.goldG),
-            child: Icon(Icons.star_rounded, size: 12, color: vk(0xFF6B4300)),
+            builder: (_, v, __) => Text(_fmt(v), style: _ts(15, w: FontWeight.w800, c: VexTheme.I.isLight ? VA.text : vk(0xFFFFE39A))),
           ),
         ]),
       );
@@ -3552,31 +3818,25 @@ class _Seg extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: vk(0xFF06303C),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: VA.line),
-          boxShadow: [BoxShadow(color: _al(Colors.black, .4), blurRadius: 18, offset: const Offset(0, 8), spreadRadius: -12)],
-        ),
+        decoration: BoxDecoration(color: _al(kW, .05), borderRadius: BorderRadius.circular(16)),
         child: Row(
           children: items.map((t) {
             final on = t[0] == value;
             return Expanded(
               child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: () => onChanged(t[0] as String),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 220),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  curve: Curves.easeOutCubic,
+                  height: 42,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    gradient: on ? VA.prime : null,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: on ? [BoxShadow(color: _al(VA.mint, .35), blurRadius: 18, offset: const Offset(0, 6), spreadRadius: -6)] : null,
+                    color: on ? VA.text : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: on ? [BoxShadow(color: _al(Colors.black, .25), blurRadius: 12, offset: const Offset(0, 4), spreadRadius: -4)] : null,
                   ),
-                  child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Icon(t[2] as IconData, size: 16, color: on ? VA.ink : VA.muted),
-                    const SizedBox(width: 6),
-                    Text(t[1] as String, style: _ts(13, w: FontWeight.w800, c: on ? VA.ink : VA.muted)),
-                  ]),
+                  child: Text(t[1] as String, style: _ts(14.5, w: on ? FontWeight.w800 : FontWeight.w700, c: on ? VA.bg : VA.muted)),
                 ),
               ),
             );
@@ -3780,43 +4040,6 @@ class _IconTile extends StatelessWidget {
       );
 }
 
-class _ActivityTile extends StatelessWidget {
-  final ArenaCat cat;
-  final String value, points;
-  final bool active;
-  final VoidCallback onTap;
-  const _ActivityTile({required this.cat, required this.value, required this.points, required this.active, required this.onTap});
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-        onTap: onTap,
-        child: Opacity(
-          opacity: active ? 1 : .55,
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(4, 10, 4, 8),
-            decoration: BoxDecoration(color: _al(kW, .04), borderRadius: BorderRadius.circular(18), border: Border.all(color: VA.line)),
-            child: Stack(children: [
-              if (active)
-                Positioned(
-                  top: 0,
-                  right: 4,
-                  child: Container(width: 7, height: 7, decoration: BoxDecoration(color: VA.mint, shape: BoxShape.circle)),
-                ),
-              Column(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                CatTile(cat: cat, size: 38),
-                Text(cat.name, textAlign: TextAlign.center, maxLines: 2, style: _ts(11.5, w: FontWeight.w800, h: 1.25)),
-                Text(value, textAlign: TextAlign.center, maxLines: 2, style: _ts(9.5, c: VA.muted, h: 1.3)),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(color: _al(VA.violet, .16), borderRadius: BorderRadius.circular(99)),
-                  child: Text(points, style: _ts(10.5, c: vk(0xFFC9B8FF), w: FontWeight.w800)),
-                ),
-              ]),
-            ]),
-          ),
-        ),
-      );
-}
-
 class _Podium extends StatelessWidget {
   final ArenaPlayer p;
   final int place;
@@ -3894,46 +4117,6 @@ class _RankRow extends StatelessWidget {
         ]),
       ),
     );
-  }
-}
-
-class _PrizeRow extends StatelessWidget {
-  const _PrizeRow();
-  @override
-  Widget build(BuildContext context) {
-    Widget pz(int n, IconData ic, String name, Color c, {bool big = false}) => Expanded(
-          flex: big ? 23 : 20,
-          child: Stack(clipBehavior: Clip.none, alignment: Alignment.topCenter, children: [
-            Container(
-              margin: const EdgeInsets.only(top: 10),
-              padding: EdgeInsets.fromLTRB(4, big ? 18 : 14, 4, 10),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(18),
-                color: _al(c, .1),
-                border: Border.all(color: _al(c, .4)),
-              ),
-              child: Column(children: [
-                Icon(ic, size: big ? 30 : 24, color: c),
-                const SizedBox(height: 6),
-                Text(name, textAlign: TextAlign.center, maxLines: 2, style: _ts(12, w: FontWeight.w800, h: 1.3)),
-              ]),
-            ),
-            Container(
-              width: 22,
-              height: 22,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(color: c, shape: BoxShape.circle),
-              child: Text('$n', style: _ts(11, c: vk(0xFF2B1D05), w: FontWeight.w900)),
-            ),
-          ]),
-        );
-    return Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-      pz(2, Icons.phone_iphone_rounded, 'iPhone 17 Pro', VA.silver),
-      const SizedBox(width: 8),
-      pz(1, Icons.directions_car_filled_rounded, 'ئۆتۆمبێل', VA.gold, big: true),
-      const SizedBox(width: 8),
-      pz(3, Icons.payments_rounded, '1,000,000 دینار', VA.bronze),
-    ]);
   }
 }
 
@@ -4049,148 +4232,6 @@ class _PrizeTickerState extends State<_PrizeTicker> with SingleTickerProviderSta
   }
 }
 
-class _MysteryCard extends StatefulWidget {
-  final String power;
-  final String? guess;
-  final bool revealed;
-  final ValueChanged<String> onGuess;
-  final VoidCallback onDemoReveal;
-  const _MysteryCard({required this.power, required this.guess, required this.revealed, required this.onGuess, required this.onDemoReveal});
-  @override
-  State<_MysteryCard> createState() => _MysteryCardState();
-}
-
-class _MysteryCardState extends State<_MysteryCard> with SingleTickerProviderStateMixin {
-  late final AnimationController _spin = AnimationController(vsync: this, duration: const Duration(seconds: 24))..repeat();
-  @override
-  void dispose() {
-    _spin.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final g = widget.guess, rev = widget.revealed, p = catById(widget.power);
-    final won = rev && g == widget.power;
-    Widget lock;
-    if (rev) {
-      lock = _Note(
-          color: won ? VA.mint : VA.amber,
-          icon: won ? Icons.check_rounded : Icons.lightbulb_rounded,
-          text: won ? 'ڕاستت پێکا! هێزی ئەمڕۆ ${p.name} بوو · +50 خاڵ' : 'هێزی ئەمڕۆ ${p.name} بوو · سبەینێ هێزێکی نوێ دەبێت');
-    } else if (g != null) {
-      lock = _Note(color: VA.violet, icon: Icons.lock_rounded, text: 'پێشبینییەکەت: ${catById(g).name} · ئەنجام لە نیوەشەو ئاشکرا دەبێت');
-    } else {
-      lock = _Note(color: VA.violet, icon: Icons.auto_awesome_rounded, text: 'پێشبینی بکە کامەیە؛ ئەگەر ڕاست بێت +50 خاڵ وەردەگریت');
-    }
-    return Container(
-      margin: const EdgeInsets.only(top: 14),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        gradient: LinearGradient(colors: [vk(0xFF3A2378), vk(0xFF221453)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-        border: Border.all(color: _al(VA.violet, .45)),
-        boxShadow: [BoxShadow(color: _al(VA.violet, .25), blurRadius: 30, offset: const Offset(0, 12))],
-      ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Row(children: [
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('هێزی نهێنیی ئەمڕۆ', style: _ts(19, w: FontWeight.w800)),
-              const SizedBox(height: 4),
-              Text.rich(
-                TextSpan(children: [
-                  const TextSpan(text: 'یەکێک لەم 11 بەشە ئەمڕۆ '),
-                  TextSpan(text: '×3', style: _ts(13, w: FontWeight.w900)),
-                  const TextSpan(text: 'ـە و یەکێکی تر '),
-                  TextSpan(text: '×1.5', style: _ts(13, w: FontWeight.w900)),
-                  const TextSpan(text: '. تا نیوەشەو کەس نازانێت.'),
-                ]),
-                style: _ts(13, c: _al(VA.text, .8), h: 1.6),
-              ),
-            ]),
-          ),
-          SizedBox(
-            width: 112,
-            height: 112,
-            child: AnimatedBuilder(
-              animation: _spin,
-              builder: (_, __) => Stack(alignment: Alignment.center, children: [
-                Container(
-                  width: 104,
-                  height: 104,
-                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: _al(kW, .15), style: BorderStyle.solid)),
-                ),
-                ...List.generate(kArenaCats.length, (i) {
-                  final a = i / kArenaCats.length * 2 * math.pi + _spin.value * 2 * math.pi;
-                  return Transform.translate(
-                    offset: Offset(math.cos(a) * 49, math.sin(a) * 49),
-                    child: Icon(kArenaCats[i].icon, size: 14, color: _al(kW, .75)),
-                  );
-                }),
-                Container(
-                  width: 58,
-                  height: 58,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(colors: [vk(0xFFB79CFF), vk(0xFF6A3AE8)]),
-                    boxShadow: [BoxShadow(color: _al(VA.violet, .7), blurRadius: 24)],
-                  ),
-                  child: rev ? Icon(p.icon, size: 26, color: kW) : Text('?', style: _ts(30, c: kW, w: FontWeight.w900)),
-                ),
-              ]),
-            ),
-          ),
-        ]),
-        const SizedBox(height: 10),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(color: _al(Colors.black, .2), borderRadius: BorderRadius.circular(16)),
-          child: Row(children: [
-            Icon(Icons.lightbulb_rounded, size: 18, color: VA.gold),
-            const SizedBox(width: 8),
-            Expanded(child: Text('ئاماژە: ${kHints[widget.power]}', style: _ts(13.5, w: FontWeight.w700))),
-          ]),
-        ),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          alignment: WrapAlignment.center,
-          children: kArenaCats.map((c) {
-            final on = g == c.id, win = rev && c.id == widget.power;
-            final disabled = g != null || rev;
-            return GestureDetector(
-              onTap: disabled ? null : () => widget.onGuess(c.id),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: win ? _al(VA.mint, .22) : on ? _al(VA.violet, .4) : _al(kW, .06),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: win ? VA.mint : on ? VA.violet : _al(kW, .12), width: on || win ? 2 : 1),
-                ),
-                child: Opacity(opacity: disabled && !on && !win ? .5 : 1, child: Icon(c.icon, size: 21, color: kW)),
-              ),
-            );
-          }).toList(),
-        ),
-        const SizedBox(height: 10),
-        lock,
-        if (g != null && !rev) ...[
-          const SizedBox(height: 8),
-          TextButton(
-            onPressed: widget.onDemoReveal,
-            child: Text('تاقیکردنەوە: نیوەشەو ئاشکرا بکە (دیمۆ)', style: _ts(12, c: _al(VA.text, .7))),
-          ),
-        ],
-      ]),
-    );
-  }
-}
-
 class _CountUp extends StatelessWidget {
   final int value;
   final TextStyle style;
@@ -4229,3 +4270,95 @@ class VexArenaDemoApp extends StatelessWidget {
 }
 
 void main() => runApp(const VexArenaDemoApp());
+
+/// دوگمەی گشتی: کەمێک بچووک دەبێتەوە کاتێک دەستی لێدەدرێت
+class _Press extends StatefulWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+  const _Press({required this.child, this.onTap});
+  @override
+  State<_Press> createState() => _PressState();
+}
+
+class _PressState extends State<_Press> {
+  bool _down = false;
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: widget.onTap == null ? null : (_) => setState(() => _down = true),
+        onTapCancel: () => setState(() => _down = false),
+        onTapUp: (_) => setState(() => _down = false),
+        onTap: widget.onTap == null
+            ? null
+            : () {
+                HapticFeedback.selectionClick();
+                widget.onTap!();
+              },
+        child: AnimatedScale(scale: _down ? .97 : 1, duration: const Duration(milliseconds: 120), child: widget.child),
+      );
+}
+
+/// تەختەی چالاکی: ئایکۆن، ناو، خاڵی بنەڕەت (پێش ئاشکرابوون) یان خاڵی کۆتایی، هێڵی پێشکەوتن
+class _ActTile extends StatelessWidget {
+  final ArenaCat cat;
+  final PointRow row;
+  final bool active, revealed;
+  final VoidCallback onTap;
+  const _ActTile({required this.cat, required this.row, required this.active, required this.revealed, required this.onTap});
+  @override
+  Widget build(BuildContext context) {
+    final frac = cat.max == 0 ? 0.0 : (row.base / cat.max).clamp(0.0, 1.0);
+    return _Press(
+      onTap: onTap,
+      child: Opacity(
+        opacity: active ? 1 : .55,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+          decoration: BoxDecoration(color: _al(kW, .04), borderRadius: BorderRadius.circular(18)),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(color: _al(cat.color, .16), borderRadius: BorderRadius.circular(10)),
+                child: Icon(cat.icon, size: 18, color: cat.color),
+              ),
+              const Spacer(),
+              if (revealed && row.mul > 1)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  decoration: BoxDecoration(color: _al(cat.color, .2), borderRadius: BorderRadius.circular(99)),
+                  child: Text('×${row.mul == 3 ? 3 : 1.5}', style: _ts(10.5, c: cat.color, w: FontWeight.w900)),
+                ),
+            ]),
+            const Spacer(),
+            Text(cat.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: _ts(13, w: FontWeight.w700)),
+            const SizedBox(height: 2),
+            revealed
+                ? Text('+${row.pts}', style: _ts(12.5, c: active ? VA.mint : VA.muted, w: FontWeight.w800))
+                : Text.rich(
+                    TextSpan(children: [
+                      TextSpan(text: '${row.base}', style: _ts(12, w: FontWeight.w800)),
+                      TextSpan(text: '/${cat.max}', style: _ts(12, c: VA.muted, w: FontWeight.w600)),
+                    ]),
+                  ),
+            const SizedBox(height: 7),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(99),
+              child: Container(
+                height: 4,
+                color: _al(kW, .08),
+                alignment: AlignmentDirectional.centerStart,
+                child: FractionallySizedBox(
+                  widthFactor: frac,
+                  heightFactor: 1,
+                  child: DecoratedBox(decoration: BoxDecoration(color: cat.color, borderRadius: BorderRadius.circular(99))),
+                ),
+              ),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+}
