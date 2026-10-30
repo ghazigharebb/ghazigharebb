@@ -370,7 +370,10 @@ class _StatsTabState extends State<_StatsTab> {
             ),
             SizedBox(
               height: bottom,
-              child: OverflowBox(maxWidth: 44, child: Center(child: _n(lbl, small ? 10 : 12, c: isS ? V.cy : V.mu, w: FontWeight.w700))),
+              child: OverflowBox(
+                maxWidth: 44,
+                child: Center(child: small ? _n(lbl, 10, c: isS ? V.cy : V.mu, w: FontWeight.w700) : _t(lbl, size: 12.5, c: isS ? V.cy : V.mu, w: FontWeight.w800)),
+              ),
             ),
           ]),
         ),
@@ -410,13 +413,19 @@ class _StatsTabState extends State<_StatsTab> {
                 bottom: bottom + goalY,
                 child: CustomPaint(size: const Size(double.infinity, 2), painter: _StDash(op(V.mint, .85))),
               ),
-              Positioned(
-                right: 0,
-                bottom: bottom + goalY + 3,
-                child: _n(fmt(g.kcal), 10.5, c: V.mint, w: FontWeight.w700),
-              ),
               Positioned.fill(
                 child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [for (var i = 0; i < n; i++) bar(i)]),
+              ),
+              Positioned(
+                left: 0,
+                bottom: bottom + goalY - 9,
+                child: IgnorePointer(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(color: V.surf, borderRadius: BorderRadius.circular(8), border: Border.all(color: op(V.mint, .6))),
+                    child: _n(fmt(g.kcal), 10, c: V.mint, w: FontWeight.w700),
+                  ),
+                ),
               ),
             ]),
           ),
@@ -655,7 +664,7 @@ class _StatsTabState extends State<_StatsTab> {
     return VCard(
       margin: const EdgeInsets.only(top: 12),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        _title('کێش', icon: const _Ic('weight', size: 28), trail: _n('${all.length} تۆمار', 12, c: V.mu, w: FontWeight.w700)),
+        _title('کێش', icon: const _Ic('weight', size: 28), trail: _t('${all.length} تۆمار', size: 12, c: V.mu)),
         if (ws.length >= 2)
           SizedBox(
             height: 150,
@@ -700,7 +709,7 @@ class _StatsTabState extends State<_StatsTab> {
           _t(
             (P.goal == 'lose' ? last <= P.tw : last >= P.tw)
                 ? 'گەیشتیت بە کێشی ئامانج (${_f1(P.tw)}kg)!'
-                : 'کێشی ئامانج ${_f1(P.tw)}kg · ماوە ${(P.tw - last).abs().toStringAsFixed(1)}kg',
+                : 'کێشی ئامانج ${_f1(P.tw)}kg · ماوە ${_f1(double.parse((P.tw - last).abs().toStringAsFixed(1)))}kg',
             size: 12.5,
             c: V.mu,
             align: TextAlign.center,
@@ -801,7 +810,7 @@ class _StatsTabState extends State<_StatsTab> {
                 height: 22,
                 child: Row(children: [
                   for (final k in keys)
-                    Expanded(child: Center(child: _n(_kStD[_fromKey(k).weekday % 7], 12, c: k == _todayKey() ? V.cy : V.mu, w: FontWeight.w700))),
+                    Expanded(child: Center(child: _t(_kStD[_fromKey(k).weekday % 7], size: 12.5, c: k == _todayKey() ? V.cy : V.mu, w: FontWeight.w800))),
                 ]),
               ),
             ]),
