@@ -2180,7 +2180,10 @@ class _ArenaCardViewState extends State<ArenaCardView> with SingleTickerProvider
               padding: EdgeInsets.fromLTRB(16 * k, 20 * k, 16 * k, 0),
               child: Column(children: [
                 Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Column(children: [
+                  Expanded(
+                      child: Align(
+                          alignment: AlignmentDirectional.topStart,
+                          child: Column(children: [
                     Text('${ratingOf(d.points)}',
                         style: TextStyle(
                             fontSize: 40 * k,
@@ -2195,10 +2198,9 @@ class _ArenaCardViewState extends State<ArenaCardView> with SingleTickerProvider
                     SizedBox(height: 5 * k),
                     Row(mainAxisSize: MainAxisSize.min, children: [
                       Icon(Icons.place_rounded, size: 11 * k, color: _al(kW, .9)),
-                      Text(d.city, style: _ts(10 * k, c: _al(kW, .9))),
+                      Flexible(child: Text(d.city, maxLines: 1, overflow: TextOverflow.ellipsis, style: _ts(10 * k, c: _al(kW, .9)))),
                     ]),
-                  ]),
-                  const Spacer(),
+                  ]))),
                   Container(
                     width: 126 * k,
                     height: 126 * k,
