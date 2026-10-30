@@ -21,10 +21,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../band/ble/vex_ble.dart';
 import '../core/theme.dart';
+import '../vitalage/vital_age_engine.dart';
 import 'food_db.dart';
 
 part 'food_coach.dart';
+part 'food_stats.dart';
 
 /// کردنەوەی بەشی خواردن
 Future<void> openFoodDesign() async {
@@ -799,92 +802,7 @@ class _GaugeP extends CustomPainter {
   bool shouldRepaint(covariant _GaugeP o) => o.bmi != bmi || o.fg != fg || o.bg != bg;
 }
 
-class _DonutP extends CustomPainter {
-  _DonutP(this.vals, this.cols, this.track);
-  final List<double> vals;
-  final List<Color> cols;
-  final Color track;
-  @override
-  void paint(Canvas c, Size s) {
-    final w = 22.0;
-    final r = (math.min(s.width, s.height) - w) / 2;
-    final rect = Rect.fromCircle(center: Offset(s.width / 2, s.height / 2), radius: r);
-    final tot = vals.fold<double>(0, (a, b) => a + b);
-    if (tot <= 0) {
-      c.drawArc(rect, 0, 2 * math.pi, false, Paint()..style = PaintingStyle.stroke..strokeWidth = w..color = track);
-      return;
-    }
-    double a0 = -math.pi / 2;
-    for (int i = 0; i < vals.length; i++) {
-      final sw = vals[i] / tot * 2 * math.pi;
-      c.drawArc(rect, a0, math.max(0, sw - 0.04), false, Paint()..style = PaintingStyle.stroke..strokeWidth = w..color = cols[i]);
-      a0 += sw;
-    }
-  }
 
-  @override
-  bool shouldRepaint(covariant _DonutP o) => o.vals != vals;
-}
-
-class _LineP extends CustomPainter {
-  _LineP(this.pts, this.col, this.goal);
-  final List<double> pts;
-  final Color col;
-  final double goal;
-  @override
-  void paint(Canvas c, Size s) {
-    if (pts.isEmpty) return;
-    final all = [...pts, if (goal > 0) goal];
-    double lo = all.reduce(math.min), hi = all.reduce(math.max);
-    if (hi - lo < 2) {
-      hi += 1;
-      lo -= 1;
-    }
-    final pad = 14.0;
-    Offset pt(int i) {
-      final x = pts.length == 1 ? s.width / 2 : pad + (s.width - pad * 2) * i / (pts.length - 1);
-      final y = pad + (s.height - pad * 2) * (1 - (pts[i] - lo) / (hi - lo));
-      return Offset(x, y);
-    }
-
-    if (goal > 0) {
-      final gy = pad + (s.height - pad * 2) * (1 - (goal - lo) / (hi - lo));
-      double x = 0;
-      while (x < s.width) {
-        c.drawLine(Offset(x, gy), Offset(math.min(x + 6, s.width), gy), Paint()..color = op(V.mint, 0.7)..strokeWidth = 1.4);
-        x += 10;
-      }
-    }
-    final path = Path()..moveTo(pt(0).dx, pt(0).dy);
-    for (int i = 1; i < pts.length; i++) {
-      path.lineTo(pt(i).dx, pt(i).dy);
-    }
-    c.drawPath(path, Paint()..style = PaintingStyle.stroke..strokeWidth = 3..strokeCap = StrokeCap.round..strokeJoin = StrokeJoin.round..color = col);
-    for (int i = 0; i < pts.length; i++) {
-      c.drawCircle(pt(i), 4.5, Paint()..color = col);
-      c.drawCircle(pt(i), 2, Paint()..color = V.bg);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _LineP o) => o.pts != pts || o.goal != goal || o.col != col;
-}
-
-class _DashP extends CustomPainter {
-  _DashP(this.col);
-  final Color col;
-  @override
-  void paint(Canvas c, Size s) {
-    double x = 0;
-    while (x < s.width) {
-      c.drawLine(Offset(x, 0), Offset(math.min(x + 5, s.width), 0), Paint()..color = col..strokeWidth = 1.4);
-      x += 9;
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _DashP o) => o.col != col;
-}
 
 // ═════════════════════════════ پارچە هاوبەشەکان ═════════════════════════════
 class _PlusBtn extends StatelessWidget {
@@ -1097,7 +1015,7 @@ class _FoodDesignState extends State<FoodDesignPage> {
           view = _CoachTab(key: ValueKey<String>('coach$tab'), ask: tab == 'ask', go: go, onWizard: startWizard);
           break;
         case 'stats':
-          view = const _StatsTab();
+          view = _StatsTab(go: go);
           break;
         case 'me':
           view = _MeTab(onWizard: startWizard);
@@ -2469,238 +2387,6 @@ class _SearchTabState extends State<_SearchTab> {
               _t('+ خواردنی تایبەتی خۆت زیاد بکە', size: 14, w: FontWeight.w800, c: V.orange),
             ]),
           ),
-        ),
-      ],
-    );
-  }
-}
-
-// ═════════════════════════════ شیکاری ═════════════════════════════
-class _StatsTab extends StatefulWidget {
-  const _StatsTab();
-  @override
-  State<_StatsTab> createState() => _StatsTabState();
-}
-
-class _StatsTabState extends State<_StatsTab> {
-  final TextEditingController wc = TextEditingController();
-
-  @override
-  void dispose() {
-    wc.dispose();
-    super.dispose();
-  }
-
-  Widget _kpi(String icon, String v, String l, Color c) => Expanded(
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: _glass(r: 20, tint: c, a: 0.09),
-          child: Column(children: [
-            _Ic(icon, size: 30),
-            const SizedBox(height: 4),
-            _n(v, 18, c: c),
-            const SizedBox(height: 2),
-            _t(l, size: 11.5, c: V.mu),
-          ]),
-        ),
-      );
-
-  @override
-  Widget build(BuildContext context) {
-    final fd = _FD.I;
-    final plan = fd.plan!;
-    final P = fd.prof!;
-    final now = DateTime.now();
-    final keys = <String>[];
-    for (int i = 6; i >= 0; i--) {
-      keys.add(_key(DateTime(now.year, now.month, now.day).subtract(Duration(days: i))));
-    }
-    final tots = keys.map((k) => fd.totals(k)).toList();
-    final logged = tots.where((t) => t.n > 0).toList();
-    final avgK = logged.isEmpty ? 0.0 : logged.fold<double>(0, (a, t) => a + t.kcal) / logged.length;
-    final avgP = logged.isEmpty ? 0.0 : logged.fold<double>(0, (a, t) => a + t.p) / logged.length;
-    final aP = logged.fold<double>(0, (a, t) => a + t.p * 4);
-    final aC = logged.fold<double>(0, (a, t) => a + t.c * 4);
-    final aF = logged.fold<double>(0, (a, t) => a + t.f * 9);
-    final sum = aP + aC + aF;
-    final st = fd.streaks();
-    final maxK = math.max(plan.kcal * 1.25, tots.fold<double>(0, (a, t) => math.max(a, t.kcal)));
-    const barH = 130.0;
-
-    Widget bar(int i) {
-      final t = tots[i];
-      final d = _fromKey(keys[i]);
-      final h = t.n == 0 ? 6.0 : math.max(8.0, barH * t.kcal / maxK);
-      Color col = V.track;
-      if (t.n > 0) col = t.kcal > plan.kcal * 1.1 ? V.coral : (t.kcal >= plan.kcal * 0.8 ? V.mint : V.amber);
-      final isToday = i == 6;
-      return Expanded(
-        child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
-          if (t.n > 0) _n(fmt(t.kcal), 10, c: V.mu, w: FontWeight.w700),
-          const SizedBox(height: 4),
-          TweenAnimationBuilder<double>(
-            tween: Tween<double>(begin: 0, end: h),
-            duration: const Duration(milliseconds: 700),
-            curve: Curves.easeOutCubic,
-            builder: (c, v, _) => Container(
-              width: 24,
-              height: v,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(9),
-                gradient: t.n == 0 ? null : LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [col, op(col, 0.55)]),
-                color: t.n == 0 ? V.track : null,
-                border: isToday ? Border.all(color: V.tx.withAlpha(150), width: 1.2) : null,
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          _t(kDays[d.weekday % 7].substring(0, 3), size: 10.5, c: isToday ? V.tx : V.mu, w: isToday ? FontWeight.w800 : FontWeight.w600),
-        ]),
-      );
-    }
-
-    final goalY = barH * plan.kcal / maxK;
-    final ws = fd.weights.length > 10 ? fd.weights.sublist(fd.weights.length - 10) : fd.weights;
-    final wpts = ws.map((w) => w.kg).toList();
-    final wFirst = fd.weights.isEmpty ? P.w : fd.weights.first.kg;
-    final wLast = fd.weights.isEmpty ? P.w : fd.weights.last.kg;
-    final diff = wLast - wFirst;
-
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 40),
-      physics: const BouncingScrollPhysics(),
-      children: [
-        Row(children: [
-          const _Ic('analytics', size: 34),
-          const SizedBox(width: 10),
-          _t('شیکاری ٧ ڕۆژ', size: 20, w: FontWeight.w800),
-        ]),
-        const SizedBox(height: 14),
-        Row(children: [
-          _kpi('kcal', logged.isEmpty ? '—' : fmt(avgK), 'کالۆری ناوەند', V.cy),
-          const SizedBox(width: 8),
-          _kpi('protein2', logged.isEmpty ? '—' : '${avgP.round()}g', 'پرۆتین ناوەند', const Color(0xFFFF5F7E)),
-          const SizedBox(width: 8),
-          _kpi('today', '${logged.length}/7', 'ڕۆژی تۆمارکراو', V.mint),
-        ]),
-        VCard(
-          margin: const EdgeInsets.only(top: 14),
-          padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Row(children: [_t('کالۆری ڕۆژانە', size: 15, w: FontWeight.w800), const Spacer(), _t('ئامانج ${fmt(plan.kcal)}', size: 11.5, c: V.mint)]),
-            const SizedBox(height: 14),
-            SizedBox(
-              height: barH + 44,
-              child: Stack(children: [
-                PositionedDirectional(
-                  start: 0,
-                  end: 0,
-                  bottom: 22 + goalY,
-                  child: SizedBox(height: 2, child: CustomPaint(painter: _DashP(op(V.mint, 0.75)))),
-                ),
-                Row(crossAxisAlignment: CrossAxisAlignment.end, children: [for (int i = 0; i < 7; i++) bar(i)]),
-              ]),
-            ),
-          ]),
-        ),
-        VCard(
-          margin: const EdgeInsets.only(top: 12),
-          padding: const EdgeInsets.all(14),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            _t('دابەشبوونی ماکرۆکان', size: 15, w: FontWeight.w800),
-            const SizedBox(height: 12),
-            Row(children: [
-              SizedBox(
-                width: 130,
-                height: 130,
-                child: CustomPaint(
-                  painter: _DonutP([aP, aC, aF], const [Color(0xFFFF5F7E), Color(0xFFFFA52E), Color(0xFF9B7BFF)], V.track),
-                  child: Center(child: _n(sum <= 0 ? '—' : fmt(avgK), 17)),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(children: [
-                  for (final r in [
-                    ['پرۆتین', aP, const Color(0xFFFF5F7E)],
-                    ['کارب', aC, const Color(0xFFFFA52E)],
-                    ['چەوری', aF, const Color(0xFF9B7BFF)],
-                  ])
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: Row(children: [
-                        Container(width: 12, height: 12, decoration: BoxDecoration(color: r[2] as Color, shape: BoxShape.circle)),
-                        const SizedBox(width: 8),
-                        _t(r[0] as String, size: 13.5, w: FontWeight.w700),
-                        const Spacer(),
-                        _n(sum <= 0 ? '—' : '${((r[1] as double) / sum * 100).round()}%', 14, c: r[2] as Color),
-                      ]),
-                    ),
-                ]),
-              ),
-            ]),
-          ]),
-        ),
-        VCard(
-          margin: const EdgeInsets.only(top: 12),
-          padding: const EdgeInsets.all(14),
-          child: Row(children: [
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                _t('بەردەوامی', size: 15, w: FontWeight.w800),
-                const SizedBox(height: 4),
-                _t('ڕۆژانی یەک لە دوای یەک کە خواردنت تۆمار کردووە', size: 11.5, c: V.mu, h: 1.5),
-              ]),
-            ),
-            const _Sv('flame', size: 34),
-            const SizedBox(width: 6),
-            Column(children: [_n('${st[0]}', 26, c: V.orange), _t('ئێستا', size: 10.5, c: V.mu)]),
-            const SizedBox(width: 16),
-            Column(children: [_n('${st[1]}', 26, c: V.amber), _t('باشترین', size: 10.5, c: V.mu)]),
-          ]),
-        ),
-        VCard(
-          margin: const EdgeInsets.only(top: 12),
-          padding: const EdgeInsets.all(14),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Row(children: [
-              const _Ic('weight', size: 30),
-              const SizedBox(width: 8),
-              _t('کێش', size: 15, w: FontWeight.w800),
-              const Spacer(),
-              _n('${_f1(wLast)} kg', 18, c: V.cy),
-            ]),
-            const SizedBox(height: 10),
-            if (wpts.length >= 2)
-              SizedBox(height: 110, child: CustomPaint(painter: _LineP(wpts, V.cy, P.tw > 0 ? P.tw : 0)))
-            else
-              Padding(padding: const EdgeInsets.symmetric(vertical: 18), child: Center(child: _t('کێشی ٢ ڕۆژ تۆمار بکە تا هێڵکارییەکە دەرکەوێت', size: 12, c: V.mu))),
-            if (fd.weights.length >= 2)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: _t('گۆڕانکاری: ${diff >= 0 ? '+' : ''}${diff.toStringAsFixed(1)}kg', size: 12.5, c: diff.abs() < 0.05 ? V.mu : ((diff < 0) == (P.goal == 'lose') ? V.mint : V.amber)),
-              ),
-            const SizedBox(height: 12),
-            Row(children: [
-              Expanded(child: _Field(c: wc, isNum: true, hint: 'کێشی ئەمڕۆ (kg)')),
-              const SizedBox(width: 8),
-              _PlusBtn(
-                color: V.cy,
-                size: 50,
-                onTap: () {
-                  final v = double.tryParse(wc.text.trim().replaceAll(',', '.')) ?? 0;
-                  if (v < 20 || v > 300) {
-                    toast('کێشێکی دروست بنووسە');
-                    return;
-                  }
-                  fd.setWeight(v);
-                  wc.clear();
-                  FocusManager.instance.primaryFocus?.unfocus();
-                  toast('کێش تۆمار کرا ✓');
-                },
-              ),
-            ]),
-          ]),
         ),
       ],
     );
