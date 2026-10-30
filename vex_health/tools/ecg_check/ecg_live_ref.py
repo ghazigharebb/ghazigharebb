@@ -87,6 +87,7 @@ class Sig:
         # re-baseline: filters restart from the current level -> the touch step does not ring through the high-pass
         self._design(self.rate); self.x0 = None
         self.hold = self.n + round(0.5 * self.rate)  # skip the touch artefact
+        self.env = 1e-6
         self.learn_e = 0.0; self.restart_at = self.n
         self.learn = 0; self.spki = self.npki = 0.0; self.cands = []; self.rej = []
         self.last_r = -1e9; self.last_qrs = -10 ** 9; self.rr = []; self.last_slope = 0.0; self.slopes = []
@@ -186,6 +187,8 @@ class Sig:
         self.play = []  # stale queued values were scaled for the old rate
 
     def _push(self, raw):
+        if self.hold > 0 and self.n == self.hold:
+            self._design(self.rate); self.x0 = None
         p = self.prev
         if p is not None:
             d = raw - p
@@ -210,7 +213,7 @@ class Sig:
         shown = -y if self.flip else y
         self.env = max(self.env * 0.5 ** (1 / (self.rate * 2.5)), abs(shown))
         scale = max(self.env * 1.05, 40.0)
-        v = max(-1.0, min(1.0, shown / scale)) if self.n > self.rate * 0.5 else 0.0
+        v = max(-1.0, min(1.0, shown / scale)) if (self.n > self.rate * 0.5 and self.n >= self.hold) else 0.0
         self.play.append(v)
         cap = round(self.rate * 3)
         if len(self.play) > cap: del self.play[:len(self.play) - cap]

@@ -220,6 +220,7 @@ class EcgSignal {
     _design(rate);
     _x0 = null;
     _hold = _n + (0.5 * rate).round(); // بازدان بەسەر لەرینی دەستلێدانەکەدا
+    _env = 1e-6; // قەبارەی نیشاندان بە خێرایی لەگەڵ ECG ی ڕاستەقینە دەگونجێت
     _learnE = 0;
     _restartAt = _n;
     _learn = 0;
@@ -359,6 +360,11 @@ class EcgSignal {
   }
 
   void _push(int raw) {
+    // کۆتایی ماوەی دەستلێدان ← هێڵی بنەڕەت دووبارە لە ئاستی ئێستاوە (لەرینی دەستلێدان نامێنێت)
+    if (_hold > 0 && _n == _hold) {
+      _design(rate);
+      _x0 = null;
+    }
     // 1) 24-bit
     final p = _prev;
     if (p != null) {
@@ -400,7 +406,8 @@ class EcgSignal {
     final shown = _flip ? -y : y;
     _env = math.max(_env * math.pow(0.5, 1 / (rate * 2.5)).toDouble(), shown.abs());
     final scale = math.max(_env * 1.05, ampFloor);
-    final v = _n > rate * 0.5 ? (shown / scale).clamp(-1.0, 1.0).toDouble() : 0.0;
+    // سەرەتا و ماوەی دەستلێدان (0.5 چرکە) هێڵی ڕاست پیشان دەدرێت، نەک لەرینەوەی گەورە
+    final v = (_n > rate * 0.5 && _n >= _hold) ? (shown / scale).clamp(-1.0, 1.0).toDouble() : 0.0;
     _play.addLast(v);
     final cap = (rate * 3).round();
     while (_play.length > cap) {
