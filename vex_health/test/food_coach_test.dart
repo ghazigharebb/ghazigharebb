@@ -16,7 +16,7 @@ const _allgWords = {
   'nuts': ['گوێز', 'بادەم', 'فستق', 'کاجۆ', 'فندق'],
   'egg': ['هێلکە', 'ئۆملێت', 'عەجە'],
   'fish': ['ماسی', 'تونە', 'سەلمۆن', 'سەردین', 'مەسگووف'],
-  'shell': ['میگوو', 'میگۆ'],
+  'shell': ['میگوو', 'میگۆ', 'کریڤێت'],
   'sesame': ['کونجی', 'تەحین', 'حومس', 'حەلاوە', 'موتەبەل'],
 };
 
@@ -71,8 +71,9 @@ void main() {
               if (q < mn - 1e-9 || q > mx + 1e-9) issues.add('$tag qty $id $q [$mn,$mx]');
               for (final a in (P['allg'] as List<String>)) {
                 if (tags.contains(a)) issues.add('$tag allergen $a in $id');
+                final toks = ku.split(RegExp(r'[\s()\-،,/]+'));
                 for (final w in _allgWords[a] ?? const <String>[]) {
-                  if (ku.contains(w)) issues.add('$tag allergen word $w in $ku');
+                  if (toks.any((x) => x == w || x == '${w}ی' || x == '${w}ە' || x == '${w}ەی')) issues.add('$tag allergen word $w in $ku');
                 }
               }
               final c = P['conds'] as List<String>;
@@ -142,10 +143,14 @@ void main() {
     }
 
     await settle(600);
+    await settle(300);
     expect(t.takeException(), isNull);
+    await expectLater(find.byType(FoodDesignPage), matchesGoldenFile('goldens/coach_dark.png'));
+    final texts = t.widgetList<Text>(find.byType(Text)).map((w) => w.data ?? w.textSpan?.toPlainText() ?? '').where((s) => s.trim().isNotEmpty).toList();
+    // ignore: avoid_print
+    print('TEXTS ${texts.length}: ${texts.take(60).join(' | ')}');
     expect(find.textContaining('ڕاهێنەری هگف'), findsOneWidget);
     expect(find.textContaining('پلانی هەفتە'), findsOneWidget);
-    await expectLater(find.byType(FoodDesignPage), matchesGoldenFile('goldens/coach_dark.png'));
 
     // کردنەوەی ژەمی بەیانی + زیاتر
     await t.tap(find.textContaining('بەیانی').last);

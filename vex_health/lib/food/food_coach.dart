@@ -49,26 +49,41 @@ Map<String, double> _cxShare(String goal) => goal == 'gain' || goal == 'muscle'
 
 // ----- هەستیاری: وشەی ناو خواردن -----
 const Map<String, List<String>> _kCxAl = {
-  'gluten': ['نان', 'کولێرە', 'کەلانە', 'سەمون', 'تۆست', 'ساوەر', 'پاستا', 'کوسکوس', 'فریکە', 'شەعریە', 'تەرخێنە', 'جۆ', 'گەنم', 'شۆفان', 'کوبە', 'عەجە', 'تەشریب', 'تۆرتیلا', 'کرواسان', 'سپاگێتی', 'لازانیا'],
-  'lact': ['ماست', 'شیر', 'پەنیر', 'دۆ', 'دۆخەوا', 'جاجیک', 'قەیماخ', 'کرێم', 'لەبنە', 'کەشک'],
-  'nuts': ['گوێز', 'بادەم', 'فستق', 'کاجۆ', 'فندق'],
-  'egg': ['هێلکە', 'ئۆملێت', 'عەجە', 'کوکۆ'],
-  'fish': ['ماسی', 'تونە', 'سەلەمۆن', 'سەردین', 'مەسگوف', 'تیلاپیا'],
-  'shell': ['میگۆ', 'کریڤێت'],
-  'sesame': ['کونجی', 'تەحین', 'حومس', 'حەلاوە', 'موتەبەل'],
+  'gluten': [
+    'نان', 'کولێرە', 'کەلانە', 'سەمون', 'تۆست', 'ساوەر', 'پاستا', 'ماکەرۆنی', 'سپاگێتی', 'لازانیا', 'کوسکوس', 'فریکە', 'شەعریە',
+    'تەرخێنە', 'جۆ', 'گەنم', 'شۆفان', 'کوبە', 'عەجە', 'تەشریب', 'تۆرتیلا', 'کرواسان', 'تەبوولە', 'فەتووش', 'هەریسە', 'کەشکەک',
+    'شنیتزڵ', 'کوتلێت', 'بۆرەک', 'سەمبووسە', 'فەتایەر', 'مەناقیش', 'عەجین', 'سمیت', 'کراکەر', 'برێوش', 'سەندویچ', 'ئارد', 'بەشەمەڵ',
+  ],
+  'lact': ['ماست', 'شیر', 'پەنیر', 'دۆ', 'دۆخەوا', 'جاجیک', 'قەیماخ', 'کرێم', 'لەبنە', 'کەشک', 'مەنسەف', 'ئەلفرێدۆ', 'بەشەمەڵ', 'یۆنانی', 'سیزەر'],
+  'nuts': ['گوێز', 'بادەم', 'فستق', 'کاجۆ', 'فندق', 'چەرەس', 'موحەمەرە'],
+  'egg': ['هێلکە', 'ئۆملێت', 'عەجە', 'کوکۆ', 'کوتلێت', 'شنیتزڵ', 'شامی', 'سیزەر', 'ئۆلیڤیە'],
+  'fish': ['ماسی', 'تونە', 'سەلمۆن', 'سەلەمۆن', 'سەردین', 'مەسگوف', 'مەسگووف', 'تیلاپیا'],
+  'shell': ['میگوو', 'میگۆ', 'کریڤێت'],
+  'sesame': ['کونجی', 'تەحین', 'حومس', 'حەلاوە', 'موتەبەل', 'سمیت', 'ڕاشی', 'زەعتەر'],
   'soy': ['سۆیا', 'تۆفو'],
 };
 
+final RegExp _kCxSplit = RegExp(r'[\s()\[\]\-،,/+]+');
+const Set<String> _kCxSuf = {'', 'ی', 'ە', 'ەی', 'یی', 'ێک', 'ەکان', 'ەکە'};
+
+/// وشەکە بە تەواوی (یان بە پاشگری ی/ە) لە ناوەکەدا هەیە؟ («دۆ» ← «دۆڵمە» ناگرێتەوە)
+bool _cxHasWord(List<String> toks, String w) {
+  for (final t in toks) {
+    if (t.startsWith(w) && _kCxSuf.contains(t.substring(w.length))) return true;
+  }
+  return false;
+}
+
 /// تاگەکانی هەستیاری بۆ خواردنێک
 List<String> _cxTags(FoodEntry x) {
-  final names = [x.ku, ...x.al].join(' ');
+  final toks = [x.ku, ...x.al].expand((s) => s.split(_kCxSplit)).where((s) => s.isNotEmpty).toList();
   final out = <String>[];
   _kCxAl.forEach((k, ws) {
-    if (ws.any(names.contains)) out.add(k);
+    if (ws.any((w) => _cxHasWord(toks, w))) out.add(k);
   });
   if (x.cat == 'bread' && !out.contains('gluten')) out.add('gluten');
   if (x.cat == 'dairy' && !out.contains('lact')) out.add('lact');
-  if (x.cat == 'nuts' && !out.contains('nuts') && !x.ku.contains('تۆوی') && !x.ku.contains('وشک') && !x.ku.contains('مێوژ')) out.add('nuts');
+  if (x.cat == 'nuts' && !out.contains('nuts') && !RegExp(r'تۆوی|وشک|مێوژ|نۆک|کونجی|کەتان|چیا').hasMatch(x.ku)) out.add('nuts');
   return out;
 }
 
@@ -106,6 +121,9 @@ class _CxF {
   final Set<String> r; // ڕۆڵەکان
   final List<String> tags;
 
+  /// قەبارەی بەشەکان بۆ کالۆری زۆر (1 … 1.5)
+  double big = 1;
+
   bool get gram => u.isGram;
   String get id => x.id;
   String get cat => x.cat;
@@ -134,14 +152,14 @@ class _CxF {
 
   double get minQ => gram ? 30 : (whole ? 1 : .5);
   double get maxQ {
-    if (gram) return capG;
+    if (gram) return (capG * big / 10).round() * 10.0;
     if (r.contains('v')) return u.g < 120 ? 1.5 : 1;
-    final m = capG / u.g;
+    final m = capG * big / u.g;
     if (whole) {
       final lim = (cat == 'bread' || id.startsWith('hilka')) ? 3 : (u.g < 20 ? 6 : 4);
-      return math.max(1, math.min(lim, m.floor())).toDouble();
+      return math.max(1, math.min((lim * big).round(), m.floor())).toDouble();
     }
-    return math.max(.5, math.min((cat == 'fruit' || cat == 'salad') ? 1.5 : 2.0, (m * 2).floor() / 2));
+    return math.max(.5, (math.min(((cat == 'fruit' || cat == 'salad') ? 1.5 : 2.0) * big, m) * 2).floor() / 2);
   }
 
   double round(double q) {
@@ -269,7 +287,12 @@ class _CxSum {
 }
 
 class _CxCtx {
-  _CxCtx(this.P, this.g, this.el, this.tr);
+  _CxCtx(this.P, this.g, this.el, this.tr) {
+    final big = _cxCl(g.kcal / 2400, 1, 1.5);
+    for (final o in el) {
+      o.big = big;
+    }
+  }
   final _Prof P;
   final _Plan g;
   final List<_CxF> el;
@@ -386,13 +409,27 @@ List<_CxIt> _cxGen(_CxCtx ctx, int di, String slot, String seed, List<String> ex
       pick((o) => o.r.contains('fr') && o.cat == 'fruit', (o) => 0, tk - kc());
     }
   }
+  // ئەگەر هێشتا کەم بوو ← میوە، گوێز یان برنج/نان
+  for (var k = 0; k < 2 && kc() < tk * .85 && items.length < 4; k++) {
+    final need = tk - kc();
+    if (slot == 'b') {
+      pick((o) => (o.r.contains('fr') && o.cat == 'fruit') || (o.r.contains('sn') && o.cat == 'nuts'), (o) => 0, need);
+    } else if (slot == 's') {
+      pick((o) => o.r.contains('sn') || o.r.contains('fr'), (o) => 0, need);
+    } else {
+      final hasCb = items.any((z) => z.o.r.contains('cb'));
+      pick((o) => (!main.full && !hasCb && o.r.contains('cb')) || (o.r.contains('fr') && o.cat == 'fruit'), (o) => o.r.contains('cb') ? 2 : 0, need);
+    }
+  }
   // ڕێکخستنی کۆتایی بۆ ئامانجی ژەم
   final sf = tk / math.max(kc(), 1);
   if (sf > 1.08 || sf < .92) {
     final f = _cxCl(sf, .6, 1.6);
     for (final z in items) {
       if (z.o.r.contains('v')) continue;
+      final old = z.q;
       z.q = _cxCl(z.o.round(z.q * f), z.o.minQ, z.o.maxQ);
+      if (f > 1 && kc() > tk * 1.12) z.q = old; // زیادەڕۆیی نەکات
     }
   }
   return items;
@@ -409,7 +446,31 @@ void _cxCommit(_CxCtx ctx, int di, String slot, List<_CxIt> items) {
   ctx.dayCat[di].add(m.cat);
 }
 
-/// ئەگەر کۆی ڕۆژ لە 92٪ ی ئامانج کەمتر بوو ← ژەمی سووک زیاد دەکرێت
+/// ڕێکخستنی ڕۆژ: ئەگەر کۆی ڕۆژ لە 92٪ ی ئامانج کەمتر بوو ← بەشەکان گەورەتر + ژەمی سووک
+void _cxFill(_CxCtx ctx, Map<String, List<_CxIt>> d, String seed) {
+  final goal = ctx.P.goal.isEmpty ? 'keep' : ctx.P.goal;
+  final T = ctx.g.kcal.toDouble();
+  double tot() => _CxSum.of([for (final l in d.values) ...l]).kc;
+  if (tot() < T * .92) {
+    for (final sl in const ['l', 'd', 'b', 's']) {
+      if (tot() >= T * .95) break;
+      final tk = T * _cxShare(goal)[sl]!;
+      final f = math.min(1.35, T / math.max(tot(), 1));
+      final its = d[sl] ?? const <_CxIt>[];
+      for (final z in its) {
+        if (z.o.r.contains('v')) continue;
+        final old = z.q;
+        z.q = _cxCl(z.o.round(z.q * f), z.o.minQ, z.o.maxQ);
+        if (_CxSum.of(its).kc > tk * 1.25 || tot() > T * 1.05) z.q = old;
+      }
+    }
+  }
+  for (var k = 0; k < (T > 2600 ? 3 : 2); k++) {
+    _cxTopUp(ctx, d, '$seed$k');
+  }
+}
+
+/// ژەمی سووکی زیادە ئەگەر کۆی ڕۆژ لە 92٪ ی ئامانج کەمتر بوو
 void _cxTopUp(_CxCtx ctx, Map<String, List<_CxIt>> d, String seed) {
   var tot = 0.0;
   final have = <String>{};
@@ -538,7 +599,7 @@ class _CxStore {
         _cxCommit(ctx, di, sl[0], it);
         d[sl[0]] = it;
       }
-      _cxTopUp(ctx, d, '$wk|u$di');
+      _cxFill(ctx, d, '$wk|u$di');
       out.add(d);
     }
     st['wk'] = wk;
@@ -1919,7 +1980,7 @@ List<Map<String, Object>> debugCoachWeek(Map<String, dynamic> prof, {String wk =
       _cxCommit(ctx, di, sl[0], it);
       d[sl[0]] = it;
     }
-    _cxTopUp(ctx, d, '$wk|u$di');
+    _cxFill(ctx, d, '$wk|u$di');
     final all = [for (final l in d.values) ...l];
     final s = _CxSum.of(all);
     out.add({
