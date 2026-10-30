@@ -221,6 +221,9 @@ class VitalAgeEngine extends ChangeNotifier {
   double get progress => collected / need;
   bool get ready => collected >= need && hasAge;
 
+  /// داتای ڕۆژێک (کلیل: yyyy-MM-dd) ـ خەو، هەنگاو، دڵ و HRV (بۆ شیکاری خواردن)
+  VitalDay? dayOf(String k) => _days[k];
+
   /// ئایا ئەمڕۆ هەر یەک لە چوار بەشەکە هەیە؟
   Map<String, bool> get today {
     final x = _days[key(DateTime.now())];
