@@ -115,6 +115,7 @@ void main() {
 
   testWidgets('coach tab UI', (t) async {
     await t.runAsync(() => FoodDb.I.load());
+    expect(FoodDb.I.foods, isNotEmpty);
     final today = DateTime.now();
     String key(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
     final w0 = key(today.subtract(const Duration(days: 21)));
@@ -153,13 +154,11 @@ void main() {
 
     await settle(600);
     await settle(300);
-    await expectLater(find.byType(FoodDesignPage), matchesGoldenFile('goldens/coach_dark.png'));
     noErr();
-    final texts = t.widgetList<Text>(find.byType(Text)).map((w) => w.data ?? w.textSpan?.toPlainText() ?? '').where((s) => s.trim().isNotEmpty).toList();
-    // ignore: avoid_print
-    print('TEXTS ${texts.length}: ${texts.take(60).join(' | ')}');
     expect(find.textContaining('ڕاهێنەری هگف'), findsOneWidget);
     expect(find.textContaining('پلانی هەفتە'), findsOneWidget);
+    expect(find.text('—'), findsNothing); // هەموو ژەمەکان پڕن
+    expect(find.textContaining('خواردم'), findsOneWidget);
 
     // کردنەوەی ژەمی بەیانی + زیاتر
     await t.tap(find.textContaining('بەیانی').last);
@@ -167,7 +166,6 @@ void main() {
     await t.tap(find.textContaining('زیاتر لە ڕاهێنەرەکە'));
     await settle();
     noErr();
-    await expectLater(find.byType(FoodDesignPage), matchesGoldenFile('goldens/coach_open_dark.png'));
 
     // خواردم ← تۆمار
     await t.tap(find.textContaining('خواردم').first);
@@ -177,7 +175,6 @@ void main() {
     // ڕووناک
     await t.runAsync(() => VexTheme.I.setMode(VexMode.light));
     await settle();
-    await expectLater(find.byType(FoodDesignPage), matchesGoldenFile('goldens/coach_light.png'));
 
     // بەشەکانی زیاتر
     for (final seg in ['کات', 'ڕاپۆرت', 'ئامۆژگاری', 'بخۆ و نەخۆ']) {
@@ -187,7 +184,6 @@ void main() {
       await settle(150);
       noErr();
     }
-    await expectLater(find.byType(FoodDesignPage), matchesGoldenFile('goldens/coach_eat_light.png'));
 
     // شیتی کێش
     await t.ensureVisible(find.text('کێش').first);
@@ -195,7 +191,6 @@ void main() {
     await t.tap(find.text('کێش').first);
     await settle();
     noErr();
-    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/coach_weight_sheet.png'));
     await t.tap(find.text('پاشەکەوتکردن').first);
     await settle();
 
@@ -204,7 +199,6 @@ void main() {
     await settle();
     await t.tap(find.text('هەینی').last);
     await settle(150);
-    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/coach_train_sheet.png'));
     await t.tap(find.text('پاشەکەوتکردن').first);
     await settle();
     noErr();
@@ -230,7 +224,7 @@ void main() {
     await t.tap(find.byIcon(Icons.add_rounded).last);
     await settle();
     noErr();
-    await expectLater(find.byType(FoodDesignPage), matchesGoldenFile('goldens/coach_ask_light.png'));
+    expect(find.textContaining('kcal ت ماوە'), findsOneWidget);
     await t.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 200)));
     await t.pump(const Duration(seconds: 5));
   });

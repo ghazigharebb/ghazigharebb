@@ -774,6 +774,19 @@ List<List<String>> _cxMsgs(_Prof P, _Plan g, _Tot t, double hr, bool tr) {
   return M.take(3).toList();
 }
 
+/// ژەمی داهاتوو بەپێی کات (یەکەم ژەمی تۆمارنەکراو لە ئێستاوە)
+String? _cxNextSlot() {
+  final now = DateTime.now();
+  final hr = now.hour + now.minute / 60;
+  const order = ['b', 'l', 's', 'd'];
+  final start = hr < 10.5 ? 0 : (hr < 15 ? 1 : (hr < 18 ? 2 : 3));
+  final today = _peek(_todayKey());
+  for (var k = start; k < 4; k++) {
+    if ((today.m[order[k]] ?? const <_Entry>[]).isEmpty) return order[k];
+  }
+  return null;
+}
+
 /// بۆچی ئەم ژەمە؟
 String _cxWhy(_Prof P, List<_CxIt> its, String slot, bool tr) {
   if (its.isEmpty) return '';
@@ -877,16 +890,7 @@ class _CoachTabState extends State<_CoachTab> {
     if (mi >= msgs.length) mi = 0;
 
     // ژەمی داهاتوو
-    final order = ['b', 'l', 's', 'd'];
-    final start = hr < 10.5 ? 0 : (hr < 15 ? 1 : (hr < 18 ? 2 : 3));
-    final today = _peek(_todayKey());
-    String? nx;
-    for (var k = start; k < 4; k++) {
-      if ((today.m[order[k]] ?? const <_Entry>[]).isEmpty) {
-        nx = order[k];
-        break;
-      }
-    }
+    final nx = _cxNextSlot();
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(14, 8, 14, 120),
@@ -1839,11 +1843,12 @@ class _CoachAskState extends State<_CoachAsk> {
     bool has(List<String> k) => k.any((x) => s.contains(x));
     if (has(['چی بخۆم', 'برسیمە', 'برسی', 'ژەم', 'پێشنیار'])) {
       final p = _CxStore.I.plan(P, plan)[_cxIdx()];
-      final hr = DateTime.now().hour;
-      final slot = hr < 11 ? 'b' : (hr < 15 ? 'l' : (hr < 18 ? 's' : 'd'));
-      final its = p[slot] ?? const <_CxIt>[];
-      if (its.isEmpty) return 'ئەمڕۆ ${fmt(left)} kcal ت ماوە. ژەمێکی سووکی پڕ پرۆتین بخۆ.';
-      return 'ئەمڕۆ ${fmt(left)} kcal ت ماوە. بەپێی پلانەکەت ئێستا: ${its.map((z) => '${z.o.x.label} (${z.o.qty(z.q)})').join('، ')}.';
+      final slot = _cxNextSlot();
+      final its = slot == null ? const <_CxIt>[] : (p[slot] ?? const <_CxIt>[]);
+      if (left <= 0) return 'بودجەی ئەمڕۆت تەواو بووە. ئەگەر برسیت بوو، سەوزە، خەیار یان ماستی کەم چەوری بخۆ و ئاو بخۆرەوە.';
+      if (its.isEmpty) return 'ئەمڕۆ ${fmt(left)} kcal ت ماوە. ژەمێکی سووکی پڕ پرۆتین بخۆ (ماست، هێلکەی کوڵاو یان میوە).';
+      final nm = _kCxSl.firstWhere((z) => z[0] == slot)[1];
+      return 'ئەمڕۆ ${fmt(left)} kcal ت ماوە. بۆ $nm بەپێی پلانەکەت: ${its.map((z) => '${z.o.x.label} (${z.o.qty(z.q)})').join('، ')}.';
     }
     if (has(['پرۆتین'])) {
       return 'ئامانجی پرۆتینت ${plan.p}g ـە؛ ئەمڕۆ ${t.p.round()}g ت خواردووە. ${t.p < plan.p ? 'هێلکە، ماست، مریشک یان کەباب زیاد بکە.' : 'ئامانجەکەت تەواو بووە، ئافەرین!'}';
