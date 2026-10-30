@@ -22,6 +22,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/theme.dart';
+import 'food_db.dart';
+
+part 'food_coach.dart';
 
 /// کردنەوەی بەشی خواردن
 Future<void> openFoodDesign() async {
@@ -1015,13 +1018,16 @@ String _todayKey() => _key(DateTime.now());
 
 // ═════════════════════════════ پەڕەی سەرەکی ═════════════════════════════
 class FoodDesignPage extends StatefulWidget {
-  const FoodDesignPage({super.key});
+  const FoodDesignPage({super.key, this.tab = 'today'});
+
+  /// بەشی سەرەتا: today | search | plan (ڕاهێنەر) | ask | stats | me
+  final String tab;
   @override
   State<FoodDesignPage> createState() => _FoodDesignState();
 }
 
 class _FoodDesignState extends State<FoodDesignPage> {
-  String tab = 'today'; // today | search | plan | ask | stats | me
+  late String tab = widget.tab; // today | search | plan | ask | stats | me
   String cur = _todayKey();
   bool wiz = false;
   _Prof? wizProf;
@@ -2466,278 +2472,6 @@ class _SearchTabState extends State<_SearchTab> {
         ),
       ],
     );
-  }
-}
-
-// ═════════════════════════════ ڕاهێنەر ═════════════════════════════
-class _CoachTab extends StatefulWidget {
-  const _CoachTab({super.key, required this.ask, required this.go, required this.onWizard});
-  final bool ask;
-  final ValueChanged<String> go;
-  final void Function(_Prof?, {int step}) onWizard;
-  @override
-  State<_CoachTab> createState() => _CoachTabState();
-}
-
-class _CoachTabState extends State<_CoachTab> {
-  final TextEditingController q = TextEditingController();
-  final ScrollController sc = ScrollController();
-  final List<List<String>> msgs = [
-    ['bot', 'سڵاو! من ڕاهێنەری خواردنی تۆم. دەتوانیت لەسەر کالۆری، پرۆتین، ئاو، کێش یان ئەوەی ئێستا چی بخۆیت بپرسیت.'],
-  ];
-
-  @override
-  void dispose() {
-    q.dispose();
-    sc.dispose();
-    super.dispose();
-  }
-
-  String _answer(String s) {
-    final fd = _FD.I;
-    final P = fd.prof!;
-    final plan = fd.plan!;
-    final t = fd.totals(_todayKey());
-    final left = plan.kcal + _kBurn - t.kcal;
-    bool has(List<String> k) => k.any((x) => s.contains(x));
-    if (has(['چی بخۆم', 'برسیمە', 'برسی', 'ژەم', 'پێشنیار'])) {
-      final rows = _allFoods().map((f) => [f, _judgeFood(f, 1)]).where((r) => (r[1] as _Verdict).v == 'ok' && (r[0] as _Food).kcal <= math.max(left, 150)).toList();
-      rows.sort((a, b) => (b[0] as _Food).p.compareTo((a[0] as _Food).p));
-      final names = rows.take(3).map((r) => (r[0] as _Food).n).join('، ');
-      if (names.isEmpty) return 'ئەمڕۆ ماوەی کالۆریت کەمە (${fmt(left)} kcal)؛ ئاو یان سەوزە بخۆ.';
-      return 'ئەمڕۆ ${fmt(left)} kcal ماوە. بۆ ئێستا باشترین: $names.';
-    }
-    if (has(['پرۆتین'])) {
-      return 'ئامانجی پرۆتینت ${plan.p}g ـە؛ ئەمڕۆ ${t.p.round()}g ت خواردووە. ${t.p < plan.p ? 'هێلکە، ماست، مریشک یان کەباب زیاد بکە.' : 'ئامانجەکەت تەواو بووە، ئافەرین!'}';
-    }
-    if (has(['ئاو', 'تینو'])) {
-      final ml = _peek(_todayKey()).water * 250;
-      return 'ئامانجی ئاوت ${fmt(plan.water)}ml ـە و ${fmt(ml)}ml ت خواردووەتەوە. هەر کاتژمێرێک پەرداخێک بخۆرەوە.';
-    }
-    if (has(['کالۆری', 'kcal'])) {
-      return 'ئامانجی ڕۆژانەت ${fmt(plan.kcal)} kcal ـە (BMR: ${fmt(plan.bmr)}، TDEE: ${fmt(plan.tdee)}). ئەمڕۆ ${fmt(t.kcal)} ت خواردووە.';
-    }
-    if (has(['کێش', 'لاواز', 'قەڵەو', 'کەم بکەمەوە'])) {
-      if (P.goal == 'lose') return 'ئامانجت کەمکردنەوەی کێشە: ${fmt(plan.kcal)} kcal، نیوەی قاپەکەت سەوزە، و ڕۆژانە ${fmt(plan.steps)} هەنگاو بڕۆ.${plan.weeks > 0 ? ' نزیکەی ${plan.weeks} هەفتە دەخایەنێت.' : ''}';
-      return 'ئامانجی ئێستات "${_goalOf(P.goal)[1]}" ـە. بۆ گۆڕینی، لە "من" پلانەکەت دەستکاری بکە.';
-    }
-    if (has(['شەکر', 'شیرین'])) {
-      return 'سنووری شەکرت ${plan.sug}g لە ڕۆژێکدا؛ ئەمڕۆ ${t.sug.round()}g ت خواردووە. شەربەت و شیرینی کەم بکەرەوە.';
-    }
-    if (has(['خوێ', 'فشار', 'سوێر'])) {
-      return 'سنووری خوێت ${plan.salt}g لە ڕۆژێکدا؛ ئەمڕۆ ${_f1(double.parse(t.salt.toStringAsFixed(1)))}g ت خواردووە. ترشی و پەنیری سوێر کەم بخۆ.';
-    }
-    if (has(['هەنگاو', 'پیاسە', 'ڕاهێنان', 'وەرزش'])) {
-      return 'ئامانجی هەنگاوت ${fmt(plan.steps)} ـە؛ ئەمڕۆ ${fmt(_kSteps)} هەنگاوت هەیە. پیاسەی ١٥ خولەکی دوای نان زۆر باشە.';
-    }
-    return 'نەمتوانی تێبگەم. دەتوانیت بپرسیت: "چی بخۆم؟"، "پرۆتینم چەندە؟"، "ئاو چەند بخۆم؟" یان "چۆن کێش کەم بکەمەوە؟".';
-  }
-
-  void _send(String text) {
-    final s = text.trim();
-    if (s.isEmpty) return;
-    setState(() {
-      msgs.add(['me', s]);
-      msgs.add(['bot', _answer(s)]);
-      q.clear();
-    });
-    Future<void>.delayed(const Duration(milliseconds: 120), () {
-      if (sc.hasClients) sc.animateTo(sc.position.maxScrollExtent + 200, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
-    });
-  }
-
-  Widget _seg() {
-    Widget b(String k, String label, bool on) => Expanded(
-          child: Press(
-            onTap: () => widget.go(k),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 160),
-              padding: const EdgeInsets.symmetric(vertical: 11),
-              decoration: BoxDecoration(
-                color: on ? op(V.mint, 0.14) : Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: on ? op(V.mint, 0.6) : Colors.transparent),
-              ),
-              child: Center(child: _t(label, size: 13.5, w: FontWeight.w800, c: on ? V.mint : V.mu)),
-            ),
-          ),
-        );
-    return Container(
-      margin: const EdgeInsets.fromLTRB(14, 8, 14, 4),
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(color: V.surf, borderRadius: BorderRadius.circular(20), border: Border.all(color: V.line)),
-      child: Row(children: [b('plan', 'پلان و ئامۆژگاری', !widget.ask), b('ask', 'پرسیار لە ڕاهێنەر', widget.ask)]),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(children: [
-      _seg(),
-      Expanded(child: widget.ask ? _askView() : _planView()),
-    ]);
-  }
-
-  Widget _stat(String icon, String v, String l, Color c) => Expanded(
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 11),
-          decoration: _glass(r: 18, tint: c, a: 0.09),
-          child: Column(children: [
-            _Ic(icon, size: 28),
-            const SizedBox(height: 4),
-            _n(v, 17, c: c),
-            _t(l, size: 11, c: V.mu),
-          ]),
-        ),
-      );
-
-  Widget _planView() {
-    final fd = _FD.I;
-    final P = fd.prof!;
-    final plan = fd.plan!;
-    final g = _goalOf(P.goal);
-    final rules = _coachRules(P);
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(14, 6, 14, 40),
-      physics: const BouncingScrollPhysics(),
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
-            gradient: const LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF0E4A59), Color(0xFF07303C)]),
-            border: Border.all(color: const Color(0x4D6CF0F7)),
-          ),
-          child: Column(children: [
-            Row(children: [
-              _Sv(g[3], size: 40),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  _t(P.name.isEmpty ? 'پلانی تایبەتی تۆ' : 'پلانی ${P.name}', size: 16, w: FontWeight.w800, c: const Color(0xFFEAFFFF)),
-                  _t(g[1], size: 12, c: const Color(0xFF8FC3CB)),
-                ]),
-              ),
-            ]),
-            const SizedBox(height: 14),
-            Row(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
-              _n(fmt(plan.kcal), 46, c: const Color(0xFFEAFFFF)),
-              const SizedBox(width: 6),
-              Text('kcal / ڕۆژ', style: nu(13, c: const Color(0xFF8FC3CB), w: FontWeight.w700)),
-            ]),
-            const SizedBox(height: 4),
-            Text('BMR ${fmt(plan.bmr)} · TDEE ${fmt(plan.tdee)}', style: nu(11.5, c: const Color(0xFF8FC3CB), w: FontWeight.w600)),
-            const SizedBox(height: 14),
-            Row(children: [
-              _stat('protein2', '${plan.p}g', 'پرۆتین', const Color(0xFFFF5F7E)),
-              const SizedBox(width: 8),
-              _stat('carbs', '${plan.c}g', 'کارب', const Color(0xFFFFA52E)),
-              const SizedBox(width: 8),
-              _stat('fat', '${plan.f}g', 'چەوری', const Color(0xFF9B7BFF)),
-            ]),
-            const SizedBox(height: 8),
-            Row(children: [
-              _stat('fiber', '${plan.fib}g', 'فایبەر', V.mint),
-              const SizedBox(width: 8),
-              _stat('water', '${(plan.water / 1000).toStringAsFixed(1)}L', 'ئاو', const Color(0xFF2FC4F0)),
-              const SizedBox(width: 8),
-              _stat('sugar', '${plan.sug}g', 'شەکر', _pink),
-            ]),
-            if (plan.weeks > 0) ...[
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 12),
-                decoration: BoxDecoration(color: const Color(0x1AFFFFFF), borderRadius: BorderRadius.circular(16)),
-                child: _t('بە ئەم پلانە نزیکەی ${plan.weeks} هەفتە بۆ گەیشتن بە ${_f1(P.tw)}kg', size: 12.5, c: const Color(0xFFEAFFFF), align: TextAlign.center),
-              ),
-            ],
-          ]),
-        ),
-        for (final f in plan.flags)
-          Container(
-            margin: const EdgeInsets.only(top: 10),
-            padding: const EdgeInsets.all(12),
-            decoration: _glass(r: 18, tint: V.amber, a: 0.1),
-            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Icon(Icons.warning_amber_rounded, color: V.amber, size: 22),
-              const SizedBox(width: 8),
-              Expanded(child: _t(f, size: 12.5, h: 1.65, w: FontWeight.w600)),
-            ]),
-          ),
-        _Sec('ئامۆژگارییەکانی ڕاهێنەر', sub: '${rules.length}'),
-        for (final r in rules)
-          Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: V.surf, borderRadius: BorderRadius.circular(22), border: Border.all(color: V.line)),
-            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(color: op(V.mint, 0.1), borderRadius: BorderRadius.circular(16)),
-                child: Center(child: _Sv(r[0], size: 34)),
-              ),
-              const SizedBox(width: 12),
-              Expanded(child: Padding(padding: const EdgeInsets.only(top: 3), child: _t(r[1], size: 13.5, h: 1.75, w: FontWeight.w600))),
-            ]),
-          ),
-        const SizedBox(height: 4),
-        _bigBtn('دەستکاری پلان', () => widget.onWizard(P, step: 1), ghost: true),
-      ],
-    );
-  }
-
-  Widget _askView() {
-    const sugg = ['چی بخۆم ئێستا؟', 'پرۆتینم چەندە؟', 'ئاو چەند بخۆم؟', 'چۆن کێش کەم بکەمەوە؟', 'شەکرم چۆنە؟'];
-    return Column(children: [
-      Expanded(
-        child: ListView(
-          controller: sc,
-          padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-          physics: const BouncingScrollPhysics(),
-          children: [
-            for (final m in msgs)
-              Align(
-                alignment: m[0] == 'me' ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart,
-                child: Container(
-                  constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
-                  margin: const EdgeInsets.only(bottom: 10),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-                  decoration: BoxDecoration(
-                    gradient: m[0] == 'me' ? V.prime : null,
-                    color: m[0] == 'me' ? null : V.surf,
-                    borderRadius: BorderRadius.circular(20),
-                    border: m[0] == 'me' ? null : Border.all(color: V.line),
-                  ),
-                  child: m[0] == 'me'
-                      ? Text(m[1], style: ku(14, w: FontWeight.w700, c: const Color(0xFF05303A), h: 1.6))
-                      : _t(m[1], size: 13.5, h: 1.75, w: FontWeight.w600),
-                ),
-              ),
-          ],
-        ),
-      ),
-      SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        child: Row(children: [
-          for (final s in sugg)
-            Padding(
-              padding: const EdgeInsetsDirectional.only(end: 8),
-              child: _Chp(on: false, onTap: () => _send(s), child: _t(s, size: 12, w: FontWeight.w800)),
-            ),
-        ]),
-      ),
-      Padding(
-        padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
-        child: Row(children: [
-          Expanded(child: _Field(c: q, hint: 'پرسیارەکەت بنووسە...')),
-          const SizedBox(width: 8),
-          _PlusBtn(color: V.mint, onTap: () => _send(q.text), size: 50),
-        ]),
-      ),
-    ]);
   }
 }
 
