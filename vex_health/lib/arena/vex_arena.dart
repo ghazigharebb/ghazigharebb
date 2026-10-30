@@ -3653,22 +3653,13 @@ class _ConfettiPainter extends CustomPainter {
 
 class _Card extends StatelessWidget {
   final Widget child;
-  final bool glow;
   final EdgeInsets margin;
-  const _Card({required this.child, this.glow = false, this.margin = const EdgeInsets.only(top: 14)});
+  const _Card({required this.child, this.margin = const EdgeInsets.only(top: 14)});
   @override
   Widget build(BuildContext context) => Container(
         margin: margin,
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: VA.surf,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: glow ? VA.line2 : VA.line),
-          gradient: glow
-              ? LinearGradient(colors: [_al(vk(0xFF0F5566), .9), _al(vk(0xFF0A3644), .9)], begin: Alignment.topLeft, end: Alignment.bottomRight)
-              : null,
-          boxShadow: glow ? [BoxShadow(color: _al(VA.cyan, .12), blurRadius: 30, offset: const Offset(0, 12))] : null,
-        ),
+        decoration: BoxDecoration(color: VA.surf, borderRadius: BorderRadius.circular(24), border: Border.all(color: VA.line)),
         child: child,
       );
 }

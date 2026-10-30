@@ -1,7 +1,9 @@
 // تاقیکردنەوەی بەشی «ئەمڕۆ» ی VEX Arena: ڕووناک و تاریک + هەموو دوگمە و شیتەکان
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,6 +14,21 @@ import 'package:vex_health/onboarding/reg_lang_state.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   GoogleFonts.config.allowRuntimeFetching = false;
+
+  setUpAll(() async {
+    // فۆنتی ڕاستەقینەی ئەپ (NotoAr) و ئایکۆنەکانی Material بۆ وێنەی دروست
+    final ar = FontLoader('NotoAr');
+    for (final f in ['Regular', 'SemiBold', 'Bold']) {
+      ar.addFont(rootBundle.load('assets/fonts/NotoSansArabic-$f.ttf'));
+    }
+    await ar.load();
+    final root = Platform.environment['FLUTTER_ROOT'] ?? '';
+    final mi = File('$root/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf');
+    if (mi.existsSync()) {
+      final bytes = mi.readAsBytesSync();
+      await (FontLoader('MaterialIcons')..addFont(Future.value(ByteData.view(bytes.buffer)))).load();
+    }
+  });
 
   Future<void> settle(WidgetTester t, [int ms = 400]) async {
     await t.runAsync(() => Future<void>.delayed(Duration(milliseconds: ms)));
@@ -49,6 +66,12 @@ void main() {
 
   for (final light in [false, true]) {
     testWidgets('arena today ${light ? 'light' : 'dark'}', (t) async {
+      final old = FlutterError.onError;
+      FlutterError.onError = (d) {
+        // ignore: avoid_print
+        print('FERR ${d.toString().split('\n').take(30).join('\n')}');
+        old?.call(d);
+      };
       await open(t, light: light);
       noErr(t, 'open');
       expect(find.text('خاڵی ئەمڕۆ'), findsOneWidget);
@@ -60,6 +83,7 @@ void main() {
       await expectLater(find.byType(VexArenaPage), matchesGoldenFile('goldens/arena_today_${light ? 'light' : 'dark'}.png'));
       if (light) {
         await t.pumpWidget(const SizedBox());
+        FlutterError.onError = old;
         return;
       }
 
@@ -132,6 +156,7 @@ void main() {
       await t.pump(const Duration(seconds: 4));
       await t.pumpWidget(const SizedBox());
       await t.pump(const Duration(seconds: 1));
+      FlutterError.onError = old;
     });
   }
 }
