@@ -1,15 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- VEX — ئایکۆنی شریتی سەرەوە: لۆگۆی VX لەگەڵ هێڵی دڵ (تەنها سپی؛ سیستەم خۆی ڕەنگی دەکات) -->
+<!-- VEX — ئایکۆنی شریتی سەرەوە: لۆگۆی VX بە هەمان ئەندازەی لۆگۆی ڕەسەن (640×349 → 24×24) -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp" android:height="24dp"
     android:viewportWidth="24" android:viewportHeight="24">
-    <path android:pathData="M2.4,6.4 L5.4,17.6 L9.2,6.4"
-        android:strokeColor="#FFFFFFFF" android:strokeWidth="2.6"
-        android:strokeLineCap="round" android:strokeLineJoin="round" />
-    <path android:pathData="M16.4,6.4 L21.4,17.6 M22.8,6.4 L15.2,17.6"
-        android:strokeColor="#FFFFFFFF" android:strokeWidth="2.6"
-        android:strokeLineCap="round" android:strokeLineJoin="round" />
-    <path android:pathData="M8.2,12.6 H10 L11.1,9.4 L12.5,15.8 L13.7,11.1 L14.5,12.6 H16.6"
-        android:strokeColor="#FFFFFFFF" android:strokeWidth="2"
-        android:strokeLineCap="round" android:strokeLineJoin="round" />
+    <group android:scaleX="0.03599" android:scaleY="0.03599" android:translateX="0.4" android:translateY="4.82">
+        <!-- V لەگەڵ قەدی سەرەوە -->
+        <path android:fillColor="#FFFFFFFF"
+            android:pathData="M2,0 L119,0 L146,48 L91,48 L165.4,229 L165.6,229 L250,0 L322,0 L166,399 Z" />
+        <!-- X: بازووی \ و / و پێی خوارەوە -->
+        <path android:fillColor="#FFFFFFFF" android:pathData="M327,0 L402,0 L644.6,349 L569.6,349 Z" />
+        <path android:fillColor="#FFFFFFFF" android:pathData="M561,0 L636,0 L397.6,349 L321.6,349 Z" />
+        <path android:fillColor="#FFFFFFFF" android:pathData="M480,292 L529.9,292 L569.6,349 L505,349 Z" />
+        <!-- هێڵی لێدانی دڵ -->
+        <path android:pathData="M160,178 H288 L314,96 L336,256 L352,178 L372,164 L386,178 H422"
+            android:strokeColor="#FFFFFFFF" android:strokeWidth="42"
+            android:strokeLineCap="round" android:strokeLineJoin="round" />
+    </group>
 </vector>
