@@ -47,7 +47,7 @@ struct VexTrack: View {
                 let l = xFlag + 12
                 let r = xHome - 12
                 let p = CGFloat(min(1, max(0, s.pct)))
-                let xRun = s.done ? xFlag + 20 : r - (r - l) * p
+                let xRun = s.done ? xFlag : r - (r - l) * p   // لە تەواوبووندا ڕێک لەسەر ئاڵاکە
                 ZStack {
                     // هێڵی خاڵخاڵ
                     Path { pth in pth.move(to: CGPoint(x: l, y: cy)); pth.addLine(to: CGPoint(x: r, y: cy)) }
@@ -74,20 +74,39 @@ struct VexTrack: View {
                     Circle().fill(Color(red: 0.114, green: 0.212, blue: 0.243)).frame(width: 24, height: 24)
                         .overlay(Image(systemName: "house.fill").font(.system(size: 11, weight: .bold)).foregroundColor(VexColor.mute))
                         .position(x: xHome, y: cy)
-                    // ئاڵا
-                    Circle().fill(VexColor.mint.opacity(0.16)).frame(width: 24, height: 24)
-                        .overlay(Circle().stroke(VexColor.mint.opacity(0.35), lineWidth: 1))
-                        .overlay(Image(systemName: "flag.fill").font(.system(size: 11, weight: .bold)).foregroundColor(VexColor.mint))
-                        .position(x: xFlag, y: cy)
-                    // ڕاکەر
-                    Circle().fill(RadialGradient(colors: [VexColor.cy.opacity(0.35), VexColor.cy.opacity(0)], center: .center, startRadius: 0, endRadius: 19))
+                    // ئاڵا — تا نەگەیشتوویە
+                    if !s.done {
+                        Circle().fill(VexColor.mint.opacity(0.16)).frame(width: 24, height: 24)
+                            .overlay(Circle().stroke(VexColor.mint.opacity(0.35), lineWidth: 1))
+                            .overlay(Image(systemName: "flag.fill").font(.system(size: 11, weight: .bold)).foregroundColor(VexColor.mint))
+                            .position(x: xFlag, y: cy)
+                    }
+                    // ڕاکەر (لە تەواوبووندا: ئاڵای چەقاو + ✓)
+                    Circle().fill(RadialGradient(colors: [(s.done ? VexColor.mint : VexColor.cy).opacity(0.4), VexColor.cy.opacity(0)], center: .center, startRadius: 0, endRadius: 19))
                         .frame(width: 38, height: 38).position(x: xRun, y: cy)
-                    Circle().fill(VexColor.accent).frame(width: 26, height: 26)
+                    Circle()
+                        .fill(s.done
+                              ? LinearGradient(colors: [VexColor.mint, Color(red: 0.098, green: 0.769, blue: 0.416)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                              : LinearGradient(colors: [VexColor.cy, VexColor.mint], startPoint: .topLeading, endPoint: .bottomTrailing))
+                        .frame(width: 26, height: 26)
                         .overlay(Circle().stroke(VexColor.bg, lineWidth: 2.5))
-                        .overlay(Image(systemName: "figure.walk").font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(Color(red: 0.016, green: 0.196, blue: 0.227)).scaleEffect(x: -1, y: 1))
-                        .shadow(color: VexColor.cy.opacity(0.45), radius: 6, y: 3)
+                        .overlay(
+                            Group {
+                                if s.done {
+                                    Image(systemName: "flag.fill").font(.system(size: 12, weight: .bold))
+                                } else {
+                                    Image(systemName: "figure.walk").font(.system(size: 14, weight: .semibold)).scaleEffect(x: -1, y: 1)
+                                }
+                            }.foregroundColor(Color(red: 0.016, green: 0.196, blue: 0.227))
+                        )
+                        .shadow(color: (s.done ? VexColor.mint : VexColor.cy).opacity(0.5), radius: 6, y: 3)
                         .position(x: xRun, y: cy)
+                    if s.done {
+                        Circle().fill(Color.white).frame(width: 13, height: 13)
+                            .overlay(Circle().stroke(VexColor.bg, lineWidth: 1.5))
+                            .overlay(Image(systemName: "checkmark").font(.system(size: 7, weight: .heavy)).foregroundColor(Color(red: 0.043, green: 0.478, blue: 0.243)))
+                            .position(x: xRun + 11, y: cy - 11)
+                    }
                 }
             }
             .frame(height: 34)

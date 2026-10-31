@@ -1,0 +1,43 @@
+name: android-build
+on:
+  push:
+    branches: [arena-today]
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: build
+        working-directory: vex_health
+        run: |
+          mkdir -p /tmp/o
+          set -o pipefail
+          st=0
+          build() {
+            set -e
+            flutter create . --platforms=android --org com.vex --project-name vex_health
+            python3 ../.github/workflows/ci_gradle_patch.py
+            python3 tools/setup_native.py
+            flutter pub get
+            flutter build apk --debug
+          }
+          build > /tmp/o/build.txt 2>&1 || st=$?
+          echo "exit=$st" >> /tmp/o/build.txt
+          cp android/app/src/main/AndroidManifest.xml /tmp/o/ || true
+          exit $st
+      - name: publish
+        if: always()
+        run: |
+          cd /tmp/o
+          git init -q && git config user.name ci && git config user.email ci@example.com
+          git checkout -q -b ci-build && git add -A && git commit -qm out
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-build

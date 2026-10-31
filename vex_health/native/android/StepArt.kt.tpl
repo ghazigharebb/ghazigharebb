@@ -100,7 +100,7 @@ object StepArt {
         val l = xFlag + dp(c, 12f)      // کۆتایی چەپی هێڵ
         val r = xHome - dp(c, 12f)      // کۆتایی ڕاستی هێڵ
         val p = pct.coerceIn(0f, 1f)
-        val xRun = if (done) xFlag + dp(c, 20f) else r - (r - l) * p
+        val xRun = if (done) xFlag else r - (r - l) * p   // لە تەواوبووندا ڕێک لەسەر ئاڵاکە
 
         val card = if (dark) 0xFF13262C.toInt() else Color.WHITE
         val line = if (dark) 0x38FFFFFF else 0x33000000
@@ -140,23 +140,45 @@ object StepArt {
         cv.drawCircle(xHome, cy, dp(c, 12f), Paint(Paint.ANTI_ALIAS_FLAG).apply { color = if (dark) 0xFF1D363E.toInt() else 0xFFDCE9ED.toInt() })
         icon(c, cv, R.drawable.ic_vx_home, xHome, cy, dp(c, 13f), if (dark) 0xFF9FC3CB.toInt() else 0xFF4D6B73.toInt(), false)
 
-        // ئاڵا (چەپ)
-        cv.drawCircle(xFlag, cy, dp(c, 12f), Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x293CF08A })
-        cv.drawCircle(xFlag, cy, dp(c, 11.5f), Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x593CF08A; style = Paint.Style.STROKE; strokeWidth = dp(c, 1f) })
-        icon(c, cv, R.drawable.ic_vx_flag, xFlag, cy, dp(c, 13f), MINT, true)
+        // ئاڵا (چەپ) — تا نەگەیشتوویە
+        if (!done) {
+            cv.drawCircle(xFlag, cy, dp(c, 12f), Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x293CF08A })
+            cv.drawCircle(xFlag, cy, dp(c, 11.5f), Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x593CF08A; style = Paint.Style.STROKE; strokeWidth = dp(c, 1f) })
+            icon(c, cv, R.drawable.ic_vx_flag, xFlag, cy, dp(c, 13f), MINT, true)
+        }
 
-        // ڕاکەر: هاڵۆ + بازنەی گرادیەنت + کەسی پیادە
+        // ڕاکەر: هاڵۆ + بازنەی گرادیەنت + کەسی پیادە (لە تەواوبووندا: ئاڵای چەقاو + ✓)
+        val glow = if (done) 0x663CF08A else 0x592FE6F3
         val halo = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            shader = RadialGradient(xRun, cy, dp(c, 19f), intArrayOf(0x592FE6F3, 0x002FE6F3), floatArrayOf(0f, 0.7f), Shader.TileMode.CLAMP)
+            shader = RadialGradient(xRun, cy, dp(c, 19f), intArrayOf(glow, 0x002FE6F3), floatArrayOf(0f, 0.7f), Shader.TileMode.CLAMP)
         }
         cv.drawCircle(xRun, cy, dp(c, 19f), halo)
         cv.drawCircle(xRun, cy, dp(c, 15.5f), Paint(Paint.ANTI_ALIAS_FLAG).apply { color = card })
         val ball = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            shader = LinearGradient(xRun - dp(c, 13f), cy - dp(c, 13f), xRun + dp(c, 13f), cy + dp(c, 13f), CY, MINT, Shader.TileMode.CLAMP)
-            setShadowLayer(dp(c, 8f), 0f, dp(c, 3f), 0x732FE6F3)
+            shader = if (done)
+                LinearGradient(xRun - dp(c, 13f), cy - dp(c, 13f), xRun + dp(c, 13f), cy + dp(c, 13f), MINT, 0xFF19C46A.toInt(), Shader.TileMode.CLAMP)
+            else
+                LinearGradient(xRun - dp(c, 13f), cy - dp(c, 13f), xRun + dp(c, 13f), cy + dp(c, 13f), CY, MINT, Shader.TileMode.CLAMP)
+            setShadowLayer(dp(c, 8f), 0f, dp(c, 3f), if (done) 0x803CF08A.toInt() else 0x732FE6F3)
         }
         cv.drawCircle(xRun, cy, dp(c, 13f), ball)
-        icon(c, cv, R.drawable.ic_vx_walk, xRun, cy, dp(c, 15f), 0xFF04323A.toInt(), true)
+        if (done) {
+            icon(c, cv, R.drawable.ic_vx_flag, xRun, cy, dp(c, 14f), 0xFF04323A.toInt(), false)
+            // نیشانەی ✓ لە سەرەوە
+            val bx = xRun + dp(c, 11f); val by = cy - dp(c, 11f)
+            cv.drawCircle(bx, by, dp(c, 8f), Paint(Paint.ANTI_ALIAS_FLAG).apply { color = card })
+            cv.drawCircle(bx, by, dp(c, 6.5f), Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE })
+            val ck = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = 0xFF0B7A3E.toInt(); style = Paint.Style.STROKE; strokeWidth = dp(c, 1.8f)
+                strokeCap = Paint.Cap.ROUND; strokeJoin = Paint.Join.ROUND
+            }
+            val path = android.graphics.Path().apply {
+                moveTo(bx - dp(c, 3.2f), by + dp(c, 0.2f)); lineTo(bx - dp(c, 0.8f), by + dp(c, 2.6f)); lineTo(bx + dp(c, 3.4f), by - dp(c, 2.4f))
+            }
+            cv.drawPath(path, ck)
+        } else {
+            icon(c, cv, R.drawable.ic_vx_walk, xRun, cy, dp(c, 15f), 0xFF04323A.toInt(), true)
+        }
 
         // پێوەر
         if (scale) {
