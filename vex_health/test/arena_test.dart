@@ -42,6 +42,11 @@ void main() {
     }
   }
 
+  // وێنەکان تەنها لەگەڵ --update-goldens دروست دەکرێن (بۆ پێداچوونەوەی دیزاین)
+  Future<void> gold(Finder f, String name) async {
+    if (autoUpdateGoldenFiles) await expectLater(f, matchesGoldenFile(name));
+  }
+
   void noErr(WidgetTester t, String at) {
     final e = t.takeException();
     if (e != null) {
@@ -97,7 +102,7 @@ void main() {
       expect(find.text(tr('g_title')), findsOneWidget);
       // هیچ تابێک پێش تۆمارکردن نییە
       expect(find.text(tr('tab_rank')), findsNothing);
-      await expectLater(find.byType(VexArenaPage), matchesGoldenFile('goldens/gate1_$mode.png'));
+      await gold(find.byType(VexArenaPage), 'goldens/gate1_$mode.png');
 
       // هەنگاوی 1: هەڵەکان
       await t.tap(find.text(tr('next')));
@@ -121,7 +126,7 @@ void main() {
       expect(find.text(tr('e_city')), findsOneWidget);
       await t.tap(find.text('هەولێر'));
       await settle(t);
-      await expectLater(find.byType(VexArenaPage), matchesGoldenFile('goldens/gate2_$mode.png'));
+      await gold(find.byType(VexArenaPage), 'goldens/gate2_$mode.png');
       await t.tap(find.text(tr('next')));
       await settle(t);
       noErr(t, 'step 3');
@@ -132,7 +137,7 @@ void main() {
       expect(find.text(tr('e_char')), findsOneWidget);
       await t.tap(find.byType(CharAvatar).first);
       await settle(t);
-      await expectLater(find.byType(VexArenaPage), matchesGoldenFile('goldens/gate3_$mode.png'));
+      await gold(find.byType(VexArenaPage), 'goldens/gate3_$mode.png');
       await t.tap(find.text(tr('next')));
       await settle(t);
       noErr(t, 'step 4');
@@ -142,7 +147,7 @@ void main() {
       await t.tap(find.text(go));
       await settle(t);
       expect(find.text(tr('e_agree')), findsOneWidget);
-      await expectLater(find.byType(VexArenaPage), matchesGoldenFile('goldens/gate4_$mode.png'));
+      await gold(find.byType(VexArenaPage), 'goldens/gate4_$mode.png');
       await t.ensureVisible(find.text(tr('agree')));
       await settle(t);
       await t.tap(find.text(tr('agree')));
@@ -153,7 +158,7 @@ void main() {
 
       // پیشاندانی کارت
       expect(find.text(tr('rv_t')), findsOneWidget);
-      await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/reveal_$mode.png'));
+      await gold(find.byType(MaterialApp), 'goldens/reveal_$mode.png');
       await t.tap(find.text(tr('rv_go')));
       await settle(t, 600);
       noErr(t, 'after reveal');
@@ -177,15 +182,15 @@ void main() {
         noErr(t, 'open $lang');
         expect(find.text(tr('tab_today')), findsOneWidget);
         expect(find.text(tr('sp_t')), findsWidgets); // شوێنی سپۆنسەر بەتاڵە
-        await expectLater(find.byType(VexArenaPage), matchesGoldenFile('goldens/${lang}_${mode}_today.png'));
+        await gold(find.byType(VexArenaPage), 'goldens/${lang}_${mode}_today.png');
         await t.tap(find.text(tr('tab_rank')));
         await settle(t);
         noErr(t, 'rank $lang');
-        await expectLater(find.byType(VexArenaPage), matchesGoldenFile('goldens/${lang}_${mode}_rank.png'));
+        await gold(find.byType(VexArenaPage), 'goldens/${lang}_${mode}_rank.png');
         await t.tap(find.text(tr('tab_card')));
         await settle(t);
         noErr(t, 'card $lang');
-        await expectLater(find.byType(VexArenaPage), matchesGoldenFile('goldens/${lang}_${mode}_card.png'));
+        await gold(find.byType(VexArenaPage), 'goldens/${lang}_${mode}_card.png');
         await t.pump(const Duration(seconds: 4));
         await t.pumpWidget(const SizedBox());
         await t.pump(const Duration(seconds: 1));
@@ -201,11 +206,11 @@ void main() {
     noErr(t, 'phone open');
     expect(st.acc!.dv, 'phone');
     expect(find.text(tr('pb_t')), findsOneWidget);
-    await expectLater(find.byType(VexArenaPage), matchesGoldenFile('goldens/phone_today.png'));
+    await gold(find.byType(VexArenaPage), 'goldens/phone_today.png');
     await t.tap(find.text(tr('tab_rank')));
     await settle(t);
     noErr(t, 'phone rank');
-    await expectLater(find.byType(VexArenaPage), matchesGoldenFile('goldens/phone_rank.png'));
+    await gold(find.byType(VexArenaPage), 'goldens/phone_rank.png');
     await t.pump(const Duration(seconds: 4));
     await t.pumpWidget(const SizedBox());
     await t.pump(const Duration(seconds: 1));
@@ -231,7 +236,7 @@ void main() {
       final g = cfg[0] == 'ckb';
       Future<void> shot(String n) async {
         noErr(t, n);
-        if (g) await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/sheet_$n.png'));
+        if (g) await gold(find.byType(MaterialApp), 'goldens/sheet_$n.png');
       }
 
       // سکە

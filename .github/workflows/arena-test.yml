@@ -35,7 +35,7 @@ jobs:
         run: |
           mkdir -p /tmp/o
           flutter analyze --no-fatal-infos --no-fatal-warnings > /tmp/o/analyze.txt 2>&1 || true
-          st=0; flutter test test/arena_test.dart --update-goldens -r expanded > /tmp/o/out.txt 2>&1 || st=$?
+          st=0; flutter test test/arena_test.dart -r expanded > /tmp/o/out.txt 2>&1 || st=$?
           echo "exit=$st" >> /tmp/o/out.txt
           cp /tmp/fonts.txt /tmp/o/ || true
           cp /tmp/merge.txt /tmp/o/ || true
