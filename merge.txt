@@ -1,0 +1,9 @@
+Dropped mapping from codepoint 0X00A0 to glyphId 'uni00A0'
+Dropped mapping from codepoint 0X202F to glyphId 'uni202F'
+Dropped mapping from codepoint 0X00A0 to glyphId 'uni00A0'
+Dropped mapping from codepoint 0X202F to glyphId 'uni202F'
+Dropped mapping from codepoint 0X00A0 to glyphId 'uni00A0'
+Dropped mapping from codepoint 0X202F to glyphId 'uni202F'
+merged Regular
+merged SemiBold
+merged Bold

@@ -1,0 +1,26 @@
+-rw-r--r-- 1 runner runner 844676 Oct 31 16:14 /tmp/ar.ttf
+-rw-r--r-- 1 runner runner 111400 Oct 31 16:14 /tmp/so.ttf
+
+tfonts:
+total 8468
+drwxr-xr-x 2 runner runner   4096 Oct 31 16:14 .
+drwxr-xr-x 9 runner runner   4096 Oct 31 16:14 ..
+-rw-r--r-- 1 runner runner 844676 Oct 31 16:14 NotoSansArabic-Black.ttf
+-rw-r--r-- 1 runner runner 844676 Oct 31 16:14 NotoSansArabic-Bold.ttf
+-rw-r--r-- 1 runner runner 844676 Oct 31 16:14 NotoSansArabic-ExtraBold.ttf
+-rw-r--r-- 1 runner runner 844676 Oct 31 16:14 NotoSansArabic-ExtraLight.ttf
+-rw-r--r-- 1 runner runner 844676 Oct 31 16:14 NotoSansArabic-Light.ttf
+-rw-r--r-- 1 runner runner 844676 Oct 31 16:14 NotoSansArabic-Medium.ttf
+-rw-r--r-- 1 runner runner 844676 Oct 31 16:14 NotoSansArabic-Regular.ttf
+-rw-r--r-- 1 runner runner 844676 Oct 31 16:14 NotoSansArabic-SemiBold.ttf
+-rw-r--r-- 1 runner runner 844676 Oct 31 16:14 NotoSansArabic-Thin.ttf
+-rw-r--r-- 1 runner runner 111400 Oct 31 16:14 Sora-Black.ttf
+-rw-r--r-- 1 runner runner 111400 Oct 31 16:14 Sora-Bold.ttf
+-rw-r--r-- 1 runner runner 111400 Oct 31 16:14 Sora-ExtraBold.ttf
+-rw-r--r-- 1 runner runner 111400 Oct 31 16:14 Sora-ExtraLight.ttf
+-rw-r--r-- 1 runner runner 111400 Oct 31 16:14 Sora-Light.ttf
+-rw-r--r-- 1 runner runner 111400 Oct 31 16:14 Sora-Medium.ttf
+-rw-r--r-- 1 runner runner 111400 Oct 31 16:14 Sora-Regular.ttf
+-rw-r--r-- 1 runner runner 111400 Oct 31 16:14 Sora-SemiBold.ttf
+-rw-r--r-- 1 runner runner 111400 Oct 31 16:14 Sora-Thin.ttf
+39:    - tfonts/
