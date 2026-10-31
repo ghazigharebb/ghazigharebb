@@ -130,7 +130,7 @@ class _GoalCard extends StatelessWidget {
           const SizedBox(width: 14),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(tr('goal_k'), style: ats(12.5, w: FontWeight.w800, c: AC.mu, ls: .25)),
+              Text(tr('goal_k'), style: ats(12.5, w: FontWeight.w800, c: AC.mu, ls: .25, h: 1.6)),
               const SizedBox(height: 2),
               status,
             ]),
@@ -409,9 +409,9 @@ class _Missions extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  _richNum(tr(ms[i].key), ats(13.5, w: FontWeight.w800, c: ms[i].ok ? AC.mint : AC.tx, h: 1.5),
-                      atn(13.5, c: ms[i].ok ? AC.mint : AC.tx, h: 1.5)),
-                  Text(tr('${ms[i].key}_h'), style: ats(11.5, c: AC.mu, h: 1.5)),
+                  _richNum(tr(ms[i].key), ats(13.5, w: FontWeight.w800, c: ms[i].ok ? AC.mint : AC.tx),
+                      atn(13.5, c: ms[i].ok ? AC.mint : AC.tx)),
+                  Text(tr('${ms[i].key}_h'), style: ats(11.5, c: AC.mu)),
                   const SizedBox(height: 5),
                   _Bar(ms[i].v / ms[i].target, color: ms[i].cat.color, h: 4),
                 ]),
@@ -461,9 +461,9 @@ class _Missions extends StatelessWidget {
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       _richNum(open ? tr('chest_got', [c.store.chest?['c'] ?? 0]) : (ready ? tr('chest_ready') : tr('chest_t')),
-                          ats(14, w: FontWeight.w700, h: 1.6), atn(14, h: 1.6)),
-                      _richNum(open ? tr('chest_tomorrow') : (ready ? tr('chest_range') : tr('chest_need', [3 - done])), ats(12, c: AC.mu, h: 1.6),
-                          atn(12, w: FontWeight.w700, c: AC.mu, h: 1.6)),
+                          ats(14, w: FontWeight.w700), atn(14)),
+                      _richNum(open ? tr('chest_tomorrow') : (ready ? tr('chest_range') : tr('chest_need', [3 - done])), ats(12, c: AC.mu),
+                          atn(12, w: FontWeight.w700, c: AC.mu)),
                     ]),
                   ),
                 ]),
@@ -549,7 +549,7 @@ class _WeekCard extends StatelessWidget {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(tr('wk_k', [lg.name]), style: ats(11.5, w: FontWeight.w700, c: AC.mu)),
                 const SizedBox(height: 2),
-                _richNum(tr('rank_of', ['#${me.r}', 30]), ats(24, w: FontWeight.w800, h: 1.3), atn(24, h: 1.3)),
+                _richNum(tr('rank_of', ['#${me.r}', 30]), ats(24, w: FontWeight.w800), atn(24)),
                 const SizedBox(height: 2),
                 _richNum(tr('wk_left', [w.left + 1]), ats(11.5, w: FontWeight.w700, c: AC.mu), atn(11.5, c: AC.mu)),
               ]),
@@ -615,9 +615,9 @@ class _WeekCard extends StatelessWidget {
                         TextSpan(text: '${above.p - me.p + 1}', style: atn(12.5, w: FontWeight.w700)),
                         TextSpan(text: ' ${tr('rival_b')}'),
                       ]),
-                      style: ats(12.5, c: AC.mu, h: 1.6),
+                      style: ats(12.5, c: AC.mu),
                     )
-                  : Text(tr('rival_top'), style: ats(12.5, c: AC.mu, h: 1.6)),
+                  : Text(tr('rival_top'), style: ats(12.5, c: AC.mu)),
             ),
           ]),
         ),
@@ -830,7 +830,7 @@ class _PrizePanelState extends State<_PrizePanel> with SingleTickerProviderState
             const SizedBox(width: 10),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(b, style: ats(13, w: FontWeight.w700, c: Colors.white, h: 1.6)),
+                Text(b, style: ats(13, w: FontWeight.w700, c: Colors.white)),
                 _richNum(sm, ats(11.5, c: const Color(0xFFC9CFEA), h: 1.55), atn(11.5, w: FontWeight.w700, c: const Color(0xFFC9CFEA), h: 1.55)),
               ]),
             ),
@@ -1114,8 +1114,8 @@ class _Activities extends StatelessWidget {
         child: Row(children: [
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(pre ? tr('tot_pre') : tr('tot_t'), style: ats(15, w: FontWeight.w800, h: 1.6)),
-              _richNum(tr('tot_s', [done, n]), ats(12, w: FontWeight.w600, c: AC.mu, h: 1.6), atn(12, w: FontWeight.w700, c: AC.mu, h: 1.6)),
+              Text(pre ? tr('tot_pre') : tr('tot_t'), style: ats(15, w: FontWeight.w800)),
+              _richNum(tr('tot_s', [done, n]), ats(12, w: FontWeight.w600, c: AC.mu), atn(12, w: FontWeight.w700, c: AC.mu)),
             ]),
           ),
           Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
@@ -1144,7 +1144,7 @@ class _ActRow extends StatelessWidget {
           decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(99)),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             AIcon(icon, size: 10, color: fg, sw: 2.2),
-            if (text.isNotEmpty) ...[const SizedBox(width: 2), Text(text, style: ats(10, w: FontWeight.w800, c: fg, h: 1.2))],
+            if (text.isNotEmpty) ...[const SizedBox(width: 2), Text(text, style: ats(10, w: FontWeight.w800, c: fg))],
           ]),
         );
     Widget? badge;
@@ -1173,7 +1173,7 @@ class _ActRow extends StatelessWidget {
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
-                  Flexible(child: Text(r.cat.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: ats(14.5, w: FontWeight.w800, h: 1.5))),
+                  Flexible(child: Text(r.cat.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: ats(14.5, w: FontWeight.w800))),
                   if (rev && r.mult > 1 && r.cap > 0)
                     Container(
                       margin: const EdgeInsetsDirectional.only(start: 6),
@@ -1183,7 +1183,7 @@ class _ActRow extends StatelessWidget {
                     ),
                 ]),
                 Row(children: [
-                  Flexible(child: Text(d.label, maxLines: 1, overflow: TextOverflow.ellipsis, style: ats(12, w: FontWeight.w600, c: AC.mu, h: 1.6))),
+                  Flexible(child: Text(d.label, maxLines: 1, overflow: TextOverflow.ellipsis, style: ats(12, w: FontWeight.w600, c: AC.mu))),
                   if (badge != null) badge,
                 ]),
                 const SizedBox(height: 5),
@@ -1233,9 +1233,9 @@ class _FairBtn extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(tr('fair_t'), style: ats(15, w: FontWeight.w800, h: 1.6)),
-                _richNum(rej > 0 ? tr('fair_rej', [rej]) : tr('fair_ok'), ats(12.5, w: FontWeight.w600, c: AC.mu, h: 1.6),
-                    atn(12.5, c: AC.mu, h: 1.6)),
+                Text(tr('fair_t'), style: ats(15, w: FontWeight.w800)),
+                _richNum(rej > 0 ? tr('fair_rej', [rej]) : tr('fair_ok'), ats(12.5, w: FontWeight.w600, c: AC.mu),
+                    atn(12.5, c: AC.mu)),
               ]),
             ),
             AIcon('down', size: 16, color: AC.mu).rot(arenaLtr ? -90 : 90),
@@ -1352,7 +1352,7 @@ class _RegCard extends StatelessWidget {
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               _richNum(tr('rg_k', [c.S.n]), ats(11.5, w: FontWeight.w800, c: AC.mint), atn(11.5, c: AC.mint)),
-              Text(tr('rg_t', [nm(c.store.acc?.name ?? '')]), style: ats(16, w: FontWeight.w800, h: 1.5)),
+              Text(tr('rg_t', [nm(c.store.acc?.name ?? '')]), style: ats(16, w: FontWeight.w800)),
               Text(tr('rg_s', [kDate(c.S.start)]), style: ats(12.5, c: AC.mu, h: 1.6)),
             ]),
           ),
@@ -1511,7 +1511,7 @@ class _CmpCard extends StatelessWidget {
                             ? Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                                 AIcon('close', size: 13, color: AC.coral),
                                 const SizedBox(width: 3),
-                                Text(tr('none'), style: ats(12, w: FontWeight.w700, c: AC.coral)),
+                                Text(tr('none'), style: ats(12, w: FontWeight.w700, c: AC.coral, h: 1.5)),
                               ])
                             : _richNum(r[2] as String, ats(12, w: FontWeight.w700, c: AC.mu, h: 1.5), atn(12, c: AC.mu, h: 1.5), align: TextAlign.center),
                       ),

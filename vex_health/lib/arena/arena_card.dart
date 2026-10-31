@@ -151,7 +151,7 @@ class _ArenaCardViewState extends State<ArenaCardView> with SingleTickerProvider
             padding: const EdgeInsets.only(bottom: 6),
             decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0x38FFFFFF)))),
             width: double.infinity,
-            child: Text(nm(w.name), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: ats(18, w: FontWeight.w800, c: white, h: 1.4)),
+            child: Text(nm(w.name), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: ats(18, w: FontWeight.w800, c: white)),
           ),
           const SizedBox(height: 5),
           Padding(
@@ -244,7 +244,7 @@ class _CardTab extends StatelessWidget {
           const SizedBox(height: 10),
           _IconLine(cs == 'ok' || cs == 'first' ? 'check' : 'lock',
               cs == 'ok' ? tr('cl_ok') : cs == 'live' ? tr('cl_live') : tr('cl_wait', [c.charDaysLeft]),
-              size: 12, iconColor: cs == 'ok' ? AC.mint : AC.mu),
+              size: 12, iconColor: cs == 'ok' ? AC.mint : AC.mu, lh: 1.6),
         ],
         const SizedBox(height: 14),
         Row(children: [
@@ -302,7 +302,7 @@ class _CardTab extends StatelessWidget {
           return Wrap(spacing: 8, runSpacing: 8, children: [for (final k in kSkins) SizedBox(width: w, child: _SkinTile(c: c, s: k))]);
         }),
         const SizedBox(height: 10),
-        Text(tr('sk_note'), style: ats(12, c: AC.mu, h: 1.7)),
+        Text(tr('sk_note'), style: ats(12, c: AC.mu, h: 1.85)),
       ])),
 
       // نازناو
@@ -372,9 +372,9 @@ class _CardTab extends StatelessWidget {
       // تایبەتمەندی
       _Card(child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         _Ttl('eye', tr('pv_t'), small: tr('pv_s')),
-        _IconLine('eye', tr('pv_y'), size: 13, color: AC.tx, iconColor: AC.mint, gap: 9),
+        _IconLine('eye', tr('pv_y'), size: 13, color: AC.tx, iconColor: AC.mint, gap: 9, lh: 1.7),
         const SizedBox(height: 10),
-        _IconLine('eyeoff', tr('pv_n'), size: 13, color: AC.tx, iconColor: AC.coral, gap: 9),
+        _IconLine('eyeoff', tr('pv_n'), size: 13, color: AC.tx, iconColor: AC.coral, gap: 9, lh: 1.7),
       ])),
 
       // ئەکاونت
@@ -385,7 +385,7 @@ class _CardTab extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(nm(a.name), style: ats(14, w: FontWeight.w700, h: 1.6)),
+              Text(nm(a.name), style: ats(14, w: FontWeight.w700)),
               Align(
                 alignment: AlignmentDirectional.centerStart,
                 child: Text(maskPhone(a.phone), textDirection: TextDirection.ltr, style: atn(12, w: FontWeight.w500, c: AC.mu)),

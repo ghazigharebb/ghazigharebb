@@ -142,6 +142,7 @@ TextStyle ats(double s, {FontWeight w = FontWeight.w500, Color? c, double? h, do
       color: c ?? AC.tx,
       height: h,
       letterSpacing: ls,
+      leadingDistribution: TextLeadingDistribution.even, // وەک CSS
     );
 
 /// ژمارە (فۆنتی Sora وەک وێب)
@@ -2084,17 +2085,17 @@ class _Bar extends StatelessWidget {
 
 /// ڕستە لەگەڵ ئایکۆن (p.v6hn و هتد)
 class _IconLine extends StatelessWidget {
-  const _IconLine(this.icon, this.text, {this.color, this.iconColor, this.size = 12.5, this.gap = 6});
+  const _IconLine(this.icon, this.text, {this.color, this.iconColor, this.size = 12.5, this.gap = 6, this.lh = 1.65});
   static const FontWeight w = FontWeight.w400;
   final String icon;
   final String text;
   final Color? color, iconColor;
-  final double size, gap;
+  final double size, gap, lh;
   @override
   Widget build(BuildContext context) => Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Padding(padding: const EdgeInsets.only(top: 3), child: AIcon(icon, size: size + 1.5, color: iconColor ?? color ?? AC.mu)),
         SizedBox(width: gap),
-        Expanded(child: Text(text, style: ats(size, w: w, c: color ?? AC.mu, h: 1.65))),
+        Expanded(child: Text(text, style: ats(size, w: w, c: color ?? AC.mu, h: lh))),
       ]);
 }
 

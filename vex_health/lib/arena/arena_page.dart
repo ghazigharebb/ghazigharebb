@@ -501,7 +501,7 @@ class _SponsorState extends State<_Sponsor> with SingleTickerProviderStateMixin 
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
                       Text(tr('sp_small', [widget.n]), style: ats(11.5, w: FontWeight.w700, c: const Color(0xFFF6D9A6))),
-                      Text(tr('sp_big'), maxLines: 1, overflow: TextOverflow.ellipsis, style: ats(19, w: FontWeight.w800, c: Colors.white, h: 1.3)),
+                      Text(tr('sp_big'), maxLines: 1, overflow: TextOverflow.ellipsis, style: ats(19, w: FontWeight.w800, c: Colors.white, h: 1.2)),
                     ]),
                   ),
                   Container(
@@ -1258,9 +1258,9 @@ class _GateState extends State<_Gate> {
                     decoration: BoxDecoration(color: AC.solid, border: Border(top: BorderSide(color: AC.line))),
                     child: Column(mainAxisSize: MainAxisSize.min, children: [
                       SizedBox(
-                        height: 20,
+                        height: 23,
                         child: Center(
-                          child: Text(err, maxLines: 1, overflow: TextOverflow.ellipsis, style: ats(12, w: FontWeight.w600, c: AC.coral)),
+                          child: Text(err, maxLines: 1, overflow: TextOverflow.ellipsis, style: ats(12, w: FontWeight.w600, c: AC.coral, h: 1.85)),
                         ),
                       ),
                       Row(children: [
@@ -2006,7 +2006,7 @@ class _CardBack extends StatelessWidget {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Text('VEX', style: atn(46, c: Colors.white, h: 1, ls: 1.8)),
           const SizedBox(height: 6),
-          Text('ARENA', style: atn(12, c: Colors.white.withAlpha(217), ls: 6)),
+          Text('ARENA', style: atn(12, c: Colors.white.withAlpha(217), ls: 6, h: 1)),
         ]),
       );
 }

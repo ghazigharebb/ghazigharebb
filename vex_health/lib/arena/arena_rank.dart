@@ -134,8 +134,8 @@ class _WeekBoardState extends State<_WeekBoard> {
           Expanded(
             child: _richNum(
               small ? tr('wr_small', [g.length]) : (me.r <= 10 ? tr('wr_zone', [weekReward(me.r)]) : tr('wr_gap', [g[9].p - me.p + 1])),
-              ats(12.5, h: 1.6),
-              atn(12.5, h: 1.6),
+              ats(12.5),
+              atn(12.5),
             ),
           ),
         ]),
@@ -162,8 +162,8 @@ class _WeekBoardState extends State<_WeekBoard> {
             const SizedBox(width: 10),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(x.me ? '${tr('you')} · ${nm(x.n)}' : nm(x.n), maxLines: 1, overflow: TextOverflow.ellipsis, style: ats(13.5, w: FontWeight.w700, h: 1.5)),
-                Text(nm(x.city), style: ats(11, c: AC.mu, h: 1.5)),
+                Text(x.me ? '${tr('you')} · ${nm(x.n)}' : nm(x.n), maxLines: 1, overflow: TextOverflow.ellipsis, style: ats(13.5, w: FontWeight.w700)),
+                Text(nm(x.city), style: ats(11, c: AC.mu)),
               ]),
             ),
             if (!small && weekReward(x.r) > 0)
@@ -296,7 +296,7 @@ class _Board extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 7),
                       decoration: BoxDecoration(gradient: AC.goldG, borderRadius: BorderRadius.circular(99)),
-                      child: Text(tr('you'), style: ats(10, w: FontWeight.w800, c: AC.onGold, h: 1.6)),
+                      child: Text(tr('you'), style: ats(10, w: FontWeight.w800, c: AC.onGold)),
                     ),
                   ),
               ]),
@@ -344,7 +344,7 @@ class _Board extends StatelessWidget {
                       ]),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: ats(14, w: FontWeight.w700, h: 1.6),
+                      style: ats(14, w: FontWeight.w700),
                     ),
                     const SizedBox(height: 2),
                     _richNum(rk > 1 && nx != null ? tr('mine_gap', [afmt(gap), '#${afmt(rk - 1)}']) : (pl.length > 1 ? tr('mine_top') : tr('mine_only')),
@@ -391,11 +391,11 @@ class _Board extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(nm(x.n) + (x.me ? ' (${tr('you')})' : ''), maxLines: 1, overflow: TextOverflow.ellipsis, style: ats(13, w: FontWeight.w700, h: 1.6)),
+                    Text(nm(x.n) + (x.me ? ' (${tr('you')})' : ''), maxLines: 1, overflow: TextOverflow.ellipsis, style: ats(13, w: FontWeight.w700)),
                     Row(children: [
-                      Flexible(child: Text(nm(x.city), maxLines: 1, overflow: TextOverflow.ellipsis, style: ats(11, c: AC.mu, h: 1.6))),
+                      Flexible(child: Text(nm(x.city), maxLines: 1, overflow: TextOverflow.ellipsis, style: ats(11, c: AC.mu))),
                       if (!pre) ...[
-                        Text(' · ${leagueOf(x.p).name} · ', style: ats(11, c: AC.mu, h: 1.6)),
+                        Text(' · ${leagueOf(x.p).name} · ', style: ats(11, c: AC.mu)),
                         const AIcon('fire', size: 12, color: Color(0xFFFF9466)),
                         const SizedBox(width: 2),
                         Text('${x.st}', style: atn(11, w: FontWeight.w600, c: AC.mu)),

@@ -108,7 +108,7 @@ void coinSheet(BuildContext context, ArenaCtl c) {
               const SizedBox(height: 10),
               _Bar(ct / mx, h: 8, gradient: AC.goldG),
               const SizedBox(height: 8),
-              _richNum((ct >= mx ? tr('cw_max') : tr('cw_next', [rest])) + tr('cw_direct'), ats(12, c: AC.mu, h: 1.6), atn(12, w: FontWeight.w700, c: AC.mu, h: 1.6)),
+              _richNum((ct >= mx ? tr('cw_max') : tr('cw_next', [rest])) + tr('cw_direct'), ats(12, c: AC.mu), atn(12, w: FontWeight.w700, c: AC.mu)),
             ]),
           ),
           Padding(padding: const EdgeInsets.fromLTRB(0, 16, 0, 8), child: Text(tr('cw_how'), style: ats(15, w: FontWeight.w800))),
@@ -232,7 +232,7 @@ void rulesSheet(BuildContext context, ArenaCtl c) {
                     CatTile.cat(k, size: 24),
                     const SizedBox(width: 8),
                     SizedBox(width: 74, child: Text(k.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: ats(12.5, w: FontWeight.w700))),
-                    Expanded(child: Text(tr('src_${k.id}'), style: ats(12, c: AC.mu, h: 1.6))),
+                    Expanded(child: Text(tr('src_${k.id}'), style: ats(12, c: AC.mu, h: 1.85))),
                     const SizedBox(width: 6),
                     Text('${k.max}', style: atn(12.5)),
                   ]),
@@ -472,7 +472,7 @@ class _PrizeSheetState extends State<_PrizeSheet> {
         ],
       ]),
       const SizedBox(height: 8),
-      Text(S.live ? tr('pzs_note') : tr('pzs_note_pre'), textAlign: TextAlign.center, style: ats(11.5, c: AC.mu)),
+      Text(S.live ? tr('pzs_note') : tr('pzs_note_pre'), textAlign: TextAlign.center, style: ats(11.5, c: AC.mu, h: 1.85)),
       if (c.regd && S.live && mine)
         bx([
           h4('target', tr('pzs_you')),
@@ -619,7 +619,7 @@ void fairSheet(BuildContext context, ArenaCtl c) {
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text('${k.name} · ${d.label}', style: ats(13, h: 1.75)),
-                      Text(sub + (d.note.isNotEmpty ? ' · ${d.note}' : ''), style: ats(11, c: AC.mu, h: 1.6)),
+                      Text(sub + (d.note.isNotEmpty ? ' · ${d.note}' : ''), style: ats(11, c: AC.mu, h: 1.75)),
                       if (d.st == 'rej')
                         Padding(
                           padding: const EdgeInsets.only(top: 6),
@@ -655,7 +655,7 @@ void fairSheet(BuildContext context, ArenaCtl c) {
             ]),
           ),
           const SizedBox(height: 10),
-          Text(tr('fr_foot'), style: ats(12, c: AC.mu, h: 1.7)),
+          Text(tr('fr_foot'), style: ats(12, c: AC.mu, h: 1.85)),
           _closeBtn(ctx),
         ]);
       },
@@ -828,7 +828,7 @@ void guessSheet(BuildContext context, ArenaCtl c) {
         ]);
       }),
       const SizedBox(height: 12),
-      _richNum(tr('gs_note'), ats(12, c: AC.mu, h: 1.7), atn(12, c: AC.mu, h: 1.7), align: TextAlign.center),
+      _richNum(tr('gs_note'), ats(12, c: AC.mu, h: 1.85), atn(12, c: AC.mu, h: 1.85), align: TextAlign.center),
     ]),
   );
 }
@@ -849,9 +849,9 @@ void yesterdaySheet(BuildContext context, ArenaCtl c) {
         const SizedBox(width: 12),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(tr('y_k'), style: ats(12, c: AC.mu)),
-            _richNum('${p.name} ×3 · ${s2.name} ×1.5', ats(15, w: FontWeight.w800, h: 1.5), atn(15, h: 1.5)),
-            Text(g == null ? tr('y_none') : (g == p.id ? tr('y_right') : tr('y_wrong', [catById(g).name])), style: ats(12, c: AC.mu)),
+            Text(tr('y_k'), style: ats(12, c: AC.mu, h: 1.85)),
+            _richNum('${p.name} ×3 · ${s2.name} ×1.5', ats(15, w: FontWeight.w800), atn(15)),
+            Text(g == null ? tr('y_none') : (g == p.id ? tr('y_right') : tr('y_wrong', [catById(g).name])), style: ats(12, c: AC.mu, h: 1.85)),
           ]),
         ),
       ]),
@@ -879,9 +879,9 @@ void yesterdaySheet(BuildContext context, ArenaCtl c) {
             ),
         ]),
         const SizedBox(height: 12),
-        _richNum(tr('y_pts', [afmt(r?.t ?? 0)]), ats(12, c: AC.mu), atn(12, c: AC.tx)),
+        _richNum(tr('y_pts', [afmt(r?.t ?? 0)]), ats(12, c: AC.mu, h: 1.85), atn(12, c: AC.tx, h: 1.85)),
       ] else
-        Padding(padding: const EdgeInsets.only(top: 12), child: Text(tr('y_nodata'), textAlign: TextAlign.center, style: ats(12, c: AC.mu))),
+        Padding(padding: const EdgeInsets.only(top: 12), child: Text(tr('y_nodata'), textAlign: TextAlign.center, style: ats(12, c: AC.mu, h: 1.85))),
       _closeBtn(ctx),
     ]),
   );
@@ -898,7 +898,7 @@ void catSheet(BuildContext context, ArenaCtl c, ArenaCat k) {
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Padding(padding: const EdgeInsets.only(top: 3), child: AIcon(icon, size: 15, color: AC.mu)),
               const SizedBox(width: 8),
-              Expanded(child: _richNum(t, ats(12, c: AC.mu, h: 1.7), atn(12, w: FontWeight.w700, c: AC.mu, h: 1.7))),
+              Expanded(child: _richNum(t, ats(12, c: AC.mu, h: 1.85), atn(12, w: FontWeight.w700, c: AC.mu, h: 1.85))),
             ]),
           );
       return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -1414,7 +1414,7 @@ void skinSheet(BuildContext context, ArenaCtl c, CardSkin s) {
             ),
           ),
           _sh3(s.name, top: 6),
-          Text(s.desc, textAlign: TextAlign.center, style: ats(13, c: AC.mu, h: 1.6)),
+          Text(s.desc, textAlign: TextAlign.center, style: ats(13, c: AC.mu, h: 1.85)),
           const SizedBox(height: 14),
           Center(child: ArenaCardView.of(c, skin: s.id)),
           const SizedBox(height: 4),
