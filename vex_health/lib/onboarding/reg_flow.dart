@@ -16,6 +16,7 @@ import 'package:flutter/services.dart';
 
 import '../band/band_emblem.dart';
 import '../core/icons.dart';
+import '../welcome/vex_welcome.dart';
 import '../core/theme.dart';
 import 'account.dart';
 import 'reg_build.dart';
@@ -746,6 +747,27 @@ class _RegFlowState extends State<RegFlow> {
       return Material(color: RC.bg, child: IgnorePointer(child: SizedBox.expand(child: _RegBg())));
     }
     final mq = MediaQuery.of(context);
+    if (cur == 'welcome') {
+      // شاشەی بەخێرهاتن: lib/welcome/vex_welcome.dart (دەقەکان: vex_welcome_i18n.dart)
+      return PopScope(
+        canPop: false,
+        // ignore: deprecated_member_use
+        onPopInvoked: (didPop) {
+          if (!didPop) _onSystemBack();
+        },
+        child: VexWelcome(
+          key: ValueKey<String>('welcome-${LangState.I.code}'),
+          lang: LangState.I.code,
+          dark: !VexTheme.I.isLight,
+          onStart: busy ? () {} : _onGo,
+          onLogin: busy ? () {} : _onAlt,
+          onLangTap: () {
+            pickL = LangState.I.code;
+            _go('lang', back: true);
+          },
+        ),
+      );
+    }
     return PopScope(
       canPop: false,
       // ignore: deprecated_member_use
@@ -892,7 +914,791 @@ class _RegFlowState extends State<RegFlow> {
       },
       child: KeyedSubtree(
         key: key,
-        child: cur == 'welcome' ? _welcome(compact: compact, tight: tight) : _stepScroll(compact, tight, kb),
+        child: _stepScroll(compact, tight, kb),
+      ),
+    );
+  }
+
+  Widget _stepScroll(bool compact, bool tight, bool kb) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.only(top: kb ? 0 : (compact ? 2 : 8), bottom: kb ? 6 : 18),
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.manual,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: _step(compact: compact, tight: tight, kb: kb),
+      ),
+    );
+  }
+
+  static const EdgeInsets _px = EdgeInsets.symmetric(horizontal: 22);
+  Widget _p(Widget w) => Padding(padding: _px, child: w);
+
+  /// سەری هەنگاو: ئایکۆن + ناونیشان + ڕوونکردنەوە
+  List<Widget> _head(String icon, String title, List<InlineSpan> sub, {required bool compact, required bool tight, required bool kb}) {
+    return [
+      if (icon.isNotEmpty && !tight && !kb) _p(Align(alignment: AlignmentDirectional.centerStart, child: RIcon(icon, compact: compact))),
+      _p(RTitle(title, compact: compact || kb)),
+      if (!kb) _p(RPara(sub, compact: compact)),
+      if (kb) const SizedBox(height: 6),
+    ];
+  }
+
+  // ---------- هەنگاوەکان ----------
+  List<String> _seq() {
+    // دوای هەڵبژاردنی شێواز: Gmail = یەک هەنگاو؛ مۆبایل = ژمارە + کۆد
+    final au = d.auth == 'gmail' ? ['gmail'] : ['phone', 'otp'];
+    final a = d.mode == 'login'
+        ? ['lang', 'welcome', 'method', ...au, 'name']
+        : ['lang', 'welcome', 'name', 'method', ...au];
+    a.addAll(['sex', 'year', 'height', 'weight', 'target', 'act', 'goals', 'band']);
+    if (d.band.has == true) a.add('pair');
+    a.addAll(['sleep', 'health', 'notif', 'sub', 'plan']);
+    return a;
+  }
+
+  void _next() {
+    final s = _seq();
+    int i = s.indexOf(cur) + 1;
+    if (i < s.length && s[i] == 'otp' && verified) i++;
+    if (i > 0 && i < s.length) _go(s[i]);
+  }
+
+  void _back() {
+    if (busy) return;
+    final s = _seq();
+    int i = s.indexOf(cur) - 1;
+    if (i >= 0 && s[i] == 'otp' && verified) i--;
+    if (i >= 0 && s[i] == 'sub') i--; // شاشەی پارەدان دووبارە نابێتەوە
+    if (i >= 0) _go(s[i], back: true);
+  }
+
+  void _go(String step, {bool back = false}) {
+    _clearStepTimers();
+    _auto?.cancel();
+    setState(() {
+      cur = step;
+      goingBack = back;
+      busy = false;
+      scr++;
+      _defaults(step);
+    });
+    _saveDraft();
+    _enter(step);
+  }
+
+  void _clearStepTimers() {
+    for (final t in _stepT) {
+      t.cancel();
+    }
+    _stepT.clear();
+  }
+
+  void _later(int ms, VoidCallback f) {
+    _stepT.add(Timer(Duration(milliseconds: ms), () {
+      if (mounted) f();
+    }));
+  }
+
+  void _focusSoon(FocusNode f) => _later(380, () {
+        if (f.canRequestFocus) f.requestFocus();
+      });
+
+  void _hideKeyboard() {
+    final f = FocusManager.instance.primaryFocus;
+    if (f != null) f.unfocus();
+  }
+
+  /// نرخە سەرەتاییەکان پێش دروستکردنی هەنگاوەکە (باڵا، کێش، ئامانج)
+  void _defaults(String step) {
+    if (step == 'height' || step == 'weight' || step == 'target') {
+      if (d.h == 0) d.h = d.sex == 'f' ? 162 : 175;
+      if (d.w == 0) d.w = d.sex == 'f' ? 62 : 75;
+    }
+    if (step == 'target' && (!d.twSet || d.tw <= 0)) d.tw = d.defTarget();
+  }
+
+  /// ئەو کارانەی کاتی هاتنە ناو هەر هەنگاوێک دەکرێن
+  void _enter(String step) {
+    switch (step) {
+      case 'name':
+        nameC.text = d.name;
+        nameC.selection = TextSelection.collapsed(offset: nameC.text.length);
+        _focusSoon(nameF);
+        break;
+      case 'method':
+        _hideKeyboard();
+        break;
+      case 'gmail':
+        gmC.clear();
+        gmErr = '';
+        gmAdding = Account.I.gmails().isEmpty;
+        if (gmAdding) _focusSoon(gmF); else _hideKeyboard();
+        break;
+      case 'phone':
+        phoneC.text = fmtPhone(d.phone);
+        phoneC.selection = TextSelection.collapsed(offset: phoneC.text.length);
+        _focusSoon(phoneF);
+        break;
+      case 'otp':
+        otpC.clear();
+        otpErr = '';
+        otpBad = false;
+        if (resendLeft <= 0) _startResend();
+        _focusSoon(otpF);
+        break;
+      case 'height':
+      case 'weight':
+      case 'target':
+        _hideKeyboard();
+        break;
+      case 'pair':
+        _hideKeyboard();
+        _enterPair();
+        break;
+      case 'sub':
+        _hideKeyboard();
+        _openSub();
+        break;
+      default:
+        _hideKeyboard();
+    }
+  }
+
+  void _saveDraft() {
+    if (cur == 'welcome' || cur == 'lang') return;
+    Account.I.saveDraft({'D': d.toJson(), 'cur': cur, 'verified': verified});
+  }
+
+  void _saveDraftSoon() {
+    _draftT?.cancel();
+    _draftT = Timer(const Duration(milliseconds: 250), _saveDraft);
+  }
+
+  /// پێشتر دوای هەڵبژاردن خۆکارانە دەچووە هەنگاوی دواتر؛ ئێستا تەنها بە دوگمەی «بەردەوامبە» دەڕوات
+  void _autoNext() {
+    _auto?.cancel();
+  }
+
+  /// هەنگاوی subscribe: هەمان لاپەڕەی VEX Plus ی ناو ئەپەکە دەکرێتەوە؛ X = بەردەوامبوون بە خۆڕایی
+  Future<void> _openSub() async {
+    if (PlusState.I.isPro) {
+      _later(0, _next);
+      return;
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 260));
+    if (!mounted || cur != 'sub') return;
+    await PlusPage.open();
+    if (!mounted || cur != 'sub') return;
+    _next();
+  }
+
+  bool _ok(String s) {
+    switch (s) {
+      case 'name':
+        return d.name.trim().length >= 2;
+      case 'method':
+        return d.auth.isNotEmpty;
+      case 'gmail':
+        return validGmail(d.email);
+      case 'phone':
+        return validPhone(d.phone);
+      case 'otp':
+        return otpC.text.length == 6;
+      case 'sex':
+        return d.sex.isNotEmpty;
+      case 'year':
+        return d.year >= kThisYear - 95 && d.year <= kThisYear - 13;
+      case 'height':
+        return d.h >= 120 && d.h <= 220;
+      case 'weight':
+        return d.w >= 30 && d.w <= 200;
+      case 'target':
+        return d.tw >= 30 && d.tw <= 200;
+      case 'act':
+        return d.act.isNotEmpty;
+      case 'goals':
+        return d.goals.isNotEmpty;
+      case 'band':
+        return d.band.has != null;
+      case 'pair':
+        return d.band.paired;
+      case 'sleep':
+        return d.sleepMin >= 180;
+      case 'plan':
+        return d.built;
+      default:
+        return true;
+    }
+  }
+
+  String _cta() {
+    switch (cur) {
+      case 'lang':
+        return langOf(pickL).t['cont'] ?? 'Continue';
+      case 'welcome':
+        return LangState.I.t('cta');
+      case 'band':
+        return LangState.I.t('cont');
+      case 'phone':
+        return verified ? 'بەردەوامبە' : 'ناردنی کۆد';
+      case 'otp':
+        return 'پشتڕاستکردنەوە';
+      case 'notif':
+        return 'ڕێگەپێدان و بەردەوامبوون';
+      case 'plan':
+        return 'دەستپێکردن';
+      default:
+        return 'بەردەوامبە';
+    }
+  }
+
+  bool get _noGo => (cur == 'pair' && !d.band.paired) || (cur == 'plan' && !d.built) || cur == 'sub';
+  bool get _canSkip => cur == 'health' || cur == 'notif';
+
+  String _alt() {
+    if (cur == 'welcome') return LangState.I.t('alt');
+    if (cur == 'pair') {
+      if (pairPh == 'scan' || pairPh == 'found') return 'کۆدی سەر قوتووەکە بنووسە';
+      if (pairPh == 'code') return 'گەڕانەوە بۆ گەڕانی خۆکار';
+    }
+    return '';
+  }
+
+  void _onGo() {
+    if (busy || !_ok(cur)) return;
+    switch (cur) {
+      case 'lang':
+        LangState.I.set(pickL);
+        _next();
+        break;
+      case 'welcome':
+        d.mode = 'new';
+        _next();
+        break;
+      case 'name':
+        d.name = d.name.trim();
+        _next();
+        break;
+      case 'method':
+        _next();
+        break;
+      case 'gmail':
+        _gmLogin(d.email);
+        break;
+      case 'phone':
+        if (verified) {
+          _next();
+        } else {
+          _sendCode();
+        }
+        break;
+      case 'otp':
+        _verify();
+        break;
+      case 'plan':
+        _finish();
+        break;
+      default:
+        _next();
+    }
+  }
+
+  void _onAlt() {
+    if (cur == 'welcome') {
+      d.mode = 'login';
+      d.auth = '';
+      verified = false;
+      _go('method');
+    } else if (cur == 'pair') {
+      _pairTo(pairPh == 'code' ? 'scan' : 'code');
+    }
+  }
+
+  void _onSkip() {
+    if (!_canSkip || busy) return;
+    if (cur == 'health') {
+      d.conds = [];
+      d.condsDone = false;
+    } else if (cur == 'notif') {
+      for (final k in d.notif.keys.toList()) {
+        d.notif[k] = false;
+      }
+    }
+    _saveDraft();
+    _next();
+  }
+
+  void _onSystemBack() {
+    if (doneTitle != null) return;
+    if (cur == 'lang') {
+      SystemNavigator.pop();
+    } else if (cur == 'welcome') {
+      pickL = LangState.I.code;
+      _go('lang', back: true);
+    } else {
+      _back();
+    }
+  }
+
+  // ---------- کۆد ----------
+  void _hold(String label) => setState(() {
+        busy = true;
+        busyLabel = label;
+      });
+
+  void _sendCode() {
+    _hold('ناردن…');
+    _later(900, () {
+      _go('otp');
+      _startResend();
+    });
+  }
+
+  void _startResend() {
+    _resendT?.cancel();
+    setState(() => resendLeft = 30);
+    _resendT = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
+      setState(() => resendLeft = math.max(0, resendLeft - 1));
+      if (resendLeft <= 0) t.cancel();
+    });
+  }
+
+  void _onOtpChanged(String v) {
+    setState(() {
+      otpErr = '';
+      otpBad = false;
+    });
+    if (v.length == 6) _verify();
+  }
+
+  void _verify() {
+    final c = otpC.text;
+    if (c.length < 6 || busy) return;
+    _hold('پشکنین…');
+    _later(700, () async {
+      if (c != '123456') {
+        setState(() {
+          busy = false;
+          otpErr = 'کۆدەکە هەڵەیە. دووبارە هەوڵ بدەرەوە.';
+          otpBad = true;
+          otpTick++;
+        });
+        otpC.clear();
+        HapticFeedback.heavyImpact();
+        otpF.requestFocus();
+        return;
+      }
+      verified = true;
+      buzz(1);
+      _hideKeyboard();
+      final acc = Account.I.accountFor(d.phone);
+      if (acc != null) {
+        // ئەم ژمارەیە پێشتر لەم مۆبایلەدا هەژماری هەبووە: هەموو داتاکانی دەگەڕێتەوە
+        _hold('هەژمارەکەت دەکرێتەوە…');
+        await Account.I.restore(acc);
+        await Future<void>.delayed(const Duration(milliseconds: 450));
+        if (!mounted) return;
+        final u = Account.I.user;
+        if (u != null && '${u['name'] ?? ''}'.trim().isNotEmpty) {
+          _welcomeBack(u);
+        } else {
+          setState(() => busy = false);
+          _next();
+        }
+        return;
+      }
+      final u = Account.I.user;
+      if (u != null && '${u['phone'] ?? ''}' == d.phone && '${u['name'] ?? ''}'.trim().isNotEmpty && asD(u['h']) > 0) {
+        _hold('هەژمارەکەت دەکرێتەوە…');
+        await Future<void>.delayed(const Duration(milliseconds: 450));
+        if (!mounted) return;
+        _welcomeBack(u);
+        return;
+      }
+      setState(() => busy = false);
+      _next();
+    });
+  }
+
+  /// چوونە ژوورەوە بە Gmail: ئەگەر هەژمارەکە لەم مۆبایلەدا هەبوو هەموو داتاکانی (Plus، Band…) دەگەڕێتەوە
+  Future<void> _gmLogin(String email) async {
+    if (busy) return;
+    final e = Account.idOf(email);
+    if (!validGmail(e)) return;
+    d.email = e;
+    d.auth = 'gmail';
+    verified = true;
+    _hideKeyboard();
+    _hold('پشکنین…');
+    await Account.I.rememberGmail(e);
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+    if (!mounted) return;
+    final acc = Account.I.accountFor(e);
+    if (acc != null) {
+      _hold('هەژمارەکەت دەکرێتەوە…');
+      await Account.I.restore(acc);
+      await Future<void>.delayed(const Duration(milliseconds: 450));
+      if (!mounted) return;
+      final u = Account.I.user;
+      if (u != null && '${u['name'] ?? ''}'.trim().isNotEmpty) {
+        _welcomeBack(u);
+        return;
+      }
+      setState(() => busy = false);
+      _next();
+      return;
+    }
+    final u = Account.I.user;
+    if (u != null && Account.idOf('${u['email'] ?? ''}') == e && '${u['name'] ?? ''}'.trim().isNotEmpty && asD(u['h']) > 0) {
+      _hold('هەژمارەکەت دەکرێتەوە…');
+      await Future<void>.delayed(const Duration(milliseconds: 450));
+      if (!mounted) return;
+      _welcomeBack(u);
+      return;
+    }
+    setState(() => busy = false);
+    _next();
+  }
+
+  /// Gmail ێکی نوێ لە خانەکەوە زیاد دەکات
+  Future<void> _gmAddFromField() async {
+    final e = Account.idOf(gmC.text);
+    if (!validGmail(e)) {
+      setState(() => gmErr = 'Gmail ێکی دروست بنووسە، وەک name@gmail.com');
+      HapticFeedback.heavyImpact();
+      return;
+    }
+    await Account.I.rememberGmail(e);
+    if (!mounted) return;
+    _hideKeyboard();
+    setState(() {
+      d.email = e;
+      d.auth = 'gmail';
+      gmAdding = false;
+      gmErr = '';
+      gmC.clear();
+    });
+    buzz(1);
+    _saveDraft();
+  }
+
+  // ---------- پەیوەستکردنی Band ----------
+  void _pairTo(String ph) {
+    _clearStepTimers();
+    setState(() => pairPh = ph);
+    _enterPair();
+  }
+
+  void _enterPair() {
+    switch (pairPh) {
+      case 'scan':
+        if (d.band.code.isEmpty) {
+          final r = math.Random();
+          const hex = '0123456789ABCDEF';
+          d.band.code = 'VX8-${List<String>.generate(4, (_) => hex[r.nextInt(16)]).join()}';
+        }
+        _later(2600, () => _pairTo('found'));
+        break;
+      case 'link':
+        _later(1800, () {
+          d.band.paired = true;
+          buzz(2);
+          _pairTo('ok');
+          _saveDraft();
+        });
+        break;
+      case 'code':
+        codeC.clear();
+        codeErr = '';
+        _focusSoon(codeF);
+        break;
+      default:
+        break;
+    }
+  }
+
+  void _submitCode() {
+    final c = codeC.text.trim().toUpperCase();
+    if (!RegExp(r'^VX[0-9A-Z-]{3,}$').hasMatch(c)) {
+      setState(() => codeErr = 'کۆدەکە دەبێت بە VX دەست پێبکات، بۆ نموونە VX8-1234');
+      HapticFeedback.heavyImpact();
+      return;
+    }
+    d.band.code = c;
+    _hideKeyboard();
+    _pairTo('link');
+  }
+
+  // ---------- کۆتایی ----------
+  Future<void> _finish() async {
+    if (busy) return;
+    _hold('ئامادەکردن…');
+    final p = d.plan();
+    final u = <String, dynamic>{
+      'name': d.name.trim().length > 30 ? d.name.trim().substring(0, 30) : d.name.trim(),
+      'phone': d.auth == 'gmail' ? '' : d.phone,
+      'email': d.auth == 'gmail' ? d.email : '',
+      'auth': d.auth == 'gmail' ? 'gmail' : 'phone',
+      'sex': d.sex,
+      'year': d.year,
+      'age': d.age,
+      'h': d.h,
+      'w': d.w,
+      'units': {'h': d.uh, 'w': d.uw},
+      'act': d.act,
+      'tw': d.tw > 0 ? d.tw : d.w,
+      'wgoal': d.tw > 0 ? d.wGoal : 'keep',
+      'goals': List<String>.from(d.goals),
+      'band': {
+        'has': d.band.has == true,
+        'paired': d.band.paired,
+        'code': d.band.code,
+        'wrist': d.band.wrist,
+      },
+      'sleep': {'bed': d.bed, 'wake': d.wake},
+      'conds': List<String>.from(d.conds),
+      'notif': Map<String, bool>.from(d.notif),
+      'plan': {
+        'steps': p.steps,
+        'act': p.act,
+        'water': p.water,
+        'sleep': p.sleep,
+        'hrMax': p.hrMax,
+        'bmi': p.bmi,
+      },
+      'at': DateTime.now().millisecondsSinceEpoch,
+    };
+    await Account.I.saveUser(u);
+    Account.I.clearDraft();
+    // Band ی پەیوەستکراو = 6 مانگ VEX Plus بە خۆڕایی (یەک جار)
+    if (d.band.has == true && d.band.paired) {
+      await PlusState.I.grantBandGift();
+    }
+    // Band و ئاگادارکردنەوەکان بۆ بەشەکانی تری ئەپ
+    if (d.band.has == true && d.band.paired) {
+      final dev = Account.I.readMap('vexdevice');
+      dev.addAll({
+        'state': 'on',
+        'name': 'VEX Band',
+        'wrist': d.band.wrist == 'right' ? 'دەستی ڕاست' : 'دەستی چەپ',
+        'last': DateTime.now().millisecondsSinceEpoch,
+      });
+      Account.I.writeMap('vexdevice', dev);
+    }
+    final prof = Account.I.readMap('vexprofile');
+    prof['notif'] = d.notif.values.any((v) => v);
+    prof['fam'] = d.notif['fam'] == true;
+    Account.I.writeMap('vexprofile', prof);
+    await Account.I.stash();
+    await Account.I.reloadStores();
+    _resendT?.cancel();
+    if (!mounted) return;
+    _done('بەخێربێیت ${firstWord(d.name)}', 'هەموو شتێک ئامادەیە');
+  }
+
+  void _welcomeBack(Map<String, dynamic> u) {
+    Account.I.clearDraft();
+    _resendT?.cancel();
+    _done('بەخێربێیتەوە ${firstWord('${u['name'] ?? ''}')}', 'هەژمارەکەت کرایەوە');
+  }
+
+  void _done(String title, String sub) {
+    _clearStepTimers();
+    _auto?.cancel();
+    _hideKeyboard();
+    setState(() {
+      busy = false;
+      doneTitle = title;
+      doneSub = sub;
+    });
+    widget.onReveal?.call();
+  }
+
+  // =====================================================================
+  //  UI
+  // =====================================================================
+  @override
+  Widget build(BuildContext context) {
+    final dt = doneTitle;
+    if (dt != null) {
+      return RDone(title: dt, sub: doneSub, onFinished: widget.onDone);
+    }
+    if (!widget.ready) {
+      return Material(color: RC.bg, child: IgnorePointer(child: SizedBox.expand(child: _RegBg())));
+    }
+    final mq = MediaQuery.of(context);
+    if (cur == 'welcome') {
+      // شاشەی بەخێرهاتن: lib/welcome/vex_welcome.dart (دەقەکان: vex_welcome_i18n.dart)
+      return PopScope(
+        canPop: false,
+        // ignore: deprecated_member_use
+        onPopInvoked: (didPop) {
+          if (!didPop) _onSystemBack();
+        },
+        child: VexWelcome(
+          key: ValueKey<String>('welcome-${LangState.I.code}'),
+          lang: LangState.I.code,
+          dark: !VexTheme.I.isLight,
+          onStart: busy ? () {} : _onGo,
+          onLogin: busy ? () {} : _onAlt,
+          onLangTap: () {
+            pickL = LangState.I.code;
+            _go('lang', back: true);
+          },
+        ),
+      );
+    }
+    return PopScope(
+      canPop: false,
+      // ignore: deprecated_member_use
+      onPopInvoked: (didPop) {
+        if (!didPop) _onSystemBack();
+      },
+      child: Material(
+        color: RC.bg,
+        child: Stack(
+          children: [
+            const Positioned.fill(child: IgnorePointer(child: _RegBg())),
+            LayoutBuilder(
+              builder: (context, cons) {
+                final h = cons.maxHeight;
+                final kb = h - mq.padding.top < 470;
+                final tight = h < 660;
+                final compact = h < 720;
+                return Padding(
+                  padding: EdgeInsets.only(top: mq.padding.top),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 440),
+                      child: Column(
+                        children: [
+                          if (cur != 'welcome' && cur != 'lang') _header(kb),
+                          Expanded(child: _main(compact: compact, tight: tight, kb: kb)),
+                          _footer(mq, kb: kb, compact: compact),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---------- سەرەوە: گەڕانەوە، ڕێڕەو، تێپەڕاندن ----------
+  Widget _header(bool kb) {
+    final s = _seq();
+    final i = s.indexOf(cur);
+    final pct = i <= 0 ? 0.0 : i / (s.length - 1);
+    return Padding(
+      padding: EdgeInsets.fromLTRB(18, kb ? 6 : 14, 18, kb ? 2 : 6),
+      child: Row(
+        children: [
+          Semantics(
+            button: true,
+            label: 'گەڕانەوە',
+            child: Press(
+              onTap: busy ? null : _back,
+              child: Container(
+                width: kb ? 34 : 40,
+                height: kb ? 34 : 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(kb ? 12 : 14),
+                  border: Border.all(color: RC.line(0.18)),
+                  color: RC.white(0.05),
+                ),
+                child: CustomPaint(size: const Size(20, 20), painter: _Chevron()),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Container(
+              height: 6,
+              decoration: BoxDecoration(borderRadius: BorderRadius.circular(9), color: RC.white(0.08)),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween<double>(end: pct),
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, v, _) => FractionallySizedBox(
+                    widthFactor: v.clamp(0.0, 1.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(9),
+                        gradient: LinearGradient(
+                          begin: AlignmentDirectional.centerStart,
+                          end: AlignmentDirectional.centerEnd,
+                          colors: [Color(0xFF8FF3F9), Color(0xFF3CF08A)],
+                        ),
+                        boxShadow: [BoxShadow(color: vk(0x8C3CF08A), blurRadius: 12)],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 64,
+            child: Visibility(
+              visible: _canSkip,
+              maintainSize: true,
+              maintainAnimation: true,
+              maintainState: true,
+              child: Press(
+                onTap: _canSkip ? _onSkip : null,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+                  child: VText('تێپەڕاندن', textAlign: TextAlign.end, style: ku(13, w: FontWeight.w700, c: RC.mu)),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ---------- ناوەڕاست (هەنگاوی ئێستا بە جووڵەوە) ----------
+  Widget _main({required bool compact, required bool tight, required bool kb}) {
+    final key = ValueKey<int>(scr);
+    final dir = goingBack ? 26.0 : -26.0;
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 450),
+      layoutBuilder: (current, previous) => Stack(
+        fit: StackFit.expand,
+        children: [...previous, if (current != null) current],
+      ),
+      transitionBuilder: (child, anim) {
+        final incoming = child.key == key;
+        return AnimatedBuilder(
+          animation: anim,
+          builder: (context, ch) {
+            final v = anim.value;
+            if (!incoming) return Opacity(opacity: v, child: ch);
+            final e = Curves.easeOutCubic.transform(v);
+            return Opacity(
+              opacity: e,
+              child: Transform.translate(offset: Offset(dir * (1 - e), 0), child: ch),
+            );
+          },
+          child: child,
+        );
+      },
+      child: KeyedSubtree(
+        key: key,
+        child: _stepScroll(compact, tight, kb),
       ),
     );
   }
