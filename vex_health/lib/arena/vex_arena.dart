@@ -1,97 +1,163 @@
 // =============================================================================
-//  VEX Arena — پێشبڕکێی تەندروستی
-//  هەموو بەشی VEX Arena لە یەک فایلدا (Flutter)، هاوتای وەشانی وێبی VEX Health
+//  VEX Arena — پێشبڕکێی تەندروستی (Flutter)
+//  هەمان دیزاین و هەمان یاسای وەشانی وێبی VEX Arena (v10)
 //
-//  ناوەڕۆک:
-//   1. ڕەنگ و ستایل
-//   2. بەشەکانی تەندروستی (11 بەش) + خاڵ + هێزی نهێنی
-//   3. پەیوەندی بە بەشەکانی تری ئەپ  (ArenaHost)
-//   4. هەژمار: لیگ، پلە، ئاست، یاریزانەکان، دیزاینی کارت، نازناو
-//   5. پاشەکەوتکردن (ArenaStore — shared_preferences)
-//   6. پەڕەی سەرەکی (VexArenaPage): ئەمڕۆ / پلەکان / کارتەکەم
-//   7. کارتی یاریزان + جووڵەی 3D
-//   8. شیتەکان: خەڵاتەکان، بەشداربوون، کارەکتەر، یاسا، یاریزان، دەستکاری...
-//   9. ئەنیمەیشنی دروستبوونی کارت (3D) و کۆنفێتی
+//  فایلەکان (هەموویان لە lib/arena/):
+//   vex_arena.dart      زمان، ڕەنگ، داتا، دژی فێڵ، پاشەکەوتکردن، کۆنترۆڵەر
+//   arena_page.dart     پەڕە، ستەیج، سەرپەڕە، سپۆنسەر، تابەکان، دەروازەی تۆمارکردن
+//   arena_today.dart    تابی «ئەمڕۆ» (وەرزی ڕاستەوخۆ + پێش وەرز)
+//   arena_rank.dart     تابی «پلەکان»
+//   arena_card.dart     تابی «کارتەکەم» + کارتی یاریزان
+//   arena_sheets.dart   هەموو شیتەکان
+//   arena_svg.dart      ئایکۆنە SVG ـەکان (هەمان وێنەی وێب)
+//   arena_i18n.dart     وەرگێڕان: سۆرانی، بادینی، English، العربية، فارسی، Türkçe
+//   arena_host.dart     بەستنەوە بە داتای ئەپەکە
 //
-//  پێویستییەکان (pubspec.yaml):
-//    dependencies:
-//      shared_preferences: ^2.2.2
-//    flutter:
-//      assets:
-//        - assets/chars/          # هەمان 33 کارەکتەری بەشی خێزان و هاوڕێ (00.webp ... 33.webp)
-//      fonts:
-//        - family: NotoAr          # Noto Sans Arabic (Regular / SemiBold 600 / Bold 700)
-//
-//  بەکارهێنان:
-//    Navigator.push(context, MaterialPageRoute(
-//      builder: (_) => VexArenaPage(host: MyArenaHost()),   // یان DemoArenaHost()
-//    ));
+//  pubspec.yaml: shared_preferences، flutter_svg، google_fonts، فۆنتی NotoAr،
+//                assets/chars/ و assets/arena/
 // =============================================================================
+// ignore_for_file: prefer_single_quotes, use_build_context_synchronously
 
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../core/theme.dart';
+
+import '../core/theme.dart' show VexTheme;
+import '../onboarding/reg_lang_state.dart' show LangState;
+
+part 'arena_page.dart';
+part 'arena_today.dart';
+part 'arena_rank.dart';
+part 'arena_card.dart';
+part 'arena_sheets.dart';
+part 'arena_svg.dart';
+part 'arena_i18n.dart';
 
 // =============================================================================
-// 1. ڕەنگ و ستایل
+// 1. زمان
 // =============================================================================
 
-class VA {
-  static Color get bg => vk(0xFF04202A);
-  static Color get bg2 => vk(0xFF073241);
-  static Color get surf => vk(0x9E0C3A48);
-  static Color get surf2 => vk(0x0EFFFFFF);
-  static Color get line => vk(0x218CEBF5);
-  static Color get line2 => vk(0x428CEBF5);
-  static Color get text => vk(0xFFEAFBFD);
-  static Color get muted => vk(0xFF8FB4BC);
-  static Color get cyan => vk(0xFF2FE6F3);
-  static Color get cyanSoft => vk(0xFF8FF3F9);
-  static Color get mint => vk(0xFF3CF08A);
-  static Color get violet => vk(0xFF9B7BFF);
-  static Color get coral => vk(0xFFFF6F86);
-  static Color get amber => vk(0xFFFFBE4D);
-  static Color get gold => vk(0xFFFFD56B);
-  static Color get silver => vk(0xFFD9E6EE);
-  static Color get bronze => vk(0xFFE29A5F);
-  static Color get sheet => vk(0xFF062A35);
-  static Color get ink => vk(0xFF04323A);
+const List<String> _kLangs = ['ckb', 'kmr', 'en', 'ar', 'fa', 'tr'];
 
-  static get prime => LinearGradient(
-    colors: [vk(0xFF8FF3F9), vk(0xFF3CF08A)],
-    begin: Alignment.topRight,
-    end: Alignment.bottomLeft,
-  );
-  static get goldG => LinearGradient(
-    colors: [vk(0xFFFFF3C4), vk(0xFFFFD56B), vk(0xFFD9971F)],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
+String get _lc => LangState.I.code;
+int get _li {
+  final i = _kLangs.indexOf(_lc);
+  return i < 0 ? 0 : i;
 }
 
-const _kFont = 'NotoAr';
+bool get arenaLtr => _lc == 'en' || _lc == 'tr';
+TextDirection get arenaDir => arenaLtr ? TextDirection.ltr : TextDirection.rtl;
 
-Color _al(Color c, double o) => c.withAlpha((o.clamp(0.0, 1.0) * 255).round());
+/// وەرگێڕان: tr('key', [a, b]) → {0} {1} پڕ دەکاتەوە
+String tr(String k, [List<Object?> a = const []]) {
+  final v = kArenaT[k];
+  var s = v == null ? k : v[_li];
+  for (var i = 0; i < a.length; i++) {
+    s = s.replaceAll('{$i}', '${a[i]}');
+  }
+  return s;
+}
 
-TextStyle _ts(double size,
-        {FontWeight w = FontWeight.w400, Color? c, double? h, double? ls}) { c ??= VA.text; return
-    TextStyle(
+// =============================================================================
+// 2. ڕەنگ — هەمان تۆکنەکانی وێب (تاریک / ڕووناک)
+// =============================================================================
+
+class AC {
+  static bool get l => VexTheme.I.isLight;
+  static Color get bg => l ? const Color(0xFFEEF9FB) : const Color(0xFF070D22);
+  static Color get bg2 => l ? const Color(0xFFD5F0F4) : const Color(0xFF0D1838);
+  static Color get surf => l ? const Color(0xE6FFFFFF) : const Color(0x8C182654);
+  static Color get surf2 => l ? const Color(0xFFFFFFFF) : const Color(0x0DFFFFFF);
+  static Color get line => l ? const Color(0x17062832) : const Color(0x21AABEFF);
+  static Color get line2 => l ? const Color(0x3306788C) : const Color(0x57FFD678);
+  static Color get solid => l ? const Color(0xFFF4FCFD) : const Color(0xFF0C1533);
+  static Color get sheet => l ? const Color(0xFFF7FDFE) : const Color(0xFF0B1430);
+  static Color get mu => l ? const Color(0xFF4D7680) : const Color(0xFF9DAAD2);
+  static Color get tx => l ? const Color(0xFF062832) : const Color(0xFFEFFEFF);
+  static Color get cy => l ? const Color(0xFF0AA7B8) : const Color(0xFF2FE6F3);
+  static Color get c2 => l ? const Color(0xFF077F8C) : const Color(0xFF8FF3F9);
+  static Color get mint => l ? const Color(0xFF13A85C) : const Color(0xFF3CF08A);
+  static Color get violet => l ? const Color(0xFF6D4FE0) : const Color(0xFF9B7BFF);
+  static Color get coral => l ? const Color(0xFFE5405F) : const Color(0xFFFF6F86);
+  static Color get amber => l ? const Color(0xFFC47F05) : const Color(0xFFFFBE4D);
+  static Color get track => l ? const Color(0x12062832) : const Color(0x12FFFFFF);
+  static Color get inp => l ? const Color(0x0D062832) : const Color(0x0FFFFFFF);
+  static Color get t3g => l ? const Color(0xFF9A6400) : const Color(0xFFFFD36B);
+  static Color get t3gl => l ? const Color(0x66C48C14) : const Color(0x59FFD678);
+  static Color get gold => l ? const Color(0xFFA87000) : const Color(0xFFFFD56B);
+  static Color get silver => l ? const Color(0xFF6B7F8C) : const Color(0xFFD9E6EE);
+  static Color get bronze => l ? const Color(0xFFA8622B) : const Color(0xFFE29A5F);
+  static Color get orange => const Color(0xFFFF8A4D);
+  static Color get skyb => const Color(0xFF7FD8FF);
+
+  /// کارتی سەرەکی (ئامانج، تۆ لەم وەرزەدا)
+  static Gradient? get t3card =>
+      l ? null : cssLin(160, const [Color(0xFF13224A), Color(0xFF0A1330)]);
+  static List<BoxShadow> get t3sh => l
+      ? [cssSh(0, 18, 40, -22, const Color(0x59966400))]
+      : [cssSh(0, 24, 50, -26, const Color(0x73FFBE3C))];
+
+  /// کارتی ئاسایی (.card)
+  static Color get card => l ? const Color(0xE6FFFFFF) : const Color(0x8C182654);
+
+  // ستەیج و زێڕ
+  static const stageTx = Color(0xFFEEF3FF);
+  static const stageMu = Color(0xFFB9C4E6);
+  static const goldS = Color(0xFFFFD36B);
+  static const accent = Color(0xFFF2B21C);
+  static const onGold = Color(0xFF2A1A00);
+  static const goldG = LinearGradient(
+      colors: [Color(0xFFFFF0B0), Color(0xFFFFD25A), Color(0xFFE7A514)],
+      stops: [0, .45, 1],
+      begin: Alignment(-1, -1),
+      end: Alignment(1, 1));
+  static const tabG = LinearGradient(
+      colors: [Color(0xFFFFE48F), Color(0xFFF2B21C)], begin: Alignment.topCenter, end: Alignment.bottomCenter);
+}
+
+/// linear-gradient(<deg>, ...) ی CSS
+LinearGradient cssLin(double deg, List<Color> c, [List<double>? stops]) {
+  final r = deg * math.pi / 180;
+  final x = math.sin(r), y = -math.cos(r);
+  return LinearGradient(colors: c, stops: stops, begin: Alignment(-x, -y), end: Alignment(x, y));
+}
+
+/// box-shadow: x y blur spread color
+BoxShadow cssSh(double x, double y, double blur, double spread, Color c) =>
+    BoxShadow(color: c, offset: Offset(x, y), blurRadius: blur * .86, spreadRadius: spread);
+
+const String _kFont = 'NotoAr';
+
+TextStyle ats(double s, {FontWeight w = FontWeight.w500, Color? c, double? h, double? ls}) => TextStyle(
       fontFamily: _kFont,
-      fontSize: size,
+      fontSize: s,
       fontWeight: w,
-      color: c,
+      color: c ?? AC.tx,
       height: h,
       letterSpacing: ls,
-      fontFeatures: const [FontFeature.tabularFigures()],
-    ); }
+    );
 
-/// 1234567 → 1,234,567
-String _fmt(num n) {
+/// ژمارە (فۆنتی Sora وەک وێب)
+TextStyle atn(double s, {FontWeight w = FontWeight.w800, Color? c, double? h, double? ls}) {
+  final base = ats(s, w: w, c: c, h: h, ls: ls);
+  try {
+    return GoogleFonts.sora(textStyle: base).copyWith(fontFamilyFallback: const [_kFont]);
+  } catch (_) {
+    return base;
+  }
+}
+
+Color _a(Color c, double o) => c.withAlpha((o.clamp(0.0, 1.0) * 255).round());
+Color _mix(Color a, Color b, double t) => Color.lerp(b, a, t)!;
+
+String afmt(num n) {
   final s = n.round().abs().toString();
   final b = StringBuffer();
   for (var i = 0; i < s.length; i++) {
@@ -103,335 +169,163 @@ String _fmt(num n) {
 
 String _p2(int n) => n.toString().padLeft(2, '0');
 
-Color _hex(String h) => Color(int.parse('FF${h.replaceAll('#', '')}', radix: 16));
+/// 07501234567 → 0750 *** 4567
+String maskPhone(String p) => p.length == 11 ? '${p.substring(0, 4)} *** ${p.substring(7)}' : p;
 
-// =============================================================================
-// 2. بەشەکانی تەندروستی + خاڵ + هێزی نهێنی
-// =============================================================================
-
-class ArenaCat {
-  final String id, name, src;
-  final IconData icon;
-  final Color color;
-  final int max;
-  const ArenaCat(this.id, this.icon, this.name, this.color, this.max, this.src);
-}
-
-List<ArenaCat> get kArenaCats => vexCache<List<ArenaCat>>('vex_arena.dart:kArenaCats', () => [
-  ArenaCat('walk', Icons.directions_walk_rounded, 'پیاسە', vk(0xFF3CF08A), 60, 'هەنگاوی Band + لێدانی دڵ'),
-  ArenaCat('run', Icons.directions_run_rounded, 'ڕاکردن', vk(0xFFFF9466), 60, 'GPS + لێدانی دڵ + خێرایی'),
-  ArenaCat('gym', Icons.fitness_center_rounded, 'وەرزش', vk(0xFFFF6F86), 60, 'خولەکی لێدانی دڵی بەرز'),
-  ArenaCat('sleep', Icons.bedtime_rounded, 'خەو', vk(0xFF9B7BFF), 60, 'خەوی Band (لێدانی دڵ + جووڵە)'),
-  ArenaCat('food', Icons.restaurant_rounded, 'خۆراک', vk(0xFFFFBE4D), 50, 'وێنەی ڕاستەوخۆی ژەم + AI'),
-  ArenaCat('water', Icons.water_drop_rounded, 'ئاو', vk(0xFF2FB8F3), 30, 'تۆماری ئاو + ئامانج'),
-  ArenaCat('heart', Icons.favorite_rounded, 'دڵ', vk(0xFFFF5F7E), 40, 'خولەک لە ناوچەی دڵی تەندروست'),
-  ArenaCat('o2', Icons.air_rounded, 'ئۆکسجین', vk(0xFF4FD2E6), 20, 'لەبەرکردنی Band لە شەودا'),
-  ArenaCat('calm', Icons.spa_rounded, 'ئارامی', vk(0xFFA58CFF), 40, 'کاتی سترێسی نزم + هەناسەدان'),
-  ArenaCat('rec', Icons.battery_charging_full_rounded, 'چاکبوونەوە', vk(0xFF3FD69A), 40, 'HRV + خەو + لێدانی پشوو'),
-  ArenaCat('body', Icons.monitor_weight_rounded, 'لەشی تەندروست', vk(0xFFE29A5F), 30, 'ڕەوتی کێشی تەندروست (هەفتانە)'),
-]);
-
-ArenaCat catById(String id) => kArenaCats.firstWhere((c) => c.id == id, orElse: () => kArenaCats.first);
-
-const Map<String, String> kHints = {
-  'walk': 'ئەمڕۆ ڕێگا درێژەکان دەدرەوشێنەوە',
-  'run': 'ئەمڕۆ خێرایی گرنگە',
-  'gym': 'ئەمڕۆ ماسولکەکان قسە دەکەن',
-  'sleep': 'نهێنیی ئەمڕۆ لە تاریکیدایە',
-  'food': 'ئەمڕۆ قاپەکەت چیرۆکێک دەگێڕێتەوە',
-  'water': 'ئەمڕۆ ڕووبارێک لە ناوتدایە',
-  'heart': 'ئەمڕۆ گوێ لە لێدانەکانت بگرە',
-  'o2': 'ئەمڕۆ هەناسەیەکی قووڵ هەڵبکێشە',
-  'calm': 'ئەمڕۆ هێمنی هێزە',
-  'rec': 'ئەمڕۆ پشوو هێزت پێدەدات',
-  'body': 'ئەمڕۆ هاوسەنگی دەباتەوە',
-};
-
-/// FNV-1a — هەمان hashـی وەشانی وێب، بۆ ئەوەی هێزی ڕۆژ لە هەموو ئامێرێک یەک بێت
 int _fnv(String s) {
   var h = 2166136261;
-  for (final c in s.runes) {
+  for (final c in s.codeUnits) {
     h ^= c;
     h = (h * 16777619) & 0xFFFFFFFF;
   }
   return h;
 }
 
-/// کلیلی ڕۆژ بۆ هێزی نهێنی (بێ سفر، وەک وێب): 2026-10-16
-String arenaDayKey(DateTime d) => '${d.year}-${d.month}-${d.day}';
-
-/// کلیلی ڕۆژ بۆ داتا (بە سفر): 2026-10-16
-String dataDayKey(DateTime d) => '${d.year}-${_p2(d.month)}-${_p2(d.day)}';
-
-// لە ئەپی ڕاستەقینەدا هێزی ڕۆژ تا نیوەشەو تەنها لە سێرڤەرە
-String powerOf(String k) => kArenaCats[_fnv('vex-power-$k') % kArenaCats.length].id;
-
-String secondOf(String k) {
-  final a = powerOf(k);
-  var i = _fnv('vex-2nd-$k') % kArenaCats.length;
-  if (kArenaCats[i].id == a) i = (i + 1) % kArenaCats.length;
-  return kArenaCats[i].id;
+/// ژمارەی هەڕەمەکیی جێگیر بۆ کلیلێک
+class _Seeded {
+  _Seeded(String k) : _s = _fnv(k) % 2147483646 + 1;
+  int _s;
+  double next() {
+    _s = (_s * 16807) % 2147483647;
+    return _s / 2147483647;
+  }
 }
 
-class PointRow {
-  final ArenaCat cat;
-  final int base, pts;
-  final double mul;
-  const PointRow(this.cat, this.base, this.mul, this.pts);
-}
+String dayKey(DateTime d) => '${d.year}-${d.month}-${d.day}';
+DateTime _dayStart(DateTime d) => DateTime(d.year, d.month, d.day);
 
-class DayPoints {
-  final List<PointRow> rows;
-  final int total;
-  final String power, second;
-  const DayPoints(this.rows, this.total, this.power, this.second);
-  PointRow row(String id) => rows.firstWhere((r) => r.cat.id == id);
-}
-
-const int kDailyCap = 600;
-
-DayPoints dayPoints(Map<String, double> f, String key) {
-  final p = powerOf(key), s2 = secondOf(key);
-  final rows = kArenaCats.map((c) {
-    final base = (c.max * math.min(f[c.id] ?? 0, 1.0)).round();
-    final m = c.id == p ? 3.0 : c.id == s2 ? 1.5 : 1.0;
-    return PointRow(c, base, m, (base * m).round());
-  }).toList();
-  final tot = math.min(kDailyCap, rows.fold<int>(0, (a, r) => a + r.pts));
-  return DayPoints(rows, tot, p, s2);
+/// 10/12/2026
+String kDate(DateTime d) {
+  final l = d.toLocal();
+  return '${l.day}/${l.month}/${l.year}';
 }
 
 // =============================================================================
-// 3. پەیوەندی بە بەشەکانی تری ئەپ
-//    ئەپەکەت ArenaHost دروست دەکات و داتای ڕاستەقینە دەداتێ:
-//    هەنگاو و دڵ و خەو (Band)، وەرزش (بەشی وەرزش)، ژەم و ئاو و کێش (بەشی خواردن)
+// 3. وەرز، لیگ، خەڵات، بەشەکان
 // =============================================================================
 
-class ArenaSportSession {
-  /// هەمان ناسنامەی بەشی وەرزش: run, walk, hike, treadmill, tri, football, gym, swim ...
-  final String sportId;
-  final int minutes;
-  final double distanceKm;
-  final int steps;
-
-  /// چرکە لە هەر 5 ناوچەی لێدانی دڵ
-  final List<int> hrZoneSec;
-  const ArenaSportSession({
-    required this.sportId,
-    required this.minutes,
-    this.distanceKm = 0,
-    this.steps = 0,
-    this.hrZoneSec = const [0, 0, 0, 0, 0],
-  });
+class ArenaCat {
+  const ArenaCat(this.id, this.icon, this.color, this.max, this.phone, this.band);
+  final String id;
+  final String icon; // ناوی ئایکۆن (kArenaIco)
+  final Color color;
+  final int max; // لیگی Band
+  final int phone; // لیگی مۆبایل (0 = نییە)
+  final bool band; // پێویستی بە Band هەیە
+  String get name => tr('cat_$id');
 }
 
-class ArenaMeal {
-  final String name;
-  final int kcal;
+const List<ArenaCat> kCats = [
+  ArenaCat('walk', 'walk', Color(0xFF3CF08A), 60, 50, false),
+  ArenaCat('run', 'run', Color(0xFFFF9466), 60, 50, false),
+  ArenaCat('gym', 'gym', Color(0xFFFF6F86), 60, 40, false),
+  ArenaCat('sleep', 'sleep', Color(0xFF9B7BFF), 60, 0, true),
+  ArenaCat('food', 'food', Color(0xFFFFBE4D), 30, 30, false),
+  ArenaCat('water', 'water', Color(0xFF2FB8F3), 30, 30, false),
+  ArenaCat('heart', 'heart', Color(0xFFFF5F7E), 40, 0, true),
+  ArenaCat('o2', 'o2', Color(0xFF4FD2E6), 20, 0, true),
+  ArenaCat('calm', 'calm', Color(0xFFA58CFF), 40, 0, true),
+  ArenaCat('rec', 'rec', Color(0xFF3FD69A), 40, 0, true),
+];
 
-  /// good / ok / bad — نمرەی AIـی بەشی خواردن
-  final String quality;
-  const ArenaMeal(this.name, this.kcal, this.quality);
+ArenaCat catById(String id) => kCats.firstWhere((c) => c.id == id, orElse: () => kCats.first);
+
+/// لیگەکان: band = هەموو 10 بەش · phone = بێ Band
+enum Div { band, phone }
+
+Div divOf(String s) => s == 'phone' ? Div.phone : Div.band;
+String divId(Div d) => d == Div.phone ? 'phone' : 'band';
+int capOf(ArenaCat c, Div d) => d == Div.phone ? c.phone : c.max;
+int maxDay(Div d) => d == Div.phone ? 200 : 600;
+int activeMin(Div d) => d == Div.phone ? 60 : 100;
+int coinMax(Div d) => maxDay(d) ~/ 25;
+
+class Prize {
+  const Prize(this.r, this.key, this.il);
+  final int r;
+  final String key;
+  final String il; // car · phone · cash
+  String get name => tr(key);
 }
 
-class ArenaWeight {
-  final DateTime day;
-  final double kg;
-  const ArenaWeight(this.day, this.kg);
+const Map<Div, List<Prize>> kPrizes = {
+  Div.band: [
+    Prize(1, 'pz_car', 'car'),
+    Prize(2, 'pz_iphone', 'phone'),
+    Prize(3, 'pz_1m', 'cash'),
+  ],
+  Div.phone: [
+    Prize(1, 'pz_250', 'cash'),
+    Prize(2, 'pz_150', 'cash'),
+    Prize(3, 'pz_100', 'cash'),
+  ],
+};
+
+class SeasonDef {
+  const SeasonDef(this.n, this.start, this.days);
+  final int n;
+  final DateTime start;
+  final int days;
+  DateTime get end => start.add(Duration(days: days));
 }
 
-/// زانیاریی پڕۆفایل کە لە سەرەتای ئەپەکەدا تۆمار کراوە
-class ArenaProfile {
-  final String name, phone;
-  final int age;
+/// وەرزەکان لەسەر ڕۆژژمێر جێگیرن (کاتی بەغدا +03:00)
+final List<SeasonDef> kSeasons = [
+  SeasonDef(1, DateTime.utc(2026, 10, 31, 3), 30),
+  SeasonDef(2, DateTime.utc(2026, 12, 10, 3), 30),
+];
 
-  /// lose / gain / keep
-  final String weightGoal;
-  const ArenaProfile({this.name = '', this.phone = '', this.age = 0, this.weightGoal = ''});
+class SeasonNow {
+  SeasonNow({required this.n, required this.live, required this.start, required this.end, required this.day, this.prevEnd});
+  final int n;
+  final bool live;
+  final DateTime start; // pre: کاتی دەستپێکردن
+  final DateTime end; // live: کۆتایی · pre: هەمان دەستپێکردن
+  final int day; // 1..30 لە کاتی وەرزدا، 0 پێش وەرز
+  final DateTime? prevEnd;
+  int get daysLeft => live ? math.max(0, 30 - day + 1) : 30;
 }
 
-class ArenaDayInputs {
-  /// هەنگاوی Band (بێ هەنگاوی وەرزشەکان — Arena خۆی زیادیان دەکات)
-  final int bandSteps;
-  final double sleepHours;
-  final int spo2, stress, hrv;
-  final List<ArenaSportSession> sessions;
-  final List<ArenaMeal> meals;
-  final int waterGlasses, waterGoalGlasses;
-  final List<ArenaWeight> weights;
-  const ArenaDayInputs({
-    this.bandSteps = 0,
-    this.sleepHours = 0,
-    this.spo2 = 0,
-    this.stress = 50,
-    this.hrv = 0,
-    this.sessions = const [],
-    this.meals = const [],
-    this.waterGlasses = 0,
-    this.waterGoalGlasses = 8,
-    this.weights = const [],
-  });
-}
-
-/// ئەم کلاسە لە ئەپەکەتدا دابنێ و بە بەشەکانی ترەوە بیبەستەوە
-abstract class ArenaHost {
-  ArenaProfile get profile;
-
-  /// داتای ئەمڕۆ
-  ArenaDayInputs today();
-
-  /// داتای دوێنێ (بۆ «هێزی دوێنێ»)
-  ArenaDayInputs yesterday();
-
-  /// کاتێک داتا دەگۆڕێت (وەرزشێکی نوێ، پەرداخێک ئاو، ژەمێک...) notify بکە
-  Listenable? get changes;
-
-  /// «بڕۆ بۆ بەشی ...»: walk→هەنگاو، run/gym→وەرزش، sleep→خەو، food/water/body→خواردن،
-  /// heart→دڵ، o2→ئۆکسجین، calm→سترێس، rec→تەندروستی
-  void openSection(BuildContext context, String catId);
-
-  /// سکەکانی Arena لەگەڵ بەشی وەرزش هاوبەشن (خەڵاتی وەرزش سکە دەدات)
-  int takePendingCoins() => 0;
-}
-
-/// داتای نموونە — هەمان ژمارەکانی شاشەی سەرەکی و تەندروستی تا Band دەبەسترێت
-class DemoArenaHost extends ArenaHost {
-  final ChangeNotifier _n = ChangeNotifier();
-  @override
-  ArenaProfile get profile => const ArenaProfile(name: 'غازی غەریب', phone: '07501234567', age: 28, weightGoal: 'lose');
-  @override
-  ArenaDayInputs today() => ArenaDayInputs(
-        bandSteps: 2225,
-        sleepHours: 6.3,
-        spo2: 93,
-        stress: 55,
-        hrv: 54,
-        sessions: const [
-          ArenaSportSession(sportId: 'run', minutes: 25, distanceKm: 4.2, steps: 4000, hrZoneSec: [60, 300, 600, 400, 100]),
-        ],
-        meals: const [ArenaMeal('هێلکە و نان', 256, 'good'), ArenaMeal('برنج و شلە', 650, 'ok')],
-        waterGlasses: 5,
-        waterGoalGlasses: 11,
-        weights: [
-          ArenaWeight(DateTime.now().subtract(const Duration(days: 12)), 78.4),
-          ArenaWeight(DateTime.now(), 77.6),
-        ],
-      );
-  @override
-  ArenaDayInputs yesterday() => const ArenaDayInputs(
-        bandSteps: 7800,
-        sleepHours: 7.6,
-        spo2: 96,
-        stress: 50,
-        hrv: 56,
-        sessions: [ArenaSportSession(sportId: 'run', minutes: 15, distanceKm: 2.5, hrZoneSec: [0, 200, 500, 200, 0])],
-        meals: [ArenaMeal('ژەم', 500, 'good'), ArenaMeal('ژەم', 600, 'ok')],
-        waterGlasses: 9,
-        waterGoalGlasses: 11,
-      );
-  @override
-  Listenable? get changes => _n;
-  @override
-  void openSection(BuildContext context, String catId) => _toast(context, 'لە ئەپەکەدا بەشی ${catById(catId).name} دەکرێتەوە');
-}
-
-/// نرخ و ڕێژەی هەر بەشێک بۆ ئەمڕۆ (هەمان یاسای وەشانی وێب)
-class CatValue {
-  final String v;
-  final double f;
-  const CatValue(this.v, this.f);
-}
-
-const _runIds = {'run', 'treadmill', 'tri'};
-const _walkIds = {'walk', 'hike'};
-
-Map<String, CatValue> computeDay(ArenaDayInputs d, ArenaProfile u) {
-  var runM = 0, gymM = 0, spSteps = 0;
-  var runKm = 0.0;
-  final zt = [0, 0, 0, 0, 0];
-  for (final h in d.sessions) {
-    spSteps += h.steps;
-    if (_runIds.contains(h.sportId)) {
-      runM += h.minutes;
-      runKm += h.distanceKm;
-    } else if (!_walkIds.contains(h.sportId)) {
-      gymM += h.minutes;
-    }
-    for (var i = 0; i < 5 && i < h.hrZoneSec.length; i++) {
-      zt[i] += h.hrZoneSec[i];
+SeasonNow seasonNow([DateTime? at]) {
+  final now = at ?? DateTime.now();
+  for (final s in kSeasons) {
+    if (!now.isBefore(s.start) && now.isBefore(s.end)) {
+      final d = math.min(s.days, now.difference(s.start).inDays + 1);
+      return SeasonNow(n: s.n, live: true, start: s.start, end: s.end, day: d);
     }
   }
-  // هەمان یاسای شاشەی سەرەکی: هەنگاوی Band + هەنگاوی وەرزشەکانی ئەمڕۆ
-  final steps = d.bandSteps + spSteps;
-  var q = 0.0, kcal = 0;
-  for (final m in d.meals) {
-    kcal += m.kcal;
-    q += m.quality == 'good' ? 1 : m.quality == 'bad' ? .3 : .7;
+  SeasonDef? prev;
+  for (final s in kSeasons) {
+    if (!now.isBefore(s.end)) prev = s;
   }
-  final meals = d.meals.length;
-  final wG = math.max(6, d.waterGoalGlasses);
-  final hz = ((zt[1] + zt[2] + zt[3]) / 60).round();
-  final sl = d.sleepHours;
-
-  var body = const CatValue('کێشەکەت تۆمار بکە', 0);
-  if (d.weights.isNotEmpty) {
-    final w = [...d.weights]..sort((a, b) => a.day.compareTo(b.day));
-    final last = w.last;
-    final from = DateTime.now().subtract(const Duration(days: 14));
-    final old = w.firstWhere((x) => !x.day.isBefore(from), orElse: () => w.first);
-    final dl = last.kg - old.kg;
-    final want = u.weightGoal == 'lose' ? -1 : u.weightGoal == 'gain' ? 1 : 0;
-    double f;
-    if (w.length < 2) {
-      f = .33;
-    } else if (want == 0) {
-      f = dl.abs() < 1 ? .9 : .4;
-    } else {
-      f = (dl.sign == want && dl.abs() <= 1.5) ? 1.0 : dl.abs() < .3 ? .5 : .2;
+  for (final s in kSeasons) {
+    if (now.isBefore(s.start)) {
+      return SeasonNow(n: s.n, live: false, start: s.start, end: s.start, day: 0, prevEnd: prev?.end);
     }
-    final ch = w.length > 1 && dl.abs() >= .1 ? ' · ${dl > 0 ? '+' : '−'}${dl.abs().toStringAsFixed(1)}' : '';
-    body = CatValue('${last.kg.toStringAsFixed(1)} کگ$ch', f);
   }
-
-  return {
-    'walk': CatValue('${_fmt(steps)} هەنگاو', math.min(1.0, steps / 10000)),
-    'run': CatValue(runM > 0 ? '$runM خولەک${runKm >= .05 ? ' · ${runKm.toStringAsFixed(1)} کم' : ''}' : 'هێشتا نییە', math.min(1.0, runM / 30)),
-    'gym': CatValue(gymM > 0 ? '$gymM خولەک' : 'هێشتا نییە', math.min(1.0, gymM / 45)),
-    'sleep': CatValue(sl > 0 ? '${sl.floor()}:${_p2((sl % 1 * 60).round())} کاتژمێر' : 'تۆمار نەکراوە', math.min(1.0, sl / 8)),
-    'food': CatValue(meals > 0 ? '$meals ژەم · ${_fmt(kcal)} کالۆری' : 'هێشتا نییە',
-        meals > 0 ? math.min(1.0, meals / 3) * .5 + (q / meals) * .5 : 0.0),
-    'water': CatValue('${d.waterGlasses}/$wG پەرداخ', math.min(1.0, d.waterGlasses / wG)),
-    'heart': CatValue(hz > 0 ? '$hz خولەک' : 'هێشتا نییە', math.min(1.0, hz / 20)),
-    'o2': CatValue(d.spo2 > 0 ? '${d.spo2}%' : 'تۆمار نەکراوە', d.spo2 >= 95 ? 1.0 : math.max(0.0, (d.spo2 - 88) / 7)),
-    'calm': CatValue('سترێس ${d.stress}', ((100 - d.stress) / 70).clamp(0, 1).toDouble()),
-    'rec': CatValue('HRV ${d.hrv}', math.min(1.0, d.hrv / 70)),
-    'body': body,
-  };
+  final n = (prev?.n ?? 0) + 1;
+  final st = (prev?.end ?? now).add(const Duration(days: 10));
+  return SeasonNow(n: n, live: false, start: st, end: st, day: 0, prevEnd: prev?.end);
 }
-
-Map<String, double> _fractions(Map<String, CatValue> m) => m.map((k, v) => MapEntry(k, v.f));
-
-// =============================================================================
-// 4. لیگ، پلە، ئاست، یاریزانەکان، دیزاینی کارت، نازناو
-// =============================================================================
 
 class League {
+  const League(this.min, this.idx, this.key, this.color, this.c1, this.c2);
   final int min, idx;
-  final String name;
-  final Color accent, c1, c2;
-  const League(this.min, this.idx, this.name, this.accent, this.c1, this.c2);
+  final String key;
+  final Color color, c1, c2;
+  String get name => tr(key);
 }
 
-List<League> get kLeagues => vexCache<List<League>>('vex_arena.dart:kLeagues', () => [
-  League(0, 0, 'برۆنز', vk(0xFFE29A5F), vk(0xFF5A3417), vk(0xFFA8642F)),
-  League(600, 1, 'زیو', vk(0xFFD9E6EE), vk(0xFF4A5866), vk(0xFF9FB1BF)),
-  League(1500, 2, 'ئاڵتوون', vk(0xFFFFD56B), vk(0xFF6B4A0A), vk(0xFFD9A21F)),
-  League(3000, 3, 'پلاتین', vk(0xFF7FE7FF), vk(0xFF0B4D5C), vk(0xFF2BB5C9)),
-  League(5000, 4, 'ئەڵماس', vk(0xFFB9A6FF), vk(0xFF2A1A6E), vk(0xFF7B5CFF)),
-  League(7500, 5, 'VEX Legend', vk(0xFFFF6F86), vk(0xFF5A0F22), vk(0xFFD62F55)),
-]);
+const List<League> kLeagues = [
+  League(0, 0, 'lg_bronze', Color(0xFFE29A5F), Color(0xFF5A3417), Color(0xFFA8642F)),
+  League(600, 1, 'lg_silver', Color(0xFFD9E6EE), Color(0xFF4A5866), Color(0xFF9FB1BF)),
+  League(1500, 2, 'lg_gold', Color(0xFFFFD56B), Color(0xFF6B4A0A), Color(0xFFD9A21F)),
+  League(3000, 3, 'lg_plat', Color(0xFF7FE7FF), Color(0xFF0B4D5C), Color(0xFF2BB5C9)),
+  League(5000, 4, 'lg_dia', Color(0xFFB9A6FF), Color(0xFF2A1A6E), Color(0xFF7B5CFF)),
+  League(7500, 5, 'lg_legend', Color(0xFFFF6F86), Color(0xFF5A0F22), Color(0xFFD62F55)),
+];
 
-League leagueOf(num p) {
+League leagueOf(num p, [Div d = Div.band]) {
   var l = kLeagues.first;
   for (final x in kLeagues) {
     if (p >= x.min) l = x;
@@ -439,1923 +333,1904 @@ League leagueOf(num p) {
   return l;
 }
 
-int levelOf(num p) => math.sqrt(p / 25).floor() + 1;
-int levelStart(int l) => 25 * (l - 1) * (l - 1);
-
-class Season {
-  static const int number = 1, length = 30, needDays = 25;
-  final int day, total;
-  final DateTime end;
-  const Season(this.day, this.total, this.end);
-}
-
-int rankOf(num p, Season s) =>
-    math.max(1, math.min(s.total, (-2600 * math.log(math.max(p, 1) / 7800)).round() + 1));
-double ptsAt(int r) => 7800 * math.exp(-(r - 1) / 2600);
+int leagueIndex(League l) => kLeagues.indexOf(l);
+int levelOf(num p) => math.sqrt(math.max(0, p) / 25).floor() + 1;
+int lvlStart(int l) => 25 * (l - 1) * (l - 1);
 int ratingOf(num p) => math.min(99, (52 + math.log(math.max(p, 50) / 50) * 9).round());
 
-const kCities = ['هەولێر', 'سلێمانی', 'دهۆک', 'کەرکووک', 'هەڵەبجە', 'زاخۆ', 'ڕانیە', 'کۆیە', 'سۆران', 'چەمچەماڵ'];
-const kAllCities = [
-  'هەولێر', 'سلێمانی', 'دهۆک', 'کەرکووک', 'هەڵەبجە', 'زاخۆ', 'ڕانیە', 'کۆیە', 'سۆران', 'چەمچەماڵ',
-  'ئاکرێ', 'ئامێدی', 'شێخان', 'سمێل', 'سەرسەنگ', 'بەردەڕەش', 'دیانا', 'ڕواندز', 'شەقڵاوە', 'مێرگەسور',
-  'پشدەر', 'قەڵادزێ', 'بێتواتە', 'پێنجوێن', 'سیتەک', 'سەیدسادق', 'دەربەندیخان', 'کەلار', 'کفری', 'خانەقین',
-  'جەلەولا', 'قەرەتەپە', 'تاقتاق', 'دووکان', 'دەبەگ', 'حەویجە', 'مەخموور', 'شنگال', 'تەلعەفەر', 'خورماتوو',
-  'تۆزخورماتوو', 'بەعشیقە', 'تەلکێف', 'عەقرە', 'زێباری', 'قۆشتەپە', 'مەهاباد', 'سنە', 'کرماشان', 'ورمێ',
-  'بانە', 'مەریوان', 'سەقز', 'بۆکان', 'پیرانشار', 'نەغەدە', 'ئیلام', 'دیاربەکر', 'وان', 'ماردین', 'باتمان',
-  'هەکاری', 'جزیر', 'ئورفە', 'قامیشلۆ', 'کۆبانی', 'عەفرین', 'دێرک', 'عامودا', 'حەسەکە', 'سەرێکانی', 'تەبریز',
-  'تاران', 'هەمەدان',
+const List<String> kCities = [
+  'هەولێر', 'سلێمانی', 'دهۆک', 'کەرکووک', 'هەڵەبجە', 'زاخۆ', 'ڕانیە', 'کۆیە', 'سۆران', 'چەمچەماڵ', 'ئاکرێ', 'ئامێدی', 'شێخان',
+  'سمێل', 'سەرسەنگ', 'بەردەڕەش', 'دیانا', 'ڕواندز', 'شەقڵاوە', 'مێرگەسور', 'پشدەر', 'قەڵادزێ', 'بێتواتە', 'پێنجوێن', 'سیتەک',
+  'سەیدسادق', 'دەربەندیخان', 'کەلار', 'کفری', 'خانەقین', 'جەلەولا', 'قەرەتەپە', 'تاقتاق', 'دووکان', 'دەبەگ', 'حەویجە', 'مەخموور',
+  'شنگال', 'تەلعەفەر', 'خورماتوو', 'تۆزخورماتوو', 'بەعشیقە', 'تەلکێف', 'عەقرە', 'زێباری', 'قۆشتەپە', 'مەهاباد', 'سنە', 'کرماشان',
+  'ورمێ', 'بانە', 'مەریوان', 'سەقز', 'بۆکان', 'پیرانشار', 'نەغەدە', 'ئیلام', 'دیاربەکر', 'وان', 'ماردین', 'باتمان', 'هەکاری',
+  'جزیر', 'ئورفە', 'قامیشلۆ', 'کۆبانی', 'عەفرین', 'دێرک', 'عامودا', 'حەسەکە', 'سەرێکانی', 'تەبریز', 'تاران', 'هەمەدان',
 ];
 
-const kAges = [
+const List<List<String>> kAges = [
   ['y', '12-17'],
   ['a', '18-39'],
   ['m', '40-59'],
   ['s', '60+'],
 ];
-String ageGroup(int age) => age < 18 ? 'y' : age < 40 ? 'a' : age < 60 ? 'm' : 's';
 
-class ArenaPlayer {
-  final String name, city, age, fav, skin, bio, ch;
-  final int points, move, streak, guess;
-  final List<Color> grad;
-  int rank = 0;
-  ArenaPlayer({
-    required this.name,
-    required this.city,
-    required this.age,
-    required this.points,
-    required this.move,
-    required this.grad,
-    required this.streak,
-    required this.guess,
-    required this.fav,
-    required this.skin,
-    required this.bio,
-    required this.ch,
-  });
-}
-
-/// یاریزانی نموونە — هەمان هاوکێشەی وێب (seed 11) بۆ ئەوەی هەمان ناوەکان دەربکەون
-/// لە ئەپی ڕاستەقینەدا لە سێرڤەرەوە دێن
-List<ArenaPlayer> buildPlayers() {
-  var seed = 11;
-  double rnd() {
-    seed = (seed * 16807) % 2147483647;
-    return seed / 2147483647;
-  }
-
-  T pick<T>(List<T> a) => a[(rnd() * a.length).floor()];
-  const fn = ['ئاراس', 'هێمن', 'دانا', 'ڕێبین', 'سارا', 'ڤیان', 'ئاوات', 'شادی', 'کارزان', 'هاوژین', 'نیگار', 'بەرزان', 'ژیلا', 'ئازاد', 'لانە', 'سۆران', 'ڕۆژان', 'هەڵۆ', 'چنار', 'بڕوا', 'پەیام', 'شیلان', 'دیار', 'هێرۆ', 'ئاکۆ', 'ناز', 'زانا', 'گوڵاڵە', 'ڕێکار', 'بەفرین'];
-  const ln = ['ک.', 'م.', 'ع.', 'ح.', 'س.', 'ڕ.', 'ب.', 'ج.'];
-  final gr = [
-    [_hex('2b5876'), _hex('4e4376')],
-    [_hex('0f9b8e'), _hex('1d4e89')],
-    [_hex('c94b4b'), _hex('4b134f')],
-    [_hex('d38312'), _hex('a83279')],
-    [_hex('1d976c'), _hex('2c3e50')],
-    [_hex('614385'), _hex('516395')],
-    [_hex('e65c00'), _hex('9b2c2c')],
-    [_hex('2193b0'), _hex('3a1c71')],
-  ];
-  const skins = ['auto', 'auto', 'neon', 'kurd', 'night', 'newroz'];
-  const bios = ['هەموو ڕۆژێک 10 هەزار هەنگاو', 'بۆ تەندروستیی خێزانەکەم', 'ڕاکەری بەیانیان', 'تەمەن تەنها ژمارەیەکە', 'خەوی باش نهێنییەکەیە'];
-  final cityList = kCities.toList();
-  final ageList = kAges.map((e) => e[0]).toList();
-  final list = <ArenaPlayer>[];
-  for (var k = 0; k < 60; k++) {
-    final f = pick(fn);
-    final p = (7800 * math.exp(-(k + 1) / 2600) * (0.985 + rnd() * 0.03)).round();
-    final n = '$f ${pick(ln)}';
-    final city = pick(cityList);
-    final age = pick(ageList);
-    final mv = ((rnd() - 0.4) * 8).round();
-    final g = pick(gr);
-    final streak = (4 + rnd() * 8).floor();
-    final guess = (rnd() * 9).floor();
-    final fav = pick(kArenaCats).id;
-    final sk = pick(skins);
-    final bio = pick(bios);
-    list.add(ArenaPlayer(
-      name: n, city: city, age: age, points: p, move: mv, grad: g, streak: streak, guess: guess,
-      fav: fav, skin: sk, bio: bio, ch: kCharIds[k % kCharIds.length],
-    ));
-  }
-  list.sort((a, b) => b.points.compareTo(a.points));
-  for (var i = 0; i < list.length; i++) {
-    list[i].rank = i + 1;
-  }
-  return list;
-}
-
-/// کارەکتەرەکان — هەمان 33 وێنەی بەشی خێزان و هاوڕێ
-const List<String> kCharIds = [
-  '00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16',
-  '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '29', '30', '31', '32', '33',
+// کارەکتەرەکان: هەمان کارەکتەرەکانی بەشی خێزان (assets/chars/XX.webp)
+const List<List<Object>> kChars = [
+  ['00', 0], ['01', 0], ['02', 0], ['03', 0], ['07', 0], ['08', 0], ['10', 0], ['11', 0],
+  ['05', 40], ['06', 40], ['09', 40], ['17', 40], ['29', 40],
+  ['04', 60], ['12', 60], ['18', 60], ['19', 60], ['23', 60], ['25', 60], ['26', 60], ['27', 60], ['30', 60], ['31', 60],
+  ['13', 80], ['15', 80], ['16', 80], ['20', 80], ['22', 80], ['32', 80], ['33', 80],
+  ['14', 150], ['21', 150], ['24', 150],
 ];
-String charAsset(String id) => 'assets/chars/$id.webp';
-
-enum SkinPattern { none, grid, stars, kurd, fire, diamond, gloss }
-
-class CardSkin {
-  final String id, name;
-  final int cost;
-
-  /// پێویستی بە لیگ (ئیندێکس) — 0 واتە نییە
-  final int league;
-  final Color? c1, c2, accent;
-  final SkinPattern pattern;
-  const CardSkin(this.id, this.name,
-      {this.cost = 0, this.league = 0, this.c1, this.c2, this.accent, this.pattern = SkinPattern.none});
+int charCost(String id) {
+  for (final c in kChars) {
+    if (c[0] == id) return c[1] as int;
+  }
+  return 0;
 }
 
-List<CardSkin> get kSkins => vexCache<List<CardSkin>>('vex_arena.dart:kSkins', () => [
-  CardSkin('auto', 'لیگەکەم', pattern: SkinPattern.gloss),
-  CardSkin('neon', 'نیۆنی VEX', cost: 120, c1: vk(0xFF05313D), c2: vk(0xFF0B5160), accent: vk(0xFF2FE6F3), pattern: SkinPattern.grid),
-  CardSkin('night', 'شەوی ئەستێرە', cost: 160, c1: vk(0xFF0B1033), c2: vk(0xFF1D2B6B), accent: vk(0xFF9B7BFF), pattern: SkinPattern.stars),
-  CardSkin('kurd', 'نەخشی کوردی', cost: 220, c1: vk(0xFF5A1414), c2: vk(0xFF8A2B1C), accent: vk(0xFFFFD56B), pattern: SkinPattern.kurd),
-  CardSkin('newroz', 'ئاگری نەورۆز', cost: 260, c1: vk(0xFF3A0D05), c2: vk(0xFFA8320C), accent: vk(0xFFFFBE4D), pattern: SkinPattern.fire),
-  CardSkin('gold', 'ئاڵتوونی', league: 2, c1: vk(0xFF6B4A0A), c2: vk(0xFFE6B13A), accent: vk(0xFFFFD56B), pattern: SkinPattern.gloss),
-  CardSkin('dia', 'ئەڵماس', league: 4, c1: vk(0xFF1D1250), c2: vk(0xFF6A4FE0), accent: vk(0xFFD6C8FF), pattern: SkinPattern.diamond),
-]);
+/// c ئاسایی · r دەگمەن · e ناوازە · l ئەفسانەیی
+String charRarity(String id) {
+  final c = charCost(id);
+  return c == 0 ? 'c' : c <= 60 ? 'r' : c <= 80 ? 'e' : 'l';
+}
+
+Color rarColor(String r) => r == 'r' ? const Color(0xFF7FD8FF) : r == 'e' ? const Color(0xFFB9A6FF) : r == 'l' ? const Color(0xFFFFD36B) : const Color(0xFF9FB1BF);
+
+String charAsset(String id) => 'assets/chars/$id.webp';
+const Duration kCharLock = Duration(days: 30);
+
+// دیزاینی کارت (وێنەکان: assets/arena/skin_*.webp)
+class CardSkin {
+  const CardSkin(this.id, this.cost, this.rar, {this.lg = 0});
+  final String id;
+  final int cost;
+  final String rar; // f بەخۆڕایی · c ئاسایی · r دەگمەن · e ئەفسانەیی · l لیگ
+  final int lg; // پێویستی بە لیگ (ئیندێکس)
+  String get name => tr('sk_$id');
+  String get desc => tr('skd_$id');
+  String asset(num pts) => id == 'auto' ? 'assets/arena/skin_auto${leagueOf(pts).idx}.webp' : 'assets/arena/skin_$id.webp';
+  Color accent(num pts) => id == 'auto' ? leagueOf(pts).color : (kSkinAccent[id] ?? const Color(0xFFFFD36B));
+}
+
+const Map<String, Color> kSkinAccent = {
+  'neon': Color(0xFF2FE6F3), 'night': Color(0xFF9B7BFF), 'carbon': Color(0xFFA9BDD4), 'kurd': Color(0xFFFFD56B),
+  'marble': Color(0xFFFFD36B), 'zagros': Color(0xFFFFC46B), 'newroz': Color(0xFFFFB36B), 'holo': Color(0xFFB6F3FF),
+  'royal': Color(0xFFFFD56B), 'gold': Color(0xFFFFD56B), 'dia': Color(0xFFD6C8FF), 'legend': Color(0xFFFF8FA3),
+};
+
+const List<CardSkin> kSkins = [
+  CardSkin('auto', 0, 'f'),
+  CardSkin('neon', 30, 'c'),
+  CardSkin('night', 40, 'c'),
+  CardSkin('carbon', 50, 'c'),
+  CardSkin('kurd', 60, 'r'),
+  CardSkin('marble', 70, 'r'),
+  CardSkin('zagros', 80, 'r'),
+  CardSkin('newroz', 90, 'r'),
+  CardSkin('holo', 100, 'e'),
+  CardSkin('royal', 120, 'e'),
+  CardSkin('gold', 0, 'l', lg: 2),
+  CardSkin('dia', 0, 'l', lg: 4),
+  CardSkin('legend', 0, 'l', lg: 5),
+];
+
+Color skinRarColor(String r) => switch (r) {
+      'f' => const Color(0xFF8FD3FF),
+      'r' => const Color(0xFFB49BFF),
+      'e' => const Color(0xFFFFD36B),
+      'l' => const Color(0xFF7FE7FF),
+      _ => const Color(0xFF9FB3CF),
+    };
 
 CardSkin skinById(String id) => kSkins.firstWhere((s) => s.id == id, orElse: () => kSkins.first);
 
-class SkinColors {
-  final Color c1, c2, accent;
-  final SkinPattern pattern;
-  const SkinColors(this.c1, this.c2, this.accent, this.pattern);
-}
-
-SkinColors skinColors(String id, num points) {
-  final s = skinById(id);
-  if (s.id == 'auto') {
-    final l = leagueOf(points);
-    return SkinColors(l.c1, l.c2, l.accent, SkinPattern.gloss);
-  }
-  return SkinColors(s.c1!, s.c2!, s.accent!, s.pattern);
-}
-
-class ArenaTitle {
-  final String id, name;
-
-  /// 0 ئازاد · 1 یەکەم پێشبینیی ڕاست · 5 لیگی Legend
-  final int req;
-  final IconData icon;
-  const ArenaTitle(this.id, this.name, this.req, this.icon);
-}
-
-const List<ArenaTitle> kTitles = [
-  ArenaTitle('t0', 'وەرزشکاری نوێ', 0, Icons.rocket_launch_rounded),
-  ArenaTitle('t1', 'پاشای خەو', 0, Icons.bedtime_rounded),
-  ArenaTitle('t2', 'ڕاکەری بەیانیان', 0, Icons.directions_run_rounded),
-  ArenaTitle('t3', 'پێشبینیکەری بلیمەت', 1, Icons.auto_awesome_rounded),
-  ArenaTitle('t4', 'شێری هەولێر', 0, Icons.flag_rounded),
-  ArenaTitle('t5', 'ئەفسانەی VEX', 5, Icons.workspace_premium_rounded),
+const List<List<Object>> kTitles = [
+  ['t0', 0, 'rocket'],
+  ['t1', 0, 'sleep'],
+  ['t2', 0, 'run'],
+  ['t3', 1, 'crystal'],
+  ['t4', 0, 'flag'],
+  ['t5', 5, 'crown'],
 ];
 
-String titleName(String id) => kTitles.firstWhere((t) => t.id == id, orElse: () => kTitles.first).name;
+// =============================================================================
+// 4. پەیوەندی بە ئەپەکەوە
+// =============================================================================
 
-const kStatNames = ['پیاسە', 'ڕاکردن', 'خەو', 'خۆراک', 'دڵ', 'ئارامی'];
-const kStatIds = ['walk', 'run', 'sleep', 'food', 'heart', 'calm'];
+class ArenaProfile {
+  const ArenaProfile({this.name = '', this.phone = '', this.age = 30});
+  final String name;
+  final String phone; // 07XXXXXXXXX
+  final int age;
+}
 
-String maskPhone(String p) => p.length == 11 ? '${p.substring(0, 4)} *** ${p.substring(7)}' : '';
+class ArenaSportSession {
+  const ArenaSportSession({required this.sportId, required this.minutes, this.km = 0, this.hrZones = const []});
+  final String sportId; // run · treadmill · walk · gym · ...
+  final int minutes;
+  final double km;
+  final List<int> hrZones; // چرکە لە هەر ناوچەیەکی دڵ (5 ناوچە)
+}
 
-String normPhone(String v) {
-  const ar = '٠١٢٣٤٥٦٧٨٩';
-  var d = v.split('').map((c) {
-    final i = ar.indexOf(c);
-    return i >= 0 ? '$i' : c;
-  }).join();
-  d = d.replaceAll(RegExp(r'[^\d+]'), '');
-  if (d.startsWith('+964')) d = '0${d.substring(4)}';
-  if (d.startsWith('00964')) d = '0${d.substring(5)}';
-  if (d.startsWith('964')) d = '0${d.substring(3)}';
-  if (d.length == 10 && d.startsWith('7')) d = '0$d';
-  return d;
+class ArenaMeal {
+  const ArenaMeal(this.name, this.kcal, this.at);
+  final String name;
+  final int kcal;
+  final String at; // HH:mm
+}
+
+class ArenaDayInputs {
+  const ArenaDayInputs({
+    this.steps = 0,
+    this.sleepHours = 0,
+    this.spo2 = 0,
+    this.stress = 0,
+    this.hrv = 0,
+    this.restHr = 0,
+    this.activeMinutes = 0,
+    this.sessions = const [],
+    this.meals = const [],
+    this.waterGlasses = 0,
+    this.waterGoalGlasses = 8,
+  });
+  final int steps;
+  final double sleepHours;
+  final int spo2, stress, hrv, restHr, activeMinutes;
+  final List<ArenaSportSession> sessions;
+  final List<ArenaMeal> meals;
+  final int waterGlasses; // پەرداخی 250ml
+  final int waterGoalGlasses;
+}
+
+/// ئەپەکە ئەمە پڕ دەکاتەوە (بڕوانە arena_host.dart)
+abstract class ArenaHost {
+  ArenaProfile get profile;
+
+  /// داتای ئەمڕۆ (Band + بەشەکانی ئەپ)
+  ArenaDayInputs today();
+
+  /// ئایا بەکارهێنەر VEX Band ی هەیە و پەیوەستی کردووە؟ (نەخێر ← لیگی مۆبایل)
+  bool get hasBand;
+
+  /// ئایا ئێستا Band لە دەستە و پەیوەستە؟
+  bool get bandConnected => hasBand;
+
+  /// هەر کاتێک داتا دەگۆڕێت notify بکە
+  Listenable? get changes => null;
+
+  /// دوگمەی «بڕۆ بۆ بەشی ...»
+  void openSection(BuildContext context, String catId) {}
+}
+
+class DemoArenaHost extends ArenaHost {
+  DemoArenaHost({this.band = true});
+  bool band;
+  @override
+  ArenaProfile get profile => const ArenaProfile(name: '', phone: '', age: 30);
+  @override
+  bool get hasBand => band;
+  @override
+  ArenaDayInputs today() => const ArenaDayInputs(
+        steps: 2225,
+        sleepHours: 6.3,
+        spo2: 93,
+        stress: 55,
+        hrv: 54,
+        restHr: 70,
+        activeMinutes: 22,
+        waterGlasses: 0,
+        waterGoalGlasses: 8,
+      );
 }
 
 // =============================================================================
-// 5. پاشەکەوتکردن
+// 5. بزوێنەری پشتڕاستکردنەوە (دژی فێڵ) و خاڵ
+// =============================================================================
+
+/// ok = پشتڕاستکرایەوە · rej = ڕەتکرایەوە · wait = چاوەڕێی Band · na = تەنها لیگی Band · none = هێشتا نییە
+class CatValue {
+  const CatValue(this.label, this.f, this.st, {this.why = '', this.note = '', this.chk = ''});
+  final String label;
+  final double f;
+  final String st;
+  final String why, note, chk;
+}
+
+class WaterLog {
+  WaterLog(this.k, this.n0, this.last, this.e);
+  String k;
+  int? n0;
+  int last;
+  List<List<int>> e; // [ms, glasses]
+  Map<String, dynamic> toJson() => {'k': k, 'n0': n0, 'last': last, 'e': e};
+  static WaterLog? fromJson(dynamic j) {
+    if (j is! Map) return null;
+    final e = <List<int>>[];
+    if (j['e'] is List) {
+      for (final x in j['e'] as List) {
+        if (x is List && x.length == 2) e.add([(x[0] as num).toInt(), (x[1] as num).toInt()]);
+      }
+    }
+    return WaterLog('${j['k'] ?? ''}', j['n0'] is num ? (j['n0'] as num).toInt() : null, (j['last'] as num?)?.toInt() ?? 0, e);
+  }
+}
+
+class _WaterEval {
+  _WaterEval(this.ok, this.rej, this.why, this.spread);
+  final int ok, rej;
+  final String why;
+  final double spread;
+}
+
+_WaterEval _waterEval(WaterLog o, int goal) {
+  var ok = math.min(o.n0 ?? 0, 4);
+  var rej = math.max(0, (o.n0 ?? 0) - 4);
+  var why = rej > 0 ? 'w_pre' : '';
+  final hrs = <int>{};
+  if ((o.n0 ?? 0) > 0) hrs.add(-1);
+  final perH = <int, int>{};
+  for (final x in o.e) {
+    final hh = DateTime.fromMillisecondsSinceEpoch(x[0]).hour;
+    var c = x[1];
+    if (c > 2) {
+      rej += c - 2;
+      c = 2;
+      why = 'w_burst';
+    }
+    if (hh < 6) {
+      rej += c;
+      why = 'w_night';
+      continue;
+    }
+    final u = math.max(0, math.min(c, 4 - (perH[hh] ?? 0)));
+    perH[hh] = (perH[hh] ?? 0) + u;
+    if (u < c) {
+      rej += c - u;
+      why = 'w_hour';
+    }
+    ok += u;
+    if (u > 0) hrs.add(hh);
+  }
+  return _WaterEval(math.min(ok, goal), rej, why, math.min(1.0, 0.4 + 0.15 * hrs.length));
+}
+
+int? _toMin(String at) {
+  final p = at.split(':');
+  if (p.length != 2) return null;
+  final h = int.tryParse(p[0]), m = int.tryParse(p[1]);
+  if (h == null || m == null) return null;
+  return h * 60 + m;
+}
+
+Map<String, CatValue> verifyDay(ArenaDayInputs d, Div div, bool band, WaterLog wl, DateTime now) {
+  final out = <String, CatValue>{};
+  final phone = div == Div.phone;
+  final nob = phone
+      ? const CatValue('', 0, 'na', why: 'why_na')
+      : const CatValue('', 0, 'wait', why: 'why_band');
+  CatValue r(String label, double f, String chk, [String note = '']) =>
+      CatValue(label, f.clamp(0.0, 1.0).toDouble(), f > 0 ? 'ok' : 'none', chk: chk, note: note);
+  CatValue x(String label, String why) => CatValue(label, 0, 'rej', why: why);
+  String n(num v) => afmt(v);
+
+  // وەرزش
+  var runM = 0, gymM = 0;
+  var runKm = 0.0;
+  var zt = [0, 0, 0, 0, 0];
+  final rejR = <String>[], rejG = <String>[];
+  for (final s in d.sessions) {
+    final isRun = s.sportId == 'run' || s.sportId == 'treadmill' || s.sportId == 'tri';
+    if (s.sportId == 'walk' || s.sportId == 'hike') continue;
+    final bag = isRun ? rejR : rejG;
+    if (s.minutes < 10) {
+      bag.add('why_short');
+      continue;
+    }
+    final z = List<int>.generate(5, (i) => i < s.hrZones.length ? s.hrZones[i] : 0);
+    final zs = z.fold<int>(0, (a, b) => a + b), hard = z[2] + z[3] + z[4];
+    if (!phone && zs >= 60 && hard / zs < 0.2) {
+      bag.add('why_hrflat');
+      continue;
+    }
+    if (isRun && s.sportId != 'treadmill') {
+      if (s.km < 0.2) {
+        bag.add('why_gps');
+        continue;
+      }
+      final pace = s.minutes / s.km;
+      if (pace < 2.8) {
+        bag.add('why_fast');
+        continue;
+      }
+      if (pace > 13) {
+        bag.add('why_slow');
+        continue;
+      }
+    }
+    if (isRun) {
+      runM += s.minutes;
+      runKm += s.km;
+    } else {
+      gymM += s.minutes;
+    }
+    for (var i = 0; i < 5; i++) {
+      zt[i] += z[i];
+    }
+  }
+  runM = math.min(runM, 90);
+  gymM = math.min(gymM, 90);
+
+  // پیاسە
+  final st = d.steps;
+  if (phone) {
+    out['walk'] = st > 40000 ? x(tr('u_steps', [n(st)]), 'why_steps') : r(tr('u_steps', [n(st)]), st / 10000, 'chk_walk_p');
+  } else if (!band) {
+    out['walk'] = CatValue(tr('band_off'), 0, nob.st, why: nob.why);
+  } else {
+    out['walk'] = st > 50000 ? x(tr('u_steps', [n(st)]), 'why_shake') : r(tr('u_steps', [n(st)]), st / 10000, 'chk_walk');
+  }
+  out['run'] = runM > 0
+      ? r(tr('u_min_km', [runM, runKm.toStringAsFixed(1)]), runM / 30, 'chk_run')
+      : rejR.isNotEmpty
+          ? x(tr('rejected'), rejR.first)
+          : r(tr('not_yet'), 0, '');
+  out['gym'] = gymM > 0
+      ? r(tr('u_min', [gymM]), gymM / 45, phone ? 'chk_gym_p' : 'chk_gym')
+      : rejG.isNotEmpty
+          ? x(tr('rejected'), rejG.first)
+          : r(tr('not_yet'), 0, '');
+
+  // خەو
+  final sl = d.sleepHours;
+  if (phone || !band) {
+    out['sleep'] = CatValue(phone ? tr('band_only') : tr('band_off'), 0, nob.st, why: nob.why);
+  } else {
+    final lbl = tr('u_hm', ['${sl.floor()}:${_p2((sl % 1 * 60).round())}']);
+    out['sleep'] = sl > 12 ? x(lbl, 'why_sleep12') : r(lbl, sl < 3 ? 0 : sl / 8, 'chk_sleep');
+  }
+
+  // خۆراک — ژەمەکان 90 خولەک لێک دوور، زۆرترین 3
+  final nowM = now.hour * 60 + now.minute;
+  var meals = 0, lastM = -999;
+  var fRej = '';
+  final ms = <List<int>>[];
+  for (final m in d.meals) {
+    final t = _toMin(m.at);
+    if (t != null) ms.add([t, m.kcal]);
+  }
+  ms.sort((a, b) => a[0].compareTo(b[0]));
+  for (final m in ms) {
+    if (m[0] > nowM + 5) {
+      fRej = 'why_future';
+      continue;
+    }
+    if (m[1] < 40) continue;
+    if (m[0] - lastM < 90) continue;
+    meals++;
+    lastM = m[0];
+  }
+  meals = math.min(meals, 3);
+  out['food'] = meals > 0
+      ? r(tr('u_meals', [meals]), meals / 3, 'chk_food', fRej)
+      : fRej.isNotEmpty
+          ? x(tr('rejected'), fRej)
+          : r(tr('not_yet'), 0, '');
+
+  // ئاو
+  final goal = math.max(6, d.waterGoalGlasses);
+  final we = _waterEval(wl, goal);
+  final wl0 = tr('u_ml', [n(d.waterGlasses * 250), n(goal * 250)]);
+  final wNote = we.rej > 0 ? tr('w_note', [n(we.rej * 250), tr(we.why)]) : (we.ok > 0 && we.spread < 1 ? tr('w_spread') : '');
+  out['water'] = r(wl0, we.ok / goal * we.spread, 'chk_water', wNote);
+
+  // دڵ
+  final hz = ((zt[1] + zt[2] + zt[3]) / 60).round() + d.activeMinutes;
+  if (phone || !band) {
+    out['heart'] = CatValue(phone ? tr('band_only') : tr('band_off'), 0, nob.st, why: nob.why);
+  } else if (hz > 0 && st < 300) {
+    out['heart'] = x(tr('u_min', [hz]), 'why_hrstill');
+  } else {
+    out['heart'] = hz > 0 ? r(tr('u_active_rest', [hz, d.restHr]), hz / 30, 'chk_heart') : r(tr('u_rest', [d.restHr]), 0, '');
+  }
+  // ئۆکسجین، ئارامی، چاکبوونەوە
+  if (phone || !band) {
+    for (final id in ['o2', 'calm', 'rec']) {
+      out[id] = CatValue(phone ? tr('band_only') : tr('band_off'), 0, nob.st, why: nob.why);
+    }
+  } else {
+    out['o2'] = (d.spo2 < 80 || d.spo2 > 100)
+        ? x('${d.spo2}%', 'why_read')
+        : r('${d.spo2}%', d.spo2 >= 95 ? 1 : (d.spo2 - 88) / 7, 'chk_o2');
+    out['calm'] = r(tr('u_stress', [d.stress]), (100 - d.stress) / 70, 'chk_calm');
+    out['rec'] = (d.hrv < 10 || d.hrv > 200) ? x('HRV ${d.hrv}', 'why_hrv') : r('HRV ${d.hrv}', d.hrv / 70, 'chk_rec');
+  }
+  return out;
+}
+
+class PointRow {
+  const PointRow(this.cat, this.cap, this.base, this.mult, this.pts);
+  final ArenaCat cat;
+  final int cap, base;
+  final double mult;
+  final int pts;
+}
+
+class DayPoints {
+  const DayPoints(this.rows, this.tot, this.power, this.second);
+  final List<PointRow> rows;
+  final int tot;
+  final String power, second;
+}
+
+String powerOf(String k) => kCats[_fnv('vex-power-$k') % kCats.length].id;
+String secondOf(String k) {
+  final a = powerOf(k);
+  var i = _fnv('vex-2nd-$k') % kCats.length;
+  if (kCats[i].id == a) i = (i + 1) % kCats.length;
+  return kCats[i].id;
+}
+
+DayPoints dayPoints(Map<String, double> f, String k, Div d) {
+  final p = powerOf(k), s2 = secondOf(k);
+  final rows = <PointRow>[];
+  var t = 0;
+  for (final c in kCats) {
+    final cap = capOf(c, d);
+    final base = (cap * (f[c.id] ?? 0).clamp(0.0, 1.0)).round();
+    final m = c.id == p ? 3.0 : c.id == s2 ? 1.5 : 1.0;
+    final pts = (base * m).round();
+    t += pts;
+    rows.add(PointRow(c, cap, base, m, pts));
+  }
+  return DayPoints(rows, math.min(maxDay(d), t), p, s2);
+}
+
+// =============================================================================
+// 6. هەژمار و پاشەکەوتکردن
 // =============================================================================
 
 class ArenaAccount {
-  String name, city, age, phone;
-  final int joinDay;
-  ArenaAccount({required this.name, required this.city, required this.age, required this.phone, required this.joinDay});
-  Map<String, dynamic> toJson() => {'name': name, 'city': city, 'age': age, 'phone': phone, 'day': joinDay};
-  static ArenaAccount? fromJson(dynamic o) {
-    if (o is! Map) return null;
+  ArenaAccount({
+    required this.name,
+    required this.phone,
+    required this.city,
+    required this.age,
+    required this.sn,
+    required this.day,
+    required this.pre,
+    required this.at,
+    required this.dv,
+  });
+  String name, phone, city, age, dv;
+  int sn, day, at;
+  bool pre;
+  Map<String, dynamic> toJson() =>
+      {'name': name, 'phone': phone, 'city': city, 'age': age, 'sn': sn, 'day': day, 'pre': pre, 'at': at, 'dv': dv};
+  static ArenaAccount? fromJson(dynamic j) {
+    if (j is! Map) return null;
     return ArenaAccount(
-      name: '${o['name'] ?? ''}',
-      city: '${o['city'] ?? kCities.first}',
-      age: '${o['age'] ?? 'a'}',
-      phone: '${o['phone'] ?? ''}',
-      joinDay: (o['day'] as num?)?.toInt() ?? 1,
+      name: '${j['name'] ?? ''}',
+      phone: '${j['phone'] ?? ''}',
+      city: '${j['city'] ?? ''}',
+      age: '${j['age'] ?? 'a'}',
+      sn: (j['sn'] as num?)?.toInt() ?? 0,
+      day: (j['day'] as num?)?.toInt() ?? 0,
+      pre: j['pre'] == true,
+      at: (j['at'] as num?)?.toInt() ?? 0,
+      dv: j['dv'] == 'phone' ? 'phone' : 'band',
     );
   }
 }
 
+class DayRec {
+  DayRec(this.t, this.a, this.f);
+  int t;
+  bool a;
+  Map<String, double> f;
+  Map<String, dynamic> toJson() => {'t': t, 'a': a ? 1 : 0, 'f': f};
+  static DayRec fromJson(dynamic j) {
+    final m = <String, double>{};
+    if (j is Map && j['f'] is Map) {
+      (j['f'] as Map).forEach((k, v) => m['$k'] = (v as num).toDouble());
+    }
+    return DayRec(j is Map ? (j['t'] as num?)?.toInt() ?? 0 : 0, j is Map && (j['a'] == 1 || j['a'] == true), m);
+  }
+}
+
+class CoinLog {
+  CoinLog(this.t, this.c, this.k, this.at);
+  final String t;
+  int c;
+  final String k;
+  int at;
+  Map<String, dynamic> toJson() => {'t': t, 'c': c, 'k': k, 'at': at};
+}
+
 class ArenaStore extends ChangeNotifier {
-  static const _key = 'vex_arena_v3';
-  static const _famKey = 'vex_family_v1'; // کارەکتەری «تۆ» لە بەشی خێزان
-  static const _meChKey = 'vex_me_ch';
+  static const String key = 'vex_arena_v4';
 
   ArenaAccount? acc;
-  String skin = 'auto', title = 't0', bio = 'بۆ تەندروستی', ch = '';
-  int coins = 340, season = 2140, bestPower = 0;
-  Set<String> owned = {};
-  Map<String, String> guess = {};
-  Set<String> revealed = {};
-  DateTime? seasonEnd;
-  bool loaded = false;
+  int coins = 0, season = 0, sn = 0, streak = 0, frz = 1, bestPower = 0, flag = 0, lt = 0, chAt = 0;
+  String ch = '', skin = 'auto', title = 't0', bio = '', frzW = '', cb = '', gd = '', ad = '';
+  bool cbP = false, eco = false, rmd = false;
+  Set<String> chOwn = <String>{}, owned = <String>{}, rev = <String>{}, apl = <String>{};
+  List<String> exc = <String>[];
+  Map<String, String> guess = <String, String>{};
+  Map<String, DayRec> days = <String, DayRec>{};
+  Map<String, dynamic>? cd; // {k,c,act,pts,sn,paid}
+  Map<String, dynamic>? chest; // {k,c}
+  Map<String, dynamic>? wkr; // {k,r,n}
+  List<CoinLog> clog = <CoinLog>[];
+  WaterLog? wl;
 
-  Season get seasonInfo => Season(12, 12847, seasonEnd ?? DateTime.now().add(const Duration(days: 18, hours: 7)));
+  bool tamper = false;
+  bool clockOk = true;
+  bool loaded = false;
+  SharedPreferences? _sp;
+
+  void reset() {
+    acc = null;
+    coins = 0;
+    season = 0;
+    sn = 0;
+    streak = 0;
+    frz = 1;
+    bestPower = 0;
+    flag = 0;
+    lt = 0;
+    chAt = 0;
+    ch = '';
+    skin = 'auto';
+    title = 't0';
+    bio = '';
+    frzW = '';
+    cb = '';
+    gd = '';
+    ad = '';
+    cbP = false;
+    eco = false;
+    rmd = false;
+    chOwn = <String>{};
+    owned = <String>{};
+    rev = <String>{};
+    apl = <String>{};
+    exc = <String>[];
+    guess = <String, String>{};
+    days = <String, DayRec>{};
+    cd = null;
+    chest = null;
+    wkr = null;
+    clog = <CoinLog>[];
+    wl = null;
+    tamper = false;
+    clockOk = true;
+  }
+
+  int _sig() => _fnv('vex·arena·${jsonEncode([
+        coins,
+        season,
+        sn,
+        chOwn.toList()..sort(),
+        owned.toList()..sort(),
+        acc?.phone,
+        acc?.day,
+        acc?.sn,
+        streak,
+        frz,
+        bestPower,
+        clog.length,
+        days.length,
+      ])}');
+
+  Map<String, dynamic> toJson() => {
+        'v': 4,
+        'acc': acc?.toJson(),
+        'coins': coins,
+        'season': season,
+        'sn': sn,
+        'streak': streak,
+        'frz': frz,
+        'bestPower': bestPower,
+        'flag': flag,
+        'lt': lt,
+        'chAt': chAt,
+        'ch': ch,
+        'skin': skin,
+        'title': title,
+        'bio': bio,
+        'frzW': frzW,
+        'cb': cb,
+        'gd': gd,
+        'ad': ad,
+        'cbP': cbP,
+        'eco': eco,
+        'rmd': rmd,
+        'chOwn': chOwn.toList(),
+        'owned': owned.toList(),
+        'rev': rev.toList(),
+        'apl': apl.toList(),
+        'exc': exc,
+        'guess': guess,
+        'days': days.map((k, v) => MapEntry(k, v.toJson())),
+        'cd': cd,
+        'chest': chest,
+        'wkr': wkr,
+        'clog': clog.map((e) => e.toJson()).toList(),
+        'wl': wl?.toJson(),
+        'sig': _sig(),
+      };
+
+  void _from(Map j) {
+    acc = ArenaAccount.fromJson(j['acc']);
+    int i(String k, [int d = 0]) => (j[k] as num?)?.toInt() ?? d;
+    String s(String k, [String d = '']) => j[k] == null ? d : '${j[k]}';
+    Set<String> ss(String k) => j[k] is List ? (j[k] as List).map((e) => '$e').toSet() : <String>{};
+    coins = i('coins');
+    season = i('season');
+    sn = i('sn');
+    streak = i('streak');
+    frz = i('frz', 1);
+    bestPower = i('bestPower');
+    flag = i('flag');
+    lt = i('lt');
+    chAt = i('chAt');
+    ch = s('ch');
+    skin = s('skin', 'auto');
+    title = s('title', 't0');
+    bio = s('bio');
+    frzW = s('frzW');
+    cb = s('cb');
+    gd = s('gd');
+    ad = s('ad');
+    cbP = j['cbP'] == true;
+    eco = j['eco'] == true;
+    rmd = j['rmd'] == true;
+    chOwn = ss('chOwn');
+    owned = ss('owned');
+    rev = ss('rev');
+    apl = ss('apl');
+    exc = j['exc'] is List ? (j['exc'] as List).map((e) => '$e').toList() : <String>[];
+    guess = j['guess'] is Map ? (j['guess'] as Map).map((k, v) => MapEntry('$k', '$v')) : <String, String>{};
+    days = j['days'] is Map ? (j['days'] as Map).map((k, v) => MapEntry('$k', DayRec.fromJson(v))) : <String, DayRec>{};
+    cd = j['cd'] is Map ? Map<String, dynamic>.from(j['cd'] as Map) : null;
+    chest = j['chest'] is Map ? Map<String, dynamic>.from(j['chest'] as Map) : null;
+    wkr = j['wkr'] is Map ? Map<String, dynamic>.from(j['wkr'] as Map) : null;
+    clog = j['clog'] is List
+        ? (j['clog'] as List)
+            .whereType<Map>()
+            .map((e) => CoinLog('${e['t']}', (e['c'] as num?)?.toInt() ?? 0, '${e['k']}', (e['at'] as num?)?.toInt() ?? 0))
+            .toList()
+        : <CoinLog>[];
+    wl = WaterLog.fromJson(j['wl']);
+  }
 
   Future<void> load() async {
     try {
-      final sp = await SharedPreferences.getInstance();
-      final s = sp.getString(_key);
-      if (s != null) {
-        final o = jsonDecode(s);
-        if (o is Map && o['v'] == 3) {
-          acc = ArenaAccount.fromJson(o['acc']);
-          skin = '${o['skin'] ?? 'auto'}';
-          title = '${o['title'] ?? 't0'}';
-          bio = '${o['bio'] ?? bio}';
-          ch = '${o['ch'] ?? ''}';
-          coins = (o['coins'] as num?)?.toInt() ?? 340;
-          season = (o['season'] as num?)?.toInt() ?? 2140;
-          bestPower = (o['bestPower'] as num?)?.toInt() ?? 0;
-          owned = ((o['owned'] as List?) ?? const []).map((e) => '$e').toSet();
-          guess = ((o['guess'] as Map?) ?? const {}).map((k, v) => MapEntry('$k', '$v'));
-          revealed = ((o['rev'] as List?) ?? const []).map((e) => '$e').toSet();
-          final se = o['seasonEnd'];
-          if (se is num) seasonEnd = DateTime.fromMillisecondsSinceEpoch(se.toInt());
+      _sp ??= await SharedPreferences.getInstance();
+      final raw = _sp!.getString(key);
+      reset();
+      if (raw != null) {
+        final j = jsonDecode(raw);
+        if (j is Map && j['v'] == 4) {
+          _from(j);
+          final sig = (j['sig'] as num?)?.toInt();
+          if (sig != null && sig != _sig()) {
+            // دەستکاری لە داتای پاشەکەوتکراو: سکە و خاڵ سفر دەبنەوە
+            tamper = true;
+            coins = 0;
+            season = 0;
+            chOwn = <String>{};
+            owned = <String>{};
+            clog = <CoinLog>[];
+            flag++;
+            cd = {'k': dayKey(DateTime.now()), 'c': 99, 'act': false, 'pts': 0, 'sn': 0, 'paid': 99};
+          }
+          if (lt > 0 && DateTime.now().millisecondsSinceEpoch < lt - 10 * 60000) clockOk = false;
         }
       }
-      seasonEnd ??= DateTime.now().add(const Duration(days: 18, hours: 7));
-      if (ch.isEmpty) {
-        ch = sp.getString(_meChKey) ?? '';
-        final f = sp.getString(_famKey);
-        if (ch.isEmpty && f != null) {
-          final o = jsonDecode(f);
-          if (o is Map && o['meCh'] is String) ch = o['meCh'] as String;
-        }
-      }
-    } catch (_) {}
+    } catch (_) {
+      reset();
+    }
     loaded = true;
     notifyListeners();
   }
 
   Future<void> save() async {
+    if (clockOk) lt = math.max(lt, DateTime.now().millisecondsSinceEpoch);
+    try {
+      _sp ??= await SharedPreferences.getInstance();
+      await _sp!.setString(key, jsonEncode(toJson()));
+    } catch (_) {}
     notifyListeners();
-    try {
-      final sp = await SharedPreferences.getInstance();
-      await sp.setString(
-          _key,
-          jsonEncode({
-            'v': 3,
-            'acc': acc?.toJson(),
-            'skin': skin,
-            'title': title,
-            'bio': bio,
-            'ch': ch,
-            'coins': coins,
-            'season': season,
-            'bestPower': bestPower,
-            'owned': owned.toList(),
-            'guess': guess,
-            'rev': revealed.toList(),
-            'seasonEnd': seasonEnd?.millisecondsSinceEpoch,
-          }));
-    } catch (_) {}
   }
 
-  /// هەمان کارەکتەر لە بەشی خێزان و هاوڕێش دادەنرێت
-  Future<void> setCharacter(String id) async {
-    ch = id;
-    await save();
-    try {
-      final sp = await SharedPreferences.getInstance();
-      await sp.setString(_meChKey, id);
-      final f = sp.getString(_famKey);
-      if (f != null) {
-        final o = jsonDecode(f);
-        if (o is Map) {
-          final m = Map<String, dynamic>.from(o);
-          m['meCh'] = id;
-          await sp.setString(_famKey, jsonEncode(m));
-        }
-      }
-    } catch (_) {}
-  }
-
-  Future<void> logout() async {
-    acc = null;
-    skin = 'auto';
-    title = 't0';
-    bio = 'بۆ تەندروستی';
-    coins = 340;
-    season = 2140;
-    bestPower = 0;
-    owned = {};
-    guess = {};
-    revealed = {};
-    await save();
+  void log(String t, int c, String k) {
+    clog.insert(0, CoinLog(t, c, k, DateTime.now().millisecondsSinceEpoch));
+    if (clog.length > 30) clog = clog.sublist(0, 30);
   }
 }
 
 // =============================================================================
-// 6. پەڕەی سەرەکی
+// 7. کۆنترۆڵەر — هەموو ژماردنەکان لێرەن
 // =============================================================================
 
-class VexArenaPage extends StatefulWidget {
-  final ArenaHost host;
-  final ArenaStore? store;
-  const VexArenaPage({super.key, required this.host, this.store});
-  @override
-  State<VexArenaPage> createState() => _VexArenaPageState();
-}
-
-class _VexArenaPageState extends State<VexArenaPage> {
-  late final ArenaStore st = widget.store ?? ArenaStore();
-  late final List<ArenaPlayer> players = buildPlayers();
-  String tab = 'today', lb = 'all';
-  int shown = 11;
-  late Map<String, CatValue> data;
-  late DayPoints today, yest;
-  late String tk, yk;
-  Timer? _poll;
-  final _scroll = ScrollController();
-  int _cardDrop = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _compute();
-    if (!st.loaded) st.load();
-    st.addListener(_onStore);
-    widget.host.changes?.addListener(_refresh);
-    _poll = Timer.periodic(const Duration(seconds: 20), (_) => _refresh());
-  }
-
-  @override
-  void dispose() {
-    _poll?.cancel();
-    st.removeListener(_onStore);
-    widget.host.changes?.removeListener(_refresh);
-    _scroll.dispose();
-    super.dispose();
-  }
-
-  void _onStore() {
-    if (mounted) setState(() {});
-  }
-
-  void _compute() {
-    final now = DateTime.now();
-    tk = arenaDayKey(now);
-    yk = arenaDayKey(now.subtract(const Duration(days: 1)));
-    data = computeDay(widget.host.today(), widget.host.profile);
-    today = dayPoints(_fractions(data), tk);
-    yest = dayPoints(_fractions(computeDay(widget.host.yesterday(), widget.host.profile)), yk);
-  }
-
-  void _refresh() {
-    if (!mounted) return;
-    final c = widget.host.takePendingCoins();
-    if (c > 0) {
-      st.coins += c;
-      st.save();
-    }
-    setState(_compute);
-  }
-
-  // ---- هەژمار ----
-  bool get won => st.revealed.contains(tk) && st.guess[tk] == today.power;
-  int get myTotal => st.season + today.total + (won ? 50 : 0);
-  Season get season => st.seasonInfo;
-  int get activeDays => st.acc == null ? 0 : math.max(1, season.day - st.acc!.joinDay + 1);
-
-  List<List<Object>> myStats() {
-    final yf = _fractions(computeDay(widget.host.yesterday(), widget.host.profile));
-    return List.generate(6, (i) {
-      final id = kStatIds[i];
-      final v = (45 + ((yf[id] ?? 0) * .6 + (data[id]?.f ?? 0) * .4) * 50).round();
-      return [kStatNames[i], math.min(99, v)];
-    });
-  }
-
-  CardData myCard() => CardData(
-        name: st.acc?.name ?? 'ناوی تۆ',
-        city: st.acc?.city ?? 'شارەکەت',
-        ch: st.ch,
-        points: myTotal,
-        skin: st.skin,
-        title: titleName(st.title),
-        stats: myStats(),
-        rank: rankOf(myTotal, season),
-        grad: [vk(0xFF0F9B8E), vk(0xFF1D4E89)],
-      );
-
-  bool skinOwned(CardSkin s) =>
-      (s.cost == 0 && s.league == 0) || st.owned.contains('skin:${s.id}') || (s.league > 0 && leagueOf(myTotal).idx >= s.league);
-
-  void _go(String t) {
-    if (t == tab) return;
-    HapticFeedback.selectionClick();
-    setState(() => tab = t);
-    if (_scroll.hasClients) _scroll.animateTo(0, duration: const Duration(milliseconds: 350), curve: Curves.easeOut);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: VA.bg,
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: RadialGradient(
-              center: Alignment(0, -1.1),
-              radius: 1.3,
-              colors: [vk(0xFF0B4556), VA.bg],
-            ),
-          ),
-          child: SafeArea(
-            bottom: false,
-            child: !st.loaded
-                ? Center(child: CircularProgressIndicator(color: VA.cyan))
-                : ListView(
-                    controller: _scroll,
-                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 40),
-                    children: [
-                      _header(),
-                      const SizedBox(height: 12),
-                      _PrizeTicker(daysLeft: season.end.difference(DateTime.now()).inDays, onTap: _openPrizes),
-                      const SizedBox(height: 12),
-                      _Seg(
-                        items: const [
-                          ['today', 'ئەمڕۆ', Icons.bolt_rounded],
-                          ['rank', 'پلەکان', Icons.emoji_events_rounded],
-                          ['card', 'کارتەکەم', Icons.star_rounded],
-                        ],
-                        value: tab,
-                        onChanged: _go,
-                      ),
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 320),
-                        transitionBuilder: (c, a) => FadeTransition(
-                          opacity: a,
-                          child: SlideTransition(
-                              position: Tween(begin: const Offset(0, .03), end: Offset.zero).animate(a), child: c),
-                        ),
-                        child: KeyedSubtree(
-                          key: ValueKey('$tab-${st.acc != null}'),
-                          child: st.acc == null && tab != 'rank'
-                              ? _joinView()
-                              : tab == 'today'
-                                  ? _todayView()
-                                  : tab == 'rank'
-                                      ? _rankView()
-                                      : _cardView(),
-                        ),
-                      ),
-                    ],
-                  ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------- header
-  Widget _header() {
-    final s = season;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            if (Navigator.of(context).canPop())
-              _IconBtn(icon: Icons.chevron_right_rounded, onTap: () => Navigator.of(context).maybePop()),
-            if (Navigator.of(context).canPop()) const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('پێشبڕکێ', style: _ts(24, w: FontWeight.w700)),
-                  Text('وەرزی ${Season.number} · ڕۆژی ${s.day} لە ${Season.length}', style: _ts(12.5, c: VA.muted, w: FontWeight.w600)),
-                ],
-              ),
-            ),
-            _CoinPill(coins: st.coins),
-            const SizedBox(width: 8),
-            _IconBtn(icon: Icons.help_outline_rounded, onTap: () => _sheet(const _HowSheet())),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Align(
-          alignment: AlignmentDirectional.centerStart,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
-            decoration: BoxDecoration(color: VA.surf2, borderRadius: BorderRadius.circular(99), border: Border.all(color: VA.line)),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.groups_rounded, size: 15, color: VA.muted),
-              const SizedBox(width: 5),
-              Text(_fmt(s.total + (st.acc != null ? 1 : 0)), style: _ts(12, w: FontWeight.w700)),
-              const SizedBox(width: 4),
-              Text('بەشداربوو', style: _ts(11.5, c: VA.muted, w: FontWeight.w700)),
-            ]),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ---------------------------------------------------------------- join
-  Widget _joinView() {
-    final demo = CardData(
-      name: widget.host.profile.name.isNotEmpty ? widget.host.profile.name : 'ناوی تۆ',
-      city: 'شارەکەت',
-      ch: st.ch,
-      points: 0,
-      skin: 'auto',
-      title: 'وەرزشکاری نوێ',
-      stats: kStatNames.map((n) => <Object>[n, '??']).toList(),
-      rank: season.total + 1,
-      grad: [vk(0xFF0F9B8E), vk(0xFF1D4E89)],
-    );
-    return _Card(
-      child: Column(children: [
-        TiltCard(child: ArenaCardView(data: demo)),
-        const SizedBox(height: 16),
-        Text('کارتی وەرزشکاریی خۆت دروست بکە', textAlign: TextAlign.center, style: _ts(19, w: FontWeight.w700)),
-        const SizedBox(height: 6),
-        Text.rich(
-          TextSpan(children: [
-            const TextSpan(text: 'هەموو کارێکی تەندروست خاڵت پێدەدات: پیاسە، ڕاکردن، خەو، خۆراک، ئاو، ئارامی و زیاتر. هەموو ڕۆژێک '),
-            TextSpan(text: 'هێزێکی نهێنی', style: _ts(13, c: VA.violet, w: FontWeight.w700)),
-            const TextSpan(text: ' هەیە کە خاڵەکەی سێ هێندەیە، و کەس نازانێت کامەیە.'),
-          ]),
-          textAlign: TextAlign.center,
-          style: _ts(13, c: VA.muted, h: 1.6),
-        ),
-        const SizedBox(height: 14),
-        _Btn(label: 'بەخۆڕایی بەشدار بە', icon: Icons.rocket_launch_rounded, onTap: _openJoin),
-      ]),
-    );
-  }
-
-  Future<void> _openJoin() async {
-    final r = await _sheet<_JoinResult>(_JoinSheet(profile: widget.host.profile));
-    if (r == null || !mounted) return;
-    st.acc = ArenaAccount(name: r.name, city: r.city, age: r.age, phone: widget.host.profile.phone, joinDay: season.day - 6);
-    await st.save();
-    if (!mounted) return;
-    await Navigator.of(context).push(PageRouteBuilder<void>(
-      opaque: false,
-      barrierDismissible: false,
-      transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (_, __, ___) => _CardReveal(data: myCard(), league: leagueOf(myTotal)),
-      transitionsBuilder: (_, a, __, c) => FadeTransition(opacity: a, child: c),
-    ));
-    if (!mounted) return;
-    setState(() {
-      tab = 'card';
-      _cardDrop++;
-    });
-    _toast(context, 'کارتەکەت دانرا!', Icons.star_rounded);
-    if (st.ch.isEmpty) {
-      await Future<void>.delayed(const Duration(milliseconds: 900));
-      if (mounted) _openCharPicker();
-    }
-  }
-
-  // ---------------------------------------------------------------- today
-  Widget _todayView() {
-    final t = today, tot = myTotal, lg = leagueOf(tot), r = rankOf(tot, season), yr = rankOf(tot - t.total, season);
-    final g = st.guess[tk], rev = st.revealed.contains(tk);
-    final seg = (t.total / kDailyCap * 12).round();
-    final streak = activeDays;
-    final p = catById(t.power);
-    final yg = st.guess[yk];
-    final pct = 23 + _fnv(yk) % 20;
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      // ---- score ----
-      _Card(
-        glow: true,
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('خاڵی ئەمڕۆ', style: _ts(13, c: VA.muted, w: FontWeight.w600)),
-                _CountUp(
-                  value: t.total,
-                  style: _ts(68, w: FontWeight.w800, h: 1.05),
-                  shader: LinearGradient(colors: [kW, VA.cyanSoft], begin: Alignment.topCenter, end: Alignment.bottomCenter),
-                ),
-              ]),
-            ),
-            Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text('پلەکەت', style: _ts(13, c: VA.muted, w: FontWeight.w600)),
-              Text('#${_fmt(r)}', style: _ts(30, w: FontWeight.w800)),
-              if (yr > r)
-                Container(
-                  margin: const EdgeInsets.only(top: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                  decoration: BoxDecoration(color: _al(VA.mint, .14), borderRadius: BorderRadius.circular(99)),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.arrow_drop_up_rounded, color: VA.mint, size: 18),
-                    Text(_fmt(yr - r), style: _ts(14, c: VA.mint, w: FontWeight.w800)),
-                  ]),
-                ),
-            ]),
-          ]),
-          const SizedBox(height: 12),
-          Row(
-            children: List.generate(
-              12,
-              (i) => Expanded(
-                child: Container(
-                  height: 9,
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
-                  decoration: BoxDecoration(
-                    gradient: i < seg ? VA.prime : null,
-                    color: i < seg ? null : _al(kW, .08),
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Row(children: [
-            Expanded(child: Text('سنووری ڕۆژانە', style: _ts(12.5, c: VA.muted, w: FontWeight.w600))),
-            Text('${t.total} / $kDailyCap', style: _ts(12.5, c: VA.muted, w: FontWeight.w700)),
-          ]),
-          const SizedBox(height: 12),
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            childAspectRatio: 3.1,
-            children: [
-              _StatTile(label: 'کۆی وەرز', value: Text(_fmt(tot), style: _ts(19, w: FontWeight.w800))),
-              _StatTile(
-                  label: 'لیگ',
-                  value: Row(mainAxisSize: MainAxisSize.min, children: [
-                    LeagueEmblem(league: lg, size: 18),
-                    const SizedBox(width: 6),
-                    Text(lg.name, style: _ts(15, w: FontWeight.w800)),
-                  ])),
-              _StatTile(label: 'ئاست', value: Text('${levelOf(tot)}', style: _ts(19, w: FontWeight.w800))),
-              _StatTile(
-                  label: 'بەردەوامی',
-                  value: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.local_fire_department_rounded, color: vk(0xFFFF9466), size: 18),
-                    const SizedBox(width: 4),
-                    Text('$streak', style: _ts(19, w: FontWeight.w800)),
-                  ])),
-            ],
-          ),
-        ]),
-      ),
-
-      // ---- mystery power ----
-      _MysteryCard(
-        power: t.power,
-        guess: g,
-        revealed: rev,
-        onGuess: (id) {
-          if (st.guess[tk] != null || rev) return;
-          HapticFeedback.mediumImpact();
-          st.guess[tk] = id;
-          st.save();
-          _toast(context, 'پێشبینییەکەت تۆمار کرا', Icons.lock_rounded);
-        },
-        onDemoReveal: () {
-          st.revealed.add(tk);
-          if (st.guess[tk] == today.power) {
-            st.coins += 30;
-            st.bestPower += 1;
-            showConfetti(context);
-            _toast(context, 'ڕاستت پێکا! +50 خاڵ و 30 سکە', Icons.star_rounded);
-          } else {
-            _toast(context, 'هێزی ئەمڕۆ ${p.name} بوو', Icons.lightbulb_rounded);
-          }
-          st.save();
-        },
-      ),
-
-      // ---- yesterday ----
-      _Card(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Row(children: [
-            CatTile(cat: catById(yest.power), size: 52),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('ئاشکرا کرا · هێزی دوێنێ', style: _ts(12, c: VA.muted)),
-                Text('${catById(yest.power).name} ×3 · ${catById(yest.second).name} ×1.5', style: _ts(15, w: FontWeight.w800)),
-                Text('$pct%ی خەڵک ڕاستیان پێکا${yg != null && yg == yest.power ? ' · تۆش یەکێک بوویت' : ''}',
-                    style: _ts(12, c: VA.muted)),
-              ]),
-            ),
-          ]),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: (yest.rows.where((x) => x.pts > 0).toList()..sort((a, b) => b.pts.compareTo(a.pts)))
-                .map((x) => Container(
-                      padding: const EdgeInsetsDirectional.fromSTEB(4, 4, 10, 4),
-                      decoration: BoxDecoration(
-                          color: _al(x.cat.color, .12),
-                          borderRadius: BorderRadius.circular(99),
-                          border: Border.all(color: _al(x.cat.color, .3))),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        CatTile(cat: x.cat, size: 20),
-                        const SizedBox(width: 5),
-                        Text('${x.pts}', style: _ts(12.5, w: FontWeight.w800)),
-                        if (x.mul > 1) ...[
-                          const SizedBox(width: 4),
-                          Text('×${x.mul == 3 ? 3 : 1.5}', style: _ts(11, c: x.cat.color, w: FontWeight.w800)),
-                        ],
-                      ]),
-                    ))
-                .toList(),
-          ),
-          const SizedBox(height: 10),
-          Text('خاڵی دوێنێت: ${_fmt(yest.total)} · ڕاپۆرتی هێزی ڕۆژ هەموو بەیانییەک دێت.', style: _ts(12.5, c: VA.muted)),
-        ]),
-      ),
-
-      // ---- activities ----
-      _Card(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const _Title(icon: Icons.bar_chart_rounded, text: 'چالاکییەکانی ئەمڕۆ', note: 'AI پشتڕاستی کردوونەتەوە'),
-          const SizedBox(height: 10),
-          GridView.count(
-            crossAxisCount: 4,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            childAspectRatio: .58,
-            children: kArenaCats.map((c) {
-              final d = data[c.id]!, row = t.row(c.id);
-              return _ActivityTile(
-                cat: c,
-                value: d.v,
-                active: d.f > 0,
-                points: rev ? '+${row.pts}' : '؟؟',
-                onTap: () => _openCat(c),
-              );
-            }).toList(),
-          ),
-        ]),
-      ),
-
-      // ---- AI report ----
-      _Card(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const _Title(icon: Icons.verified_user_rounded, text: 'ڕاپۆرتی AI', note: 'یاریی پاک'),
-          const SizedBox(height: 8),
-          _AiRow(ok: true, title: '${data['walk']!.v} پشتڕاست کرایەوە', sub: 'لێدانی دڵ لەگەڵ ڕۆیشتن بەرز بووەوە'),
-          _AiRow(ok: true, title: 'خەوی ${data['sleep']!.v}', sub: 'لێدانی دڵ و جووڵەی شەو لەگەڵ یەک گونجان'),
-          _AiRow(ok: true, title: 'خۆراک: ${data['food']!.v}', sub: 'تۆمارکراو لە بەشی خواردن · وێنەی ڕاستەوخۆ'),
-          const _AiRow(ok: false, title: '1,180 هەنگاو ڕەتکرایەوە', sub: 'جووڵەی دەست بێ بەرزبوونەوەی لێدانی دڵ · 22:15'),
-          const _AiRow(ok: false, title: 'وێنەی ژەم ڕەتکرایەوە', sub: 'وێنەکە لە گەلەرییەوە بوو، نەک لە کامێرای ڕاستەوخۆ'),
-        ]),
-      ),
-
-      // ---- prizes ----
-      _Card(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const _Title(icon: Icons.card_giftcard_rounded, text: 'خەڵاتەکانی وەرز', note: 'بۆ ئەوانەی 25 ڕۆژ چالاک دەبن'),
-          const SizedBox(height: 12),
-          GestureDetector(onTap: _openPrizes, child: const _PrizeRow()),
-          const SizedBox(height: 12),
-          _Btn(
-              label: 'خاڵەکان چۆن کۆدەکرێنەوە و بۆچی کەس ناتوانێت فێڵ بکات؟',
-              icon: Icons.shield_rounded,
-              secondary: true,
-              onTap: () => _sheet(const _HowSheet())),
-        ]),
-      ),
-    ]);
-  }
-
-  void _openCat(ArenaCat c) {
-    _sheet(Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Center(child: CatTile(cat: c, size: 60)),
-      const SizedBox(height: 10),
-      Text(c.name, textAlign: TextAlign.center, style: _ts(18, w: FontWeight.w800)),
-      Text.rich(
-          TextSpan(children: [
-            const TextSpan(text: 'ئەمڕۆ: '),
-            TextSpan(text: data[c.id]!.v, style: _ts(13.5, w: FontWeight.w800)),
-          ]),
-          textAlign: TextAlign.center,
-          style: _ts(13.5, c: VA.muted)),
-      const SizedBox(height: 12),
-      _Card(
-        margin: EdgeInsets.zero,
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          _InfoLine(icon: Icons.shield_rounded, text: 'پشتڕاستکردنەوە: ${c.src}'),
-          _InfoLine(icon: Icons.track_changes_rounded, text: 'زۆرترین خاڵی ئاسایی: ${c.max}'),
-          _InfoLine(icon: Icons.favorite_rounded, text: 'تەنها ڕەفتاری تەندروست دەژمێردرێت؛ زیادەڕۆیی خاڵی زیاتر نادات.'),
-        ]),
-      ),
-      const SizedBox(height: 12),
-      Builder(
-        builder: (ctx) => _Btn(
-          label: 'بڕۆ بۆ بەشی ${c.name}',
-          icon: Icons.open_in_new_rounded,
-          onTap: () {
-            Navigator.of(ctx).pop();
-            widget.host.openSection(context, c.id);
-          },
-        ),
-      ),
-      const SizedBox(height: 8),
-      Builder(builder: (ctx) => _Btn(label: 'داخستن', secondary: true, onTap: () => Navigator.of(ctx).pop())),
-    ]));
-  }
-
-  void _openPrizes() {
-    _sheet(_PrizeSheet(
-      season: season,
-      joined: st.acc != null,
-      myPoints: myTotal,
-      activeDays: activeDays,
-      onHow: () => _sheet(const _HowSheet()),
-    ));
-  }
-
-  // ---------------------------------------------------------------- rank
-  Widget _rankView() {
-    final a = st.acc;
-    var list = [...players];
-    if (lb == 'city' && a != null) list = list.where((x) => x.city == a.city).toList();
-    if (lb == 'age' && a != null) list = list.where((x) => x.age == a.age).toList();
-    if (lb == 'friends') list = list.sublist(5, 9);
-    if (lb == 'guess') list.sort((x, y) => y.guess.compareTo(x.guess));
-    final gs = lb == 'guess';
-    int rr(ArenaPlayer x) => lb == 'all' ? x.rank : list.indexOf(x) + 1;
-    final pod = list.length >= 3;
-    final rest = list.sublist(pod ? 3 : 0);
-    final vis = rest.take(shown).toList();
-    final my = myTotal, rk = rankOf(my, season);
-    final gap = math.max(1, (ptsAt(math.max(1, rk - 1)) - my).round());
-    Widget val(ArenaPlayer x, {double size = 14}) => gs
-        ? Row(mainAxisSize: MainAxisSize.min, children: [
-            Text('${x.guess}', style: _ts(size, w: FontWeight.w800)),
-            const SizedBox(width: 3),
-            Icon(Icons.auto_awesome_rounded, size: size, color: VA.violet),
-          ])
-        : Text(_fmt(x.points), style: _ts(size, w: FontWeight.w800));
-
-    return _Card(
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        _Title(icon: Icons.emoji_events_rounded, text: 'تابلۆی پلەکان', note: '${_fmt(season.total + (a != null ? 1 : 0))} بەشداربوو'),
-        const SizedBox(height: 10),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: const [
-              ['all', 'گشتی', Icons.emoji_events_rounded],
-              ['city', 'شارەکەم', Icons.place_rounded],
-              ['age', 'تەمەنم', Icons.groups_rounded],
-              ['friends', 'هاوڕێکان', Icons.person_add_alt_1_rounded],
-              ['guess', 'پێشبینیکەران', Icons.auto_awesome_rounded],
-            ]
-                .map((t) => Padding(
-                      padding: const EdgeInsetsDirectional.only(end: 6),
-                      child: _Chip(
-                        label: t[1] as String,
-                        icon: t[2] as IconData,
-                        on: lb == t[0],
-                        onTap: () => setState(() {
-                          lb = t[0] as String;
-                          shown = 11;
-                        }),
-                      ),
-                    ))
-                .toList(),
-          ),
-        ),
-        if (a != null) ...[
-          const SizedBox(height: 10),
-          InkWell(
-            borderRadius: BorderRadius.circular(18),
-            onTap: () => _go('card'),
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [_al(VA.mint, .14), _al(VA.cyan, .06)]),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: _al(VA.mint, .35))),
-              child: Row(children: [
-                CharAvatar(ch: st.ch, name: a.name, size: 44, ring: leagueOf(my).accent),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('${a.name} (تۆ)', style: _ts(14.5, w: FontWeight.w800), overflow: TextOverflow.ellipsis),
-                    Text(rk > 1 ? 'تەنها ${_fmt(gap)} خاڵ ماوە بۆ پلەی #${_fmt(rk - 1)}' : 'تۆ یەکەمیت', style: _ts(12, c: VA.muted)),
-                  ]),
-                ),
-                Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                  Text('#${_fmt(rk)}', style: _ts(17, w: FontWeight.w800)),
-                  Text('${_fmt(my)} خاڵ', style: _ts(11, c: VA.muted)),
-                ]),
-              ]),
-            ),
-          ),
-        ],
-        if (pod) ...[
-          const SizedBox(height: 14),
-          Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-            Expanded(child: _Podium(p: list[1], place: 2, h: 62, color: VA.silver, size: 62, val: val(list[1]), onTap: _openPlayer)),
-            Expanded(child: _Podium(p: list[0], place: 1, h: 88, color: VA.gold, size: 78, val: val(list[0]), onTap: _openPlayer)),
-            Expanded(child: _Podium(p: list[2], place: 3, h: 48, color: VA.bronze, size: 62, val: val(list[2]), onTap: _openPlayer)),
-          ]),
-        ],
-        const SizedBox(height: 8),
-        ...vis.map((x) => _RankRow(
-              rank: '#${rr(x)}',
-              p: x,
-              value: val(x),
-              onTap: () => _openPlayer(x),
-            )),
-        if (rest.length > shown)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: _Btn(label: 'زیاتر پیشان بدە', icon: Icons.expand_more_rounded, secondary: true, onTap: () => setState(() => shown += 15)),
-          ),
-        if (a != null) ...[
-          Center(child: Padding(padding: const EdgeInsets.all(6), child: Text('• • •', style: _ts(14, c: VA.muted)))),
-          InkWell(
-            onTap: () => _go('card'),
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                  color: _al(VA.mint, .1), borderRadius: BorderRadius.circular(16), border: Border.all(color: _al(VA.mint, .3))),
-              child: Row(children: [
-                SizedBox(width: 50, child: Text(lb == 'all' ? '#${_fmt(rk)}' : 'تۆ', style: _ts(13, w: FontWeight.w800))),
-                CharAvatar(ch: st.ch, name: a.name, size: 40, ring: leagueOf(my).accent),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('${a.name} (تۆ)', style: _ts(14, w: FontWeight.w800), overflow: TextOverflow.ellipsis),
-                    Text('${a.city} · ${leagueOf(my).name}', style: _ts(11.5, c: VA.muted)),
-                  ]),
-                ),
-                gs
-                    ? Row(mainAxisSize: MainAxisSize.min, children: [
-                        Text('${st.bestPower}', style: _ts(14, w: FontWeight.w800)),
-                        Icon(Icons.auto_awesome_rounded, size: 14, color: VA.violet),
-                      ])
-                    : Text(_fmt(my), style: _ts(14, w: FontWeight.w800)),
-              ]),
-            ),
-          ),
-        ] else
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: _Btn(label: 'بەشداربوون', icon: Icons.rocket_launch_rounded, onTap: _openJoin),
-          ),
-        if (rest.isEmpty && !pod)
-          Padding(
-            padding: const EdgeInsets.only(top: 14),
-            child: Text('هێشتا کەس لێرە نییە.', textAlign: TextAlign.center, style: _ts(13, c: VA.muted)),
-          ),
-      ]),
-    );
-  }
-
-  void _openPlayer(ArenaPlayer x) {
-    var s = _fnv('${x.name}${x.rank}');
-    final stats = kStatNames.map((n) {
-      s = (s * 1103515245 + 12345) & 0xFFFFFFFF;
-      return <Object>[n, math.min(99, ratingOf(x.points) - 20 + (s % 21))];
-    }).toList();
-    final d = CardData(
-        name: x.name, city: x.city, ch: x.ch, points: x.points, skin: x.skin, title: x.bio, stats: stats, rank: x.rank, grad: x.grad);
-    _sheet(Builder(
-      builder: (ctx) => Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Center(child: TiltCard(child: ArenaCardView(data: d))),
-        const SizedBox(height: 14),
-        Row(children: [
-          Expanded(
-              child: _StatTile(
-                  label: 'بەردەوامی',
-                  value: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.local_fire_department_rounded, color: vk(0xFFFF9466), size: 17),
-                    Text('${x.streak}', style: _ts(17, w: FontWeight.w800)),
-                  ]))),
-          const SizedBox(width: 8),
-          Expanded(
-              child: _StatTile(
-                  label: 'پێشبینیی ڕاست',
-                  value: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.auto_awesome_rounded, color: VA.violet, size: 17),
-                    Text('${x.guess}', style: _ts(17, w: FontWeight.w800)),
-                  ]))),
-          const SizedBox(width: 8),
-          Expanded(child: _StatTile(label: 'دڵخواز', value: CatTile(cat: catById(x.fav), size: 26))),
-        ]),
-        const SizedBox(height: 10),
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(Icons.visibility_off_rounded, size: 15, color: VA.muted),
-          const SizedBox(width: 6),
-          Text('داتای تەندروستیی ئەم کەسە نهێنییە و دەرناکەوێت', style: _ts(12.5, c: VA.muted)),
-        ]),
-        const SizedBox(height: 12),
-        Row(children: [
-          Expanded(
-            child: _Btn(
-                label: 'هاندان',
-                icon: Icons.thumb_up_rounded,
-                onTap: () {
-                  Navigator.of(ctx).pop();
-                  _toast(context, 'هاندانت نارد بۆ ${x.name.split(' ').first}', Icons.thumb_up_rounded);
-                }),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _Btn(
-                label: 'هاوڕێ',
-                icon: Icons.person_add_alt_1_rounded,
-                secondary: true,
-                onTap: () {
-                  Navigator.of(ctx).pop();
-                  _toast(context, 'داواکاریی هاوڕێیەتی نێردرا', Icons.check_rounded);
-                }),
-          ),
-        ]),
-      ]),
-    ));
-  }
-
-  // ---------------------------------------------------------------- card
-  List<List<Object>> _badges() {
-    final t = myTotal;
-    return [
-      [Icons.rocket_launch_rounded, 'یەکەم ڕۆژ', st.acc != null, vk(0xFF3CF08A)],
-      [Icons.local_fire_department_rounded, '7 ڕۆژ', activeDays >= 7, vk(0xFFFF9466)],
-      [Icons.auto_awesome_rounded, 'پێشبینیکەر', st.bestPower >= 1, vk(0xFFA58CFF)],
-      [Icons.track_changes_rounded, '3 پێشبینیی ڕاست', st.bestPower >= 3, vk(0xFFFF6F86)],
-      [Icons.bedtime_rounded, 'خەوی ئاڵتوونی', (data['sleep']?.f ?? 0) >= 1, vk(0xFF9B7BFF)],
-      [Icons.restaurant_rounded, 'خۆراکی پاک', (data['food']?.f ?? 0) >= .95, vk(0xFFFFBE4D)],
-      [Icons.directions_run_rounded, '50 کیلۆمەتر', false, vk(0xFFFF9466)],
-      [Icons.emoji_events_rounded, 'لیگی ئاڵتوون', t >= 1500, vk(0xFFE6B13A)],
-      [Icons.water_drop_rounded, 'ڕووباری ئاو', (data['water']?.f ?? 0) >= 1, vk(0xFF2FB8F3)],
-      [Icons.spa_rounded, 'ئارامی', (data['calm']?.f ?? 0) >= 1, vk(0xFFA58CFF)],
-      [Icons.groups_rounded, '5 هاوڕێ', false, vk(0xFF3FD69A)],
-      [Icons.workspace_premium_rounded, 'VEX Legend', t >= 7500, vk(0xFFFF5577)],
-    ];
-  }
-
-  Widget _cardView() {
-    final a = st.acc!;
-    final d = myCard(), t = myTotal, lv = levelOf(t), xs = levelStart(lv), xe = levelStart(lv + 1);
-    final fill = ((t - xs) / (xe - xs) * 20).round();
-    final b = _badges();
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      _Card(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Center(child: _DropIn(key: ValueKey('drop$_cardDrop'), child: TiltCard(child: ArenaCardView(data: d)))),
-          const SizedBox(height: 14),
-          Row(children: [
-            Expanded(
-                child: _Btn(
-                    label: st.ch.isEmpty ? 'کارەکتەرەکەت هەڵبژێرە' : 'گۆڕینی کارەکتەر',
-                    icon: Icons.face_rounded,
-                    onTap: _openCharPicker)),
-            const SizedBox(width: 8),
-            _SqBtn(icon: Icons.ios_share_rounded, onTap: _openShare),
-            const SizedBox(width: 8),
-            _SqBtn(icon: Icons.edit_rounded, onTap: _openEdit),
-          ]),
-          const SizedBox(height: 14),
-          Row(children: [
-            Expanded(child: Text('ئاست $lv · XP', style: _ts(12.5, c: VA.muted, w: FontWeight.w700))),
-            Text('${_fmt(t)} / ${_fmt(xe)}', style: _ts(12.5, c: VA.muted, w: FontWeight.w700)),
-          ]),
-          const SizedBox(height: 6),
-          Row(
-            children: List.generate(
-              20,
-              (i) => Expanded(
-                child: Container(
-                  height: 8,
-                  margin: const EdgeInsets.symmetric(horizontal: 1.5),
-                  decoration: BoxDecoration(
-                      gradient: i < fill ? VA.prime : null,
-                      color: i < fill ? null : _al(kW, .08),
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-              ),
-            ),
-          ),
-        ]),
-      ),
-      // ---- skins ----
-      _Card(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const _Title(icon: Icons.star_rounded, text: 'دیزاینی کارت', note: 'بە سکە یان بە لیگ دەکرێتەوە'),
-          const SizedBox(height: 10),
-          GridView.count(
-            crossAxisCount: 4,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            childAspectRatio: .72,
-            children: kSkins.map((s) {
-              final ok = skinOwned(s);
-              final sc = skinColors(s.id, t);
-              return GestureDetector(
-                onTap: () {
-                  if (!ok) {
-                    if (s.league > 0) {
-                      _toast(context, 'دەبێت بگەیتە لیگی ${kLeagues[s.league].name}', Icons.lock_rounded);
-                      return;
-                    }
-                    if (st.coins < s.cost) {
-                      _toast(context, '${s.cost - st.coins} سکەی ترت پێویستە', Icons.lock_rounded);
-                      return;
-                    }
-                    st.coins -= s.cost;
-                    st.owned.add('skin:${s.id}');
-                    _toast(context, 'کڕدرا: ${s.name}', Icons.check_rounded);
-                  }
-                  HapticFeedback.selectionClick();
-                  st.skin = s.id;
-                  st.save();
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
-                    gradient: LinearGradient(colors: [sc.c1, sc.c2], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                    border: Border.all(color: st.skin == s.id ? sc.accent : _al(kW, .15), width: st.skin == s.id ? 2.5 : 1),
-                    boxShadow: st.skin == s.id ? [BoxShadow(color: _al(sc.accent, .45), blurRadius: 14)] : null,
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Stack(children: [
-                      Positioned.fill(child: CustomPaint(painter: _PatternPainter(sc.pattern))),
-                      if (!ok)
-                        Positioned(
-                          top: 6,
-                          left: 6,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(color: _al(Colors.black, .35), borderRadius: BorderRadius.circular(8)),
-                            child: Icon(Icons.lock_rounded, size: 12, color: kW),
-                          ),
-                        ),
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 3),
-                          color: _al(Colors.black, .28),
-                          child: Text(
-                            ok ? s.name : s.league > 0 ? '${s.name} · ${kLeagues[s.league].name}' : '${s.name} · ${s.cost}',
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            style: _ts(10, c: kW, w: FontWeight.w700, h: 1.3),
-                          ),
-                        ),
-                      ),
-                    ]),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 10),
-          Text('سکە لە خاڵی ڕۆژانە و پێشبینیی ڕاستەوە دێت. خەرجکردنی سکە خاڵی پێشبڕکێکەت کەم ناکاتەوە، بۆیە کەس ناتوانێت پلە بکڕێت.',
-              style: _ts(12.5, c: VA.muted, h: 1.6)),
-        ]),
-      ),
-      // ---- titles ----
-      _Card(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const _Title(icon: Icons.flag_rounded, text: 'نازناو', note: 'لەسەر کارتەکەت دەردەکەوێت'),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: kTitles.map((x) {
-              final ok = x.req == 0 || (x.req == 1 && st.bestPower >= 1) || (x.req == 5 && t >= 7500);
-              return _Chip(
-                label: x.name,
-                icon: ok ? x.icon : Icons.lock_rounded,
-                on: st.title == x.id,
-                dim: !ok,
-                onTap: () {
-                  if (!ok) {
-                    _toast(context, 'هێشتا نەکراوەتەوە', Icons.lock_rounded);
-                    return;
-                  }
-                  st.title = x.id;
-                  st.save();
-                },
-              );
-            }).toList(),
-          ),
-        ]),
-      ),
-      // ---- badges ----
-      _Card(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          _Title(icon: Icons.emoji_events_rounded, text: 'مێدالیاکان', note: '${b.where((x) => x[2] == true).length}/${b.length}'),
-          const SizedBox(height: 10),
-          GridView.count(
-            crossAxisCount: 4,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 8,
-            childAspectRatio: .9,
-            children: b.map((x) {
-              final on = x[2] == true;
-              return Opacity(
-                opacity: on ? 1 : .35,
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  _IconTile(icon: x[0] as IconData, color: x[3] as Color, size: 40),
-                  const SizedBox(height: 5),
-                  Text(x[1] as String, textAlign: TextAlign.center, maxLines: 2, style: _ts(10.5, w: FontWeight.w700, h: 1.25)),
-                ]),
-              );
-            }).toList(),
-          ),
-        ]),
-      ),
-      // ---- privacy ----
-      _Card(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          _Title(icon: Icons.visibility_rounded, text: 'تایبەتمەندی', note: 'کەسانی تر چی دەبینن'),
-          SizedBox(height: 8),
-          _InfoLine(icon: Icons.visibility_rounded, text: 'کارەکتەر، ناو، شار، کارت، لیگ، پلە و مێدالیا', color: VA.mint),
-          _InfoLine(
-              icon: Icons.visibility_off_rounded,
-              text: 'هیچ داتایەکی تەندروستی (لێدانی دڵ، کێش، خەو، ئۆکسجین) بۆ کەس دەرناکەوێت',
-              color: VA.coral),
-        ]),
-      ),
-      // ---- account ----
-      _Card(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const _Title(icon: Icons.face_rounded, text: 'ئەکاونت'),
-          const SizedBox(height: 10),
-          Row(children: [
-            CharAvatar(ch: st.ch, name: a.name, size: 46, ring: leagueOf(t).accent),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(a.name, style: _ts(15, w: FontWeight.w800)),
-                Text(maskPhone(a.phone), textDirection: TextDirection.ltr, style: _ts(12, c: VA.muted)),
-              ]),
-            ),
-          ]),
-          const SizedBox(height: 14),
-          _Btn(label: 'چوونە دەرەوە', icon: Icons.logout_rounded, danger: true, onTap: _openLogout),
-        ]),
-      ),
-    ]);
-  }
-
-  Future<void> _openCharPicker() async {
-    final id = await _sheet<String>(_CharPickerSheet(current: st.ch, preview: (ch) => myCard().copyWith(ch: ch)));
-    if (id == null || !mounted) return;
-    await st.setCharacter(id);
-    if (!mounted) return;
-    setState(() => _cardDrop++);
-    showConfetti(context);
-    _toast(context, 'کارەکتەرەکەت دانرا', Icons.check_rounded);
-  }
-
-  void _openShare() {
-    const txt = 'ئەزانی هێزی نهێنیی ئەمڕۆ چییە؟ ئەپی VEX دابەزێنە';
-    _sheet(Builder(
-      builder: (ctx) => Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text('کارتەکەت بڵاو بکەرەوە', textAlign: TextAlign.center, style: _ts(18, w: FontWeight.w800)),
-        const SizedBox(height: 10),
-        Center(child: TiltCard(child: ArenaCardView(data: myCard()))),
-        const SizedBox(height: 10),
-        Text('کارتەکە وەک وێنە دەچێتە TikTok، Instagram و Snapchat، لەگەڵ ئەم نووسینە: «$txt»',
-            textAlign: TextAlign.center, style: _ts(12.5, c: VA.muted, h: 1.6)),
-        const SizedBox(height: 12),
-        _Btn(
-            label: 'کۆپیکردنی نووسین',
-            icon: Icons.copy_rounded,
-            onTap: () async {
-              await Clipboard.setData(const ClipboardData(text: txt));
-              if (ctx.mounted) Navigator.of(ctx).pop();
-              if (mounted) _toast(context, 'نووسینەکە کۆپی کرا', Icons.check_rounded);
-            }),
-        const SizedBox(height: 8),
-        _Btn(label: 'داخستن', secondary: true, onTap: () => Navigator.of(ctx).pop()),
-      ]),
-    ));
-  }
-
-  Future<void> _openEdit() async {
-    final r = await _sheet<List<String>>(_EditSheet(name: st.acc!.name, bio: st.bio));
-    if (r == null) return;
-    if (r[0].trim().length >= 2) st.acc!.name = r[0].trim().characters.take(24).toString();
-    st.bio = r[1].trim().characters.take(60).toString();
-    await st.save();
-    if (mounted) _toast(context, 'پاشەکەوت کرا', Icons.check_rounded);
-  }
-
-  Future<void> _openLogout() async {
-    final ok = await _sheet<bool>(Builder(
-      builder: (ctx) => Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Center(child: _IconTile(icon: Icons.logout_rounded, color: VA.coral, size: 60)),
-        const SizedBox(height: 10),
-        Text('دڵنیایت لەوەی دەتەوێت بچیتە دەرەوە؟', textAlign: TextAlign.center, style: _ts(17, w: FontWeight.w800)),
-        const SizedBox(height: 6),
-        Text('کارت، سکە و دیزاینەکانت لەم ئامێرە دەسڕێنەوە. خاڵەکانت لە سێرڤەر دەمێننەوە و بە ژمارەی مۆبایلەکەت دەگەڕێنەوە.',
-            textAlign: TextAlign.center, style: _ts(13, c: VA.muted, h: 1.6)),
-        const SizedBox(height: 14),
-        Row(children: [
-          Expanded(child: _Btn(label: 'بەڵێ، دەچمە دەرەوە', danger: true, onTap: () => Navigator.of(ctx).pop(true))),
-          const SizedBox(width: 8),
-          Expanded(child: _Btn(label: 'نەخێر', secondary: true, onTap: () => Navigator.of(ctx).pop(false))),
-        ]),
-      ]),
-    ));
-    if (ok != true) return;
-    await st.logout();
-    if (!mounted) return;
-    setState(() {
-      tab = 'today';
-      lb = 'all';
-      shown = 11;
-    });
-    _toast(context, 'چوویتە دەرەوە', Icons.logout_rounded);
-  }
-
-  Future<T?> _sheet<T>(Widget child) => showArenaSheet<T>(context, child);
-}
-
-// =============================================================================
-// 7. کارتی یاریزان + جووڵەی 3D
-// =============================================================================
-
-class CardData {
-  final String name, city, ch, skin, title;
-  final int points, rank;
-  final List<List<Object>> stats;
-  final List<Color> grad;
-  const CardData({
-    required this.name,
+class APlayer {
+  APlayer({
+    required this.id,
+    required this.n,
     required this.city,
+    required this.age,
     required this.ch,
-    required this.points,
+    required this.dv,
+    required this.p,
+    required this.wp,
+    required this.st,
+    required this.gp,
     required this.skin,
     required this.title,
     required this.stats,
-    required this.rank,
-    required this.grad,
+    required this.pre,
+    required this.at,
+    this.me = false,
   });
-  CardData copyWith({String? ch}) => CardData(
-      name: name, city: city, ch: ch ?? this.ch, points: points, skin: skin, title: title, stats: stats, rank: rank, grad: grad);
+  final String id, n, city, age, ch, skin, title;
+  final Div dv;
+  final int p, wp, st, gp, at;
+  final List<int> stats;
+  final bool pre, me;
+  int r = 0;
 }
 
-class ArenaCardView extends StatefulWidget {
-  final CardData data;
-  final double width;
-  const ArenaCardView({super.key, required this.data, this.width = 236});
-  @override
-  State<ArenaCardView> createState() => _ArenaCardViewState();
+class WeekInfo {
+  const WeekInfo(this.i, this.k, this.left, this.start);
+  final int i, left;
+  final String k;
+  final DateTime start;
 }
 
-class _ArenaCardViewState extends State<ArenaCardView> with SingleTickerProviderStateMixin {
-  late final AnimationController _sheen = AnimationController(vsync: this, duration: const Duration(seconds: 3))..repeat();
+WeekInfo weekInfo(DateTime now) {
+  final i = (now.weekday % 7 + 1) % 7; // شەممە = 0
+  final st = _dayStart(now).subtract(Duration(days: i));
+  return WeekInfo(i, dayKey(st), 6 - i, st);
+}
 
-  @override
-  void dispose() {
-    _sheen.dispose();
-    super.dispose();
+int weekReward(int r) => r == 1 ? 50 : r == 2 ? 30 : r == 3 ? 20 : r <= 10 ? 15 : 0;
+
+class Mission {
+  const Mission(this.cat, this.target, this.v, this.key);
+  final ArenaCat cat;
+  final int target, v;
+  final String key;
+  bool get ok => v >= target;
+}
+
+const List<List<Object>> _kMissions = [
+  ['walk', 30, 'ms_walk'], ['sleep', 40, 'ms_sleep'], ['water', 15, 'ms_water'], ['calm', 25, 'ms_calm'],
+  ['o2', 15, 'ms_o2'], ['rec', 25, 'ms_rec'], ['food', 10, 'ms_food'], ['heart', 20, 'ms_heart'],
+  ['gym', 20, 'ms_gym'], ['run', 20, 'ms_run'],
+];
+
+// 10 بەشداربووی نموونە (7 لە لیگی Band، 3 لە لیگی مۆبایل)
+const List<List<Object>> _kSample = [
+  ['s01', 'ئاراس کەریم', 'هەولێر', 'a', '21', 'band', 548, 'holo'],
+  ['s02', 'سارا ئەحمەد', 'سلێمانی', 'a', '09', 'band', 521, 'royal'],
+  ['s03', 'هێمن ڕەشید', 'دهۆک', 'm', '27', 'band', 497, 'zagros'],
+  ['s04', 'ڤیان عەلی', 'کەرکووک', 'a', '11', 'band', 462, 'kurd'],
+  ['s05', 'دانا سەعید', 'هەڵەبجە', 'a', '17', 'band', 430, 'neon'],
+  ['s06', 'ڕێبین حەسەن', 'زاخۆ', 'y', '25', 'band', 388, 'night'],
+  ['s07', 'ژیلا مەحموود', 'کۆیە', 'm', '10', 'band', 341, 'marble'],
+  ['s08', 'ئازاد قادر', 'سۆران', 'a', '26', 'phone', 164, 'carbon'],
+  ['s09', 'لانە جەمال', 'ڕانیە', 'a', '06', 'phone', 141, 'auto'],
+  ['s10', 'کارزان عومەر', 'چەمچەماڵ', 'm', '12', 'phone', 118, 'auto'],
+];
+
+class ArenaEvent {
+  const ArenaEvent(this.text, this.icon, {this.confetti = false});
+  final String text;
+  final String icon;
+  final bool confetti;
+}
+
+class ArenaCtl extends ChangeNotifier {
+  ArenaCtl(this.host, this.store);
+  final ArenaHost host;
+  final ArenaStore store;
+
+  SeasonNow S = seasonNow();
+  DateTime now = DateTime.now();
+  Map<String, CatValue> data = {};
+  DayPoints today = dayPoints(const {}, '', Div.band);
+  DateTime lastSync = DateTime.now();
+  final List<ArenaEvent> events = [];
+  bool _dirty = false;
+
+  String get tk => dayKey(now);
+  String get yk => dayKey(now.subtract(const Duration(days: 1)));
+  Div get div => store.acc != null ? divOf(store.acc!.dv) : (host.hasBand ? Div.band : Div.phone);
+  bool get live => S.live;
+  bool get regd => store.acc != null && store.acc!.sn == S.n;
+  bool get founder => regd && store.acc!.pre;
+  int get active => activeMin(div);
+
+  void refresh() {
+    now = DateTime.now();
+    S = seasonNow(now);
+    _divCheck();
+    final inp = host.today();
+    _water(inp);
+    data = verifyDay(inp, div, host.bandConnected, store.wl!, now);
+    today = dayPoints({for (final e in data.entries) e.key: e.value.st == 'ok' ? e.value.f : 0.0}, tk, div);
+    _seasonStart();
+    _reveal();
+    _settle();
+    _track();
+    lastSync = now;
+    if (_dirty) {
+      _dirty = false;
+      store.save();
+    }
+    notifyListeners();
   }
 
+  void _divCheck() {
+    final a = store.acc;
+    if (a != null && a.dv == 'phone' && host.hasBand) {
+      a.dv = 'band';
+      _dirty = true;
+      events.add(ArenaEvent(tr('ev_band'), 'shield', confetti: true));
+    }
+  }
+
+  void _water(ArenaDayInputs d) {
+    final dk = tk;
+    var o = store.wl;
+    if (o == null || o.k != dk) {
+      o = WaterLog(dk, null, 0, []);
+      _dirty = true;
+    }
+    final n = d.waterGlasses;
+    if (o.n0 == null) {
+      o.n0 = n;
+      o.last = n;
+      _dirty = true;
+    } else if (n > o.last) {
+      o.e.add([now.millisecondsSinceEpoch, n - o.last]);
+      o.last = n;
+      _dirty = true;
+    } else if (n < o.last) {
+      var r = o.last - n;
+      while (r > 0 && o.e.isNotEmpty) {
+        final x = o.e.last;
+        final k = math.min(r, x[1]);
+        x[1] -= k;
+        r -= k;
+        if (x[1] == 0) o.e.removeLast();
+      }
+      if (r > 0) o.n0 = math.max(0, (o.n0 ?? 0) - r);
+      o.last = n;
+      _dirty = true;
+    }
+    store.wl = o;
+  }
+
+  void _seasonStart() {
+    if (!live || store.acc == null || store.acc!.sn != S.n) return;
+    if (store.sn != S.n) {
+      store.sn = S.n;
+      store.season = 0;
+      store.exc = <String>[];
+      _dirty = true;
+    }
+  }
+
+  void _reveal() {
+    for (final k in store.guess.keys.toList()) {
+      if (store.rev.contains(k) || k == tk) continue;
+      final p = k.split('-').map(int.tryParse).toList();
+      if (p.length != 3 || p.contains(null)) continue;
+      final at = DateTime(p[0]!, p[1]!, p[2]! + 1, 6);
+      if (now.isBefore(at)) continue;
+      store.rev.add(k);
+      _dirty = true;
+      if (store.guess[k] == powerOf(k) && store.clockOk) {
+        store.bestPower++;
+        store.coins += 10;
+        store.log('guess', 10, k);
+        if (live && regd && store.sn == S.n) store.season += 50;
+        events.add(ArenaEvent(tr('ev_guess'), 'crystal', confetti: true));
+      }
+    }
+  }
+
+  void _settle() {
+    final st = store;
+    if (!st.eco) {
+      st.eco = true;
+      st.cd = null;
+      st.streak = 0;
+      _dirty = true;
+    }
+    final W = weekInfo(now);
+    if (st.frzW != W.k) {
+      final w = st.wkr;
+      if (st.frzW.isNotEmpty && w != null && w['k'] == st.frzW && (w['n'] as num? ?? 0) >= 5 && st.clockOk) {
+        final c = weekReward((w['r'] as num? ?? 99).toInt());
+        if (c > 0) {
+          st.coins += c;
+          st.log('week', c, st.frzW);
+        }
+      }
+      st.frz = math.min(2, st.frz + 1);
+      st.frzW = W.k;
+      _dirty = true;
+    }
+    final cd = st.cd;
+    if (cd != null && cd['k'] != tk) {
+      final rest = ((cd['c'] as num?) ?? 0).toInt() - ((cd['paid'] as num?) ?? 0).toInt();
+      if (rest > 0) {
+        st.coins += rest;
+        _dayLog(((cd['c'] as num?) ?? 0).toInt(), '${cd['k']}');
+      }
+      final pts = ((cd['pts'] as num?) ?? 0).toInt();
+      if (pts > 0 && cd['sn'] == st.sn) st.season += pts;
+      if (cd['act'] == true) {
+        st.streak++;
+        if (st.streak % 7 == 0) {
+          st.coins += 15;
+          st.log('streak', 15, '${cd['k']}');
+        }
+      } else {
+        if (st.exc.contains('${cd['k']}')) {
+        } else if (st.frz > 0) {
+          st.frz--;
+          st.log('freeze', 0, '${cd['k']}');
+        } else {
+          st.streak = 0;
+        }
+        st.cbP = true;
+      }
+      st.cd = null;
+      _dirty = true;
+    }
+  }
+
+  void _dayLog(int c, String k) {
+    for (final e in store.clog) {
+      if (e.t == 'day' && e.k == k) {
+        e.c = c;
+        e.at = DateTime.now().millisecondsSinceEpoch;
+        return;
+      }
+    }
+    store.log('day', c, k);
+  }
+
+  int get coinsToday => math.min(coinMax(div), today.tot ~/ 25);
+
+  void _track() {
+    final st = store;
+    if (st.acc == null) return;
+    if (st.cbP && today.tot >= active) {
+      st.cbP = false;
+      st.cb = tk;
+      _dirty = true;
+      events.add(ArenaEvent(tr('ev_back'), 'star'));
+    }
+    final c = coinsToday, a = today.tot >= active;
+    final pts = live && regd ? myTotal - seasonPts : 0;
+    final cd = st.cd;
+    final paid = cd != null && cd['k'] == tk ? ((cd['paid'] as num?) ?? 0).toInt() : 0;
+    var pay = paid;
+    if (c > paid && st.clockOk) {
+      st.coins += c - paid;
+      _dayLog(c, tk);
+      pay = c;
+      events.add(ArenaEvent('+${c - paid}', 'coin'));
+    }
+    final nc = {'k': tk, 'c': c, 'act': a, 'pts': pts, 'sn': pts > 0 ? S.n : 0, 'paid': math.max(pay, paid)};
+    if (cd == null || jsonEncode(cd) != jsonEncode(nc)) {
+      st.cd = nc;
+      _dirty = true;
+    }
+    final f = <String, double>{for (final r in today.rows) r.cat.id: r.cap > 0 ? (r.base / r.cap * 100).round() / 100 : 0.0};
+    final old = st.days[tk];
+    if (old == null || old.t != today.tot || old.a != a || jsonEncode(old.f) != jsonEncode(f)) {
+      st.days[tk] = DayRec(today.tot, a, f);
+      if (st.days.length > 45) {
+        final ks = st.days.keys.toList()..sort((x, y) => _kd(x).compareTo(_kd(y)));
+        for (final k in ks.take(st.days.length - 45)) {
+          st.days.remove(k);
+        }
+      }
+      _dirty = true;
+    }
+    if (a && st.ad != tk && today.tot < goal) {
+      st.ad = tk;
+      _dirty = true;
+      events.add(ArenaEvent(tr('ev_counted'), 'check'));
+    }
+    if (today.tot >= goal && st.gd != tk) {
+      st.gd = tk;
+      st.ad = tk;
+      _dirty = true;
+      events.add(ArenaEvent(tr('ev_goal'), 'star', confetti: true));
+    }
+  }
+
+  DateTime _kd(String k) {
+    final p = k.split('-').map((e) => int.tryParse(e) ?? 1).toList();
+    return p.length == 3 ? DateTime(p[0], p[1], p[2]) : DateTime(2000);
+  }
+
+  // ---- خاڵ ----
+  int get seasonPts => live && regd && store.sn == S.n ? store.season : 0;
+  int get myTotal => !live ? 0 : seasonPts + today.tot + (store.cb == tk ? 50 : 0);
+
+  int get activeDays {
+    if (!live || store.acc == null) return 0;
+    final joined = DateTime.fromMillisecondsSinceEpoch(store.acc!.at);
+    var n = 0;
+    store.days.forEach((k, r) {
+      final d = _kd(k).add(const Duration(hours: 23, minutes: 59));
+      if (r.a && !d.isBefore(S.start) && !d.isBefore(_dayStart(joined)) && d.isBefore(S.end.add(const Duration(days: 1)))) n++;
+    });
+    return n;
+  }
+
+  int get joinDay => store.acc == null ? S.day : (store.acc!.sn == S.n ? store.acc!.day : S.day);
+  int get daysSinceJoin => math.max<int>(1, S.day - math.max<int>(1, joinDay) + 1);
+  int get avgDaily => math.max((active * 0.8).round(), (seasonPts / math.max<int>(1, daysSinceJoin - 1)).round());
+  int get goal => math.min(maxDay(div) ~/ 2, math.max(active, ((avgDaily * 1.1) / 10).round() * 10));
+
+  int weekPts() {
+    final W = weekInfo(now);
+    var t = 0;
+    for (var j = 0; j < W.i; j++) {
+      final r = store.days[dayKey(W.start.add(Duration(days: j)))];
+      if (r != null) t += r.t;
+    }
+    return t + today.tot + (store.cb == tk ? 50 : 0);
+  }
+
+  List<int> myStats() {
+    const ids = ['walk', 'run', 'sleep', 'food', 'heart', 'calm'];
+    final ks = store.days.keys.where((k) => k != tk).toList()..sort((a, b) => _kd(a).compareTo(_kd(b)));
+    final last = ks.length > 6 ? ks.sublist(ks.length - 6) : ks;
+    return [
+      for (final id in ids)
+        () {
+          final v = [for (final k in last) store.days[k]!.f[id] ?? 0.0];
+          final d = data[id];
+          v.add(d != null && d.st == 'ok' ? d.f : 0.0);
+          return math.min(99, (45 + v.fold<double>(0, (a, b) => a + b) / v.length * 54).round());
+        }()
+    ];
+  }
+
+  String get myTitle => tr('ti_${store.title}');
+
+  // ---- بەشداربووان ----
+  List<APlayer> players() {
+    final out = <APlayer>[];
+    final W = weekInfo(now);
+    if (live) {
+      for (var i = 0; i < _kSample.length; i++) {
+        final x = _kSample[i];
+        final R = _Seeded('smp${x[0]}$tk');
+        final base = x[6] as int;
+        final f = 0.85 + R.next() * 0.15;
+        out.add(APlayer(
+          id: x[0] as String,
+          n: x[1] as String,
+          city: x[2] as String,
+          age: x[3] as String,
+          ch: x[4] as String,
+          dv: divOf(x[5] as String),
+          p: (base * S.day * (S.day == 1 ? 1 : f)).round(),
+          wp: (base * math.min(S.day, W.i + 1) * (S.day == 1 ? 1 : f)).round(),
+          st: math.min(S.day, 1 + (R.next() * 3).floor()),
+          gp: (R.next() * 2).floor(),
+          skin: x[7] as String,
+          title: ['t0', 't1', 't2'][i % 3],
+          stats: [for (final v in [55, 45, 60, 50, 58, 52]) math.min(99, v + (R.next() * 20).floor())],
+          pre: i < 6,
+          at: S.start.millisecondsSinceEpoch - (10 - i) * 3600000,
+        ));
+      }
+    }
+    final a = store.acc;
+    if (regd && a != null) {
+      out.add(APlayer(
+        id: 'me',
+        n: a.name,
+        city: a.city,
+        age: a.age,
+        ch: store.ch,
+        dv: div,
+        p: myTotal,
+        wp: weekPts(),
+        st: store.streak,
+        gp: store.bestPower,
+        skin: store.skin,
+        title: store.title,
+        stats: myStats(),
+        pre: a.pre,
+        at: a.at,
+        me: true,
+      ));
+    }
+    out.sort((x, y) => y.p != x.p ? y.p.compareTo(x.p) : x.at.compareTo(y.at));
+    final n = {Div.band: 0, Div.phone: 0};
+    for (final p in out) {
+      n[p.dv] = n[p.dv]! + 1;
+      p.r = n[p.dv]!;
+    }
+    return out;
+  }
+
+  List<APlayer> divPlayers([Div? d]) => players().where((x) => x.dv == (d ?? div)).toList();
+  int rankOf(int p) => 1 + divPlayers().where((x) => !x.me && x.p > p).length;
+  int ptsAt(int r, Div d) {
+    final l = divPlayers(d);
+    return r - 1 < l.length ? l[r - 1].p : 0;
+  }
+
+  List<APlayer> weekGroup() {
+    final l = divPlayers();
+    final rows = [
+      for (final x in l)
+        APlayer(
+            id: x.id, n: x.n, city: x.city, age: x.age, ch: x.ch, dv: x.dv, p: x.me ? weekPts() : x.wp, wp: x.wp,
+            st: x.st, gp: x.gp, skin: x.skin, title: x.title, stats: x.stats, pre: x.pre, at: x.at, me: x.me)
+    ]..sort((x, y) => y.p != x.p ? y.p.compareTo(x.p) : (x.me ? -1 : 1));
+    final g = rows.take(30).toList();
+    for (var i = 0; i < g.length; i++) {
+      g[i].r = i + 1;
+    }
+    if (live && regd) {
+      final me = g.where((x) => x.me).toList();
+      if (me.isNotEmpty) {
+        final w = {'k': weekInfo(now).k, 'r': me.first.r, 'n': g.length};
+        if (jsonEncode(store.wkr) != jsonEncode(w)) {
+          store.wkr = w;
+          _dirty = true;
+        }
+      }
+    }
+    return g;
+  }
+
+  List<Mission> missions() {
+    final R = _Seeded('ms$tk');
+    final pool = _kMissions.where((m) => capOf(catById(m[0] as String), div) >= (m[1] as int)).toList();
+    final out = <Mission>[];
+    while (out.length < 3 && pool.isNotEmpty) {
+      final m = pool.removeAt((R.next() * pool.length).floor() % pool.length);
+      final row = today.rows.firstWhere((r) => r.cat.id == m[0]);
+      out.add(Mission(row.cat, m[1] as int, math.min(m[1] as int, row.base), m[2] as String));
+    }
+    return out;
+  }
+
+  int get chestAmount => 5 + _fnv('chest$tk${store.acc?.name ?? ''}') % 21;
+  bool get chestOpen => store.chest != null && store.chest!['k'] == tk;
+
+  List<PointRow> bestMoves() {
+    final l = today.rows.where((r) => r.cap > 0 && r.cap - r.base > 0 && !const ['sleep', 'o2', 'rec'].contains(r.cat.id)).toList()
+      ..sort((a, b) => (b.cap - b.base).compareTo(a.cap - a.base));
+    return l.take(3).toList();
+  }
+
+  /// قەڵغانی هەفتە: 'ok' 'x' 'now' 'fut'
+  List<String> shield() {
+    final W = weekInfo(now);
+    final joined = store.acc?.at ?? now.millisecondsSinceEpoch;
+    return [
+      for (var j = 0; j < 7; j++)
+        () {
+          final d = W.start.add(Duration(days: j));
+          if (j < W.i) {
+            if (d.add(const Duration(hours: 23, minutes: 59)).millisecondsSinceEpoch < joined) return 'fut';
+            final r = store.days[dayKey(d)];
+            return (r != null && r.a) || store.exc.contains(dayKey(d)) ? 'ok' : 'x';
+          }
+          return j == W.i ? (today.tot >= goal ? 'ok' : 'now') : 'fut';
+        }()
+    ];
+  }
+
+  // ---- کارەکان ----
+  void register({required String name, required String phone, required String city, required String age, required String ch}) {
+    final st = store;
+    st.acc = ArenaAccount(
+      name: name,
+      phone: phone,
+      city: city,
+      age: age,
+      sn: S.n,
+      day: live ? S.day : 0,
+      pre: !live,
+      at: DateTime.now().millisecondsSinceEpoch,
+      dv: host.hasBand ? 'band' : 'phone',
+    );
+    if (ch.isNotEmpty) {
+      st.ch = ch;
+      st.chAt = DateTime.now().millisecondsSinceEpoch;
+    }
+    st.coins += 20;
+    st.log('welcome', 20, tk);
+    if (live) {
+      st.sn = S.n;
+      st.season = 0;
+    } else {
+      st.coins += 30;
+      st.log('founder', 30, tk);
+    }
+    _dirty = true;
+    refresh();
+  }
+
+  void logout() {
+    store.reset();
+    store.eco = false;
+    _dirty = true;
+    refresh();
+  }
+
+  void guessPower(String id) {
+    if (store.guess[tk] != null) return;
+    store.guess[tk] = id;
+    _dirty = true;
+    refresh();
+  }
+
+  bool openChest() {
+    if (chestOpen || missions().where((m) => m.ok).length < 3) return false;
+    final c = chestAmount;
+    store.chest = {'k': tk, 'c': c};
+    store.coins += c;
+    store.log('chest', c, tk);
+    _dirty = true;
+    refresh();
+    return true;
+  }
+
+  bool buyFreeze() {
+    if (store.frz >= 2 || store.coins < 30) return false;
+    store.coins -= 30;
+    store.frz++;
+    store.log('frzbuy', -30, tk);
+    _dirty = true;
+    refresh();
+    return true;
+  }
+
+  bool useExcuse() {
+    if (store.exc.length >= 3 || store.exc.contains(tk) || today.tot >= active) return false;
+    store.exc.add(tk);
+    _dirty = true;
+    refresh();
+    return true;
+  }
+
+  /// گۆڕینی کارەکتەر: یەکەم جار بەخۆڕایی · دواتر یەکجار لە 30 ڕۆژدا · لە کاتی وەرزدا داخراوە
+  String charState() {
+    if (store.ch.isEmpty) return 'first';
+    if (live && regd) return 'live';
+    final left = store.chAt + kCharLock.inMilliseconds - now.millisecondsSinceEpoch;
+    return left > 0 ? 'wait' : 'ok';
+  }
+
+  int get charDaysLeft => math.max(0, ((store.chAt + kCharLock.inMilliseconds - now.millisecondsSinceEpoch) / 86400000).ceil());
+  bool charOwned(String id) => charCost(id) == 0 || store.chOwn.contains(id);
+
+  bool buyChar(String id) {
+    final c = charCost(id);
+    if (charOwned(id) || store.coins < c) return false;
+    store.coins -= c;
+    store.chOwn.add(id);
+    store.log('char', -c, tk);
+    _dirty = true;
+    refresh();
+    return true;
+  }
+
+  bool setChar(String id) {
+    final s = charState();
+    if ((s != 'first' && s != 'ok') || !charOwned(id)) return false;
+    store.ch = id;
+    store.chAt = DateTime.now().millisecondsSinceEpoch;
+    _dirty = true;
+    refresh();
+    return true;
+  }
+
+  bool skinOwned(CardSkin s) {
+    if (s.lg > 0) return leagueIndex(leagueOf(myTotal, div)) >= s.lg;
+    return s.cost == 0 || store.owned.contains('skin:${s.id}');
+  }
+
+  bool buySkin(CardSkin s) {
+    if (skinOwned(s) || s.lg > 0 || store.coins < s.cost) return false;
+    store.coins -= s.cost;
+    store.owned.add('skin:${s.id}');
+    store.log('buy', -s.cost, tk);
+    store.skin = s.id;
+    _dirty = true;
+    refresh();
+    return true;
+  }
+
+  void useSkin(CardSkin s) {
+    if (!skinOwned(s)) return;
+    store.skin = s.id;
+    _dirty = true;
+    refresh();
+  }
+
+  bool titleOk(String id) {
+    final req = kTitles.firstWhere((t) => t[0] == id, orElse: () => kTitles.first)[1] as int;
+    return req == 0 || (req == 1 && store.bestPower >= 1) || (req == 5 && myTotal >= 7500);
+  }
+
+  /// مێدالیاکان: [ئایکۆن، کلیل، کراوە؟، ڕەنگ]
+  List<List<Object>> badges() {
+    final t = myTotal;
+    return [
+      ['rocket', 'bd_first', store.acc != null, const Color(0xFF3CF08A)],
+      ['fire', 'bd_7', live && activeDays >= 7, const Color(0xFFFF9466)],
+      ['crystal', 'bd_guess', store.bestPower >= 1, const Color(0xFFA58CFF)],
+      ['target', 'bd_guess3', store.bestPower >= 3, const Color(0xFFFF6F86)],
+      ['sleep', 'bd_sleep', false, const Color(0xFF9B7BFF)],
+      ['food', 'bd_food', false, const Color(0xFFFFBE4D)],
+      ['run', 'bd_50km', false, const Color(0xFFFF9466)],
+      ['trophy', 'bd_gold', t >= 1500, const Color(0xFFE6B13A)],
+      ['water', 'bd_water', false, const Color(0xFF2FB8F3)],
+      ['calm', 'bd_calm', false, const Color(0xFFA58CFF)],
+      ['users', 'bd_5f', false, const Color(0xFF3FD69A)],
+      ['crown', 'bd_legend', t >= 7500, const Color(0xFFFF5577)],
+    ];
+  }
+
+  void setTitle(String id) {
+    if (!titleOk(id)) return;
+    store.title = id;
+    _dirty = true;
+    refresh();
+  }
+
+  void editProfile(String name, String bio) {
+    final a = store.acc;
+    if (a == null) return;
+    if (name.trim().length >= 2) a.name = name.trim().length > 24 ? name.trim().substring(0, 24) : name.trim();
+    store.bio = bio.trim().length > 60 ? bio.trim().substring(0, 60) : bio.trim();
+    _dirty = true;
+    refresh();
+  }
+
+  void appeal(String id) {
+    store.apl.add('$id$tk');
+    _dirty = true;
+    refresh();
+  }
+}
+
+// =============================================================================
+// 8. ناوی لاتینی (بۆ English و Türkçe)
+// =============================================================================
+
+const Map<String, String> _kLatin = {
+  'هەولێر': 'Erbil', 'سلێمانی': 'Sulaymaniyah', 'دهۆک': 'Duhok', 'کەرکووک': 'Kirkuk', 'هەڵەبجە': 'Halabja',
+  'زاخۆ': 'Zakho', 'ڕانیە': 'Ranya', 'کۆیە': 'Koya', 'سۆران': 'Soran', 'چەمچەماڵ': 'Chamchamal', 'ئاکرێ': 'Akre',
+  'ئامێدی': 'Amedi', 'شێخان': 'Shekhan', 'سمێل': 'Semel', 'شەقڵاوە': 'Shaqlawa', 'ڕواندز': 'Rawanduz',
+  'مێرگەسور': 'Mergasur', 'قەڵادزێ': 'Qaladze', 'پێنجوێن': 'Penjwen', 'سەیدسادق': 'Sayid Sadiq',
+  'دەربەندیخان': 'Darbandikhan', 'کەلار': 'Kalar', 'کفری': 'Kifri', 'خانەقین': 'Khanaqin', 'دووکان': 'Dukan',
+  'دەبەگ': 'Debaga', 'مەخموور': 'Makhmur', 'شنگال': 'Sinjar', 'خورماتوو': 'Tuz Khurmatu', 'تەلکێف': 'Tel Keppe',
+  'بەغدا': 'Baghdad', 'موسڵ': 'Mosul', 'بەسرە': 'Basra', 'نەجەف': 'Najaf', 'کەربەلا': 'Karbala', 'ئەنبار': 'Anbar',
+  'دیالە': 'Diyala', 'تکریت': 'Tikrit', 'کووت': 'Kut', 'عەمارە': 'Amarah',
+  'سەرسەنگ': 'Sarsang', 'بەردەڕەش': 'Bardarash', 'دیانا': 'Diana', 'پشدەر': 'Pshdar', 'بێتواتە': 'Betwata', 'سیتەک': 'Sitak',
+  'جەلەولا': 'Jalawla', 'قەرەتەپە': 'Qaratapa', 'تاقتاق': 'Taqtaq', 'حەویجە': 'Hawija', 'تەلعەفەر': 'Tal Afar',
+  'تۆزخورماتوو': 'Tuz', 'بەعشیقە': 'Bashiqa', 'عەقرە': 'Aqrah', 'زێباری': 'Zebar', 'قۆشتەپە': 'Qushtapa', 'مەهاباد': 'Mahabad',
+  'سنە': 'Sanandaj', 'کرماشان': 'Kermanshah', 'ورمێ': 'Urmia', 'بانە': 'Baneh', 'مەریوان': 'Marivan', 'سەقز': 'Saqqez',
+  'بۆکان': 'Bukan', 'پیرانشار': 'Piranshahr', 'نەغەدە': 'Naqadeh', 'ئیلام': 'Ilam', 'دیاربەکر': 'Diyarbakır', 'وان': 'Van',
+  'ماردین': 'Mardin', 'باتمان': 'Batman', 'هەکاری': 'Hakkari', 'جزیر': 'Cizre', 'ئورفە': 'Urfa', 'قامیشلۆ': 'Qamishli',
+  'کۆبانی': 'Kobani', 'عەفرین': 'Afrin', 'دێرک': 'Derik', 'عامودا': 'Amuda', 'حەسەکە': 'Hasakah', 'سەرێکانی': 'Serêkaniyê',
+  'تەبریز': 'Tabriz', 'تاران': 'Tehran', 'هەمەدان': 'Hamadan',
+  'ئاراس کەریم': 'Aras Karim', 'سارا ئەحمەد': 'Sara Ahmad', 'هێمن ڕەشید': 'Hemin Rashid', 'ڤیان عەلی': 'Vian Ali',
+  'دانا سەعید': 'Dana Saeed', 'ڕێبین حەسەن': 'Rebin Hasan', 'ژیلا مەحموود': 'Zhila Mahmood', 'ئازاد قادر': 'Azad Qadir',
+  'لانە جەمال': 'Lana Jamal', 'کارزان عومەر': 'Karzan Omar',
+};
+
+/// ناوی شار یان کەس بەپێی زمان
+String nm(String s) => arenaLtr ? (_kLatin[s] ?? s) : s;
+
+
+// =============================================================================
+// 9. ئامرازە هاوبەشەکانی ڕووکار
+// =============================================================================
+
+String _hex(Color c) => '#${(c.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}';
+
+final Map<String, String> _svgCache = {};
+
+/// ئایکۆنی وێب (هەمان SVG)
+class AIcon extends StatelessWidget {
+  const AIcon(this.name, {super.key, this.size = 18, this.color, this.sw = 1.8});
+  final String name;
+  final double size;
+  final Color? color;
+  final double sw;
   @override
   Widget build(BuildContext context) {
-    final d = widget.data, w = widget.width, k = w / 236;
-    final sc = skinColors(d.skin, d.points);
-    final lg = leagueOf(d.points);
-    return SizedBox(
-      width: w,
-      height: w * 330 / 236,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30 * k), bottom: Radius.circular(26 * k)),
-          boxShadow: [BoxShadow(color: _al(sc.accent, .45), blurRadius: 30 * k, offset: Offset(0, 14 * k), spreadRadius: -12 * k)],
+    final c = color ?? DefaultTextStyle.of(context).style.color ?? AC.tx;
+    final op = c.a;
+    final k = '$name|${_hex(c)}|$sw';
+    final svg = _svgCache[k] ??=
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="${_hex(c)}" stroke-width="$sw" stroke-linecap="round" stroke-linejoin="round">${(kArenaIco[name] ?? '').replaceAll('currentColor', _hex(c))}</svg>';
+    final w = SvgPicture.string(svg, width: size, height: size);
+    return op < .99 ? Opacity(opacity: op, child: w) : w;
+  }
+}
+
+/// تایلی بەش (.tl)
+class CatTile extends StatelessWidget {
+  const CatTile(this.icon, this.k, {super.key, this.size = 40, this.idle = false, this.strong = false});
+  CatTile.cat(ArenaCat c, {Key? key, double size = 40, bool idle = false, bool strong = false})
+      : this(c.icon, c.color, key: key, size: size, idle: idle, strong: strong);
+  final String icon;
+  final Color k;
+  final double size;
+  final bool idle, strong;
+  @override
+  Widget build(BuildContext context) {
+    var c1 = _mix(k, Colors.white, .88), c2 = _mix(k, const Color(0xFF001418), .58);
+    if (idle) {
+      c1 = _desat(c1, .45, .9);
+      c2 = _desat(c2, .45, .9);
+    }
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(size * .32),
+        gradient: cssLin(145, [c1, c2]),
+        boxShadow: idle ? null : [strong ? cssSh(0, 10, 20, -10, k) : cssSh(0, 6, 14, -8, k)],
+        border: Border(top: BorderSide(color: Colors.white.withAlpha(strong ? 115 : 89), width: 1)),
+      ),
+      alignment: Alignment.center,
+      child: AIcon(icon, size: (size * .54).roundToDouble(), color: Colors.white),
+    );
+  }
+}
+
+Color _desat(Color c, double s, double b) {
+  final h = HSLColor.fromColor(c);
+  return h.withSaturation(h.saturation * s).withLightness((h.lightness * b).clamp(0.0, 1.0)).toColor();
+}
+
+/// نیشانەی لیگ (قەڵغان)
+class Emblem extends StatelessWidget {
+  const Emblem(this.i, {super.key, this.size = 24});
+  final int i;
+  final double size;
+  @override
+  Widget build(BuildContext context) =>
+      SvgPicture.string(kArenaEmb[i.clamp(0, kArenaEmb.length - 1)], width: size, height: (size * 56 / 48).roundToDouble());
+}
+
+/// وێنەی کارەکتەر لە بازنەدا (.ava.chv)
+class CharAvatar extends StatelessWidget {
+  const CharAvatar({super.key, required this.ch, required this.name, this.size = 40, this.ring, this.gold = false});
+  final String ch, name;
+  final double size;
+  final Color? ring;
+  final bool gold;
+  @override
+  Widget build(BuildContext context) {
+    final ini = name.trim().isEmpty ? '?' : name.trim().characters.first;
+    final fallback = Center(child: Text(ini, style: ats(size * .38, w: FontWeight.w800, c: Colors.white)));
+    final inner = Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          center: const Alignment(0, -.52),
+          radius: .9,
+          colors: gold
+              ? const [Color(0xFFFFF3C4), Color(0xFFF2B21C), Color(0xFF8A5A06)]
+              : const [Color(0xFFE3FCFF), Color(0xFF2FE6F3), Color(0xFF0B5F73)],
+          stops: const [0, .7, 1],
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30 * k), bottom: Radius.circular(26 * k)),
-          child: Stack(children: [
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                      colors: [sc.c1, sc.c2], begin: const Alignment(-.6, -1), end: const Alignment(.6, 1)),
-                ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: ch.isEmpty
+          ? fallback
+          : OverflowBox(
+              maxWidth: size * 1.12,
+              maxHeight: size * 1.12,
+              alignment: Alignment.bottomCenter,
+              child: Transform.translate(
+                offset: Offset(0, size * .04),
+                child: Image.asset(charAsset(ch),
+                    width: size * 1.12,
+                    height: size * 1.12,
+                    fit: BoxFit.contain,
+                    alignment: Alignment.bottomCenter,
+                    filterQuality: FilterQuality.medium,
+                    gaplessPlayback: true,
+                    errorBuilder: (_, __, ___) => fallback),
               ),
             ),
-            Positioned.fill(child: CustomPaint(painter: _PatternPainter(sc.pattern))),
-            // sheen
-            Positioned.fill(
-              child: AnimatedBuilder(
-                animation: _sheen,
-                builder: (_, __) {
-                  final t = (_sheen.value / .38).clamp(0.0, 1.0);
-                  return IgnorePointer(
-                    child: FractionalTranslation(
-                      translation: Offset(-1.3 + t * 2.8, 0),
-                      child: Transform(
-                        transform: Matrix4.skewX(-.25),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(colors: [
-                              _al(kW, 0),
-                              _al(kW, .28),
-                              _al(kW, 0),
-                            ], stops: const [.3, .5, .7]),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
+    );
+    if (ring == null) return inner;
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(shape: BoxShape.circle, color: ring),
+      child: Container(
+          padding: const EdgeInsets.all(2), decoration: BoxDecoration(shape: BoxShape.circle, color: AC.bg), child: inner),
+    );
+  }
+}
+
+/// سکە (.cn)
+class _Coin extends StatelessWidget {
+  const _Coin(this.s);
+  final double s;
+  @override
+  Widget build(BuildContext context) => Container(
+        width: s,
+        height: s,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: cssLin(135, const [Color(0xFFFFF3C4), Color(0xFFFFD56B), Color(0xFFD9971F)], const [0, .45, 1]),
+          boxShadow: const [BoxShadow(color: Color(0x40FFD56B), spreadRadius: 2)],
+        ),
+        alignment: Alignment.center,
+        child: AIcon('star', size: (s * .58).roundToDouble(), color: const Color(0xFF6B4300), sw: 2.2),
+      );
+}
+
+class _Tap extends StatelessWidget {
+  const _Tap({required this.child, this.onTap, this.radius = 16});
+  final Widget child;
+  final VoidCallback? onTap;
+  final double radius;
+  @override
+  Widget build(BuildContext context) => Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(radius),
+          onTap: onTap == null
+              ? null
+              : () {
+                  HapticFeedback.selectionClick();
+                  onTap!();
                 },
-              ),
+          child: child,
+        ),
+      );
+}
+
+/// دوگمە: p زێڕ · s ئاسایی · d سوور
+class _Btn extends StatelessWidget {
+  const _Btn(this.label, {this.icon, this.lead, this.onTap, this.kind = 'p', this.h = 52, this.trail});
+  final String label;
+  final String? icon;
+  final Widget? lead, trail;
+  final VoidCallback? onTap;
+  final String kind;
+  final double h;
+  @override
+  Widget build(BuildContext context) {
+    final off = onTap == null;
+    final p = kind == 'p', d = kind == 'd';
+    final fg = p ? AC.onGold : (d ? AC.coral : AC.tx);
+    return Opacity(
+      opacity: off ? .5 : 1,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(15),
+          onTap: off
+              ? null
+              : () {
+                  HapticFeedback.selectionClick();
+                  onTap!();
+                },
+          child: Ink(
+            height: h,
+            decoration: BoxDecoration(
+              gradient: p ? AC.goldG : null,
+              color: p ? null : (d ? const Color(0x1FFF5F7E) : AC.surf2),
+              borderRadius: BorderRadius.circular(15),
+              border: p ? null : Border.all(color: d ? const Color(0x66FF5F7E) : AC.line),
             ),
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(30 * k), bottom: Radius.circular(26 * k)),
-                  border: Border.all(color: _al(kW, .18), width: 1.5),
-                ),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(16 * k, 20 * k, 16 * k, 0),
-              child: Column(children: [
-                Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Column(children: [
-                    Text('${ratingOf(d.points)}',
-                        style: TextStyle(
-                            fontSize: 40 * k,
-                            fontWeight: FontWeight.w800,
-                            color: kW,
-                            height: 1,
-                            shadows: [Shadow(color: _al(Colors.black, .35), blurRadius: 10)])),
-                    SizedBox(height: 4 * k),
-                    Text('VEX', style: TextStyle(fontSize: 10 * k, letterSpacing: 1, color: _al(kW, .85))),
-                    SizedBox(height: 5 * k),
-                    LeagueEmblem(league: lg, size: 32 * k),
-                    SizedBox(height: 5 * k),
-                    Row(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(Icons.place_rounded, size: 11 * k, color: _al(kW, .9)),
-                      Text(d.city, style: _ts(10 * k, c: _al(kW, .9))),
-                    ]),
-                  ]),
-                  const Spacer(),
-                  Container(
-                    width: 126 * k,
-                    height: 126 * k,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(color: sc.accent, spreadRadius: 3 * k),
-                        BoxShadow(color: _al(Colors.black, .5), blurRadius: 20 * k, offset: Offset(0, 10 * k)),
-                      ],
-                    ),
-                    child: CharAvatar(ch: d.ch, name: d.name, size: 126 * k, grad: d.grad, breathe: true),
-                  ),
-                ]),
-                SizedBox(height: 10 * k),
-                Container(
-                  padding: EdgeInsets.only(bottom: 6 * k),
-                  decoration: BoxDecoration(border: Border(bottom: BorderSide(color: _al(kW, .22)))),
-                  child: Text(d.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: _ts(18 * k, c: kW, w: FontWeight.w800)),
-                ),
-                SizedBox(height: 5 * k),
-                Text(d.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: _ts(11 * k, c: _al(kW, .88))),
-                SizedBox(height: 8 * k),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  runSpacing: 4 * k,
-                  children: d.stats
-                      .map((s) => SizedBox(
-                            width: (w - 32 * k) / 3,
-                            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                              Text('${s[1]}', style: TextStyle(fontSize: 15 * k, fontWeight: FontWeight.w800, color: kW)),
-                              SizedBox(width: 4 * k),
-                              Text('${s[0]}', style: _ts(10 * k, c: kW)),
-                            ]),
-                          ))
-                      .toList(),
-                ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                if (lead != null) ...[lead!, const SizedBox(width: 8)],
+                if (icon != null) ...[AIcon(icon!, size: 18, color: fg), const SizedBox(width: 8)],
+                if (label.isNotEmpty)
+                  Flexible(
+                      child: Text(label,
+                          maxLines: 1, overflow: TextOverflow.ellipsis, style: ats(14, w: FontWeight.w800, c: fg))),
+                if (trail != null) ...[const SizedBox(width: 8), trail!],
               ]),
             ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 10 * k,
-              child: Text('VEX ARENA · SEASON ${Season.number} · #${_fmt(d.rank)}',
-                  textAlign: TextAlign.center,
-                  textDirection: TextDirection.ltr,
-                  style: TextStyle(fontSize: 9 * k, letterSpacing: 1.1, color: _al(kW, .78))),
-            ),
-          ]),
+          ),
         ),
       ),
     );
   }
 }
 
-/// بە پەنجە کارتەکە دەجووڵێت (3D) و کاتێک بەری دەدەیت دەگەڕێتەوە
-class TiltCard extends StatefulWidget {
+/// کارتی گشتی (.card) — سنووری زێڕینی لار
+class _Card extends StatelessWidget {
+  const _Card({required this.child, this.margin = const EdgeInsets.only(top: 14)});
   final Widget child;
-  const TiltCard({super.key, required this.child});
+  final EdgeInsets margin;
+  static const EdgeInsets pad = EdgeInsets.all(16);
   @override
-  State<TiltCard> createState() => _TiltCardState();
-}
-
-class _TiltCardState extends State<TiltCard> with SingleTickerProviderStateMixin {
-  Offset _t = Offset.zero;
-  late final AnimationController _back = AnimationController(vsync: this, duration: const Duration(milliseconds: 450));
-  Offset _from = Offset.zero;
-
-  @override
-  void initState() {
-    super.initState();
-    _back.addListener(() => setState(() => _t = Offset.lerp(_from, Offset.zero, Curves.elasticOut.transform(_back.value))!));
-  }
-
-  @override
-  void dispose() {
-    _back.dispose();
-    super.dispose();
-  }
-
-  void _update(Offset local, Size size) {
-    _back.stop();
-    setState(() => _t = Offset(
-          (local.dx / size.width - .5).clamp(-.5, .5),
-          (local.dy / size.height - .5).clamp(-.5, .5),
-        ));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, c) {
-      final size = Size(c.maxWidth.isFinite ? c.maxWidth : 236, c.maxHeight.isFinite ? c.maxHeight : 330);
-      void release() {
-        _from = _t;
-        _back.forward(from: 0);
-      }
-
-      // Listener (نەک GestureDetector) بۆ ئەوەی سکڕۆڵی پەڕەکە نەگرێت
-      return Listener(
-        onPointerDown: (e) => _update(e.localPosition, size),
-        onPointerMove: (e) => _update(e.localPosition, size),
-        onPointerUp: (_) => release(),
-        onPointerCancel: (_) => release(),
-        child: Transform(
-          alignment: Alignment.center,
-          transform: Matrix4.identity()
-            ..setEntry(3, 2, .0012)
-            ..rotateX(-_t.dy * .45)
-            ..rotateY(_t.dx * .45),
-          child: widget.child,
+  Widget build(BuildContext context) => Container(
+        margin: margin,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: cssLin(150, [AC.l ? const Color(0x3306788C) : const Color(0x57FFD678), Colors.transparent], const [0, .6]),
+        ),
+        padding: const EdgeInsets.all(1),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(23),
+            color: AC.l ? Colors.white.withAlpha(240) : Color.alphaBlend(AC.card, AC.bg),
+          ),
+          padding: pad,
+          child: child,
         ),
       );
-    });
-  }
 }
 
-/// کاتێک کارتەکە دادەنرێت لە سەرەوە دەکەوێتە خوارەوە
-class _DropIn extends StatefulWidget {
-  final Widget child;
-  const _DropIn({super.key, required this.child});
+/// سەردێڕی کارت (.ttl)
+class _Ttl extends StatelessWidget {
+  const _Ttl(this.icon, this.title, {this.small, this.smallW});
+  final String icon;
+  final String title;
+  final String? small;
+  final Widget? smallW;
   @override
-  State<_DropIn> createState() => _DropInState();
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Row(children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: AC.l ? const Color(0x1FE6A014) : const Color(0x1FFFC846),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AC.line),
+            ),
+            alignment: Alignment.center,
+            child: AIcon(icon, size: 16, color: AC.t3g),
+          ),
+          const SizedBox(width: 8),
+          Expanded(child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: ats(15, w: FontWeight.w800))),
+          if (smallW != null) smallW!,
+          if (small != null) Text(small!, style: ats(11.5, w: FontWeight.w600, c: AC.mu)),
+        ]),
+      );
 }
 
-class _DropInState extends State<_DropIn> with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))..forward();
+/// سەردێڕی بەش (.t3h)
+class _H extends StatelessWidget {
+  const _H(this.title, {this.small, this.color, this.smallColor, this.pad = const EdgeInsets.only(bottom: 10)});
+  final String title;
+  final String? small;
+  final Color? color, smallColor;
+  final EdgeInsets pad;
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: pad,
+        child: Row(children: [
+          Expanded(child: Text(title, maxLines: 2, style: ats(18, w: FontWeight.w800, c: color))),
+          if (small != null) ...[
+            const SizedBox(width: 10),
+            Text(small!, style: ats(12, w: FontWeight.w700, c: smallColor ?? AC.mu)),
+          ],
+        ]),
+      );
+}
+
+class _Bar extends StatelessWidget {
+  const _Bar(this.f, {this.color, this.gradient, this.h = 5, this.glow = false});
+  final double f;
+  final Color? color;
+  final Gradient? gradient;
+  final double h;
+  final bool glow;
+  @override
+  Widget build(BuildContext context) => Container(
+        height: h,
+        decoration: BoxDecoration(color: AC.track, borderRadius: BorderRadius.circular(9)),
+        child: Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: f.clamp(0.0, 1.0).toDouble()),
+            duration: const Duration(milliseconds: 900),
+            curve: Curves.easeOutCubic,
+            builder: (_, v, __) => FractionallySizedBox(
+              widthFactor: v,
+              heightFactor: 1,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: gradient == null ? (color ?? AC.accent) : null,
+                  gradient: gradient,
+                  borderRadius: BorderRadius.circular(9),
+                  boxShadow: glow ? const [BoxShadow(color: Color(0x8CFFC846), blurRadius: 12)] : null,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+}
+
+/// ڕستە لەگەڵ ئایکۆن (p.v6hn و هتد)
+class _IconLine extends StatelessWidget {
+  const _IconLine(this.icon, this.text, {this.color, this.iconColor, this.size = 12.5, this.gap = 6});
+  static const FontWeight w = FontWeight.w400;
+  final String icon;
+  final String text;
+  final Color? color, iconColor;
+  final double size, gap;
+  @override
+  Widget build(BuildContext context) => Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Padding(padding: const EdgeInsets.only(top: 3), child: AIcon(icon, size: size + 1.5, color: iconColor ?? color ?? AC.mu)),
+        SizedBox(width: gap),
+        Expanded(child: Text(text, style: ats(size, w: w, c: color ?? AC.mu, h: 1.65))),
+      ]);
+}
+
+// ---- پەیام و کۆنفێتی ----
+OverlayEntry? _toastE;
+Timer? _toastT;
+void arenaToast(BuildContext context, String text, [String icon = 'check']) {
+  final ov = Overlay.maybeOf(context, rootOverlay: true);
+  if (ov == null) return;
+  _toastT?.cancel();
+  _toastE?.remove();
+  _toastE = OverlayEntry(
+    builder: (_) => Positioned(
+      left: 0,
+      right: 0,
+      bottom: 110 + MediaQuery.of(context).padding.bottom,
+      child: IgnorePointer(
+        child: Center(
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 280),
+            builder: (_, v, ch) => Opacity(opacity: v, child: Transform.translate(offset: Offset(0, 20 * (1 - v)), child: ch)),
+            child: Directionality(
+              textDirection: arenaDir,
+              child: Container(
+                constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * .88),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+                decoration: BoxDecoration(
+                  gradient: AC.goldG,
+                  borderRadius: BorderRadius.circular(99),
+                  boxShadow: const [BoxShadow(color: Color(0x66000000), blurRadius: 24, offset: Offset(0, 10))],
+                ),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  AIcon(icon, size: 16, color: AC.onGold),
+                  const SizedBox(width: 8),
+                  Flexible(
+                      child: Material(
+                          type: MaterialType.transparency,
+                          child: Text(text, textAlign: TextAlign.center, style: ats(13, w: FontWeight.w800, c: AC.onGold)))),
+                ]),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+  ov.insert(_toastE!);
+  _toastT = Timer(const Duration(milliseconds: 2400), () {
+    _toastE?.remove();
+    _toastE = null;
+  });
+}
+
+void arenaConfetti(BuildContext context, [int n = 60]) {
+  final ov = Overlay.maybeOf(context, rootOverlay: true);
+  if (ov == null) return;
+  late OverlayEntry e;
+  e = OverlayEntry(builder: (_) => IgnorePointer(child: _Confetti(n: n, onDone: () => e.remove())));
+  ov.insert(e);
+}
+
+class _Confetti extends StatefulWidget {
+  const _Confetti({required this.onDone, this.n = 60});
+  final VoidCallback onDone;
+  final int n;
+  @override
+  State<_Confetti> createState() => _ConfettiState();
+}
+
+class _ConfettiState extends State<_Confetti> with SingleTickerProviderStateMixin {
+  late final AnimationController a = AnimationController(vsync: this, duration: const Duration(milliseconds: 2200))
+    ..forward().whenComplete(widget.onDone);
+  late final List<List<double>> p = List.generate(widget.n, (i) {
+    final r = _Seeded('cf$i${DateTime.now().millisecond}');
+    return [r.next(), r.next(), r.next(), r.next(), r.next()];
+  });
   @override
   void dispose() {
-    _c.dispose();
+    a.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
-        animation: _c,
-        child: widget.child,
-        builder: (_, child) {
-          final t = Curves.easeOutBack.transform(_c.value);
-          return Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.identity()
-              ..setEntry(3, 2, .001)
-              ..translate(0.0, -60 * (1 - t))
-              ..scale(1 + .18 * (1 - t))
-              ..rotateX(.3 * (1 - t)),
-            child: child,
-          );
-        },
+        animation: a,
+        builder: (_, __) => CustomPaint(size: MediaQuery.of(context).size, painter: _ConfettiPainter(a.value, p)),
       );
 }
 
-class CharAvatar extends StatefulWidget {
-  final String ch, name;
-  final double size;
-  final Color? ring;
-  final List<Color>? grad;
-  final bool breathe;
-  const CharAvatar({super.key, required this.ch, required this.name, required this.size, this.ring, this.grad, this.breathe = false});
+class _ConfettiPainter extends CustomPainter {
+  _ConfettiPainter(this.t, this.p);
+  final double t;
+  final List<List<double>> p;
+  static const cols = [Color(0xFFFFD36B), Color(0xFF3CF08A), Color(0xFF2FE6F3), Color(0xFFFF6F86), Color(0xFF9B7BFF)];
   @override
-  State<CharAvatar> createState() => _CharAvatarState();
-}
-
-class _CharAvatarState extends State<CharAvatar> with SingleTickerProviderStateMixin {
-  AnimationController? _b;
-  @override
-  void initState() {
-    super.initState();
-    if (widget.breathe) _b = AnimationController(vsync: this, duration: const Duration(milliseconds: 3400))..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _b?.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final s = widget.size;
-    final has = widget.ch.isNotEmpty;
-    Widget inner = has
-        ? Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(center: Alignment(0, -.55), colors: [vk(0xFFE3FCFF), vk(0xFF2FE6F3), vk(0xFF0B5F73)], stops: [0, .7, 1]),
-            ),
-            child: ClipOval(
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: _b == null
-                    ? _charImg(s, 0)
-                    : AnimatedBuilder(animation: _b!, builder: (_, __) => _charImg(s, Curves.easeInOut.transform(_b!.value))),
-              ),
-            ),
-          )
-        : Container(
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(colors: widget.grad ?? [vk(0xFF0F9B8E), vk(0xFF1D4E89)]),
-            ),
-            child: Text(widget.name.trim().isEmpty ? '?' : widget.name.trim().characters.first,
-                style: _ts(s * .38, c: kW, w: FontWeight.w800)),
-          );
-    return Container(
-      width: s,
-      height: s,
-      decoration: widget.ring == null
-          ? null
-          : BoxDecoration(shape: BoxShape.circle, boxShadow: [
-              BoxShadow(color: VA.bg, spreadRadius: 2),
-              BoxShadow(color: widget.ring!, spreadRadius: 4),
-            ]),
-      child: inner,
-    );
-  }
-
-  Widget _charImg(double s, double t) => Transform.translate(
-        offset: Offset(0, s * (.04 - .03 * t)),
-        child: Transform.scale(
-          scale: 1.12,
-          alignment: Alignment.bottomCenter,
-          child: Image.asset(charAsset(widget.ch), width: s, height: s, fit: BoxFit.contain, alignment: Alignment.bottomCenter,
-              errorBuilder: (_, __, ___) => Icon(Icons.person_rounded, size: s * .6, color: kW)),
-        ),
-      );
-}
-
-class LeagueEmblem extends StatelessWidget {
-  final League league;
-  final double size;
-  const LeagueEmblem({super.key, required this.league, this.size = 24});
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size * 56 / 48,
-      child: CustomPaint(painter: _EmblemPainter(league.accent, league.idx)),
-    );
-  }
-}
-
-class _EmblemPainter extends CustomPainter {
-  final Color c;
-  final int idx;
-  _EmblemPainter(this.c, this.idx);
-  @override
-  void paint(Canvas canvas, Size s) {
-    final w = s.width, h = s.height;
-    final p = Path()
-      ..moveTo(w / 2, 0)
-      ..lineTo(w, h * .18)
-      ..lineTo(w, h * .52)
-      ..quadraticBezierTo(w * .95, h * .85, w / 2, h)
-      ..quadraticBezierTo(w * .05, h * .85, 0, h * .52)
-      ..lineTo(0, h * .18)
-      ..close();
-    final rect = Offset.zero & s;
-    canvas.drawPath(
-        p,
-        Paint()
-          ..shader = LinearGradient(
-            colors: [Color.lerp(c, kW, .45)!, c, Color.lerp(c, Colors.black, .35)!],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ).createShader(rect));
-    canvas.drawPath(p, Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = w * .06
-      ..color = _al(kW, .55));
-    // chevrons = league level
-    final cp = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = w * .09
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..color = _al(kW, .92);
-    final n = math.min(3, idx + 1);
-    for (var i = 0; i < n; i++) {
-      final y = h * (.34 + i * .15);
-      canvas.drawPath(
-          Path()
-            ..moveTo(w * .28, y)
-            ..lineTo(w * .5, y + h * .1)
-            ..lineTo(w * .72, y),
-          cp);
-    }
-    if (idx >= 3) {
-      canvas.drawCircle(Offset(w / 2, h * .2), w * .07, Paint()..color = kW);
+  void paint(Canvas c, Size s) {
+    for (final q in p) {
+      final x = q[0] * s.width + math.sin(t * 6 + q[1] * 9) * 26;
+      final y = -20 + (s.height + 40) * (t * (.7 + q[2] * .5)) + q[3] * -120;
+      final paint = Paint()..color = cols[(q[4] * cols.length).floor() % cols.length].withAlpha(((1 - t * .6) * 255).round());
+      c.save();
+      c.translate(x, y);
+      c.rotate(t * 10 * (q[1] - .5));
+      c.drawRect(const Rect.fromLTWH(-4, -2.5, 8, 5), paint);
+      c.restore();
     }
   }
 
   @override
-  bool shouldRepaint(_EmblemPainter o) => o.c != c || o.idx != idx;
+  bool shouldRepaint(_ConfettiPainter o) => o.t != t;
 }
 
-class _PatternPainter extends CustomPainter {
-  final SkinPattern p;
-  _PatternPainter(this.p);
-  @override
-  void paint(Canvas canvas, Size s) {
-    switch (p) {
-      case SkinPattern.none:
-        break;
-      case SkinPattern.gloss:
-        canvas.drawRect(
-            Offset.zero & s,
-            Paint()
-              ..shader = LinearGradient(
-                colors: [_al(kW, .18), _al(kW, 0)],
-                begin: Alignment.topLeft,
-                end: const Alignment(.1, -.1),
-              ).createShader(Offset.zero & s));
-        break;
-      case SkinPattern.grid:
-        final g = Paint()..color = _al(vk(0xFF8FF3F9), .09);
-        for (double x = 0; x < s.width; x += 14) {
-          canvas.drawRect(Rect.fromLTWH(x, 0, 1, s.height), g);
-        }
-        for (double y = 0; y < s.height; y += 14) {
-          canvas.drawRect(Rect.fromLTWH(0, y, s.width, 1), g);
-        }
-        break;
-      case SkinPattern.stars:
-        final a = Paint()..color = kW;
-        final b = Paint()..color = _al(kW, .55);
-        for (double y = 0; y < s.height; y += 22) {
-          for (double x = 0; x < s.width; x += 22) {
-            canvas.drawCircle(Offset(x, y), 1.1, a);
-            canvas.drawCircle(Offset(x + 11, y + 11), 1, b);
-          }
-        }
-        break;
-      case SkinPattern.kurd:
-        final a = Paint()
-          ..color = _al(vk(0xFFFFD56B), .22)
-          ..strokeWidth = 5;
-        final b = Paint()
-          ..color = _al(vk(0xFFDC3C3C), .3)
-          ..strokeWidth = 5;
-        for (double d = -s.height; d < s.width + s.height; d += 16) {
-          canvas.drawLine(Offset(d, 0), Offset(d + s.height, s.height), a);
-          canvas.drawLine(Offset(d + s.height, 0), Offset(d, s.height), b);
-        }
-        break;
-      case SkinPattern.fire:
-        for (final f in [
-          [.2, vk(0xFFFFD56B), .65],
-          [.8, vk(0xFFFF7800), .6],
-          [.5, vk(0xFFFF3C00), .5],
-        ]) {
-          final c = Offset(s.width * (f[0] as double), s.height * 1.15);
-          final r = s.width * .55;
-          canvas.drawCircle(
-              c,
-              r,
-              Paint()
-                ..shader = RadialGradient(colors: [_al(f[1] as Color, f[2] as double), _al(f[1] as Color, 0)])
-                    .createShader(Rect.fromCircle(center: c, radius: r)));
-        }
-        break;
-      case SkinPattern.diamond:
-        final a = Paint()..color = _al(kW, .12);
-        for (double y = 0; y < s.height; y += 24) {
-          for (double x = 0; x < s.width; x += 24) {
-            canvas.drawPath(
-                Path()
-                  ..moveTo(x, y)
-                  ..lineTo(x + 12, y)
-                  ..lineTo(x, y + 12)
-                  ..close(),
-                a);
-          }
-        }
-        break;
-    }
-  }
-
-  @override
-  bool shouldRepaint(_PatternPainter o) => o.p != p;
-}
-
-// =============================================================================
-// 8. شیتەکان
-// =============================================================================
-
-Future<T?> showArenaSheet<T>(BuildContext context, Widget child) {
+/// شیتی خوارەوە (.shc)
+Future<T?> arenaSheet<T>(BuildContext context, Widget Function(BuildContext) b) {
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: true,
+    useSafeArea: true,
     backgroundColor: Colors.transparent,
-    barrierColor: _al(vk(0xFF010C10), .7),
+    barrierColor: const Color(0xB3010C10),
     builder: (ctx) => Directionality(
-      textDirection: TextDirection.rtl,
-      child: Container(
-        constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * .92),
-        decoration: BoxDecoration(
-          color: VA.sheet,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-          border: Border(top: BorderSide(color: VA.line2)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 22),
+      textDirection: arenaDir,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * .92, maxWidth: 440),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AC.sheet,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+            border: Border(top: BorderSide(color: AC.line2)),
+          ),
+          child: SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(16, 12, 16, 22 + MediaQuery.of(ctx).viewInsets.bottom + MediaQuery.of(ctx).padding.bottom),
+            child: DefaultTextStyle(
+              style: ats(14),
               child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                 Center(
-                  child: Container(
-                    width: 46,
-                    height: 5,
-                    margin: const EdgeInsets.only(bottom: 14),
-                    decoration: BoxDecoration(color: _al(kW, .2), borderRadius: BorderRadius.circular(9)),
-                  ),
-                ),
-                child,
+                    child: Container(
+                        width: 46,
+                        height: 5,
+                        margin: const EdgeInsets.only(bottom: 14),
+                        decoration: BoxDecoration(color: AC.line2, borderRadius: BorderRadius.circular(9)))),
+                b(ctx),
               ]),
             ),
           ),
@@ -2365,1867 +2240,12 @@ Future<T?> showArenaSheet<T>(BuildContext context, Widget child) {
   );
 }
 
-void _toast(BuildContext context, String text, [IconData? icon]) {
-  final m = ScaffoldMessenger.maybeOf(context);
-  if (m == null) return;
-  m.hideCurrentSnackBar();
-  m.showSnackBar(SnackBar(
-    behavior: SnackBarBehavior.floating,
-    backgroundColor: Colors.transparent,
-    elevation: 0,
-    duration: Duration(milliseconds: text.length > 40 ? 3600 : 2000),
-    content: Directionality(
-      textDirection: TextDirection.rtl,
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(gradient: VA.prime, borderRadius: BorderRadius.circular(18), boxShadow: [
-            BoxShadow(color: _al(VA.mint, .35), blurRadius: 18, offset: const Offset(0, 8)),
-          ]),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            if (icon != null) ...[Icon(icon, size: 17, color: VA.ink), const SizedBox(width: 8)],
-            Flexible(child: Text(text, style: _ts(13.5, c: VA.ink, w: FontWeight.w800))),
-          ]),
-        ),
-      ),
-    ),
-  ));
-}
+/// سەردێڕی ناوەڕاستی شیت (.shc h3)
+Widget _sh3(String t, {double top = 0}) =>
+    Padding(padding: EdgeInsets.only(top: top, bottom: 8), child: Text(t, textAlign: TextAlign.center, style: ats(18, w: FontWeight.w800)));
 
-// ---------------------------------------------------------------- prize sheet
-class _PrizeSheet extends StatefulWidget {
-  final Season season;
-  final bool joined;
-  final int myPoints, activeDays;
-  final VoidCallback onHow;
-  const _PrizeSheet({required this.season, required this.joined, required this.myPoints, required this.activeDays, required this.onHow});
-  @override
-  State<_PrizeSheet> createState() => _PrizeSheetState();
-}
 
-class _PrizeSheetState extends State<_PrizeSheet> with SingleTickerProviderStateMixin {
-  Timer? _t;
-  late final AnimationController _bob = AnimationController(vsync: this, duration: const Duration(milliseconds: 2600))..repeat(reverse: true);
-  @override
-  void initState() {
-    super.initState();
-    _t = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() {});
-    });
-  }
 
-  @override
-  void dispose() {
-    _t?.cancel();
-    _bob.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final s = widget.season;
-    final left = s.end.difference(DateTime.now());
-    final l = left.isNegative ? Duration.zero : left;
-    final dayLeft = Season.length - s.day + 1;
-    final need = Season.needDays, act = widget.activeDays;
-    final ok = act >= need, canReach = act + dayLeft - 1 >= need;
-    final rk = rankOf(widget.myPoints, s);
-    final gap3 = math.max(0, (ptsAt(3) - widget.myPoints).round());
-    final e = s.end;
-    final endS = '${e.day}/${e.month}/${e.year} · ${_p2(e.hour)}:${_p2(e.minute)}';
-
-    Widget cd(String v, String u, {bool pulse = false}) => Expanded(
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 3.5),
-            padding: const EdgeInsets.symmetric(vertical: 9),
-            decoration: BoxDecoration(
-                color: _al(Colors.black, .28),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: _al(VA.gold, .22))),
-            child: Column(children: [
-              TweenAnimationBuilder<double>(
-                key: ValueKey(pulse ? v : u),
-                tween: Tween(begin: pulse ? 1.12 : 1, end: 1),
-                duration: const Duration(milliseconds: 400),
-                builder: (_, sc, child) => Transform.scale(scale: sc, child: child),
-                child: Text(v, style: _ts(26, c: vk(0xFFFFE9A8), w: FontWeight.w900, h: 1.1)),
-              ),
-              Text(u, style: _ts(10.5, c: _al(vk(0xFFFFF3C4), .7), w: FontWeight.w700)),
-            ]),
-          ),
-        );
-
-    Widget prize(int place, String name, IconData ic, Color c, String sub) {
-      final big = place == 1;
-      return Expanded(
-        flex: big ? 23 : 20,
-        child: Stack(clipBehavior: Clip.none, alignment: Alignment.topCenter, children: [
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            padding: EdgeInsets.fromLTRB(6, big ? 22 : 16, 6, 12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(22),
-              gradient: LinearGradient(colors: [_al(c, .22), _al(c, .05)], begin: Alignment.topCenter, end: Alignment.bottomCenter),
-              border: Border.all(color: _al(c, .45)),
-              boxShadow: big ? [BoxShadow(color: _al(c, .4), blurRadius: 30, offset: const Offset(0, 14), spreadRadius: -14)] : null,
-            ),
-            child: Column(children: [
-              AnimatedBuilder(
-                animation: _bob,
-                builder: (_, child) => Transform.translate(offset: Offset(0, -4 * Curves.easeInOut.transform(_bob.value)), child: child),
-                child: Container(
-                  width: big ? 66 : 54,
-                  height: big ? 66 : 54,
-                  decoration: BoxDecoration(color: _al(c, .18), borderRadius: BorderRadius.circular(big ? 22 : 18)),
-                  child: Icon(ic, size: big ? 36 : 28, color: Color.lerp(c, VA.text, .28)),
-                ),
-              ),
-              const SizedBox(height: 6),
-              SizedBox(
-                height: 36,
-                child: Center(
-                  child: Text(name, textAlign: TextAlign.center, maxLines: 2, style: _ts(13, w: FontWeight.w900, h: 1.3)),
-                ),
-              ),
-              Text(sub, style: _ts(10.5, c: VA.muted, w: FontWeight.w700)),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(color: _al(c, .18), borderRadius: BorderRadius.circular(99)),
-                child: Text('${_fmt(ptsAt(place))} خاڵ', style: _ts(10.5, w: FontWeight.w800)),
-              ),
-            ]),
-          ),
-          Container(
-            width: 26,
-            height: 26,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(color: c, shape: BoxShape.circle, border: Border.all(color: VA.sheet, width: 3)),
-            child: Text('$place', style: _ts(12, c: vk(0xFF2B1D05), w: FontWeight.w900)),
-          ),
-        ]),
-      );
-    }
-
-    Widget status() {
-      if (ok) return _Note(color: VA.mint, icon: Icons.check_rounded, text: 'مەرجی ڕۆژە چالاکەکانت تەواوە. ئێستا تەنها پلەکەت گرنگە.');
-      if (canReach) {
-        return _Note(
-            color: VA.cyan,
-            icon: Icons.lightbulb_rounded,
-            text: '${need - act} ڕۆژی چالاکی ترت ماوە بۆ ئەوەی شایستەی خەڵاتە گەورەکان بیت. وەرزەکە $dayLeft ڕۆژی ماوە.');
-      }
-      return _Note(
-          color: VA.amber,
-          icon: Icons.schedule_rounded,
-          text:
-              'ئەم وەرزە ناتوانیت بگەیتە $need ڕۆژی چالاکی، چونکە تەنها $dayLeft ڕۆژ ماوە. هێشتا خاڵ و پلە و سکە کۆدەکەیتەوە، و لە ڕۆژی یەکەمی وەرزی داهاتووەوە شایستەی خەڵاتە گەورەکان دەبیت.');
-    }
-
-    return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      // ---- golden hero ----
-      Container(
-        padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(26),
-          gradient: RadialGradient(
-              center: Alignment(0, -1), radius: 1.4, colors: [vk(0xFF5A3D06), vk(0xFF2B1D05), vk(0xFF140D02)], stops: [0, .55, 1]),
-          border: Border.all(color: _al(VA.gold, .35)),
-          boxShadow: [BoxShadow(color: _al(VA.amber, .4), blurRadius: 40, offset: const Offset(0, 16), spreadRadius: -18)],
-        ),
-        child: Column(children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-                color: _al(VA.gold, .16), borderRadius: BorderRadius.circular(99), border: Border.all(color: _al(VA.gold, .3))),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.emoji_events_rounded, size: 14, color: VA.gold),
-              const SizedBox(width: 6),
-              Text('وەرزی ${Season.number} · خەڵاتەکان', style: _ts(12, c: VA.gold, w: FontWeight.w800)),
-            ]),
-          ),
-          const SizedBox(height: 10),
-          Text('خەڵاتە گەورەکانی وەرز', style: _ts(22, c: vk(0xFFFFF3C4), w: FontWeight.w800)),
-          Text('کێبڕکێ کۆتایی دێت لە', style: _ts(12.5, c: _al(vk(0xFFFFF3C4), .72))),
-          const SizedBox(height: 14),
-          Row(children: [
-            cd('${l.inDays}', 'ڕۆژ'),
-            cd(_p2(l.inHours % 24), 'کاتژمێر'),
-            cd(_p2(l.inMinutes % 60), 'خولەک'),
-            cd(_p2(l.inSeconds % 60), 'چرکە', pulse: true),
-          ]),
-          const SizedBox(height: 10),
-          Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(Icons.flag_rounded, size: 14, color: _al(vk(0xFFFFF3C4), .8)),
-            const SizedBox(width: 6),
-            Text('کۆتایی: $endS', style: _ts(12, c: _al(vk(0xFFFFF3C4), .8), w: FontWeight.w700)),
-          ]),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(9),
-            child: LinearProgressIndicator(
-              value: s.day / Season.length,
-              minHeight: 8,
-              backgroundColor: _al(Colors.white, .12),
-              valueColor: AlwaysStoppedAnimation(VA.gold),
-            ),
-          ),
-          const SizedBox(height: 5),
-          Row(children: [
-            Expanded(child: Text('ڕۆژی ${s.day}', style: _ts(11, c: _al(vk(0xFFFFF3C4), .7), w: FontWeight.w700))),
-            Text('$dayLeft ڕۆژ ماوە', style: _ts(11, c: _al(vk(0xFFFFF3C4), .7), w: FontWeight.w700)),
-          ]),
-        ]),
-      ),
-      const SizedBox(height: 16),
-      // ---- podium ----
-      Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-        prize(2, 'iPhone 17 Pro', Icons.phone_iphone_rounded, VA.silver, 'پلەی دووەم'),
-        const SizedBox(width: 8),
-        prize(1, 'ئۆتۆمبێل', Icons.directions_car_filled_rounded, VA.gold, 'پلەی یەکەم'),
-        const SizedBox(width: 8),
-        prize(3, '1,000,000 دینار', Icons.payments_rounded, VA.bronze, 'پلەی سێیەم'),
-      ]),
-      const SizedBox(height: 8),
-      Text('ژمارەی ژێر هەر خەڵاتێک خاڵی ئێستای ئەو پلەیەیە', textAlign: TextAlign.center, style: _ts(11.5, c: VA.muted)),
-      // ---- my status ----
-      _Box(
-        child: widget.joined
-            ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                const _Title(icon: Icons.track_changes_rounded, text: 'دۆخی تۆ'),
-                const SizedBox(height: 10),
-                Row(children: [
-                  Expanded(child: _MiniStat(label: 'پلەکەت ئێستا', value: '#${_fmt(rk)}')),
-                  const SizedBox(width: 8),
-                  Expanded(
-                      child: _MiniStat(
-                          label: rk <= 3 ? 'لە نێو سێیەکەمیت' : 'ماوە بۆ پلەی سێیەم', value: rk <= 3 ? '🏆' : _fmt(gap3), unit: rk <= 3 ? null : 'خاڵ')),
-                ]),
-                const SizedBox(height: 10),
-                Row(children: [
-                  Expanded(child: Text('ڕۆژە چالاکەکانت', style: _ts(12.5, w: FontWeight.w800))),
-                  Text('$act / $need', style: _ts(12.5, w: FontWeight.w800)),
-                ]),
-                const SizedBox(height: 6),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(9),
-                  child: Stack(children: [
-                    Container(height: 10, color: _al(VA.cyan, .12)),
-                    FractionallySizedBox(
-                      widthFactor: math.min(1.0, act / need),
-                      child: Container(height: 10, decoration: BoxDecoration(gradient: VA.prime)),
-                    ),
-                  ]),
-                ),
-                const SizedBox(height: 10),
-                status(),
-              ])
-            : _Note(color: VA.cyan, icon: Icons.rocket_launch_rounded, text: 'هێشتا بەشدار نەبوویت. بەشداریکردن بەخۆڕاییە.'),
-      ),
-      _Box(
-        child: Row(children: [
-          _IconTile(icon: Icons.card_giftcard_rounded, color: VA.violet, size: 46),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text.rich(
-              TextSpan(children: [
-                TextSpan(text: 'خەڵاتی بەشداری\n', style: _ts(13.5, w: FontWeight.w800)),
-                const TextSpan(text: 'هەموو ئەوانەی هەر 30 ڕۆژی وەرزەکە تەواو دەکەن خەڵاتیان هەیە، جگە لە سێ خەڵاتە گەورەکە.'),
-              ]),
-              style: _ts(13, h: 1.6),
-            ),
-          ),
-        ]),
-      ),
-      _Box(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: const [
-          _Title(icon: Icons.shield_rounded, text: 'مەرجەکان'),
-          SizedBox(height: 10),
-          _RuleLine(icon: Icons.schedule_rounded, text: 'بۆ خەڵاتە گەورەکان دەبێت لانیکەم 25 ڕۆژ لە 30 ڕۆژ چالاک بیت.'),
-          _RuleLine(icon: Icons.emoji_events_rounded, text: 'ڕیزبەندی بەپێی کۆی خاڵی هەموو وەرزەکەیە. هەر ڕۆژێک سنووری 600 خاڵی هەیە.'),
-          _RuleLine(icon: Icons.smart_toy_rounded, text: 'AI هەموو چالاکییەک پشتڕاست دەکاتەوە (GPS، لێدانی دڵ، کامێرای ڕاستەوخۆ). خاڵی ساختە ڕەت دەکرێتەوە.'),
-          _RuleLine(icon: Icons.flag_rounded, text: 'براوەکان لە کۆتایی وەرزدا، کاتی سفربوونەوەی کاتژمێرەکەی سەرەوە، ڕادەگەیەنرێن.'),
-        ]),
-      ),
-      const SizedBox(height: 12),
-      _Btn(
-          label: 'خاڵەکان چۆن کۆدەکرێنەوە؟',
-          icon: Icons.help_outline_rounded,
-          secondary: true,
-          onTap: () {
-            Navigator.of(context).pop();
-            widget.onHow();
-          }),
-    ]);
-  }
-}
-
-// ---------------------------------------------------------------- how sheet
-class _HowSheet extends StatelessWidget {
-  const _HowSheet();
-  @override
-  Widget build(BuildContext context) {
-    const rules = [
-      'خاڵ لە سێرڤەر دەژمێردرێت، نەک لە مۆبایل. ئەپەکە تەنها داتای خاوی Band دەنێرێت.',
-      'هەنگاو بێ بەرزبوونەوەی لێدانی دڵ ڕەت دەکرێتەوە، بۆیە لەقاندنی مۆبایل و Band کار ناکات.',
-      'AI شێوازی جووڵە دەناسێتەوە: پانکە، مەکینە، ئاژەڵ، یان دانی Band بە کەسێکی تر.',
-      'ڕاکردن بە GPS و خێرایی و لێدانی دڵ پشتڕاست دەکرێتەوە؛ ئۆتۆمبێل و پاسکیل جیا دەکرێنەوە.',
-      'وێنەی ژەم تەنها لە کامێرای ڕاستەوخۆ وەردەگیرێت. وێنەی دووبارە و وێنەی ئینتەرنێت دەناسرێنەوە، و خاڵی خۆراک بۆ کوالێتییە نەک زۆری.',
-      'کێش تەنها لە تەرازووی زیرەکی بەستراو یان پشکنینی دوکان دەژمێردرێت.',
-      'هەر ژمارەی مۆبایلێک یەک ئەکاونت، و هەر Band ـێک یەک کەس؛ گۆڕینی Band چاوەڕوانی 7 ڕۆژی هەیە.',
-      'ڕۆژانە زۆرترین 600 خاڵ، و ئەگەر دوو کەس خاڵیان یەکسان بوو، ئەوەی ڕۆژی چالاکیی زیاترە پێشتر دەکەوێت.',
-      '100 کەسی یەکەم بە دەست پشکنینیان بۆ دەکرێت، و براوەکان بە ناسنامە و ڤیدیۆ پشتڕاست دەکرێنەوە.',
-      'فێڵکردن: یەکەمجار ئاگادارکردنەوە، دووەمجار سفرکردنەوەی خاڵی وەرز، سێیەمجار لابردنی ئەکاونت.',
-    ];
-    Widget h4(IconData i, String t) => Padding(
-          padding: const EdgeInsets.only(top: 14, bottom: 8),
-          child: Row(children: [Icon(i, size: 18, color: VA.cyan), const SizedBox(width: 7), Text(t, style: _ts(15, w: FontWeight.w800))]),
-        );
-    return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Text('خاڵەکان چۆن کۆدەکرێنەوە', textAlign: TextAlign.center, style: _ts(18, w: FontWeight.w800)),
-      h4(Icons.favorite_rounded, 'هەموو کارێکی تەندروست'),
-      ...kArenaCats.map((c) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(children: [
-              CatTile(cat: c, size: 24),
-              const SizedBox(width: 8),
-              SizedBox(width: 84, child: Text(c.name, style: _ts(12.5, w: FontWeight.w700))),
-              Expanded(child: Text(c.src, style: _ts(11.5, c: VA.muted))),
-              Text('${c.max}', style: _ts(13, w: FontWeight.w800)),
-            ]),
-          )),
-      const SizedBox(height: 6),
-      Text(
-          'ژمارەکان زۆرترین خاڵی ئاسایی هەر بەشێکن. هەموویان سنووریان هەیە: خەوی 12 کاتژمێر یان وەرزشی 5 کاتژمێر خاڵی زیاتر نادات. کەمکردنەوەی کێش تەنها بە ڕێژەیەکی تەندروست دەژمێردرێت (کەمتر لە 1kg لە هەفتەیەکدا). بۆ ئۆکسجین، خاڵەکە بۆ لەبەرکردنی Band ـە، نەک بۆ ژمارەکە.',
-          style: _ts(12.5, c: VA.muted, h: 1.6)),
-      h4(Icons.auto_awesome_rounded, 'هێزی نهێنیی ڕۆژ'),
-      Text(
-          'هەموو ڕۆژێک سێرڤەر بە هەڕەمەکی یەک بەش ×3 و یەکێکی تر ×1.5 دەکات. تا نیوەشەو بۆ هیچ مۆبایلێک نانێردرێت. پێش هەر ڕۆژێک کۆدێکی شاراوەی (hash) هێزەکە بڵاو دەکرێتەوە، بۆیە دوای ئاشکراکردن هەر کەسێک دەتوانێت بیپشکنێت و بزانێت هێزەکە نەگۆڕدراوە.',
-          style: _ts(13, h: 1.6)),
-      h4(Icons.shield_rounded, 'بۆچی کەس ناتوانێت فێڵ بکات'),
-      ...List.generate(
-          rules.length,
-          (i) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  SizedBox(width: 22, child: Text('${i + 1}.', style: _ts(13, c: VA.cyan, w: FontWeight.w800))),
-                  Expanded(child: Text(rules[i], style: _ts(13, h: 1.6))),
-                ]),
-              )),
-      h4(Icons.flag_rounded, 'یاسا'),
-      Text('بەشداربوون بەخۆڕاییە. بۆ خەڵاتە گەورەکان دەبێت لانیکەم 25 ڕۆژ لە 30 ڕۆژ چالاک بیت. Apple و Google هیچ بەشێکیان لەم پێشبڕکێیەدا نییە.',
-          style: _ts(12.5, c: VA.muted, h: 1.6)),
-      const SizedBox(height: 14),
-      _Btn(label: 'تێگەیشتم', secondary: true, onTap: () => Navigator.of(context).pop()),
-    ]);
-  }
-}
-
-// ---------------------------------------------------------------- join sheet
-class _JoinResult {
-  final String name, city, age;
-  const _JoinResult(this.name, this.city, this.age);
-}
-
-class _JoinSheet extends StatefulWidget {
-  final ArenaProfile profile;
-  const _JoinSheet({required this.profile});
-  @override
-  State<_JoinSheet> createState() => _JoinSheetState();
-}
-
-class _JoinSheetState extends State<_JoinSheet> {
-  final _name = TextEditingController();
-  final _q = TextEditingController();
-  final _wheel = FixedExtentScrollController();
-  List<String> list = kAllCities;
-  int idx = 0;
-  late String age = widget.profile.age > 0 ? ageGroup(widget.profile.age) : 'a';
-  String err = '';
-
-  @override
-  void dispose() {
-    _name.dispose();
-    _q.dispose();
-    _wheel.dispose();
-    super.dispose();
-  }
-
-  void _filter(String q) {
-    setState(() {
-      list = q.trim().isEmpty ? kAllCities : kAllCities.where((c) => c.contains(q.trim())).toList();
-      idx = 0;
-    });
-    if (_wheel.hasClients) _wheel.jumpToItem(0);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final p = widget.profile;
-    final hasName = p.name.trim().isNotEmpty;
-    return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Text('بەشداربوون لە VEX Arena', textAlign: TextAlign.center, style: _ts(18, w: FontWeight.w800)),
-      Text('بەخۆڕاییە · تەنها شارەکەت هەڵبژێرە', textAlign: TextAlign.center, style: _ts(12.5, c: VA.muted)),
-      const SizedBox(height: 14),
-      if (hasName)
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: _al(VA.cyan, .09), borderRadius: BorderRadius.circular(20), border: Border.all(color: VA.line2)),
-          child: Row(children: [
-            Container(
-              width: 46,
-              height: 46,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(shape: BoxShape.circle, gradient: VA.prime),
-              child: Text(p.name.trim().characters.first, style: _ts(20, c: VA.ink, w: FontWeight.w900)),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(p.name, style: _ts(16, w: FontWeight.w900)),
-                Text(
-                    [
-                      if (p.age > 0) 'تەمەن ${p.age}',
-                      if (p.phone.isNotEmpty) maskPhone(normPhone(p.phone)),
-                    ].join(' · '),
-                    style: _ts(12, c: VA.muted, w: FontWeight.w700)),
-              ]),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-              decoration: BoxDecoration(color: _al(VA.mint, .14), borderRadius: BorderRadius.circular(99)),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Icon(Icons.check_rounded, size: 14, color: VA.mint),
-                const SizedBox(width: 3),
-                Text('لە پڕۆفایلەکەت', style: _ts(11, c: VA.mint, w: FontWeight.w800)),
-              ]),
-            ),
-          ]),
-        )
-      else ...[
-        Text('ناوت', style: _ts(13, c: VA.muted, w: FontWeight.w700)),
-        const SizedBox(height: 6),
-        _Input(controller: _name, hint: 'بۆ نموونە: ئاراس کەریم', maxLength: 24),
-      ],
-      const SizedBox(height: 14),
-      Row(children: [
-        Icon(Icons.place_rounded, size: 15, color: VA.muted),
-        const SizedBox(width: 4),
-        Text('لە چ شارێکیت؟', style: _ts(13, c: VA.muted, w: FontWeight.w700)),
-      ]),
-      const SizedBox(height: 6),
-      _Input(controller: _q, hint: 'بگەڕێ بۆ شارەکەت...', onChanged: _filter),
-      const SizedBox(height: 8),
-      Container(
-        height: 170,
-        decoration: BoxDecoration(color: VA.surf2, borderRadius: BorderRadius.circular(18), border: Border.all(color: VA.line)),
-        child: list.isEmpty
-            ? Center(child: Text('شارەکە نەدۆزرایەوە', style: _ts(14, c: VA.muted)))
-            : Stack(alignment: Alignment.center, children: [
-                Container(
-                  height: 44,
-                  margin: const EdgeInsets.symmetric(horizontal: 8),
-                  decoration: BoxDecoration(
-                      color: _al(VA.mint, .14), borderRadius: BorderRadius.circular(14), border: Border.all(color: _al(VA.mint, .6), width: 1.5)),
-                ),
-                ListWheelScrollView.useDelegate(
-                  controller: _wheel,
-                  itemExtent: 44,
-                  diameterRatio: 1.6,
-                  physics: const FixedExtentScrollPhysics(),
-                  onSelectedItemChanged: (i) {
-                    HapticFeedback.selectionClick();
-                    setState(() => idx = i);
-                  },
-                  childDelegate: ListWheelChildBuilderDelegate(
-                    childCount: list.length,
-                    builder: (_, i) => Center(
-                      child: Text(list[i],
-                          style: _ts(i == idx ? 18 : 16, w: i == idx ? FontWeight.w800 : FontWeight.w600, c: i == idx ? VA.text : VA.muted)),
-                    ),
-                  ),
-                ),
-              ]),
-      ),
-      if (p.age <= 0) ...[
-        const SizedBox(height: 14),
-        Text('تەمەنت (بۆ پێشبڕکێیەکی دادپەروەرانە)', style: _ts(13, c: VA.muted, w: FontWeight.w700)),
-        const SizedBox(height: 6),
-        Wrap(
-          spacing: 6,
-          children: kAges.map((a) => _Chip(label: a[1], on: age == a[0], onTap: () => setState(() => age = a[0]))).toList(),
-        ),
-      ],
-      SizedBox(
-        height: 26,
-        child: Center(child: Text(err, style: _ts(12.5, c: VA.coral))),
-      ),
-      _Btn(
-        label: 'دەستپێبکە · کارتەکەم دروست بکە',
-        icon: Icons.rocket_launch_rounded,
-        big: true,
-        onTap: () {
-          final n = hasName ? p.name.trim() : _name.text.trim();
-          if (n.length < 2) {
-            setState(() => err = 'ناوت بنووسە (لانیکەم 2 پیت).');
-            return;
-          }
-          if (list.isEmpty) {
-            setState(() => err = 'شارێک هەڵبژێرە.');
-            return;
-          }
-          HapticFeedback.mediumImpact();
-          Navigator.of(context).pop(_JoinResult(n.characters.take(24).toString(), list[math.max(0, math.min(idx, list.length - 1))], age));
-        },
-      ),
-    ]);
-  }
-}
-
-// ---------------------------------------------------------------- character picker
-class _CharPickerSheet extends StatefulWidget {
-  final String current;
-  final CardData Function(String ch) preview;
-  const _CharPickerSheet({required this.current, required this.preview});
-  @override
-  State<_CharPickerSheet> createState() => _CharPickerSheetState();
-}
-
-class _CharPickerSheetState extends State<_CharPickerSheet> with SingleTickerProviderStateMixin {
-  late String cur = widget.current.isNotEmpty ? widget.current : kCharIds.first;
-  late final AnimationController _bob = AnimationController(vsync: this, duration: const Duration(milliseconds: 3400))..repeat(reverse: true);
-  int _flip = 0;
-
-  @override
-  void dispose() {
-    _bob.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Text('کارەکتەرەکەت هەڵبژێرە', textAlign: TextAlign.center, style: _ts(18, w: FontWeight.w800)),
-      Text('هەمان کارەکتەرەکانی بەشی خێزان و هاوڕێکانە', textAlign: TextAlign.center, style: _ts(12.5, c: VA.muted)),
-      const SizedBox(height: 12),
-      Center(
-        child: TweenAnimationBuilder<double>(
-          key: ValueKey(_flip),
-          tween: Tween(begin: _flip == 0 ? 0 : 1, end: 0),
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeOutBack,
-          builder: (_, v, child) => Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.identity()
-              ..setEntry(3, 2, .001)
-              ..rotateY(v * 1.2),
-            child: Opacity(opacity: (1 - v * .7).clamp(0.0, 1.0), child: child),
-          ),
-          child: ArenaCardView(data: widget.preview(cur), width: 189),
-        ),
-      ),
-      const SizedBox(height: 14),
-      GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, mainAxisSpacing: 10, crossAxisSpacing: 10),
-        itemCount: kCharIds.length,
-        itemBuilder: (_, i) {
-          final id = kCharIds[i];
-          final on = id == cur;
-          return AnimatedBuilder(
-            animation: _bob,
-            builder: (_, child) {
-              final ph = ((i % 8) / 8 + _bob.value) % 1.0;
-              return Transform.translate(offset: Offset(0, -3 * math.sin(ph * math.pi)), child: child);
-            },
-            child: GestureDetector(
-              onTap: () {
-                if (on) return;
-                HapticFeedback.selectionClick();
-                setState(() {
-                  cur = id;
-                  _flip++;
-                });
-              },
-              child: AnimatedScale(
-                scale: on ? 1.06 : 1,
-                duration: const Duration(milliseconds: 200),
-                child: Stack(children: [
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [
-                        BoxShadow(color: on ? VA.mint : VA.line2, spreadRadius: on ? 3 : 2),
-                        if (on) BoxShadow(color: _al(VA.mint, .6), blurRadius: 18, offset: const Offset(0, 6)),
-                      ]),
-                      child: CharAvatar(ch: id, name: '', size: 80),
-                    ),
-                  ),
-                  Positioned(
-                    top: 2,
-                    right: 2,
-                    child: AnimatedScale(
-                      scale: on ? 1 : 0,
-                      duration: const Duration(milliseconds: 250),
-                      curve: Curves.easeOutBack,
-                      child: Container(
-                        width: 22,
-                        height: 22,
-                        decoration: BoxDecoration(color: VA.mint, shape: BoxShape.circle),
-                        child: Icon(Icons.check_rounded, size: 14, color: VA.ink),
-                      ),
-                    ),
-                  ),
-                ]),
-              ),
-            ),
-          );
-        },
-      ),
-      const SizedBox(height: 14),
-      _Btn(label: 'لەسەر کارتەکەم دایبنێ', icon: Icons.check_rounded, big: true, onTap: () => Navigator.of(context).pop(cur)),
-    ]);
-  }
-}
-
-// ---------------------------------------------------------------- edit sheet
-class _EditSheet extends StatefulWidget {
-  final String name, bio;
-  const _EditSheet({required this.name, required this.bio});
-  @override
-  State<_EditSheet> createState() => _EditSheetState();
-}
-
-class _EditSheetState extends State<_EditSheet> {
-  late final _n = TextEditingController(text: widget.name);
-  late final _b = TextEditingController(text: widget.bio);
-  @override
-  void dispose() {
-    _n.dispose();
-    _b.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text('دەستکاریی پرۆفایل', textAlign: TextAlign.center, style: _ts(18, w: FontWeight.w800)),
-        const SizedBox(height: 12),
-        Text('ناو', style: _ts(13, c: VA.muted, w: FontWeight.w700)),
-        const SizedBox(height: 6),
-        _Input(controller: _n, maxLength: 24),
-        const SizedBox(height: 10),
-        Text('دەربارەی من', style: _ts(13, c: VA.muted, w: FontWeight.w700)),
-        const SizedBox(height: 6),
-        _Input(controller: _b, maxLength: 60),
-        const SizedBox(height: 14),
-        _Btn(label: 'پاشەکەوتکردن', icon: Icons.check_rounded, onTap: () => Navigator.of(context).pop([_n.text, _b.text])),
-      ]);
-}
-
-// =============================================================================
-// 9. ئەنیمەیشنی دروستبوونی کارت (3D) + کۆنفێتی
-// =============================================================================
-
-class _CardReveal extends StatefulWidget {
-  final CardData data;
-  final League league;
-  const _CardReveal({required this.data, required this.league});
-  @override
-  State<_CardReveal> createState() => _CardRevealState();
-}
-
-class _CardRevealState extends State<_CardReveal> with TickerProviderStateMixin {
-  late final AnimationController _in = AnimationController(vsync: this, duration: const Duration(milliseconds: 2050));
-  late final AnimationController _rays = AnimationController(vsync: this, duration: const Duration(seconds: 26))..repeat();
-  late final AnimationController _burst = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100));
-  late final AnimationController _out = AnimationController(vsync: this, duration: const Duration(milliseconds: 520));
-  bool landed = false;
-
-  @override
-  void initState() {
-    super.initState();
-    HapticFeedback.lightImpact();
-    _in.forward().whenComplete(() {
-      if (!mounted) return;
-      setState(() => landed = true);
-      HapticFeedback.heavyImpact();
-      _burst.forward();
-      showConfetti(context);
-    });
-  }
-
-  @override
-  void dispose() {
-    _in.dispose();
-    _rays.dispose();
-    _burst.dispose();
-    _out.dispose();
-    super.dispose();
-  }
-
-  /// هەمان ڕێڕەوی وێب: لە دوورەوە دێت و 3 جار دەسووڕێتەوە، پاشان کەمێک تێدەپەڕێت و دادەنیشێت
-  Matrix4 _cardMatrix(double t) {
-    double ry, rx, z, y;
-    if (t < .72) {
-      final k = Curves.easeOutCubic.transform(t / .72);
-      ry = _lerp(-6 * math.pi, -8 * math.pi / 180, k);
-      rx = _lerp(28 * math.pi / 180, -6 * math.pi / 180, k);
-      z = _lerp(-1600, 90, k);
-      y = _lerp(40, -14, k);
-    } else if (t < .86) {
-      final k = Curves.easeInOut.transform((t - .72) / .14);
-      ry = _lerp(-8, 4, k) * math.pi / 180;
-      rx = _lerp(-6, 2, k) * math.pi / 180;
-      z = _lerp(90, 0, k);
-      y = _lerp(-14, 4, k);
-    } else {
-      final k = Curves.easeOut.transform((t - .86) / .14);
-      ry = _lerp(4, 0, k) * math.pi / 180;
-      rx = _lerp(2, 0, k) * math.pi / 180;
-      z = 0;
-      y = _lerp(4, 0, k);
-    }
-    final scale = 1200 / (1200 - z); // perspective 1200px
-    return Matrix4.identity()
-      ..setEntry(3, 2, 1 / 1200)
-      ..translate(0.0, y)
-      ..scale(scale)
-      ..rotateX(rx)
-      ..rotateY(ry);
-  }
-
-  double _lerp(double a, double b, double t) => a + (b - a) * t;
-
-  @override
-  Widget build(BuildContext context) {
-    final d = widget.data;
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: AnimatedBuilder(
-        animation: _out,
-        builder: (_, child) => Opacity(opacity: 1 - _out.value, child: child),
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: RadialGradient(
-                  center: Alignment(0, -.24), radius: 1.1, colors: [vk(0xFF0D4F5E), vk(0xFF04202A), vk(0xFF010B10)], stops: [0, .45, 1]),
-            ),
-            child: Stack(alignment: Alignment.center, children: [
-              // rotating rays
-              Positioned.fill(
-                child: AnimatedBuilder(
-                  animation: _rays,
-                  builder: (_, __) => CustomPaint(painter: _RaysPainter(_rays.value * 2 * math.pi, _in.value)),
-                ),
-              ),
-              SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    SizedBox(
-                      width: 236,
-                      height: 330,
-                      child: Stack(clipBehavior: Clip.none, alignment: Alignment.center, children: [
-                        // sparks + ring burst
-                        AnimatedBuilder(
-                          animation: _burst,
-                          builder: (_, __) => CustomPaint(size: const Size(236, 330), painter: _BurstPainter(_burst.value)),
-                        ),
-                        AnimatedBuilder(
-                          animation: Listenable.merge([_in, _out]),
-                          builder: (_, __) {
-                            final m = _cardMatrix(_in.value);
-                            final outT = Curves.easeIn.transform(_out.value);
-                            final angle = _faceAngle(m);
-                            final front = angle;
-                            return Transform.translate(
-                              offset: Offset(0, MediaQuery.of(context).size.height * .3 * outT),
-                              child: Transform.scale(
-                                scale: 1 - .5 * outT,
-                                child: Transform(
-                                  alignment: Alignment.center,
-                                  transform: m,
-                                  child: front
-                                      ? ArenaCardView(data: d)
-                                      : Transform(
-                                          alignment: Alignment.center,
-                                          transform: Matrix4.rotationY(math.pi),
-                                          child: const _CardBack(),
-                                        ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ]),
-                    ),
-                    const SizedBox(height: 30),
-                    AnimatedOpacity(
-                      opacity: landed ? 1 : 0,
-                      duration: const Duration(milliseconds: 600),
-                      child: AnimatedSlide(
-                        offset: landed ? Offset.zero : const Offset(0, .15),
-                        duration: const Duration(milliseconds: 600),
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 360),
-                          child: Column(children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                              decoration: BoxDecoration(
-                                  color: _al(VA.mint, .14), borderRadius: BorderRadius.circular(99), border: Border.all(color: _al(VA.mint, .35))),
-                              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                                Icon(Icons.auto_awesome_rounded, size: 14, color: vk(0xFF7CF7B4)),
-                                const SizedBox(width: 6),
-                                Text('وەرزی ${Season.number} · بەشدارییەکەت قبوڵ کرا', style: _ts(12, c: vk(0xFF7CF7B4), w: FontWeight.w800)),
-                              ]),
-                            ),
-                            const SizedBox(height: 10),
-                            ShaderMask(
-                              shaderCallback: (r) => VA.prime.createShader(r),
-                              child: Text('کارتەکەت ئامادەیە!', style: _ts(26, c: kW, w: FontWeight.w900)),
-                            ),
-                            const SizedBox(height: 4),
-                            Text.rich(
-                              TextSpan(children: [
-                                TextSpan(text: 'بەخێربێیت ${d.name} · لە لیگی '),
-                                TextSpan(text: widget.league.name, style: _ts(13.5, c: kW, w: FontWeight.w800)),
-                                const TextSpan(text: ' دەست پێدەکەیت · پلەی '),
-                                TextSpan(text: '#${_fmt(d.rank)}', style: _ts(13.5, c: kW, w: FontWeight.w800)),
-                              ]),
-                              textAlign: TextAlign.center,
-                              style: _ts(13.5, c: _al(vk(0xFFEAFCFF), .78), h: 1.6),
-                            ),
-                            const SizedBox(height: 16),
-                            _Btn(
-                              label: 'کارتەکەم دابنێ',
-                              icon: Icons.check_rounded,
-                              big: true,
-                              onTap: () async {
-                                if (!landed) return;
-                                HapticFeedback.mediumImpact();
-                                await _out.forward();
-                                if (mounted) Navigator.of(context).pop();
-                              },
-                            ),
-                          ]),
-                        ),
-                      ),
-                    ),
-                  ]),
-                ),
-              ),
-            ]),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// ڕووی پێشەوە یان پشتەوە دیارە؟ (وەک backface-visibility)
-  bool _faceAngle(Matrix4 m) {
-    // نۆرماڵی کارت (0,0,1) دوای گۆڕان: ستوونی سێیەمی ماتریکس
-    final nz = m.entry(2, 2);
-    return nz >= 0;
-  }
-}
-
-class _CardBack extends StatelessWidget {
-  const _CardBack();
-  @override
-  Widget build(BuildContext context) => Container(
-        width: 236,
-        height: 330,
-        decoration: BoxDecoration(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(30), bottom: Radius.circular(26)),
-          gradient: RadialGradient(
-              center: Alignment(0, -.3), colors: [vk(0xFF1FD4C4), vk(0xFF0B5E74), vk(0xFF06303C)], stops: [0, .55, 1]),
-          border: Border.all(color: _al(kW, .22), width: 1.5),
-        ),
-        alignment: Alignment.center,
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text('VEX',
-              style: TextStyle(
-                  fontSize: 46,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 2,
-                  color: kW,
-                  shadows: [Shadow(color: _al(Colors.black, .35), blurRadius: 20, offset: const Offset(0, 4))])),
-          const SizedBox(height: 6),
-          Text('ARENA', style: TextStyle(fontSize: 12, letterSpacing: 6, color: _al(kW, .85))),
-        ]),
-      );
-}
-
-class _RaysPainter extends CustomPainter {
-  final double angle, appear;
-  _RaysPainter(this.angle, this.appear);
-  @override
-  void paint(Canvas canvas, Size s) {
-    final c = Offset(s.width / 2, s.height * .38);
-    final r = 450.0;
-    final o = (appear * 2).clamp(0.0, 1.0);
-    final p = Paint()
-      ..shader = RadialGradient(colors: [_al(vk(0xFF8FF3F9), .09 * o), _al(vk(0xFF8FF3F9), 0)], stops: const [0, .6])
-          .createShader(Rect.fromCircle(center: c, radius: r));
-    for (var i = 0; i < 16; i++) {
-      final a = angle + i * (2 * math.pi / 16);
-      final path = Path()
-        ..moveTo(c.dx, c.dy)
-        ..lineTo(c.dx + r * math.cos(a), c.dy + r * math.sin(a))
-        ..lineTo(c.dx + r * math.cos(a + .14), c.dy + r * math.sin(a + .14))
-        ..close();
-      canvas.drawPath(path, p);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_RaysPainter o) => o.angle != angle || o.appear != appear;
-}
-
-class _BurstPainter extends CustomPainter {
-  final double t;
-  _BurstPainter(this.t);
-  @override
-  void paint(Canvas canvas, Size s) {
-    if (t <= 0 || t >= 1) return;
-    final c = Offset(s.width / 2, s.height / 2);
-    // ring
-    canvas.drawCircle(
-        c,
-        118 * (.6 + 1.6 * t),
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2
-          ..color = _al(vk(0xFF8FF3F9), .9 * (1 - t)));
-    // sparks
-    for (var i = 0; i < 18; i++) {
-      final delay = (i % 6) * .08;
-      final k = ((t - delay) / (1 - delay)).clamp(0.0, 1.0);
-      if (k <= 0) continue;
-      final e = Curves.easeOutCubic.transform(k);
-      final a = i * 20 * math.pi / 180;
-      final d = 30 + 180 * e;
-      final col = i % 3 == 2 ? vk(0xFFFFD56B) : vk(0xFF8FF3F9);
-      final pos = c + Offset(math.cos(a) * d, math.sin(a) * d);
-      canvas.drawCircle(pos, 3 * (1 - .6 * e), Paint()..color = _al(col, 1 - e));
-      canvas.drawCircle(pos, 7 * (1 - .6 * e), Paint()..color = _al(col, .25 * (1 - e)));
-    }
-  }
-
-  @override
-  bool shouldRepaint(_BurstPainter o) => o.t != t;
-}
-
-/// کۆنفێتی بەسەر هەموو شاشەکەدا
-void showConfetti(BuildContext context) {
-  final ov = Overlay.maybeOf(context, rootOverlay: true);
-  if (ov == null) return;
-  late OverlayEntry e;
-  e = OverlayEntry(builder: (_) => _Confetti(onDone: () => e.remove()));
-  ov.insert(e);
-}
-
-class _Confetti extends StatefulWidget {
-  final VoidCallback onDone;
-  const _Confetti({required this.onDone});
-  @override
-  State<_Confetti> createState() => _ConfettiState();
-}
-
-class _ConfettiState extends State<_Confetti> with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 3200));
-  final _r = math.Random();
-  late final List<List<double>> bits = List.generate(70, (_) => [_r.nextDouble(), _r.nextDouble() * .6, .6 + _r.nextDouble() * .7, _r.nextDouble() * 6, _r.nextInt(5).toDouble(), 5 + _r.nextDouble() * 5]);
-
-  @override
-  void initState() {
-    super.initState();
-    _c.forward().whenComplete(widget.onDone);
-  }
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => IgnorePointer(
-        child: AnimatedBuilder(animation: _c, builder: (_, __) => CustomPaint(size: Size.infinite, painter: _ConfettiPainter(_c.value, bits))),
-      );
-}
-
-class _ConfettiPainter extends CustomPainter {
-  final double t;
-  final List<List<double>> bits;
-  _ConfettiPainter(this.t, this.bits);
-  static get cols => [vk(0xFFFFD56B), vk(0xFF3CF08A), vk(0xFF2FE6F3), vk(0xFF9B7BFF), vk(0xFFFF6F86)];
-  @override
-  void paint(Canvas canvas, Size s) {
-    for (final b in bits) {
-      final k = ((t - b[1] * .5) / (1 - b[1] * .5)).clamp(0.0, 1.0);
-      if (k <= 0) continue;
-      final x = b[0] * s.width + math.sin(k * 6 + b[3]) * 18;
-      final y = -20 + k * (s.height * 1.1) * b[2];
-      canvas.save();
-      canvas.translate(x, y);
-      canvas.rotate(k * 12 + b[3]);
-      canvas.drawRect(Rect.fromCenter(center: Offset.zero, width: b[5], height: b[5] * .55),
-          Paint()..color = _al(cols[b[4].toInt()], (1 - k * .6).clamp(0.0, 1.0)));
-      canvas.restore();
-    }
-  }
-
-  @override
-  bool shouldRepaint(_ConfettiPainter o) => o.t != t;
-}
-
-// =============================================================================
-// 10. ویجێتە بچووکەکان
-// =============================================================================
-
-class _Card extends StatelessWidget {
-  final Widget child;
-  final bool glow;
-  final EdgeInsets margin;
-  const _Card({required this.child, this.glow = false, this.margin = const EdgeInsets.only(top: 14)});
-  @override
-  Widget build(BuildContext context) => Container(
-        margin: margin,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: VA.surf,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: glow ? VA.line2 : VA.line),
-          gradient: glow
-              ? LinearGradient(colors: [_al(vk(0xFF0F5566), .9), _al(vk(0xFF0A3644), .9)], begin: Alignment.topLeft, end: Alignment.bottomRight)
-              : null,
-          boxShadow: glow ? [BoxShadow(color: _al(VA.cyan, .12), blurRadius: 30, offset: const Offset(0, 12))] : null,
-        ),
-        child: child,
-      );
-}
-
-class _Box extends StatelessWidget {
-  final Widget child;
-  const _Box({required this.child});
-  @override
-  Widget build(BuildContext context) => Container(
-        margin: const EdgeInsets.only(top: 12),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: VA.surf, borderRadius: BorderRadius.circular(22), border: Border.all(color: VA.line)),
-        child: child,
-      );
-}
-
-class _Title extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  final String? note;
-  const _Title({required this.icon, required this.text, this.note});
-  @override
-  Widget build(BuildContext context) => Row(children: [
-        Container(
-          width: 30,
-          height: 30,
-          decoration: BoxDecoration(color: _al(VA.cyan, .12), borderRadius: BorderRadius.circular(10)),
-          child: Icon(icon, size: 16, color: VA.cyan),
-        ),
-        const SizedBox(width: 8),
-        Expanded(child: Text(text, style: _ts(15.5, w: FontWeight.w800))),
-        if (note != null) Flexible(child: Text(note!, textAlign: TextAlign.end, style: _ts(11.5, c: VA.muted))),
-      ]);
-}
-
-class _Btn extends StatefulWidget {
-  final String label;
-  final IconData? icon;
-  final VoidCallback onTap;
-  final bool secondary, danger, big;
-  const _Btn({required this.label, required this.onTap, this.icon, this.secondary = false, this.danger = false, this.big = false});
-  @override
-  State<_Btn> createState() => _BtnState();
-}
-
-class _BtnState extends State<_Btn> {
-  bool _down = false;
-  @override
-  Widget build(BuildContext context) {
-    final fg = widget.danger ? VA.coral : widget.secondary ? VA.text : VA.ink;
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _down = true),
-      onTapCancel: () => setState(() => _down = false),
-      onTapUp: (_) => setState(() => _down = false),
-      onTap: widget.onTap,
-      child: AnimatedScale(
-        scale: _down ? .97 : 1,
-        duration: const Duration(milliseconds: 120),
-        child: Container(
-          height: widget.big ? 56 : 50,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(
-            gradient: widget.secondary || widget.danger ? null : VA.prime,
-            color: widget.danger ? _al(VA.coral, .12) : widget.secondary ? VA.surf2 : null,
-            borderRadius: BorderRadius.circular(18),
-            border: widget.secondary ? Border.all(color: VA.line2) : widget.danger ? Border.all(color: _al(VA.coral, .35)) : null,
-            boxShadow: !widget.secondary && !widget.danger
-                ? [BoxShadow(color: _al(VA.mint, .3), blurRadius: 22, offset: const Offset(0, 10), spreadRadius: -8)]
-                : null,
-          ),
-          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            if (widget.icon != null) ...[Icon(widget.icon, size: 19, color: fg), const SizedBox(width: 8)],
-            Flexible(
-              child: Text(widget.label,
-                  textAlign: TextAlign.center, maxLines: 2, style: _ts(widget.big ? 15.5 : 14.5, c: fg, w: FontWeight.w800, h: 1.3)),
-            ),
-          ]),
-        ),
-      ),
-    );
-  }
-}
-
-class _SqBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _SqBtn({required this.icon, required this.onTap});
-  @override
-  Widget build(BuildContext context) => InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(color: VA.surf2, borderRadius: BorderRadius.circular(18), border: Border.all(color: VA.line2)),
-          child: Icon(icon, size: 19, color: VA.text),
-        ),
-      );
-}
-
-class _IconBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _IconBtn({required this.icon, required this.onTap});
-  @override
-  Widget build(BuildContext context) => InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(color: VA.surf, borderRadius: BorderRadius.circular(14), border: Border.all(color: VA.line)),
-          child: Icon(icon, size: 21, color: VA.text),
-        ),
-      );
-}
-
-class _CoinPill extends StatelessWidget {
-  final int coins;
-  const _CoinPill({required this.coins});
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsetsDirectional.fromSTEB(12, 7, 10, 7),
-        decoration: BoxDecoration(color: VA.surf, borderRadius: BorderRadius.circular(99), border: Border.all(color: VA.line)),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          TweenAnimationBuilder<double>(
-            tween: Tween(end: coins.toDouble()),
-            duration: const Duration(milliseconds: 700),
-            builder: (_, v, __) => Text(_fmt(v), style: _ts(13, w: FontWeight.w800)),
-          ),
-          const SizedBox(width: 6),
-          Container(
-            width: 19,
-            height: 19,
-            decoration: BoxDecoration(shape: BoxShape.circle, gradient: VA.goldG),
-            child: Icon(Icons.star_rounded, size: 12, color: vk(0xFF6B4300)),
-          ),
-        ]),
-      );
-}
-
-class _Seg extends StatelessWidget {
-  final List<List<Object>> items;
-  final String value;
-  final ValueChanged<String> onChanged;
-  const _Seg({required this.items, required this.value, required this.onChanged});
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: vk(0xFF06303C),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: VA.line),
-          boxShadow: [BoxShadow(color: _al(Colors.black, .4), blurRadius: 18, offset: const Offset(0, 8), spreadRadius: -12)],
-        ),
-        child: Row(
-          children: items.map((t) {
-            final on = t[0] == value;
-            return Expanded(
-              child: GestureDetector(
-                onTap: () => onChanged(t[0] as String),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: BoxDecoration(
-                    gradient: on ? VA.prime : null,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: on ? [BoxShadow(color: _al(VA.mint, .35), blurRadius: 18, offset: const Offset(0, 6), spreadRadius: -6)] : null,
-                  ),
-                  child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Icon(t[2] as IconData, size: 16, color: on ? VA.ink : VA.muted),
-                    const SizedBox(width: 6),
-                    Text(t[1] as String, style: _ts(13, w: FontWeight.w800, c: on ? VA.ink : VA.muted)),
-                  ]),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      );
-}
-
-class _Chip extends StatelessWidget {
-  final String label;
-  final IconData? icon;
-  final bool on, dim;
-  final VoidCallback onTap;
-  const _Chip({required this.label, required this.on, required this.onTap, this.icon, this.dim = false});
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
-          decoration: BoxDecoration(
-            color: on ? _al(VA.mint, .14) : VA.surf2,
-            borderRadius: BorderRadius.circular(99),
-            border: Border.all(color: on ? VA.mint : VA.line),
-          ),
-          child: Opacity(
-            opacity: dim ? .5 : 1,
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              if (icon != null) ...[Icon(icon, size: 14, color: on ? VA.mint : VA.muted), const SizedBox(width: 5)],
-              Text(label, style: _ts(12.5, w: FontWeight.w800, c: on ? VA.mint : VA.text)),
-            ]),
-          ),
-        ),
-      );
-}
-
-class _Input extends StatelessWidget {
-  final TextEditingController controller;
-  final String? hint;
-  final int? maxLength;
-  final ValueChanged<String>? onChanged;
-  const _Input({required this.controller, this.hint, this.maxLength, this.onChanged});
-  @override
-  Widget build(BuildContext context) => TextField(
-        controller: controller,
-        onChanged: onChanged,
-        maxLength: maxLength,
-        style: _ts(15),
-        cursorColor: VA.cyan,
-        decoration: InputDecoration(
-          counterText: '',
-          hintText: hint,
-          hintStyle: _ts(15, c: _al(VA.muted, .7)),
-          filled: true,
-          fillColor: VA.surf2,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: VA.line)),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: VA.cyan, width: 1.5)),
-        ),
-      );
-}
-
-class _StatTile extends StatelessWidget {
-  final String label;
-  final Widget value;
-  const _StatTile({required this.label, required this.value});
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(color: _al(kW, .04), borderRadius: BorderRadius.circular(16), border: Border.all(color: VA.line)),
-        child: Row(children: [
-          Expanded(child: Text(label, style: _ts(12, c: VA.muted, w: FontWeight.w600))),
-          value,
-        ]),
-      );
-}
-
-class _MiniStat extends StatelessWidget {
-  final String label, value;
-  final String? unit;
-  const _MiniStat({required this.label, required this.value, this.unit});
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(color: _al(VA.cyan, .09), borderRadius: BorderRadius.circular(16)),
-        child: Column(children: [
-          Text(label, style: _ts(11, c: VA.muted, w: FontWeight.w700)),
-          Text(value, style: _ts(20, w: FontWeight.w900)),
-          if (unit != null) Text(unit!, style: _ts(11, c: VA.muted, w: FontWeight.w700)),
-        ]),
-      );
-}
-
-class _Note extends StatelessWidget {
-  final Color color;
-  final IconData icon;
-  final String text;
-  const _Note({required this.color, required this.icon, required this.text});
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-            color: _al(color, .12), borderRadius: BorderRadius.circular(14), border: Border.all(color: _al(color, .3))),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Padding(padding: const EdgeInsets.only(top: 2), child: Icon(icon, size: 16, color: color)),
-          const SizedBox(width: 8),
-          Expanded(child: Text(text, style: _ts(12.5, h: 1.6))),
-        ]),
-      );
-}
-
-class _RuleLine extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  const _RuleLine({required this.icon, required this.text});
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 9),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(color: _al(VA.cyan, .12), borderRadius: BorderRadius.circular(10)),
-            child: Icon(icon, size: 15, color: VA.cyan),
-          ),
-          const SizedBox(width: 10),
-          Expanded(child: Text(text, style: _ts(13, h: 1.6))),
-        ]),
-      );
-}
-
-class _InfoLine extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  final Color color;
-  _InfoLine({required this.icon, required this.text, Color? color}) : color = color ?? VA.muted;
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Padding(padding: const EdgeInsets.only(top: 2), child: Icon(icon, size: 15, color: color)),
-          const SizedBox(width: 8),
-          Expanded(child: Text(text, style: _ts(13, c: VA.text, h: 1.55))),
-        ]),
-      );
-}
-
-class _AiRow extends StatelessWidget {
-  final bool ok;
-  final String title, sub;
-  const _AiRow({required this.ok, required this.title, required this.sub});
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: VA.line))),
-        child: Row(children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(color: _al(ok ? VA.mint : VA.coral, .14), borderRadius: BorderRadius.circular(10)),
-            child: Icon(ok ? Icons.check_rounded : Icons.close_rounded, size: 16, color: ok ? VA.mint : VA.coral),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, style: _ts(13.5, w: FontWeight.w700)),
-              Text(sub, style: _ts(11.5, c: VA.muted)),
-            ]),
-          ),
-        ]),
-      );
-}
-
-class CatTile extends StatelessWidget {
-  final ArenaCat cat;
-  final double size;
-  const CatTile({super.key, required this.cat, this.size = 40});
-  @override
-  Widget build(BuildContext context) => _IconTile(icon: cat.icon, color: cat.color, size: size);
-}
-
-class _IconTile extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final double size;
-  const _IconTile({required this.icon, required this.color, this.size = 40});
-  @override
-  Widget build(BuildContext context) => Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(size * .32),
-          gradient: LinearGradient(
-            colors: [Color.lerp(color, kW, .15)!, Color.lerp(color, Colors.black, .25)!],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          boxShadow: [BoxShadow(color: _al(color, .35), blurRadius: size * .3, offset: Offset(0, size * .12), spreadRadius: -size * .1)],
-        ),
-        child: Icon(icon, size: size * .54, color: kW),
-      );
-}
-
-class _ActivityTile extends StatelessWidget {
-  final ArenaCat cat;
-  final String value, points;
-  final bool active;
-  final VoidCallback onTap;
-  const _ActivityTile({required this.cat, required this.value, required this.points, required this.active, required this.onTap});
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-        onTap: onTap,
-        child: Opacity(
-          opacity: active ? 1 : .55,
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(4, 10, 4, 8),
-            decoration: BoxDecoration(color: _al(kW, .04), borderRadius: BorderRadius.circular(18), border: Border.all(color: VA.line)),
-            child: Stack(children: [
-              if (active)
-                Positioned(
-                  top: 0,
-                  right: 4,
-                  child: Container(width: 7, height: 7, decoration: BoxDecoration(color: VA.mint, shape: BoxShape.circle)),
-                ),
-              Column(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                CatTile(cat: cat, size: 38),
-                Text(cat.name, textAlign: TextAlign.center, maxLines: 2, style: _ts(11.5, w: FontWeight.w800, h: 1.25)),
-                Text(value, textAlign: TextAlign.center, maxLines: 2, style: _ts(9.5, c: VA.muted, h: 1.3)),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(color: _al(VA.violet, .16), borderRadius: BorderRadius.circular(99)),
-                  child: Text(points, style: _ts(10.5, c: vk(0xFFC9B8FF), w: FontWeight.w800)),
-                ),
-              ]),
-            ]),
-          ),
-        ),
-      );
-}
-
-class _Podium extends StatelessWidget {
-  final ArenaPlayer p;
-  final int place;
-  final double h, size;
-  final Color color;
-  final Widget val;
-  final ValueChanged<ArenaPlayer> onTap;
-  const _Podium({required this.p, required this.place, required this.h, required this.color, required this.size, required this.val, required this.onTap});
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-        onTap: () => onTap(p),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          if (place == 1) Icon(Icons.workspace_premium_rounded, color: VA.gold, size: 26),
-          CharAvatar(ch: p.ch, name: p.name, size: size, ring: color, grad: p.grad),
-          const SizedBox(height: 6),
-          Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: _ts(12.5, w: FontWeight.w800)),
-          Text(p.city, style: _ts(10.5, c: VA.muted)),
-          val,
-          const SizedBox(height: 4),
-          Container(
-            height: h,
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-              gradient: LinearGradient(colors: [color, _al(color, .45)], begin: Alignment.topCenter, end: Alignment.bottomCenter),
-            ),
-            child: Text('$place', style: _ts(22, c: vk(0xFF2B1D05), w: FontWeight.w900)),
-          ),
-        ]),
-      );
-}
-
-class _RankRow extends StatelessWidget {
-  final String rank;
-  final ArenaPlayer p;
-  final Widget value;
-  final VoidCallback onTap;
-  const _RankRow({required this.rank, required this.p, required this.value, required this.onTap});
-  @override
-  Widget build(BuildContext context) {
-    final lg = leagueOf(p.points);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: VA.line))),
-        child: Row(children: [
-          SizedBox(width: 44, child: Text(rank, style: _ts(13, c: VA.muted, w: FontWeight.w800))),
-          CharAvatar(ch: p.ch, name: p.name, size: 40, ring: lg.accent, grad: p.grad),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(p.name, style: _ts(14, w: FontWeight.w800), overflow: TextOverflow.ellipsis),
-              Row(children: [
-                Flexible(child: Text('${p.city} · ${lg.name} · ', style: _ts(11.5, c: VA.muted), overflow: TextOverflow.ellipsis)),
-                Icon(Icons.local_fire_department_rounded, size: 12, color: vk(0xFFFF9466)),
-                Text('${p.streak}', style: _ts(11.5, c: VA.muted)),
-              ]),
-            ]),
-          ),
-          SizedBox(
-            width: 34,
-            child: p.move == 0
-                ? Text('–', textAlign: TextAlign.center, style: _ts(12, c: VA.muted))
-                : Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Icon(p.move > 0 ? Icons.arrow_drop_up_rounded : Icons.arrow_drop_down_rounded,
-                        size: 18, color: p.move > 0 ? VA.mint : VA.coral),
-                    Text('${p.move.abs()}', style: _ts(11.5, c: p.move > 0 ? VA.mint : VA.coral, w: FontWeight.w800)),
-                  ]),
-          ),
-          const SizedBox(width: 6),
-          value,
-        ]),
-      ),
-    );
-  }
-}
-
-class _PrizeRow extends StatelessWidget {
-  const _PrizeRow();
-  @override
-  Widget build(BuildContext context) {
-    Widget pz(int n, IconData ic, String name, Color c, {bool big = false}) => Expanded(
-          flex: big ? 23 : 20,
-          child: Stack(clipBehavior: Clip.none, alignment: Alignment.topCenter, children: [
-            Container(
-              margin: const EdgeInsets.only(top: 10),
-              padding: EdgeInsets.fromLTRB(4, big ? 18 : 14, 4, 10),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(18),
-                color: _al(c, .1),
-                border: Border.all(color: _al(c, .4)),
-              ),
-              child: Column(children: [
-                Icon(ic, size: big ? 30 : 24, color: c),
-                const SizedBox(height: 6),
-                Text(name, textAlign: TextAlign.center, maxLines: 2, style: _ts(12, w: FontWeight.w800, h: 1.3)),
-              ]),
-            ),
-            Container(
-              width: 22,
-              height: 22,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(color: c, shape: BoxShape.circle),
-              child: Text('$n', style: _ts(11, c: vk(0xFF2B1D05), w: FontWeight.w900)),
-            ),
-          ]),
-        );
-    return Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-      pz(2, Icons.phone_iphone_rounded, 'iPhone 17 Pro', VA.silver),
-      const SizedBox(width: 8),
-      pz(1, Icons.directions_car_filled_rounded, 'ئۆتۆمبێل', VA.gold, big: true),
-      const SizedBox(width: 8),
-      pz(3, Icons.payments_rounded, '1,000,000 دینار', VA.bronze),
-    ]);
-  }
-}
-
-/// نوارە جووڵاوەکەی خەڵاتەکان — پەنجەی لێبدە وردەکارییەکان دەکرێتەوە
-class _PrizeTicker extends StatefulWidget {
-  final int daysLeft;
-  final VoidCallback onTap;
-  const _PrizeTicker({required this.daysLeft, required this.onTap});
-  @override
-  State<_PrizeTicker> createState() => _PrizeTickerState();
-}
-
-class _PrizeTickerState extends State<_PrizeTicker> with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(seconds: 30))..repeat();
-  final _k = GlobalKey();
-  double _w = 0;
-  bool _down = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
-  }
-
-  void _measure() {
-    final b = _k.currentContext?.findRenderObject() as RenderBox?;
-    if (b != null && b.hasSize && mounted) setState(() => _w = b.size.width);
-  }
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  Widget _items({Key? key}) {
-    Widget it(IconData i, Color c, String a, String b) => Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 13),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(i, size: 15, color: c),
-            const SizedBox(width: 5),
-            Text(a, style: _ts(13, w: FontWeight.w700)),
-            Text(b, style: _ts(13, c: VA.gold, w: FontWeight.w800)),
-          ]),
-        );
-    return Row(key: key, mainAxisSize: MainAxisSize.min, children: [
-      it(Icons.workspace_premium_rounded, VA.gold, 'پلەی یەکەم: ', 'ئۆتۆمبێل'),
-      it(Icons.phone_iphone_rounded, VA.silver, 'پلەی دووەم: ', 'iPhone 17 Pro'),
-      it(Icons.payments_rounded, VA.bronze, 'پلەی سێیەم: ', '1,000,000 دینار'),
-      it(Icons.card_giftcard_rounded, VA.gold, 'هەموو ئەوانەی 30 ڕۆژ تەواو دەکەن ', 'خەڵاتیان هەیە'),
-    ]);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _down = true),
-      onTapCancel: () => setState(() => _down = false),
-      onTapUp: (_) => setState(() => _down = false),
-      onTap: () {
-        HapticFeedback.selectionClick();
-        widget.onTap();
-      },
-      child: AnimatedScale(
-        scale: _down ? .98 : 1,
-        duration: const Duration(milliseconds: 150),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            gradient: LinearGradient(colors: [_al(VA.gold, .13), _al(VA.gold, .03)]),
-            border: Border.all(color: _al(VA.gold, .28)),
-          ),
-          child: Row(children: [
-            Expanded(
-              child: ShaderMask(
-                shaderCallback: (r) => const LinearGradient(
-                  colors: [Colors.transparent, Colors.black, Colors.black, Colors.transparent],
-                  stops: [0, .08, .92, 1],
-                ).createShader(r),
-                blendMode: BlendMode.dstIn,
-                child: ClipRect(
-                  child: SizedBox(
-                    height: 22,
-                    child: AnimatedBuilder(
-                      animation: _c,
-                      builder: (_, child) => OverflowBox(
-                        alignment: AlignmentDirectional.centerStart,
-                        maxWidth: double.infinity,
-                        child: Transform.translate(offset: Offset(_w * _c.value, 0), child: child),
-                      ),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [_items(key: _k), _items()]),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Icon(Icons.hourglass_bottom_rounded, size: 14, color: VA.gold),
-            const SizedBox(width: 3),
-            Text('${widget.daysLeft} ڕۆژ', style: _ts(12, c: VA.gold, w: FontWeight.w800)),
-            const SizedBox(width: 8),
-            Container(
-              width: 26,
-              height: 26,
-              decoration: BoxDecoration(color: _al(VA.gold, .18), shape: BoxShape.circle),
-              child: Icon(Icons.chevron_left_rounded, size: 18, color: VA.gold),
-            ),
-          ]),
-        ),
-      ),
-    );
-  }
-}
-
-class _MysteryCard extends StatefulWidget {
-  final String power;
-  final String? guess;
-  final bool revealed;
-  final ValueChanged<String> onGuess;
-  final VoidCallback onDemoReveal;
-  const _MysteryCard({required this.power, required this.guess, required this.revealed, required this.onGuess, required this.onDemoReveal});
-  @override
-  State<_MysteryCard> createState() => _MysteryCardState();
-}
-
-class _MysteryCardState extends State<_MysteryCard> with SingleTickerProviderStateMixin {
-  late final AnimationController _spin = AnimationController(vsync: this, duration: const Duration(seconds: 24))..repeat();
-  @override
-  void dispose() {
-    _spin.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final g = widget.guess, rev = widget.revealed, p = catById(widget.power);
-    final won = rev && g == widget.power;
-    Widget lock;
-    if (rev) {
-      lock = _Note(
-          color: won ? VA.mint : VA.amber,
-          icon: won ? Icons.check_rounded : Icons.lightbulb_rounded,
-          text: won ? 'ڕاستت پێکا! هێزی ئەمڕۆ ${p.name} بوو · +50 خاڵ' : 'هێزی ئەمڕۆ ${p.name} بوو · سبەینێ هێزێکی نوێ دەبێت');
-    } else if (g != null) {
-      lock = _Note(color: VA.violet, icon: Icons.lock_rounded, text: 'پێشبینییەکەت: ${catById(g).name} · ئەنجام لە نیوەشەو ئاشکرا دەبێت');
-    } else {
-      lock = _Note(color: VA.violet, icon: Icons.auto_awesome_rounded, text: 'پێشبینی بکە کامەیە؛ ئەگەر ڕاست بێت +50 خاڵ وەردەگریت');
-    }
-    return Container(
-      margin: const EdgeInsets.only(top: 14),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        gradient: LinearGradient(colors: [vk(0xFF3A2378), vk(0xFF221453)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-        border: Border.all(color: _al(VA.violet, .45)),
-        boxShadow: [BoxShadow(color: _al(VA.violet, .25), blurRadius: 30, offset: const Offset(0, 12))],
-      ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Row(children: [
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('هێزی نهێنیی ئەمڕۆ', style: _ts(19, w: FontWeight.w800)),
-              const SizedBox(height: 4),
-              Text.rich(
-                TextSpan(children: [
-                  const TextSpan(text: 'یەکێک لەم 11 بەشە ئەمڕۆ '),
-                  TextSpan(text: '×3', style: _ts(13, w: FontWeight.w900)),
-                  const TextSpan(text: 'ـە و یەکێکی تر '),
-                  TextSpan(text: '×1.5', style: _ts(13, w: FontWeight.w900)),
-                  const TextSpan(text: '. تا نیوەشەو کەس نازانێت.'),
-                ]),
-                style: _ts(13, c: _al(VA.text, .8), h: 1.6),
-              ),
-            ]),
-          ),
-          SizedBox(
-            width: 112,
-            height: 112,
-            child: AnimatedBuilder(
-              animation: _spin,
-              builder: (_, __) => Stack(alignment: Alignment.center, children: [
-                Container(
-                  width: 104,
-                  height: 104,
-                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: _al(kW, .15), style: BorderStyle.solid)),
-                ),
-                ...List.generate(kArenaCats.length, (i) {
-                  final a = i / kArenaCats.length * 2 * math.pi + _spin.value * 2 * math.pi;
-                  return Transform.translate(
-                    offset: Offset(math.cos(a) * 49, math.sin(a) * 49),
-                    child: Icon(kArenaCats[i].icon, size: 14, color: _al(kW, .75)),
-                  );
-                }),
-                Container(
-                  width: 58,
-                  height: 58,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(colors: [vk(0xFFB79CFF), vk(0xFF6A3AE8)]),
-                    boxShadow: [BoxShadow(color: _al(VA.violet, .7), blurRadius: 24)],
-                  ),
-                  child: rev ? Icon(p.icon, size: 26, color: kW) : Text('?', style: _ts(30, c: kW, w: FontWeight.w900)),
-                ),
-              ]),
-            ),
-          ),
-        ]),
-        const SizedBox(height: 10),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(color: _al(Colors.black, .2), borderRadius: BorderRadius.circular(16)),
-          child: Row(children: [
-            Icon(Icons.lightbulb_rounded, size: 18, color: VA.gold),
-            const SizedBox(width: 8),
-            Expanded(child: Text('ئاماژە: ${kHints[widget.power]}', style: _ts(13.5, w: FontWeight.w700))),
-          ]),
-        ),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          alignment: WrapAlignment.center,
-          children: kArenaCats.map((c) {
-            final on = g == c.id, win = rev && c.id == widget.power;
-            final disabled = g != null || rev;
-            return GestureDetector(
-              onTap: disabled ? null : () => widget.onGuess(c.id),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: win ? _al(VA.mint, .22) : on ? _al(VA.violet, .4) : _al(kW, .06),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: win ? VA.mint : on ? VA.violet : _al(kW, .12), width: on || win ? 2 : 1),
-                ),
-                child: Opacity(opacity: disabled && !on && !win ? .5 : 1, child: Icon(c.icon, size: 21, color: kW)),
-              ),
-            );
-          }).toList(),
-        ),
-        const SizedBox(height: 10),
-        lock,
-        if (g != null && !rev) ...[
-          const SizedBox(height: 8),
-          TextButton(
-            onPressed: widget.onDemoReveal,
-            child: Text('تاقیکردنەوە: نیوەشەو ئاشکرا بکە (دیمۆ)', style: _ts(12, c: _al(VA.text, .7))),
-          ),
-        ],
-      ]),
-    );
-  }
-}
-
-class _CountUp extends StatelessWidget {
-  final int value;
-  final TextStyle style;
-  final Gradient? shader;
-  const _CountUp({required this.value, required this.style, this.shader});
-  @override
-  Widget build(BuildContext context) {
-    final t = TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: value.toDouble()),
-      duration: const Duration(milliseconds: 1300),
-      curve: Curves.easeOutCubic,
-      builder: (_, v, __) => Text(_fmt(v), style: style),
-    );
-    if (shader == null) return t;
-    return ShaderMask(shaderCallback: (r) => shader!.createShader(r), child: t);
-  }
-}
-
-// =============================================================================
-// 11. ڕاکردنی بە تەنیا:  flutter run -t lib/vex_arena.dart
-// =============================================================================
-
-class VexArenaDemoApp extends StatelessWidget {
-  const VexArenaDemoApp({super.key});
-  @override
-  Widget build(BuildContext context) => MaterialApp(
-        title: 'VEX Arena',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData.dark(useMaterial3: true).copyWith(
-          scaffoldBackgroundColor: VA.bg,
-          colorScheme: ColorScheme.dark(primary: VA.cyan, secondary: VA.mint, surface: VA.bg2),
-        ),
-        builder: (context, child) => Directionality(textDirection: TextDirection.rtl, child: child!),
-        home: VexArenaPage(host: DemoArenaHost()),
-      );
-}
-
-void main() => runApp(const VexArenaDemoApp());
+/// تەنها بۆ تاقیکردنەوە: کۆنترۆڵەری دوایین پەڕە
+@visibleForTesting
+ArenaCtl? arenaDebugCtl;

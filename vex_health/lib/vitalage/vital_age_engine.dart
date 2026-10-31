@@ -79,6 +79,9 @@ class VitalAgeEngine extends ChangeNotifier {
   static String key(DateTime t) =>
       '${t.year}-${t.month.toString().padLeft(2, '0')}-${t.day.toString().padLeft(2, '0')}';
 
+  /// داتای ڕۆژێک (بۆ خوێندنەوە، بۆ نموونە خەوی ئەمڕۆ لە VEX Arena)
+  VitalDay? dayOf(DateTime t) => _days[key(t)];
+
   Future<void> init() async {
     if (_inited) return;
     _inited = true;

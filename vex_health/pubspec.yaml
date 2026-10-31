@@ -40,6 +40,7 @@ flutter:
     - assets/foods/
     - assets/pay/
     - assets/chars/
+    - assets/arena/
     - assets/ecg/
   fonts:
     - family: NotoAr
