@@ -13,9 +13,12 @@ p = 'android/build.gradle.kts'
 s = open(p).read()
 s += '''
 subprojects {
-    plugins.withId("com.android.library") {
-        extensions.configure<com.android.build.gradle.LibraryExtension>("android") {
-            compileSdkVersion(35)
+    if (name != "app") {
+        afterEvaluate {
+            if (project.hasProperty("android")) {
+                val ext = project.extensions.getByName("android") as com.android.build.gradle.BaseExtension
+                ext.compileSdkVersion(35)
+            }
         }
     }
 }
