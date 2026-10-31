@@ -7,3 +7,18 @@ s = re.sub(r'minSdk = [^\n]+', 'minSdk = 24', s)
 s += '\ndependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")\n}\n'
 open(p, 'w').write(s)
 print(s)
+
+# پلەگینە کۆنەکان (geocoding_android …) لەسەر compileSdk 33 ن؛ هەموویان ببە سەر 35
+p = 'android/build.gradle.kts'
+s = open(p).read()
+s += '''
+subprojects {
+    afterEvaluate {
+        if (project.hasProperty("android")) {
+            val ext = project.extensions.getByName("android") as com.android.build.gradle.BaseExtension
+            ext.compileSdkVersion(35)
+        }
+    }
+}
+'''
+open(p, 'w').write(s)
