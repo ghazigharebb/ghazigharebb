@@ -125,13 +125,19 @@ Color _op(Color c, double o) => c.withAlpha((o.clamp(0.0, 1.0) * 255).round());
 
 /// دەقی زمانەکە: عەرەبی/کوردی/فارسی بە Noto Sans Arabic، ئەوانی تر بە Noto Sans
 TextStyle _lang(WelcomeLang l, double size, {FontWeight w = FontWeight.w400, required Color c, double? h}) => l.rtl
-    ? GoogleFonts.notoSansArabic(fontSize: size, fontWeight: w, color: c, height: h)
+    ? GoogleFonts.notoSansArabic(fontSize: size, fontWeight: w, color: c, height: h).copyWith(fontFamilyFallback: _latin(w))
     : GoogleFonts.notoSans(fontSize: size, fontWeight: w, color: c, height: h);
+
+/// پیتی لاتینی (ECG، AI، VEX Band، ·) لەناو دەقی عەرەبی/کوردیدا
+List<String> _latin(FontWeight w) => [
+      GoogleFonts.notoSans(fontWeight: w).fontFamily!,
+      GoogleFonts.sora(fontWeight: w).fontFamily!,
+    ];
 
 /// دوگمە و تایبەتمەندییەکان: English/Türkçe بە Sora، ئەوانی تر بە Noto Sans Arabic
 TextStyle _ui(WelcomeLang l, double size, {FontWeight w = FontWeight.w400, required Color c, double? h}) => !l.rtl
     ? GoogleFonts.sora(fontSize: size, fontWeight: w, color: c, height: h == null ? null : h * 0.86)
-    : GoogleFonts.notoSansArabic(fontSize: size, fontWeight: w, color: c, height: h);
+    : GoogleFonts.notoSansArabic(fontSize: size, fontWeight: w, color: c, height: h).copyWith(fontFamilyFallback: _latin(w));
 
 /// ژمارە (Sora)
 TextStyle _num(double size, {FontWeight w = FontWeight.w800, required Color c, double? h}) =>
