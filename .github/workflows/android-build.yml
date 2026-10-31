@@ -25,14 +25,7 @@ jobs:
           build() {
             set -e
             flutter create . --platforms=android --org com.vex --project-name vex_health
-            python3 - <<'PY'
-import re
-p='android/app/build.gradle.kts'; s=open(p).read()
-s=s.replace('compileOptions {','compileOptions {\n        isCoreLibraryDesugaringEnabled = true',1)
-s=re.sub(r'minSdk = [^\n]+','minSdk = 24',s)
-s+='\ndependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")\n}\n'
-open(p,'w').write(s); print(s)
-PY
+            python3 ../.github/workflows/ci_gradle_patch.py
             python3 tools/setup_native.py
             flutter pub get
             flutter build apk --debug
