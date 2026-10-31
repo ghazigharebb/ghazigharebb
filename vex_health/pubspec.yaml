@@ -41,6 +41,7 @@ flutter:
     - assets/pay/
     - assets/chars/
     - assets/arena/
+    - assets/google_fonts/
     - assets/ecg/
   fonts:
     - family: NotoAr

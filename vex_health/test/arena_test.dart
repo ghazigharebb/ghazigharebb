@@ -31,6 +31,9 @@ void main() {
 
   Future<void> settle(WidgetTester t, [int ms = 300]) async {
     await t.runAsync(() => Future<void>.delayed(Duration(milliseconds: ms)));
+    await t.runAsync(() => GoogleFonts.pendingFonts());
+    await t.pump();
+    await t.runAsync(() => GoogleFonts.pendingFonts());
     for (var i = 0; i < 14; i++) {
       await t.pump(const Duration(milliseconds: 100));
     }

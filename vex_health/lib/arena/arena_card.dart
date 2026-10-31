@@ -252,7 +252,7 @@ class _CardTab extends StatelessWidget {
           Text('${afmt(t)} / ${afmt(xe)}', textDirection: TextDirection.ltr, style: atn(11, w: FontWeight.w700, c: AC.mu)),
         ]),
         const SizedBox(height: 6),
-        Row(children: [
+        Row(textDirection: TextDirection.ltr, children: [
           for (var i = 0; i < 20; i++) ...[
             if (i > 0) const SizedBox(width: 4),
             Expanded(
