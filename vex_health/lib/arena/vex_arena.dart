@@ -135,19 +135,23 @@ BoxShadow cssSh(double x, double y, double blur, double spread, Color c) =>
 
 const String _kFont = 'NotoAr';
 
+/// بەرزیی «normal» ی CSS بۆ Noto Sans Arabic (1374 + 738) و Sora (970 + 290).
+/// ڕاستەوخۆ دەنووسرێت چونکە Material بەرزیی 1.43 دەسەپێنێت.
+const double _kNormAr = 2.112, _kNormSora = 1.26;
+
 TextStyle ats(double s, {FontWeight w = FontWeight.w500, Color? c, double? h, double? ls}) => TextStyle(
       fontFamily: _kFont,
       fontSize: s,
       fontWeight: w,
       color: c ?? AC.tx,
-      height: h,
+      height: h ?? _kNormAr,
       letterSpacing: ls,
       leadingDistribution: TextLeadingDistribution.even, // وەک CSS
     );
 
 /// ژمارە (فۆنتی Sora وەک وێب)
 TextStyle atn(double s, {FontWeight w = FontWeight.w800, Color? c, double? h, double? ls}) {
-  final base = ats(s, w: w, c: c, h: h, ls: ls);
+  final base = ats(s, w: w, c: c, h: h ?? _kNormSora, ls: ls);
   try {
     return GoogleFonts.sora(textStyle: base).copyWith(fontFamilyFallback: const [_kFont]);
   } catch (_) {

@@ -13,5 +13,12 @@ for name, w in [('Regular', 400), ('SemiBold', 600), ('Bold', 700)]:
     lat.save('/tmp/lat.ttf')
     m = Merger()
     f = m.merge(['assets/fonts/NotoSansArabic-%s.ttf' % name, '/tmp/lat.ttf'])
+    # هەمان بەرزیی دێڕی فۆنتی عەرەبی (وەک ئەپ و وێب)
+    src = TTFont('assets/fonts/NotoSansArabic-%s.ttf' % name)
+    for t, attrs in [('hhea', ['ascent', 'descent', 'lineGap']),
+                     ('OS/2', ['sTypoAscender', 'sTypoDescender', 'sTypoLineGap', 'usWinAscent', 'usWinDescent', 'fsSelection'])]:
+        for a in attrs:
+            setattr(f[t], a, getattr(src[t], a))
+    print(name, f['hhea'].ascent, f['hhea'].descent)
     f.save('%s/NotoAr-%s.ttf' % (out, name))
     print('merged', name)
