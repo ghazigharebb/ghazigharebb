@@ -454,7 +454,8 @@ class _SkinTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.fromLTRB(6, 6, 6, 8),
         decoration: BoxDecoration(
-          color: AC.surf2,
+          // ڕەنگی ناڕوون بۆ ئەوەی سێبەری زێڕین تەنها لە دەرەوە دەربکەوێت (وەک CSS)
+          color: on ? Color.alphaBlend(AC.surf2, Color.alphaBlend(AC.card, AC.bg)) : AC.surf2,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: on ? AC.accent : AC.line),
           boxShadow: on ? const [BoxShadow(color: Color(0x2EF2B21C), spreadRadius: 3), BoxShadow(color: Color(0xCCF2B21C), offset: Offset(0, 10), blurRadius: 20, spreadRadius: -12)] : null,
