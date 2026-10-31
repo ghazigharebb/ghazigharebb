@@ -1299,7 +1299,7 @@ class ArenaCtl extends ChangeNotifier {
   }
 
   int get joinDay => store.acc == null ? S.day : (store.acc!.sn == S.n ? store.acc!.day : S.day);
-  int get daysSinceJoin => math.max(1, S.day - math.max(1, joinDay) + 1);
+  int get daysSinceJoin => math.max<int>(1, S.day - math.max<int>(1, joinDay) + 1);
   int get avgDaily => math.max((active * 0.8).round(), (seasonPts / math.max<int>(1, daysSinceJoin - 1)).round());
   int get goal => math.min(maxDay(div) ~/ 2, math.max(active, ((avgDaily * 1.1) / 10).round() * 10));
 
