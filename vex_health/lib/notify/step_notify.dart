@@ -185,6 +185,9 @@ class StepNotify extends ChangeNotifier with WidgetsBindingObserver {
     if (_hooked) return;
     _hooked = true;
     Store.I.addListener(_onStore);
+    // کاتێک Band پەیوەست / جیا دەبێتەوە یان هەنگاوی نوێ دەنێرێت، ئاگادارکردنەوەکە یەکسەر نوێ دەبێتەوە
+    VexBand.I.addListener(_onStore);
+    BandState.I.addListener(_onStore);
     WidgetsBinding.instance.addObserver(this);
     _syncWater();
   }
@@ -193,6 +196,8 @@ class StepNotify extends ChangeNotifier with WidgetsBindingObserver {
     if (!_hooked) return;
     _hooked = false;
     Store.I.removeListener(_onStore);
+    VexBand.I.removeListener(_onStore);
+    BandState.I.removeListener(_onStore);
     WidgetsBinding.instance.removeObserver(this);
     _debounce?.cancel();
   }
