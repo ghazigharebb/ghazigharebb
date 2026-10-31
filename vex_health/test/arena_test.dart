@@ -143,6 +143,8 @@ void main() {
       await settle(t);
       expect(find.text(tr('e_agree')), findsOneWidget);
       await expectLater(find.byType(VexArenaPage), matchesGoldenFile('goldens/gate4_$mode.png'));
+      await t.ensureVisible(find.text(tr('agree')));
+      await settle(t);
       await t.tap(find.text(tr('agree')));
       await settle(t);
       await t.tap(find.text(go));
