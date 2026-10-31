@@ -55,7 +55,7 @@ def main():
     for d in (kdir, jdir):
         if os.path.exists(os.path.join(d, 'MainActivity.kt')):
             outdir = d
-    for name in ('StepService', 'StepReceiver', 'StepsChannel'):
+    for name in ('StepService', 'StepReceiver', 'StepsChannel', 'StepArt'):
         write(os.path.join(outdir, name + '.kt'), read(os.path.join(SRC, name + '.kt.tpl')).replace('__PKG__', pkg))
         print('  +', name + '.kt')
 

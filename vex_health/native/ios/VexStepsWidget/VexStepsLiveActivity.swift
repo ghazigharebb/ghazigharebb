@@ -14,28 +14,26 @@ struct VexStepsLiveActivity: Widget {
             let s = context.state
             return DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    VexRing(pct: s.pct, done: s.done).frame(width: 46, height: 46).padding(.leading, 2)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("\(Int((s.pct * 100).rounded()))%")
+                            .font(.system(size: 22, weight: .heavy, design: .rounded))
+                            .foregroundColor(s.done ? VexColor.mint : VexColor.cy)
+                        Text("هەنگاو").font(.system(size: 11, weight: .semibold)).foregroundColor(VexColor.mute)
+                    }.padding(.leading, 4)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    VStack(alignment: .trailing, spacing: 0) {
-                        Text(VexShared.fmt(s.steps))
-                            .font(.system(size: 28, weight: .heavy, design: .rounded))
-                            .foregroundColor(.white)
-                            .minimumScaleFactor(0.7)
-                        Text("هەنگاو").font(.system(size: 12, weight: .semibold)).foregroundColor(VexColor.mute)
-                    }
+                    VexHero(s: s, size: 26).padding(.trailing, 2)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    VStack(spacing: 7) {
-                        HStack(spacing: 16) {
-                            VexChip(icon: "point.topleft.down.curvedto.point.bottomright.up", color: VexColor.cy,
-                                    text: String(format: "%.2f km", s.km))
+                    VStack(spacing: 8) {
+                        VexTrack(s: s)
+                        HStack(spacing: 14) {
+                            VexChip(icon: "point.topleft.down.to.point.bottomright.curvepath.fill", color: VexColor.sky, text: String(format: "%.2f کم", s.km))
                             VexChip(icon: "flame.fill", color: VexColor.flame, text: "\(s.kcal) kcal")
                             if s.hr >= 30 && s.hr <= 220 {
-                                VexChip(icon: "heart.fill", color: VexColor.heart, text: "\(s.hr)")
+                                VexChip(icon: "heart.fill", color: VexColor.heart, text: "\(s.hr) bpm")
                             }
                         }
-                        VexTrack(pct: s.pct, done: s.done)
                         Text(vexRemaining(s))
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(VexColor.mute)
@@ -66,31 +64,32 @@ struct VexStepsLiveActivity: Widget {
 struct VexLockView: View {
     let s: VexMetrics
     var body: some View {
-        HStack(alignment: .center, spacing: 14) {
-            VexRing(pct: s.pct, done: s.done, line: 6).frame(width: 54, height: 54)
-            VStack(alignment: .leading, spacing: 5) {
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text(VexShared.fmt(s.steps))
-                        .font(.system(size: 26, weight: .heavy, design: .rounded))
-                        .foregroundColor(.white)
-                    Text("هەنگاو").font(.system(size: 13, weight: .semibold)).foregroundColor(VexColor.mute)
-                    Spacer(minLength: 0)
-                    Text("VEX").font(.system(size: 11, weight: .heavy, design: .rounded)).foregroundColor(VexColor.cy)
+        VStack(alignment: .leading, spacing: 6) {
+            Text(s.done ? "گەشتی ئەمڕۆ تەواو بوو" : "گەشتی ئەمڕۆ بۆ ئامانج")
+                .font(.system(size: 12, weight: .medium)).foregroundColor(VexColor.mute)
+            HStack(alignment: .center) {
+                VexHero(s: s, size: 32)
+                Spacer()
+                Text("\(Int((s.pct * 100).rounded()))%")
+                    .font(.system(size: 18, weight: .heavy, design: .rounded))
+                    .foregroundColor(s.done ? VexColor.mint : VexColor.cy)
+            }
+            VexTrack(s: s, showScale: true)
+            HStack(spacing: 6) {
+                if s.done {
+                    VexPill(icon: "checkmark", color: VexColor.mint, text: "ئامانجی ئەمڕۆ تەواو بوو")
+                } else {
+                    VexPill(icon: "flag.fill", color: Color(red: 0.624, green: 0.965, blue: 0.984), text: "ماوە \(VexShared.fmt(max(0, s.goal - s.steps)))")
+                    VexPill(icon: "point.topleft.down.to.point.bottomright.curvepath.fill", color: Color(red: 0.714, green: 0.910, blue: 1.0), text: String(format: "%.1f کم", s.remKm))
+                    VexPill(icon: "clock.fill", color: VexColor.violet, text: "\(s.remMin) خولەک")
                 }
-                HStack(spacing: 14) {
-                    VexChip(icon: "point.topleft.down.curvedto.point.bottomright.up", color: VexColor.cy,
-                            text: String(format: "%.2f km", s.km))
-                    VexChip(icon: "flame.fill", color: VexColor.flame, text: "\(s.kcal) kcal")
-                    if s.hr >= 30 && s.hr <= 220 {
-                        VexChip(icon: "heart.fill", color: VexColor.heart, text: "\(s.hr)")
-                    }
+            }
+            HStack(spacing: 14) {
+                VexChip(icon: "point.topleft.down.to.point.bottomright.curvepath.fill", color: VexColor.sky, text: String(format: "%.2f کم", s.km))
+                VexChip(icon: "flame.fill", color: VexColor.flame, text: "\(s.kcal) kcal")
+                if s.hr >= 30 && s.hr <= 220 {
+                    VexChip(icon: "heart.fill", color: VexColor.heart, text: "\(s.hr) bpm")
                 }
-                VexTrack(pct: s.pct, done: s.done)
-                Text(vexRemaining(s))
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(VexColor.mute)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
             }
         }
         .padding(14)

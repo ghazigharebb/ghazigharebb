@@ -1,102 +1,140 @@
-// VEX Health — پارچە هاوبەشەکانی دیزاین (هەمان ڕەنگ و شێوەی وێبەکە)
+// VEX Health — پارچە هاوبەشەکانی دیزاینی «گەشت» (هەمان دیزاینی Android)
 import SwiftUI
 
 enum VexColor {
-    static let bg = Color(red: 0.016, green: 0.102, blue: 0.133)      // #041A22
+    static let bg = Color(red: 0.055, green: 0.110, blue: 0.133)      // #0E1C22
     static let cy = Color(red: 0.184, green: 0.902, blue: 0.953)      // #2FE6F3
     static let mint = Color(red: 0.235, green: 0.941, blue: 0.541)    // #3CF08A
-    static let flame = Color(red: 1.0, green: 0.541, blue: 0.361)     // #FF8A5C
-    static let mute = Color(red: 0.549, green: 0.718, blue: 0.749)    // #8CB7BF
-    static let heart = Color(red: 1.0, green: 0.361, blue: 0.478)     // #FF5C7A
+    static let sky = Color(red: 0.498, green: 0.847, blue: 1.0)       // #7FD8FF
+    static let violet = Color(red: 0.831, green: 0.788, blue: 1.0)    // #D4C9FF
+    static let flame = Color(red: 1.0, green: 0.604, blue: 0.361)     // #FF9A5C
+    static let heart = Color(red: 1.0, green: 0.435, blue: 0.525)     // #FF6F86
+    static let mute = Color(red: 0.624, green: 0.718, blue: 0.741)    // #9FB7BD
+    static let accent = LinearGradient(colors: [cy, mint], startPoint: .topLeading, endPoint: .bottomTrailing)
 }
 
-/// بازنەی پێشکەوتن؛ لە کاتی تەواوبوونی ئامانج ✓ ی سەوز
-struct VexRing: View {
-    let pct: Double
-    let done: Bool
-    var line: CGFloat = 5
-
+/// ژمارەی هەنگاو « 1,456 / 10,000 »
+struct VexHero: View {
+    let s: VexMetrics
+    var size: CGFloat = 34
     var body: some View {
-        ZStack {
-            Circle().stroke(Color.white.opacity(0.12), lineWidth: line)
-            Circle()
-                .trim(from: 0, to: CGFloat(max(0.001, pct)))
-                .stroke(
-                    done ? AnyShapeStyle(VexColor.mint)
-                         : AnyShapeStyle(LinearGradient(colors: [VexColor.cy, VexColor.mint], startPoint: .top, endPoint: .bottom)),
-                    style: StrokeStyle(lineWidth: line, lineCap: .round)
-                )
-                .rotationEffect(.degrees(-90))
-            if done {
-                Image(systemName: "checkmark").font(.system(size: 14, weight: .heavy)).foregroundColor(VexColor.mint)
-            } else {
-                Text("\(Int((pct * 100).rounded()))%")
-                    .font(.system(size: 12, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
-                    .minimumScaleFactor(0.6)
-            }
+        HStack(alignment: .firstTextBaseline, spacing: 3) {
+            Text(VexShared.fmt(s.steps))
+                .font(.system(size: size, weight: .heavy, design: .rounded))
+                .foregroundColor(s.done ? VexColor.mint : .white)
+            Text("/ \(VexShared.fmt(s.goal))")
+                .font(.system(size: size * 0.38, weight: .medium, design: .rounded))
+                .foregroundColor(VexColor.mute)
         }
+        .environment(\.layoutDirection, .leftToRight)
+        .minimumScaleFactor(0.7)
+        .lineLimit(1)
     }
 }
 
-/// ڕێگای ئامانج: کەسێک لە ڕاستەوە بەرەو ئاڵا (لای چەپ) دەڕوات.
-/// لە کاتی تەواوبوون لە تەنیشت ئاڵاکە دەوەستێت و بەسەریدا نانیشێت.
+/// ڕێگای گەشت: ماڵ (ڕاست) ← ڕاکەر ← ئاڵا (چەپ)، خاڵەکانی 25/50/75٪
 struct VexTrack: View {
-    let pct: Double
-    let done: Bool
+    let s: VexMetrics
+    var showScale = false
 
     var body: some View {
-        GeometryReader { g in
-            let w = g.size.width
-            let lineW = max(0, w - 14)
-            let fillW = lineW * CGFloat(min(1, max(0, pct)))
-            let walkerX = done ? CGFloat(30) : max(CGFloat(18), w - fillW)
-            ZStack(alignment: .topLeading) {
-                // هێڵی خاڵخاڵ
-                Path { p in
-                    p.move(to: CGPoint(x: 14, y: 13))
-                    p.addLine(to: CGPoint(x: w, y: 13))
+        VStack(spacing: 4) {
+            GeometryReader { g in
+                let w = g.size.width
+                let cy: CGFloat = 17
+                let xHome = w - 12
+                let xFlag: CGFloat = 12
+                let l = xFlag + 12
+                let r = xHome - 12
+                let p = CGFloat(min(1, max(0, s.pct)))
+                let xRun = s.done ? xFlag + 20 : r - (r - l) * p
+                ZStack {
+                    // هێڵی خاڵخاڵ
+                    Path { pth in pth.move(to: CGPoint(x: l, y: cy)); pth.addLine(to: CGPoint(x: r, y: cy)) }
+                        .stroke(Color.white.opacity(0.22), style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [4, 3]))
+                    // هێڵی تەواوبوو
+                    if p > 0 {
+                        Capsule()
+                            .fill(LinearGradient(colors: [VexColor.mint, VexColor.cy], startPoint: .leading, endPoint: .trailing))
+                            .frame(width: max(0, r - xRun), height: 4)
+                            .shadow(color: VexColor.mint.opacity(0.45), radius: 4)
+                            .position(x: (xRun + r) / 2, y: cy)
+                    }
+                    // خاڵەکان
+                    ForEach([25, 50, 75], id: \.self) { m in
+                        let x = r - (r - l) * CGFloat(m) / 100
+                        let passed = s.pct * 100 >= Double(m)
+                        Circle()
+                            .fill(passed ? VexColor.mint : Color(red: 0.094, green: 0.196, blue: 0.227))
+                            .frame(width: passed ? 10 : 8, height: passed ? 10 : 8)
+                            .overlay(Circle().stroke(passed ? VexColor.mint.opacity(0.3) : Color.white.opacity(0.22), lineWidth: 2))
+                            .position(x: x, y: cy)
+                    }
+                    // ماڵ
+                    Circle().fill(Color(red: 0.114, green: 0.212, blue: 0.243)).frame(width: 24, height: 24)
+                        .overlay(Image(systemName: "house.fill").font(.system(size: 11, weight: .bold)).foregroundColor(VexColor.mute))
+                        .position(x: xHome, y: cy)
+                    // ئاڵا
+                    Circle().fill(VexColor.mint.opacity(0.16)).frame(width: 24, height: 24)
+                        .overlay(Circle().stroke(VexColor.mint.opacity(0.35), lineWidth: 1))
+                        .overlay(Image(systemName: "flag.fill").font(.system(size: 11, weight: .bold)).foregroundColor(VexColor.mint))
+                        .position(x: xFlag, y: cy)
+                    // ڕاکەر
+                    Circle().fill(RadialGradient(colors: [VexColor.cy.opacity(0.35), VexColor.cy.opacity(0)], center: .center, startRadius: 0, endRadius: 19))
+                        .frame(width: 38, height: 38).position(x: xRun, y: cy)
+                    Circle().fill(VexColor.accent).frame(width: 26, height: 26)
+                        .overlay(Circle().stroke(VexColor.bg, lineWidth: 2.5))
+                        .overlay(Image(systemName: "figure.walk").font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(Color(red: 0.016, green: 0.196, blue: 0.227)).scaleEffect(x: -1, y: 1))
+                        .shadow(color: VexColor.cy.opacity(0.45), radius: 6, y: 3)
+                        .position(x: xRun, y: cy)
                 }
-                .stroke(Color.white.opacity(0.22), style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [4, 3]))
-                // هێڵی تەواوبوو
-                Capsule()
-                    .fill(LinearGradient(colors: [VexColor.mint, VexColor.cy], startPoint: .leading, endPoint: .trailing))
-                    .frame(width: fillW, height: 2)
-                    .offset(x: w - fillW, y: 12)
-                // ئاڵا
-                Image(systemName: "flag.fill")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(done ? .white : VexColor.mint)
-                    .shadow(color: done ? VexColor.mint : .clear, radius: 4)
-                    .offset(x: 0, y: 1)
-                // کەسی ڕۆیشتوو (scaleX(-1) بۆ ئەوەی بەرەو ئاڵا بڕوات)
-                Image(systemName: "figure.walk")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.white)
-                    .scaleEffect(x: -1, y: 1)
-                    .shadow(color: VexColor.cy.opacity(0.7), radius: 3)
-                    .position(x: walkerX, y: 8)
+            }
+            .frame(height: 34)
+            if showScale {
+                HStack {
+                    ForEach(Array(["10k", "7.5k", "5k", "2.5k", "0"].enumerated()), id: \.offset) { i, t in
+                        if i > 0 { Spacer() }
+                        Text(t).font(.system(size: 10, weight: .medium, design: .rounded)).foregroundColor(VexColor.mute)
+                    }
+                }
+                .padding(.horizontal, 10)
             }
         }
-        .frame(height: 20)
         .environment(\.layoutDirection, .leftToRight)
     }
 }
 
-struct VexChip: View {
+/// حەبەی ڕەنگاوڕەنگ (ماوە · کم · خولەک)
+struct VexPill: View {
     let icon: String
     let color: Color
     let text: String
     var body: some View {
         HStack(spacing: 4) {
+            Image(systemName: icon).font(.system(size: 10, weight: .bold))
+            Text(text).font(.system(size: 12, weight: .bold))
+        }
+        .foregroundColor(color)
+        .padding(.horizontal, 9).padding(.vertical, 4)
+        .background(Capsule().fill(color.opacity(0.14)))
+    }
+}
+
+/// پێوانەی بچووک (کم · kcal · bpm)
+struct VexChip: View {
+    let icon: String
+    let color: Color
+    let text: String
+    var body: some View {
+        HStack(spacing: 5) {
             Image(systemName: icon).font(.system(size: 11, weight: .bold)).foregroundColor(color)
             Text(text).font(.system(size: 13, weight: .bold, design: .rounded)).foregroundColor(.white)
         }
-        .environment(\.layoutDirection, .leftToRight)
     }
 }
 
 func vexRemaining(_ s: VexMetrics) -> String {
-    if s.done { return "🎉 ئامانجی ئەمڕۆ تەواو بوو" }
-    return "ماوە \(VexShared.fmt(max(0, s.goal - s.steps))) هەنگاو · \(String(format: "%.1f", s.remKm)) km · نزیکەی \(s.remMin) خولەک"
+    if s.done { return "ئامانجی ئەمڕۆ تەواو بوو" }
+    return "ماوە \(VexShared.fmt(max(0, s.goal - s.steps))) هەنگاو · \(String(format: "%.1f", s.remKm)) کم · نزیکەی \(s.remMin) خولەک"
 }

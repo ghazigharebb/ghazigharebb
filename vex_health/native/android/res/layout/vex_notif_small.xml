@@ -1,34 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- VEX — ئاگادارکردنەوەی هەنگاو (کورتکراوە): ژمارە + ڕێگای گەشت -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="wrap_content"
-    android:orientation="vertical" android:background="@drawable/vex_bg"
-    android:layoutDirection="rtl" android:padding="10dp">
+    android:orientation="vertical" android:layoutDirection="rtl"
+    android:paddingTop="2dp" android:paddingBottom="2dp">
 
     <LinearLayout
         android:layout_width="match_parent" android:layout_height="wrap_content"
         android:orientation="horizontal" android:gravity="center_vertical">
-        <TextView android:id="@+id/tvSteps"
-            android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:textColor="#FFFFFFFF" android:textSize="17sp" android:textStyle="bold"
-            android:layoutDirection="ltr" android:text="0" />
+        <ImageView android:id="@+id/imHero"
+            android:layout_width="wrap_content" android:layout_height="24dp"
+            android:adjustViewBounds="true" android:scaleType="fitStart" />
         <TextView android:id="@+id/tvUnit"
             android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
             android:layout_marginStart="6dp"
-            android:textColor="#FF8CB7BF" android:textSize="12sp" android:text="هەنگاو" />
+            android:textColor="#FF9FB7BD" android:textSize="12sp" android:text="هەنگاو" />
         <TextView android:id="@+id/tvPct"
             android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:textColor="#FF2FE6F3" android:textSize="13sp" android:textStyle="bold"
+            android:textColor="#FF2FE6F3" android:textSize="15sp" android:textStyle="bold"
             android:layoutDirection="ltr" android:text="0%" />
     </LinearLayout>
 
-    <ProgressBar android:id="@+id/bar"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent" android:layout_height="6dp"
-        android:layout_marginTop="7dp" android:layout_marginBottom="5dp"
-        android:max="100" android:progress="0"
-        android:progressDrawable="@drawable/vex_bar" />
-
-    <TextView android:id="@+id/tvRem"
-        android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:textColor="#FF8CB7BF" android:textSize="12sp" android:maxLines="1" android:text="" />
+    <ImageView android:id="@+id/imTrack"
+        android:layout_width="match_parent" android:layout_height="30dp"
+        android:layout_marginTop="2dp"
+        android:scaleType="fitCenter" />
 </LinearLayout>
