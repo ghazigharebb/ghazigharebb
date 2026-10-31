@@ -1968,9 +1968,10 @@ class _Btn extends StatelessWidget {
 
 /// کارتی گشتی (.card) — سنووری زێڕینی لار
 class _Card extends StatelessWidget {
-  const _Card({required this.child, this.margin = const EdgeInsets.only(top: 14), this.pad = const EdgeInsets.all(16)});
+  const _Card({required this.child, this.margin = const EdgeInsets.only(top: 14)});
   final Widget child;
-  final EdgeInsets margin, pad;
+  final EdgeInsets margin;
+  static const EdgeInsets pad = EdgeInsets.all(16);
   @override
   Widget build(BuildContext context) => Container(
         margin: margin,
@@ -2076,12 +2077,12 @@ class _Bar extends StatelessWidget {
 
 /// ڕستە لەگەڵ ئایکۆن (p.v6hn و هتد)
 class _IconLine extends StatelessWidget {
-  const _IconLine(this.icon, this.text, {this.color, this.iconColor, this.size = 12.5, this.w = FontWeight.w400, this.gap = 6});
+  const _IconLine(this.icon, this.text, {this.color, this.iconColor, this.size = 12.5, this.gap = 6});
+  static const FontWeight w = FontWeight.w400;
   final String icon;
   final String text;
   final Color? color, iconColor;
   final double size, gap;
-  final FontWeight w;
   @override
   Widget build(BuildContext context) => Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Padding(padding: const EdgeInsets.only(top: 3), child: AIcon(icon, size: size + 1.5, color: iconColor ?? color ?? AC.mu)),
@@ -2243,14 +2244,7 @@ Future<T?> arenaSheet<T>(BuildContext context, Widget Function(BuildContext) b) 
 Widget _sh3(String t, {double top = 0}) =>
     Padding(padding: EdgeInsets.only(top: top, bottom: 8), child: Text(t, textAlign: TextAlign.center, style: ats(18, w: FontWeight.w800)));
 
-Widget _muted(String t, {TextAlign a = TextAlign.center, double size = 12, EdgeInsets pad = EdgeInsets.zero}) =>
-    Padding(padding: pad, child: Text(t, textAlign: a, style: ats(size, c: AC.mu, h: 1.85)));
 
-
-extension _Rot on Widget {
-  /// سووڕاندن بە پلە
-  Widget rot(double deg) => deg == 0 ? this : Transform.rotate(angle: deg * math.pi / 180, child: this);
-}
 
 /// تەنها بۆ تاقیکردنەوە: کۆنترۆڵەری دوایین پەڕە
 @visibleForTesting

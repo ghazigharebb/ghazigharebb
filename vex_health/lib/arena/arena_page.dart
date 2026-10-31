@@ -680,7 +680,7 @@ class _TabFrameState extends State<_TabFrame> {
       AnimatedBuilder(
         animation: sc,
         builder: (_, child) => Positioned(
-          top: -(sc.hasClients ? sc.offset : 0),
+          top: -(sc.hasClients ? sc.offset : 0.0),
           left: 0,
           right: 0,
           height: stageH,
@@ -1600,7 +1600,7 @@ class _GateState extends State<_Gate> {
               Text(name.text.trim(), maxLines: 1, overflow: TextOverflow.ellipsis, style: ats(14.5, w: FontWeight.w800)),
               Text.rich(
                 TextSpan(children: [
-                  TextSpan(text: '⁦${maskPhone(ph)}⁩', style: atn(12, w: FontWeight.w600, c: AC.mu)),
+                  TextSpan(text: '\u2066${maskPhone(ph)}\u2069', style: atn(12, w: FontWeight.w600, c: AC.mu)),
                   TextSpan(text: ' · ${nm(city)}'),
                 ]),
                 maxLines: 1,

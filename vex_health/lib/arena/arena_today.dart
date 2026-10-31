@@ -436,18 +436,15 @@ class _Missions extends StatelessWidget {
               arenaToast(context, tr('chest_need_t', [3 - done]), 'gift');
             }
           },
-          child: Ink(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              gradient: ready ? cssLin(120, const [Color(0x33FFC846), Color(0x0AFFC846)]) : null,
-            ),
-            child: CustomPaint(
-              painter: ready ? null : _DashBorder(AC.line, 18),
-              foregroundPainter: ready ? _SolidBorder(AC.accent, 18) : null,
-              child: Padding(
-                padding: const EdgeInsets.all(2),
-                child: Row(children: [
+          child: CustomPaint(
+            foregroundPainter: ready ? _SolidBorder(AC.accent, 18) : _DashBorder(AC.line, 18),
+            child: Ink(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                gradient: ready ? cssLin(120, const [Color(0x33FFC846), Color(0x0AFFC846)]) : null,
+              ),
+              child: Row(children: [
                   Container(
                     width: 44,
                     height: 44,
@@ -470,7 +467,6 @@ class _Missions extends StatelessWidget {
                     ]),
                   ),
                 ]),
-              ),
             ),
           ),
         ),
@@ -485,7 +481,7 @@ class _DashBorder extends CustomPainter {
   final double r;
   @override
   void paint(Canvas cv, Size s) {
-    final path = Path()..addRRect(RRect.fromRectAndRadius((Offset.zero & s).inflate(10), Radius.circular(r)));
+    final path = Path()..addRRect(RRect.fromRectAndRadius((Offset.zero & s).deflate(.75), Radius.circular(r)));
     final p = Paint()
       ..color = c
       ..style = PaintingStyle.stroke
@@ -509,7 +505,7 @@ class _SolidBorder extends CustomPainter {
   final double r;
   @override
   void paint(Canvas cv, Size s) => cv.drawRRect(
-      RRect.fromRectAndRadius((Offset.zero & s).inflate(10), Radius.circular(r)),
+      RRect.fromRectAndRadius((Offset.zero & s).deflate(.75), Radius.circular(r)),
       Paint()
         ..color = c
         ..style = PaintingStyle.stroke
