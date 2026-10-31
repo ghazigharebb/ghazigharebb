@@ -10,7 +10,11 @@ import 'package:flutter/widgets.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../band/band_state.dart';
+import '../band/ble/vex_ble.dart' show VexBand;
 import '../core/store.dart';
+import '../onboarding/account.dart';
+import '../onboarding/reg_data.dart' show asI;
 
 class StepNotify extends ChangeNotifier with WidgetsBindingObserver {
   StepNotify._();
@@ -121,14 +125,35 @@ class StepNotify extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
+  /// ئامانجی هەنگاوی کەسی (لە پلانی تۆمارکردن)؛ ئەگەر نەبوو 10,000
+  int get goal {
+    final p = Account.I.user?['plan'];
+    final g = p is Map ? asI(p['steps']) : 0;
+    return g >= 1000 ? g : stepGoal;
+  }
+
+  /// هەنگاوی ئەمڕۆی Band — تەنها کاتێک Band ـی ڕاستەقینە پەیوەستە و داتای ئەمڕۆی هەیە.
+  /// ئەگەر نەبوو null دەگەڕێنێتەوە و سێنسەری مۆبایل تەنها سەرچاوەیە (ژمارەی نموونە نانێردرێت).
+  int? get bandStepsToday {
+    if (!BandState.I.connected) return null;
+    final now = DateTime.now();
+    for (final s in VexBand.I.stepsDays) {
+      final d = s.day;
+      if (d != null && d.year == now.year && d.month == now.month && d.day == now.day && s.steps > 0) return s.steps;
+    }
+    return null;
+  }
+
   Map<String, Object> _payload() {
     final h = Store.I.h;
+    final band = bandStepsToday;
     return <String, Object>{
-      'steps': h.steps,
-      'goal': stepGoal,
+      if (band != null) 'steps': band,
+      'goal': goal,
       'heightCm': h.heightCm,
       'weightKg': h.weightKg,
-      'hr': h.hr,
+      // لێدانی دڵ تەنها لە Band ـەوە ڕاستە
+      'hr': BandState.I.connected ? h.hr : 0,
       'day': Store.today,
     };
   }

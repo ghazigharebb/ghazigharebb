@@ -195,10 +195,18 @@ class StepService : Service(), SensorEventListener {
         main.postDelayed(repost, REPOST_MS)
     }
 
+    private val pending = Runnable { refresh(true) }
+
     fun refresh(force: Boolean) {
         if (!started || dismissed) return
         val now = System.currentTimeMillis()
-        if (!force && now - lastPost < MIN_REFRESH_MS) return
+        if (!force && now - lastPost < MIN_REFRESH_MS) {
+            // زۆر زوو هاتووە: دوای ماوەی ماوە یەک جار نوێ دەکرێتەوە (هیچ هەنگاوێک ون نابێت)
+            main.removeCallbacks(pending)
+            main.postDelayed(pending, MIN_REFRESH_MS - (now - lastPost))
+            return
+        }
+        main.removeCallbacks(pending)
         lastPost = now
         try {
             (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).notify(NOTIF_ID, build())
