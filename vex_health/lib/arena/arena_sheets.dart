@@ -432,7 +432,7 @@ class _PrizeSheetState extends State<_PrizeSheet> {
                 padding: EdgeInsets.fromLTRB(6, i == 1 ? 22 : 16, 6, 12),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(22),
-                  gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [_a(cols[i], .22), _a(cols[i], .04)]),
+                  gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color.alphaBlend(_a(cols[i], .22), AC.sheet), Color.alphaBlend(_a(cols[i], .04), AC.sheet)]),
                   border: Border.all(color: _a(cols[i], .45)),
                   boxShadow: i == 1 ? [cssSh(0, 14, 34, -16, cols[i])] : null,
                 ),
