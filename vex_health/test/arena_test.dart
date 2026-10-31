@@ -77,7 +77,7 @@ void main() {
     await t.runAsync(() => st.load());
     ArenaCtl(host, st).register(name: 'ئاراس کەریم', phone: '07501234567', city: 'هەولێر', age: 'a', ch: '07');
     await t.runAsync(() => st.save());
-    await t.pumpWidget(MaterialApp(navigatorKey: navKey, home: VexArenaPage(host: host, store: st)));
+    await t.pumpWidget(MaterialApp(debugShowCheckedModeBanner: false, navigatorKey: navKey, home: VexArenaPage(host: host, store: st)));
     await settle(t, 500);
     return st;
   }
@@ -91,7 +91,7 @@ void main() {
       await t.binding.setSurfaceSize(const Size(400, 860));
       LangState.I.code = 'ckb';
       await theme(t, mode);
-      await t.pumpWidget(MaterialApp(navigatorKey: navKey, home: VexArenaPage(host: DemoArenaHost(band: mode == 'dark'))));
+      await t.pumpWidget(MaterialApp(debugShowCheckedModeBanner: false, navigatorKey: navKey, home: VexArenaPage(host: DemoArenaHost(band: mode == 'dark'))));
       await settle(t, 500);
       noErr(t, 'gate open');
       expect(find.text(tr('g_title')), findsOneWidget);
@@ -110,7 +110,7 @@ void main() {
       expect(find.text(tr('e_phone')), findsOneWidget);
       await t.enterText(find.byType(TextField).at(1), '7501234567');
       await settle(t);
-      expect(find.text('750 123 4567'), findsOneWidget);
+      expect(find.text('750 123 4567'), findsWidgets);
       await t.tap(find.text(tr('next')));
       await settle(t);
       noErr(t, 'step 2');

@@ -1855,6 +1855,7 @@ class _Bar extends StatelessWidget {
             Positioned.fill(child: ColoredBox(color: AC.track)),
             FractionallySizedBox(
               widthFactor: f.clamp(0.0, 1.0).toDouble(),
+              heightFactor: 1,
               alignment: AlignmentDirectional.centerStart,
               child: DecoratedBox(
                   decoration: BoxDecoration(
@@ -2955,7 +2956,7 @@ class _Hero extends StatelessWidget {
         borderRadius: BorderRadius.circular(28),
         gradient: const RadialGradient(center: Alignment(0, -1.1), radius: 1.3, colors: [Color(0xFF2A2F6A), AC.stage1, AC.stage2]),
         border: Border.all(color: _a(AC.goldS, .3)),
-        boxShadow: const [BoxShadow(color: Color(0x55000000), blurRadius: 30, offset: Offset(0, 14))],
+        boxShadow: AC.sh,
       ),
       child: Column(children: [
         Row(children: [
@@ -3597,7 +3598,7 @@ class _PrizePanel extends StatelessWidget {
         borderRadius: BorderRadius.circular(28),
         gradient: const LinearGradient(colors: [AC.stage1, AC.stage2], begin: Alignment.topCenter, end: Alignment.bottomCenter),
         border: Border.all(color: _a(AC.goldS, .35)),
-        boxShadow: const [BoxShadow(color: Color(0x44F2B21C), blurRadius: 30, offset: Offset(0, 12))],
+        boxShadow: AC.sh,
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         _Head(tr('pz_t', [tr(d == Div.band ? 'dv_band' : 'dv_phone')]), small: tr(d == Div.band ? 'pz_big' : 'pz_norm'), color: AC.stageTx),
@@ -4107,6 +4108,7 @@ class _Podium extends StatelessWidget {
               const SizedBox(height: 6),
               Container(
                 height: h,
+                width: double.infinity,
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
                   gradient: LinearGradient(colors: [_a(c3, .45), _a(c3, .08)], begin: Alignment.topCenter, end: Alignment.bottomCenter),
@@ -4596,7 +4598,7 @@ class _CharCell extends StatelessWidget {
             child: on
                 ? const Icon(Icons.check_rounded, size: 14, color: AC.onGold)
                 : own
-                    ? Text(tr('owned'), textAlign: TextAlign.center, style: ats(10, w: FontWeight.w800, c: rc))
+                    ? Text(cost == 0 ? tr('free') : tr('owned'), textAlign: TextAlign.center, style: ats(10, w: FontWeight.w800, c: rc))
                     : Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                         const _Coin(11),
                         const SizedBox(width: 3),
@@ -5544,6 +5546,7 @@ const Map<String, List<String>> kArenaT = {
   'fair_s': ['هەموو خاڵێک پێش حیسابکردن پشتڕاست دەکرێتەوە', 'هەر خالەک بەری حیسابکرنێ دهێتە پشتڕاستکرن', 'Every point is verified before it counts', 'يتم التحقق من كل نقطة قبل احتسابها', 'هر امتیاز قبل از حساب شدن تأیید می‌شود', 'Her puan sayılmadan önce doğrulanır'],
   'fair_t': ['یاری دادپەروەرانە', 'یاریا دادپەروەر', 'Fair play', 'اللعب النظيف', 'بازی منصفانه', 'Adil oyun'],
   'founder': ['دامەزرێنەر', 'دامەزرێنەر', 'Founder', 'مؤسس', 'بنیان‌گذار', 'Kurucu'],
+  'free': ['بەخۆڕایی', 'بێ بەرامبەر', 'Free', 'مجاني', 'رایگان', 'Ücretsiz'],
   'freeze': ['پاراستنی زنجیرە', 'پاراستنا زنجیرێ', 'Streak shield', 'حماية السلسلة', 'محافظ زنجیره', 'Seri kalkanı'],
   'frz_1': ['هەموو هەفتەیەک 1 دانە بەخۆڕایی (زۆرترین 2)', 'هەمی حەفتیان 1 بێ بەرامبەر (زێدەتر 2)', '1 free every week (max 2)', 'واحدة مجاناً كل أسبوع (حد أقصى 2)', 'هر هفته 1 رایگان (حداکثر 2)', 'Her hafta 1 ücretsiz (en fazla 2)'],
   'frz_2': ['ئۆتۆماتیک بەکاردێت کاتێک ڕۆژێکت لەدەست دەچێت', 'ب خۆ دهێتە بکارئینان دەمێ ڕۆژەک ژ دەست دچیت', 'Used automatically when you miss a day', 'تُستخدم تلقائياً عند تفويت يوم', 'هنگام از دست دادن روز خودکار استفاده می‌شود', 'Bir gün kaçırınca otomatik kullanılır'],
@@ -5616,7 +5619,7 @@ const Map<String, List<String>> kArenaT = {
   'ms_t': ['ئەرکەکانی ئەمڕۆ', 'ئەرکێن ئەڤرۆ', 'Today\'s missions', 'مهام اليوم', 'مأموریت‌های امروز', 'Bugünün görevleri'],
   'ms_walk': ['{0} خاڵ لە پیاسەدا', '{0} خال د پیاسێ دا', '{0} pts from walking', '{0} نقطة من المشي', '{0} امتیاز از پیاده‌روی', 'Yürüyüşten {0} puan'],
   'ms_water': ['{0} خاڵ لە ئاودا', '{0} خال د ئاڤێ دا', '{0} pts from water', '{0} نقطة من الماء', '{0} امتیاز از آب', 'Sudan {0} puan'],
-  'n_of': ['{0} / {1}', '{0} / {1}', '{0} / {1}', '{0} / {1}', '{0} / {1}', '{0} / {1}'],
+  'n_of': ['⁦{0} / {1}⁩', '⁦{0} / {1}⁩', '{0} / {1}', '⁦{0} / {1}⁩', '⁦{0} / {1}⁩', '{0} / {1}'],
   'n_of_3': ['{0} لە 3', '{0} ژ 3', '{0} of 3', '{0} من 3', '{0} از 3', '{0} / 3'],
   'next': ['دواتر', 'پاشی', 'Next', 'التالي', 'بعدی', 'İleri'],
   'no_coins': ['سکەت بەس نییە', 'پارێن تە بەس نینن', 'Not enough coins', 'العملات غير كافية', 'سکه کافی نیست', 'Yeterli coin yok'],
@@ -5671,7 +5674,7 @@ const Map<String, List<String>> kArenaT = {
   'r_lock': ['گۆڕینی کارەکتەر لە کاتی وەرزدا داخراوە.', 'گوهۆڕینا کارەکتەری د دەمێ وەرزی دا یا گرتییە.', 'Character changes are locked during a live season.', 'تغيير الشخصية مقفل أثناء الموسم.', 'تغییر کاراکتر در طول فصل قفل است.', 'Sezon sırasında karakter değişimi kilitlidir.'],
   'r_rare': ['دەگمەن', 'کێمدیتی', 'Rare', 'نادر', 'کمیاب', 'Nadir'],
   'rank': ['پلە', 'پلە', 'Rank', 'المرتبة', 'رتبه', 'Sıra'],
-  'rank_of': ['#{0} لە {1}', '#{0} ژ {1}', '#{0} of {1}', '#{0} من {1}', '#{0} از {1}', '#{0} / {1}'],
+  'rank_of': ['پلەی {0} لە {1}', 'پلا {0} ژ {1}', '#{0} of {1}', 'المركز {0} من {1}', 'رتبه {0} از {1}', '#{0} / {1}'],
   'reg_k': ['تۆمارکرای · وەرزی {0}', 'تۆمارکری · وەرزێ {0}', 'Registered · Season {0}', 'مسجّل · الموسم {0}', 'ثبت‌نام شده · فصل {0}', 'Kayıtlı · Sezon {0}'],
   'reg_s': ['کاتێک وەرز دەستپێدەکات، خاڵەکانت لێرە حیساب دەکرێن. ئێستا دەتوانیت ڕاهێنان بکەیت.', 'دەمێ وەرز دەستپێدکەت، خالێن تە ل ڤێرێ دێ حیسابکرن. نوکە دشێی ڕاهێنانێ بکەی.', 'When the season starts your points count here. You can practice now.', 'عند بدء الموسم تُحتسب نقاطك هنا. يمكنك التدرب الآن.', 'وقتی فصل شروع شود امتیازهایت اینجا حساب می‌شود. الان می‌توانی تمرین کنی.', 'Sezon başladığında puanların burada sayılır. Şimdi antrenman yapabilirsin.'],
   'reg_t': ['ئامادەیت، {0}!', 'تو ئامادەیی، {0}!', 'You are in, {0}!', 'أنت جاهز يا {0}!', 'آماده‌ای، {0}!', 'Hazırsın, {0}!'],
@@ -5793,8 +5796,8 @@ const Map<String, List<String>> kArenaT = {
   'u_m': ['خولەک', 'خولەک', 'min', 'دقيقة', 'دقیقه', 'dk'],
   'u_meals': ['{0} ژەم', '{0} ژەم', '{0} meals', '{0} وجبات', '{0} وعده', '{0} öğün'],
   'u_min': ['{0} خولەک', '{0} خولەک', '{0} min', '{0} دقيقة', '{0} دقیقه', '{0} dk'],
-  'u_min_km': ['{0} خولەک · {1} km', '{0} خولەک · {1} km', '{0} min · {1} km', '{0} دقيقة · {1} كم', '{0} دقیقه · {1} km', '{0} dk · {1} km'],
-  'u_ml': ['{0} / {1} ml', '{0} / {1} ml', '{0} / {1} ml', '{0} / {1} مل', '{0} / {1} ml', '{0} / {1} ml'],
+  'u_min_km': ['{0} خولەک · ⁦{1} km⁩', '{0} خولەک · ⁦{1} km⁩', '{0} min · {1} km', '{0} دقيقة · {1} كم', '{0} دقیقه · ⁦{1} km⁩', '{0} dk · {1} km'],
+  'u_ml': ['⁦{0} / {1} ml⁩', '⁦{0} / {1} ml⁩', '{0} / {1} ml', '⁦{0} / {1} مل⁩', '⁦{0} / {1} ml⁩', '{0} / {1} ml'],
   'u_rest': ['لێدانی پشوو {0}', 'لێدانا بێهنڤەدانێ {0}', 'Resting HR {0}', 'نبض الراحة {0}', 'ضربان استراحت {0}', 'Dinlenme nabzı {0}'],
   'u_right': ['ڕاست', 'دروست', 'correct', 'صحيح', 'درست', 'doğru'],
   'u_s': ['چرکە', 'چرکە', 'sec', 'ثانية', 'ثانیه', 'sn'],
