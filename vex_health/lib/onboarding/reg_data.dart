@@ -103,7 +103,7 @@ class RPill {
   final int c;
 }
 
-/// چوار ڕیزی تایبەتمەندییەکان لە بەخێرهاتندا (32 دانە)
+/// چوار ڕیزی تایبەتمەندییەکان لە بەخێرهاتندا (31 دانە)
 const List<List<RPill>> kFeatRows = [
   [
     RPill('❤️', 'لێدانی دڵ 24/7', 0xFFFF5F7E),
@@ -137,7 +137,6 @@ const List<List<RPill>> kFeatRows = [
   ],
   [
     RPill('👨‍👩‍👧', 'بازنەی خێزان', 0xFFFF8FC8),
-    RPill('🍼', 'خواردنی منداڵ', 0xFFFF8FC8),
     RPill('🏆', 'VEX Arena', 0xFFFFBE4D),
     RPill('🎁', 'خاڵ و خەڵات', 0xFFFFBE4D),
     RPill('⌚', 'VEX Band', 0xFF8FF3F9),

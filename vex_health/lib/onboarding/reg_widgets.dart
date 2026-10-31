@@ -1371,7 +1371,7 @@ class RMarquee extends StatelessWidget {
                 delayMs: 150 + i * 120,
                 child: _MqRow(
                   row: kFeatRows[i],
-                  labels: LangState.I.isKu ? null : (LangState.I.code == 'ar' ? kFeatAr : (LangState.I.code == 'fa' ? kFeatFa : (LangState.I.code == 'tr' ? kFeatTr : kFeatEn))).sublist(i * 8, i * 8 + kFeatRows[i].length),
+                  labels: LangState.I.isKu ? null : (LangState.I.code == 'ar' ? kFeatAr : (LangState.I.code == 'fa' ? kFeatFa : (LangState.I.code == 'tr' ? kFeatTr : kFeatEn))).sublist(_featStart(i), _featStart(i) + kFeatRows[i].length),
                   seconds: secs[i],
                   reverse: i.isOdd,
                   height: compact ? 31 : 36,
@@ -1819,4 +1819,13 @@ class RPlanTile extends StatelessWidget {
       ),
     );
   }
+}
+
+/// شوێنی دەستپێکی ڕیزی [i] لە لیستی وەرگێڕانی تایبەتمەندییەکان (ڕیزەکان دەتوانن درێژی جیاوازیان هەبێت)
+int _featStart(int i) {
+  var n = 0;
+  for (var j = 0; j < i; j++) {
+    n += kFeatRows[j].length;
+  }
+  return n;
 }
