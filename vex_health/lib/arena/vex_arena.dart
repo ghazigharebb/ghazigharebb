@@ -24,7 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../core/theme.dart' show VexTheme, VexMode;
+import '../core/theme.dart' show VexTheme;
 import '../onboarding/reg_lang_state.dart' show LangState;
 
 // =============================================================================
@@ -1300,7 +1300,7 @@ class ArenaCtl extends ChangeNotifier {
 
   int get joinDay => store.acc == null ? S.day : (store.acc!.sn == S.n ? store.acc!.day : S.day);
   int get daysSinceJoin => math.max(1, S.day - math.max(1, joinDay) + 1);
-  int get avgDaily => math.max((active * 0.8).round(), (seasonPts / math.max(1, daysSinceJoin - 1)).round());
+  int get avgDaily => math.max((active * 0.8).round(), (seasonPts / math.max<int>(1, daysSinceJoin - 1)).round());
   int get goal => math.min(maxDay(div) ~/ 2, math.max(active, ((avgDaily * 1.1) / 10).round() * 10));
 
   int weekPts() {
@@ -1643,22 +1643,18 @@ String nm(String s) => arenaLtr ? (_kLatin[s] ?? s) : s;
 // =============================================================================
 
 class _Box extends StatelessWidget {
-  const _Box({required this.child, this.pad = const EdgeInsets.all(16), this.color, this.border, this.gradient, this.radius = 24, this.margin});
+  const _Box({required this.child, this.border, this.gradient});
   final Widget child;
-  final EdgeInsets pad;
-  final Color? color;
   final Color? border;
   final Gradient? gradient;
-  final double radius;
-  final EdgeInsets? margin;
   @override
   Widget build(BuildContext context) => Container(
-        margin: margin ?? const EdgeInsets.only(bottom: 14),
-        padding: pad,
+        margin: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: gradient == null ? (color ?? AC.card) : null,
+          color: gradient == null ? AC.card : null,
           gradient: gradient,
-          borderRadius: BorderRadius.circular(radius),
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(color: border ?? AC.line),
           boxShadow: AC.sh,
         ),
@@ -1667,18 +1663,16 @@ class _Box extends StatelessWidget {
 }
 
 class _Head extends StatelessWidget {
-  const _Head(this.title, {this.small, this.trailing, this.color});
+  const _Head(this.title, {this.small, this.color});
   final String title;
   final String? small;
-  final Widget? trailing;
   final Color? color;
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(bottom: 10),
         child: Row(children: [
           Expanded(child: Text(title, style: ats(17, w: FontWeight.w800, c: color), maxLines: 2)),
-          if (trailing != null) trailing!,
-          if (small != null && trailing == null)
+          if (small != null)
             Flexible(child: Text(small!, textAlign: TextAlign.end, style: ats(12, c: color != null ? AC.stageMu : AC.mu), maxLines: 2)),
         ]),
       );
@@ -1848,18 +1842,17 @@ class _Pill extends StatelessWidget {
 }
 
 class _Bar extends StatelessWidget {
-  const _Bar(this.f, {this.color, this.h = 6, this.track});
+  const _Bar(this.f, {this.color, this.h = 6});
   final double f;
   final Color? color;
   final double h;
-  final Color? track;
   @override
   Widget build(BuildContext context) => ClipRRect(
         borderRadius: BorderRadius.circular(h),
         child: SizedBox(
           height: h,
           child: Stack(children: [
-            Positioned.fill(child: ColoredBox(color: track ?? AC.track)),
+            Positioned.fill(child: ColoredBox(color: AC.track)),
             FractionallySizedBox(
               widthFactor: f.clamp(0.0, 1.0).toDouble(),
               alignment: AlignmentDirectional.centerStart,
