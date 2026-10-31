@@ -1465,7 +1465,7 @@ void playerSheet(BuildContext context, ArenaCtl c, APlayer x) {
         const SizedBox(width: 8),
         box(tr('ps_guess'), Text('${x.gp}', style: atn(16)), icon: 'crystal', k: AC.violet),
         const SizedBox(width: 8),
-        box(tr('f_city'), Text(nm(x.city), maxLines: 1, overflow: TextOverflow.ellipsis, style: ats(13, w: FontWeight.w800))),
+        box(tr('st_city'), Text(nm(x.city), maxLines: 1, overflow: TextOverflow.ellipsis, style: ats(13, w: FontWeight.w800))),
       ]),
       const SizedBox(height: 10),
       Row(mainAxisAlignment: MainAxisAlignment.center, children: [

@@ -1948,16 +1948,23 @@ class _Btn extends StatelessWidget {
               border: p ? null : Border.all(color: d ? const Color(0x66FF5F7E) : AC.line),
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                if (lead != null) ...[lead!, const SizedBox(width: 8)],
-                if (icon != null) ...[AIcon(icon!, size: 18, color: fg), const SizedBox(width: 8)],
-                if (label.isNotEmpty)
-                  Flexible(
-                      child: Text(label,
-                          maxLines: 1, overflow: TextOverflow.ellipsis, style: ats(14, w: FontWeight.w800, c: fg))),
-                if (trail != null) ...[const SizedBox(width: 8), trail!],
-              ]),
+              padding: EdgeInsets.symmetric(horizontal: label.isEmpty ? 0 : 14),
+              child: LayoutBuilder(builder: (_, bc) {
+                final t = Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: ats(14, w: FontWeight.w800, c: fg));
+                final parts = <Widget>[
+                  if (lead != null) lead!,
+                  if (icon != null) AIcon(icon!, size: 18, color: fg),
+                  if (label.isNotEmpty) bc.hasBoundedWidth ? Flexible(child: t) : t,
+                  if (trail != null) trail!,
+                ];
+                return Row(
+                  mainAxisSize: bc.hasBoundedWidth ? MainAxisSize.max : MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    for (var i = 0; i < parts.length; i++) ...[if (i > 0) const SizedBox(width: 8), parts[i]],
+                  ],
+                );
+              }),
             ),
           ),
         ),
