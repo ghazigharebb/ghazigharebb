@@ -1010,10 +1010,13 @@ class _YouCard extends StatelessWidget {
               ]),
             ),
             const SizedBox(width: 8),
-            Row(mainAxisSize: MainAxisSize.min, children: [
-              AIcon('chart', size: 13, color: AC.mint),
-              const SizedBox(width: 4),
-              _richNum(tr('rank_all', ['#${afmt(c.rankOf(tot))}']), ats(12, w: FontWeight.w800, c: AC.mint), atn(12, c: AC.mint)),
+            Column(mainAxisSize: MainAxisSize.min, children: [
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                Text(tr('rank_all', ['']).trim(), style: ats(12, w: FontWeight.w800, c: AC.mint)),
+                const SizedBox(width: 4),
+                AIcon('chart', size: 13, color: AC.mint),
+              ]),
+              Text('#${afmt(c.rankOf(tot))}', textDirection: TextDirection.ltr, style: atn(12, c: AC.mint)),
             ]),
           ]),
         ),

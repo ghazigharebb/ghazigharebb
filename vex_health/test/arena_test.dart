@@ -75,7 +75,7 @@ void main() {
   }
 
   /// پەڕەیەکی تۆمارکراو (بێ دەروازە) — بۆ تاقیکردنەوەی زمان و دۆخەکان
-  Future<ArenaStore> openRegistered(WidgetTester t, {required String lang, required String mode, bool band = true, double h = 4400}) async {
+  Future<ArenaStore> openRegistered(WidgetTester t, {required String lang, required String mode, bool band = true, double h = 5200}) async {
     SharedPreferences.setMockInitialValues({});
     await t.binding.setSurfaceSize(Size(400, h));
     LangState.I.code = lang;
