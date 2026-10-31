@@ -1357,7 +1357,8 @@ class _GateState extends State<_Gate> {
           _lbl(tr('f_phone')),
           Directionality(
             textDirection: TextDirection.ltr,
-            child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            child: IntrinsicHeight(
+             child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 alignment: Alignment.center,
@@ -1389,7 +1390,8 @@ class _GateState extends State<_Gate> {
                   onSubmitted: (_) => _next(),
                 ),
               ),
-            ]),
+             ]),
+            ),
           ),
           _hint('lock', tr('f_phone_h')),
         ]);

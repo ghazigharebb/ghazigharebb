@@ -29,16 +29,21 @@ Widget _cwRow(String icon, Color k, String b, String sm, {Widget? trail}) => Con
 
 /// سەری تاریکی شیت (.cwh / .rlh)
 Widget _darkHead({required Widget icon, required List<Widget> children}) => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         gradient: cssLin(170, const [Color(0xFF16224D), Color(0xFF080D22)]),
         border: Border.all(color: const Color(0x61FFD678)),
       ),
-      child: Stack(children: [
-        Positioned.fill(child: CustomPaint(painter: _TopGlow(const Color(0x4DFFC846)))),
-        Column(children: [icon, ...children]),
-      ]),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(23),
+        child: CustomPaint(
+          painter: _TopGlow(const Color(0x4DFFC846)),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+            child: SizedBox(width: double.infinity, child: Column(children: [icon, ...children])),
+          ),
+        ),
+      ),
     );
 
 class _TopGlow extends CustomPainter {

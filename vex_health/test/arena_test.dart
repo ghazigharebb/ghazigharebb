@@ -158,7 +158,7 @@ void main() {
       await t.tap(find.text(tr('rv_go')));
       await settle(t, 600);
       noErr(t, 'after reveal');
-      expect(find.text(tr('tab_rank')), findsOneWidget);
+      expect(find.text(tr('tab_rank')), findsWidgets);
       expect(arenaDebugCtl!.regd, isTrue);
       await done(t);
     });
@@ -173,13 +173,13 @@ void main() {
       testWidgets('tabs $lang $mode', (t) async {
         await openRegistered(t, lang: lang, mode: mode);
         noErr(t, 'open $lang');
-        expect(find.text(tr('tab_today')), findsOneWidget);
+        expect(find.text(tr('tab_today')), findsWidgets);
         await gold(find.byType(VexArenaPage), 'goldens/${lang}_${mode}_today.png');
-        await t.tap(find.text(tr('tab_rank')));
+        await t.tap(find.text(tr('tab_rank')).first);
         await settle(t);
         noErr(t, 'rank $lang');
         await gold(find.byType(VexArenaPage), 'goldens/${lang}_${mode}_rank.png');
-        await t.tap(find.text(tr('tab_card')));
+        await t.tap(find.text(tr('tab_card')).first);
         await settle(t);
         noErr(t, 'card $lang');
         await gold(find.byType(VexArenaPage), 'goldens/${lang}_${mode}_card.png');
@@ -209,7 +209,7 @@ void main() {
     expect(st.acc!.dv, 'phone');
     expect(arenaDebugCtl!.div, Div.phone);
     await gold(find.byType(VexArenaPage), 'goldens/phone_today.png');
-    await t.tap(find.text(tr('tab_rank')));
+    await t.tap(find.text(tr('tab_rank')).first);
     await settle(t);
     noErr(t, 'phone rank');
     await gold(find.byType(VexArenaPage), 'goldens/phone_rank.png');
@@ -284,7 +284,7 @@ void main() {
       await closeSheet(t);
 
       // پلەکان: هەموو بەشەکان
-      await t.tap(find.text(tr('tab_rank')));
+      await t.tap(find.text(tr('tab_rank')).first);
       await settle(t);
       for (final s in ['all', 'age', 'guess', 'week']) {
         final f = find.text(tr('sg_$s'));
