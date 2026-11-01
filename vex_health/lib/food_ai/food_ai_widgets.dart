@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../core/theme.dart';
 import 'food_ai_data.dart';
@@ -47,6 +48,10 @@ Widget ic(String inner, Color c, {double size = 20, double stroke = 2.1, bool fi
     height: size,
   );
 }
+
+/// دەقی کوردی + Sora بۆ پیتی لاتینی و ژمارە (kcal, AI, ·) — وەک دیزاینەکە
+TextStyle kx(double size, {FontWeight w = FontWeight.w400, Color? c, double? h}) =>
+    ku(size, w: w, c: c, h: h).copyWith(fontFamilyFallback: [GoogleFonts.sora(fontWeight: w).fontFamily!]);
 
 /// ژمارە بە ڕەقەمی ئینگلیزی لەناو دەقی کوردیدا
 String n0(num v) => ltr(fmt(v));
@@ -310,7 +315,7 @@ class MacroLegend extends StatelessWidget {
     Widget it(String l, double v, Color c) => Row(mainAxisSize: MainAxisSize.min, children: [
           Container(width: 8, height: 8, decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(3))),
           const SizedBox(width: 4),
-          Text(l, style: ku(11.5, c: V.mu)),
+          Text(l, style: kx(11.5, c: V.mu)),
           const SizedBox(width: 4),
           Text('${v.round()}g', style: nu(12.5, w: FontWeight.w700), textDirection: TextDirection.ltr),
         ]);
@@ -367,7 +372,7 @@ class QtyStepper extends StatelessWidget {
               },
               child: Center(
                 key: ValueKey<String>(word),
-                child: FittedBox(fit: BoxFit.scaleDown, child: Text(word, maxLines: 1, style: ku(13.5, w: FontWeight.w700))),
+                child: FittedBox(fit: BoxFit.scaleDown, child: Text(word, maxLines: 1, style: kx(13.5, w: FontWeight.w700))),
               ),
             ),
           ),
@@ -401,7 +406,7 @@ class KcalRing extends StatelessWidget {
           child: Center(
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               Text(fmt(x), style: nu(size * .18, c: V.tx), textDirection: TextDirection.ltr),
-              Text('لە ${n0(goal)}', style: ku(size * .087, c: V.mu, h: 1.2)),
+              Text('لە ${n0(goal)}', style: kx(size * .087, c: V.mu, h: 1.2)),
             ]),
           ),
         ),
@@ -540,7 +545,7 @@ class GradBtn extends StatelessWidget {
           ),
           child: Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: [
             if (icon != null) ...[ic(icon!, kInk, size: size + 2, stroke: 2.4), const SizedBox(width: 7)],
-            Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(size, w: FontWeight.w800, c: kInk))),
+            Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: kx(size, w: FontWeight.w800, c: kInk))),
           ]),
         ),
       ),
@@ -572,7 +577,7 @@ class SoftBtn extends StatelessWidget {
         ),
         child: Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: [
           if (icon != null) ...[ic(icon!, on ? V.cy : c, size: 16), const SizedBox(width: 6)],
-          Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(12.5, w: FontWeight.w700, c: on ? V.cy : c))),
+          Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: kx(12.5, w: FontWeight.w700, c: on ? V.cy : c))),
         ]),
       ),
     );

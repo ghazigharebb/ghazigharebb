@@ -29,8 +29,9 @@ jobs:
           flutter analyze --no-fatal-infos --no-fatal-warnings > /tmp/o/analyze.txt 2>&1 || true
           st=0; flutter test test/food_ai_test.dart --update-goldens -r expanded > /tmp/o/out.txt 2>&1 || st=$?
           echo "exit=$st" >> /tmp/o/out.txt
-          st2=0; flutter test test/report_test.dart -r expanded > /tmp/o/report.txt 2>&1 || st2=$?
+          st2=0; flutter test test/report_test.dart --update-goldens -r expanded > /tmp/o/report.txt 2>&1 || st2=$?
           echo "exit=$st2" >> /tmp/o/report.txt
+          cp /tmp/fonts.txt /tmp/o/ || true
           mkdir -p /tmp/o/food
           cp test/goldens/food/*.png /tmp/o/food/ 2>/dev/null || true
           if [ -d test/goldens/video ]; then

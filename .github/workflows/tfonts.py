@@ -14,3 +14,19 @@ for fam, url in src.items():
         s = instancer.instantiateVariableFont(f, {'wght': w, 'wdth': 100})
         s.save('tfonts/%s-%s.ttf' % (fam, n))
         print(fam, n)
+
+# NotoSansArabic + NotoSans (لاتینی) لە یەک فایلدا — وەک مۆبایل کە پیتی لاتینی بە فۆنتی سیستەم پیشان دەدات
+from fontTools.merge import Merger
+for n, w in W:
+    try:
+        ar = 'tfonts/NotoSansArabic-%s.ttf' % n
+        m = Merger().merge([ar, 'tfonts/NotoSans-%s.ttf' % n])
+        src = TTFont(ar)
+        for t, attrs in [('hhea', ['ascent', 'descent', 'lineGap']),
+                         ('OS/2', ['sTypoAscender', 'sTypoDescender', 'sTypoLineGap', 'usWinAscent', 'usWinDescent', 'fsSelection'])]:
+            for a in attrs:
+                setattr(m[t], a, getattr(src[t], a))
+        m.save(ar)
+        print('merged', n)
+    except Exception as e:
+        print('merge failed', n, e)

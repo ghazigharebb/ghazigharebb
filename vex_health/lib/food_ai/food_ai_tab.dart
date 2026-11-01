@@ -42,8 +42,8 @@ class _FoodAiTabState extends State<FoodAiTab> {
             const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(x.dish.name, style: ku(17, w: FontWeight.w700)),
-                Text('${qtyWord(x.q, x.unit)} · ${n0(x.nut.k)} kcal', style: ku(12, c: V.mu)),
+                Text(x.dish.name, style: kx(17, w: FontWeight.w700)),
+                Text('${qtyWord(x.q, x.unit)} · ${n0(x.nut.k)} kcal', style: kx(12, c: V.mu)),
               ]),
             ),
           ]),
@@ -62,8 +62,8 @@ class _FoodAiTabState extends State<FoodAiTab> {
             const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(d.name, style: ku(17, w: FontWeight.w700)),
-                Text('${qtyWord(d.q0, d.u0)} · ${n0(d.nut(d.u0, d.q0).k)} kcal', style: ku(12, c: V.mu)),
+                Text(d.name, style: kx(17, w: FontWeight.w700)),
+                Text('${qtyWord(d.q0, d.u0)} · ${n0(d.nut(d.u0, d.q0).k)} kcal', style: kx(12, c: V.mu)),
               ]),
             ),
           ]),
@@ -88,13 +88,13 @@ class _FoodAiTabState extends State<FoodAiTab> {
       const SizedBox(width: 10),
       Expanded(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('VEX AI · خواردن', style: ku(20, w: FontWeight.w800)),
-          Text(kurdishDate(), style: ku(12, c: V.mu)),
+          Text('VEX AI · خواردن', style: kx(20, w: FontWeight.w800)),
+          Text(kurdishDate(), style: kx(12, c: V.mu)),
         ]),
       ),
       FChip(
         color: FoodAiEngine.live ? V.mint : kWarn,
-        child: Text(FoodAiEngine.live ? 'AI بەستراوە' : 'دۆخی نموونە', style: ku(11, w: FontWeight.w700, c: FoodAiEngine.live ? V.mint : kWarn)),
+        child: Text(FoodAiEngine.live ? 'AI بەستراوە' : 'دۆخی نموونە', style: kx(11, w: FontWeight.w700, c: FoodAiEngine.live ? V.mint : kWarn)),
       ),
     ]);
   }
@@ -107,8 +107,7 @@ class _FoodAiTabState extends State<FoodAiTab> {
           padding: const EdgeInsets.only(top: 8),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Row(children: [
-              Text(l, style: ku(12)),
-              const Spacer(),
+              Expanded(child: Text(l, maxLines: 1, overflow: TextOverflow.fade, softWrap: false, style: kx(12))),
               Text('$v / ${g.round()}g', style: nu(11.5, w: FontWeight.w600, c: V.mu), textDirection: TextDirection.ltr),
             ]),
             const SizedBox(height: 4),
@@ -147,7 +146,7 @@ class _FoodAiTabState extends State<FoodAiTab> {
                 TextSpan(text: fmt(left.abs()), style: nu(13, w: FontWeight.w800, c: left >= 0 ? V.mint : kFat)),
                 const TextSpan(text: ' kcal'),
               ]),
-              style: ku(12.5, w: FontWeight.w600, c: V.mu),
+              style: kx(12.5, w: FontWeight.w600, c: V.mu),
             ),
             bar('پرۆتین', t.p, goal * .25 / 4, kPro),
             bar('کاربۆهیدرات', t.c, goal * .45 / 4, kCarb),
@@ -175,8 +174,8 @@ class _FoodAiTabState extends State<FoodAiTab> {
           key: const ValueKey<String>('fa-open-cam'),
           onTap: () => openFoodCapture(),
           child: Container(
-            height: 92,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            constraints: const BoxConstraints(minHeight: 92),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               gradient: const LinearGradient(colors: [kCy, kMint]),
               borderRadius: BorderRadius.circular(20),
@@ -193,8 +192,8 @@ class _FoodAiTabState extends State<FoodAiTab> {
               const SizedBox(width: 12),
               Expanded(
                 child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('وێنەی خواردنەکەت بگرە', style: ku(17, w: FontWeight.w800, c: kInk)),
-                  Text('تا 5 وێنە بە یەک جار · AI هەموو خواردنێک دەناسێتەوە', maxLines: 2, style: ku(11.5, w: FontWeight.w600, c: kInk.withAlpha(190))),
+                  Text('وێنەی خواردنەکەت بگرە', style: kx(17, w: FontWeight.w800, c: kInk)),
+                  Text('تا 5 وێنە بە یەک جار · AI هەموو خواردنێک دەناسێتەوە', maxLines: 2, style: kx(11.5, w: FontWeight.w600, c: kInk.withAlpha(190))),
                 ]),
               ),
             ]),
@@ -221,7 +220,7 @@ class _FoodAiTabState extends State<FoodAiTab> {
           child: Row(children: [
             ic(FI.save, V.cy, size: 20),
             const SizedBox(width: 10),
-            Expanded(child: Text('لە وردەکاریی هەر خواردنێک «پاشەکەوت» دابگرە — جاری داهاتوو بە یەک دەستلێدان زیاد دەبێت.', style: ku(12, c: V.mu, h: 1.5))),
+            Expanded(child: Text('لە وردەکاریی هەر خواردنێک «پاشەکەوت» دابگرە — جاری داهاتوو بە یەک دەستلێدان زیاد دەبێت.', style: kx(12, c: V.mu, h: 1.5))),
           ]),
         )
       else
@@ -243,8 +242,8 @@ class _FoodAiTabState extends State<FoodAiTab> {
                   child: Column(children: [
                     DishPng(d, size: 50),
                     const SizedBox(height: 4),
-                    Text(d.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(12, w: FontWeight.w700)),
-                    Text('${n0(d.nut(d.u0, d.q0).k)} kcal', style: ku(10.5, c: V.mu)),
+                    Text(d.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: kx(12, w: FontWeight.w700)),
+                    Text('${n0(d.nut(d.u0, d.q0).k)} kcal', style: kx(10.5, c: V.mu)),
                   ]),
                 ),
               );
@@ -257,7 +256,7 @@ class _FoodAiTabState extends State<FoodAiTab> {
   Widget _title(String t, String? badge) => Padding(
         padding: const EdgeInsets.fromLTRB(4, 18, 4, 8),
         child: Row(children: [
-          Text(t, style: ku(15, w: FontWeight.w800)),
+          Text(t, style: kx(15, w: FontWeight.w800)),
           if (badge != null) ...[
             const SizedBox(width: 6),
             Container(
@@ -283,8 +282,8 @@ class _FoodAiTabState extends State<FoodAiTab> {
                 Padding(padding: const EdgeInsets.symmetric(horizontal: 2), child: Opacity(opacity: .55, child: DishPng(dishById(id)!, size: 40))),
             ]),
             const SizedBox(height: 8),
-            Text('هێشتا هیچ خواردنێکت تۆمار نەکردووە', style: ku(13, w: FontWeight.w600)),
-            Text('وێنەیەک بگرە، AI ـەکە خۆی دەیناسێتەوە', style: ku(11.5, c: V.mu)),
+            Text('هێشتا هیچ خواردنێکت تۆمار نەکردووە', style: kx(13, w: FontWeight.w600)),
+            Text('وێنەیەک بگرە، AI ـەکە خۆی دەیناسێتەوە', style: kx(11.5, c: V.mu)),
           ]),
         ),
       ]);
@@ -298,7 +297,7 @@ class _FoodAiTabState extends State<FoodAiTab> {
       out.add(Padding(
         padding: const EdgeInsets.fromLTRB(4, 18, 4, 8),
         child: Row(children: [
-          Text(kMealName[s]!, style: ku(15, w: FontWeight.w800)),
+          Text(kMealName[s]!, style: kx(15, w: FontWeight.w800)),
           const SizedBox(width: 6),
           Text(g.first.at, style: nu(11.5, w: FontWeight.w600, c: V.mu), textDirection: TextDirection.ltr),
           const Spacer(),
@@ -317,13 +316,13 @@ class _FoodAiTabState extends State<FoodAiTab> {
             const SizedBox(width: 10),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(x.dish.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(14.5, w: FontWeight.w700)),
-                Text(qtyWord(x.q, x.unit), style: ku(11.5, c: V.mu)),
+                Text(x.dish.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: kx(14.5, w: FontWeight.w700)),
+                Text(qtyWord(x.q, x.unit), style: kx(11.5, c: V.mu)),
               ]),
             ),
             Column(children: [
               Text(fmt(x.nut.k), style: nu(16, c: V.tx), textDirection: TextDirection.ltr),
-              Text('kcal', style: ku(10, c: V.mu)),
+              Text('kcal', style: kx(10, c: V.mu)),
             ]),
             const SizedBox(width: 4),
             Press(

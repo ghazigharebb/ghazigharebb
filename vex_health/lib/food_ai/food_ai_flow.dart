@@ -188,18 +188,29 @@ class _FoodCapturePageState extends State<FoodCapturePage> with SingleTickerProv
     return Rect.fromLTWH(left, top, 52, 52);
   }
 
+  final List<String> _queue = [];
+
   bool _room() {
-    if (shots.length + (_flyShot == null ? 0 : 1) >= kMaxShots) {
+    if (shots.length + ((_busy || _flyShot != null) ? 1 : 0) + _queue.length >= kMaxShots) {
       toast('زۆرترین 5 وێنە بە یەک جار');
       return false;
     }
     return true;
   }
 
+  /// نموونەکان بە ڕیز (دەستلێدانی خێرا ون نابێت)
   Future<void> _sample(String id) async {
-    if (_busy || !_room()) return;
-    _busy = true;
+    if (!_room()) return;
     HapticFeedback.selectionClick();
+    _queue.add(id);
+    if (_busy) return;
+    while (_queue.isNotEmpty && mounted) {
+      await _shoot(_queue.removeAt(0));
+    }
+  }
+
+  Future<void> _shoot(String id) async {
+    _busy = true;
     setState(() {
       _view = id;
       _det = false;
@@ -251,8 +262,12 @@ class _FoodCapturePageState extends State<FoodCapturePage> with SingleTickerProv
     if (l.isNotEmpty && mounted) setState(() => shots.addAll(l));
   }
 
-  void _go() {
-    if (shots.isEmpty || _flyShot != null) return;
+  Future<void> _go() async {
+    // چاوەڕێی تەواوبوونی وێنەگرتنی ئێستا
+    while ((_busy || _flyShot != null || _queue.isNotEmpty) && mounted) {
+      await Future<void>.delayed(const Duration(milliseconds: 60));
+    }
+    if (!mounted || shots.isEmpty) return;
     if (widget.retake) {
       Navigator.of(context).pop(List<FShot>.of(shots));
       return;
@@ -284,7 +299,7 @@ class _FoodCapturePageState extends State<FoodCapturePage> with SingleTickerProv
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             SizedBox(width: ds, height: ds, child: CustomPaint(painter: _Corners())),
             const SizedBox(height: 14),
-            Text('خواردنەکەت بخەرە ناو چوارچێوەکە', style: ku(13, w: FontWeight.w600, c: Colors.white.withAlpha(200))),
+            Text('خواردنەکەت بخەرە ناو چوارچێوەکە', style: kx(13, w: FontWeight.w600, c: Colors.white.withAlpha(200))),
           ]),
         ),
       ),
@@ -334,7 +349,7 @@ class _FoodCapturePageState extends State<FoodCapturePage> with SingleTickerProv
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                           decoration: BoxDecoration(color: _detColor(d.id), borderRadius: BorderRadius.circular(99)),
-                          child: Text(d.id == 'doogh' ? 'شیر ؟' : d.name, style: ku(12, w: FontWeight.w800, c: kInk)),
+                          child: Text(d.id == 'doogh' ? 'شیر ؟' : d.name, style: kx(12, w: FontWeight.w800, c: kInk)),
                         ),
                       ),
                     ),
@@ -350,7 +365,7 @@ class _FoodCapturePageState extends State<FoodCapturePage> with SingleTickerProv
       Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         ic(FI.spark, kCy, size: 12, fill: true),
         const SizedBox(width: 5),
-        Text('نموونەکان بۆ تاقیکردنەوە — دەستی لێبدە', style: ku(11.5, w: FontWeight.w700, c: Colors.white.withAlpha(215))),
+        Text('نموونەکان بۆ تاقیکردنەوە — دەستی لێبدە', style: kx(11.5, w: FontWeight.w700, c: Colors.white.withAlpha(215))),
       ]),
       const SizedBox(height: 6),
       SizedBox(
@@ -382,7 +397,7 @@ class _FoodCapturePageState extends State<FoodCapturePage> with SingleTickerProv
                     child: DishPng(d, size: 44),
                   ),
                   const SizedBox(height: 3),
-                  Text(d.name, maxLines: 1, overflow: TextOverflow.clip, style: ku(10, w: FontWeight.w600, c: Colors.white.withAlpha(220), h: 1.1)),
+                  Text(d.name, maxLines: 1, overflow: TextOverflow.clip, style: kx(10, w: FontWeight.w600, c: Colors.white.withAlpha(220), h: 1.1)),
                 ]),
               ),
             );
@@ -431,8 +446,8 @@ class _FoodCapturePageState extends State<FoodCapturePage> with SingleTickerProv
                     ),
                   ),
                   const SizedBox(width: 7),
-                  Text(FoodAiEngine.live ? 'AI ئامادەیە' : 'AI · دۆخی نموونە', style: ku(12, w: FontWeight.w700, c: kCy)),
-                  Text(' · ', style: ku(12, c: kCy)),
+                  Text(FoodAiEngine.live ? 'AI ئامادەیە' : 'AI · دۆخی نموونە', style: kx(12, w: FontWeight.w700, c: kCy)),
+                  Text(' · ', style: kx(12, c: kCy)),
                   Text('$n/5', style: nu(12, w: FontWeight.w700, c: kCy), textDirection: TextDirection.ltr),
                 ]),
               ),
@@ -453,7 +468,7 @@ class _FoodCapturePageState extends State<FoodCapturePage> with SingleTickerProv
                 const TextSpan(text: ' وێنە بە یەک جار · هەموو خواردنەکان پێکەوە'),
               ]),
               textAlign: TextAlign.center,
-              style: ku(11.5, c: Colors.white.withAlpha(170)),
+              style: kx(11.5, c: Colors.white.withAlpha(170)),
             ),
           ),
           // خانەکان
@@ -501,8 +516,8 @@ class _FoodCapturePageState extends State<FoodCapturePage> with SingleTickerProv
             left: 0,
             right: 0,
             bottom: pad.bottom + 30,
-            child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-              SizedBox(width: 110, child: Center(child: _IconBtn(FI.gal, _gallery, size: 50, dark: true, key: const ValueKey<String>('fa-gallery')))),
+            child: Row(children: [
+              Expanded(child: Center(child: _IconBtn(FI.gal, _gallery, size: 50, dark: true, key: const ValueKey<String>('fa-gallery')))),
               Press(
                 key: const ValueKey<String>('fa-shutter'),
                 onTap: _camera,
@@ -515,8 +530,7 @@ class _FoodCapturePageState extends State<FoodCapturePage> with SingleTickerProv
                   child: Container(width: 64, height: 64, decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white)),
                 ),
               ),
-              SizedBox(
-                width: 110,
+              Expanded(
                 child: Center(
                   child: Press(
                     key: const ValueKey<String>('fa-go'),
@@ -527,10 +541,10 @@ class _FoodCapturePageState extends State<FoodCapturePage> with SingleTickerProv
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
                         decoration: BoxDecoration(gradient: const LinearGradient(colors: [kCy, kMint]), borderRadius: BorderRadius.circular(99)),
-                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        child: FittedBox(fit: BoxFit.scaleDown, child: Row(mainAxisSize: MainAxisSize.min, children: [
                           ic(FI.spark, kInk, size: 13, fill: true),
                           const SizedBox(width: 4),
-                          Text(widget.retake ? 'باشە' : 'شیکردنەوە', style: ku(13, w: FontWeight.w800, c: kInk)),
+                          Text(widget.retake ? 'باشە' : 'شیکردنەوە', style: kx(13, w: FontWeight.w800, c: kInk)),
                           if (n > 0) ...[
                             const SizedBox(width: 5),
                             Container(
@@ -539,7 +553,7 @@ class _FoodCapturePageState extends State<FoodCapturePage> with SingleTickerProv
                               child: Text('$n', style: nu(11.5, c: kCy)),
                             ),
                           ],
-                        ]),
+                        ])),
                       ),
                     ),
                   ),
@@ -768,7 +782,7 @@ class _FoodAnalysisPageState extends State<FoodAnalysisPage> with TickerProvider
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Row(children: [
                 _IconBtn(FI.x, () => Navigator.of(context).maybePop()),
-                Expanded(child: Text('شیکردنەوە', textAlign: TextAlign.center, style: ku(19, w: FontWeight.w700))),
+                Expanded(child: Text('شیکردنەوە', textAlign: TextAlign.center, style: kx(19, w: FontWeight.w700))),
                 FChip(
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     ic(FI.clock, V.cy, size: 13),
@@ -823,7 +837,7 @@ class _FoodAnalysisPageState extends State<FoodAnalysisPage> with TickerProvider
                   child: Text.rich(TextSpan(children: [
                     TextSpan(text: '${_found.length}', style: nu(12, w: FontWeight.w700, c: V.mu)),
                     const TextSpan(text: ' خواردن دۆزرایەوە'),
-                  ]), style: ku(11.5, c: V.mu)),
+                  ]), style: kx(11.5, c: V.mu)),
                 ),
                 const SizedBox(height: 8),
                 Expanded(
@@ -845,9 +859,9 @@ class _FoodAnalysisPageState extends State<FoodAnalysisPage> with TickerProvider
                           child: Row(children: [
                             CheckerBox(radius: 12, child: SizedBox(width: 42, height: 42, child: Center(child: DishPng(it.dish, size: 40)))),
                             const SizedBox(width: 10),
-                            Text(it.sure ? it.dish.name : '${it.guess ?? it.dish.name} ؟', style: ku(14, w: FontWeight.w700)),
+                            Text(it.sure ? it.dish.name : '${it.guess ?? it.dish.name} ؟', style: kx(14, w: FontWeight.w700)),
                             const Spacer(),
-                            Text(it.word, style: ku(11.5, c: V.mu)),
+                            Text(it.word, style: kx(11.5, c: V.mu)),
                             const SizedBox(width: 8),
                             Container(width: 7, height: 7, decoration: BoxDecoration(shape: BoxShape.circle, color: it.sure ? kMint : kWarn)),
                           ]),
@@ -893,7 +907,7 @@ class _ErrorCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: box(r: 20, color: op(kFat, 0.08), border: op(kFat, 0.4)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text(msg, textAlign: TextAlign.center, style: ku(14, w: FontWeight.w600)),
+        Text(msg, textAlign: TextAlign.center, style: kx(14, w: FontWeight.w600)),
         const SizedBox(height: 12),
         GradBtn(label: 'گەڕانەوە', onTap: onBack, pad: const EdgeInsets.all(12), size: 14),
       ]),
@@ -1001,7 +1015,7 @@ class _FoodReviewPageState extends State<FoodReviewPage> with SingleTickerProvid
 
   Future<void> _meal() async {
     final r = await showFoodSheet<String>(context, (ctx) => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Padding(padding: const EdgeInsets.only(bottom: 10), child: Text('کام ژەم؟', textAlign: TextAlign.center, style: ku(17, w: FontWeight.w800))),
+          Padding(padding: const EdgeInsets.only(bottom: 10), child: Text('کام ژەم؟', textAlign: TextAlign.center, style: kx(17, w: FontWeight.w800))),
           for (final k in kMealOrder)
             Padding(
               padding: const EdgeInsets.only(bottom: 7),
@@ -1057,7 +1071,7 @@ class _FoodReviewPageState extends State<FoodReviewPage> with SingleTickerProvid
               TextSpan(text: '${items.length}', style: nu(13, w: FontWeight.w700, c: V.mu)),
               const TextSpan(text: ' خواردن'),
             ]),
-            style: ku(13, c: V.mu),
+            style: kx(13, c: V.mu),
           ),
           const Spacer(),
           CountNum(t.k, key: const ValueKey<String>('fa-total'), style: nu(28, c: V.tx)),
@@ -1094,7 +1108,7 @@ class _FoodReviewPageState extends State<FoodReviewPage> with SingleTickerProvid
                 child: GestureDetector(
                   key: ValueKey<String>('fa-name-$i'),
                   onTap: () => _detail(it),
-                  child: Text(warn ? (it.guess ?? it.dish.name) : it.dish.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(15, w: FontWeight.w700)),
+                  child: Text(warn ? (it.guess ?? it.dish.name) : it.dish.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: kx(15, w: FontWeight.w700)),
                 ),
               ),
               const SizedBox(width: 6),
@@ -1112,7 +1126,7 @@ class _FoodReviewPageState extends State<FoodReviewPage> with SingleTickerProvid
           width: 58,
           child: Column(children: [
             CountNum(it.nut.k, style: nu(19, c: V.tx)),
-            Text('kcal', style: ku(10.5, c: V.mu)),
+            Text('kcal', style: kx(10.5, c: V.mu)),
           ]),
         ),
       ]),
@@ -1137,7 +1151,7 @@ class _FoodReviewPageState extends State<FoodReviewPage> with SingleTickerProvid
                     key: const ValueKey<String>('fa-meal'),
                     onTap: _meal,
                     child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      Flexible(child: Text(kMealName[slot]!, maxLines: 1, style: ku(19, w: FontWeight.w700))),
+                      Flexible(child: Text(kMealName[slot]!, maxLines: 1, style: kx(19, w: FontWeight.w700))),
                       const SizedBox(width: 4),
                       ic(FI.chev, V.mu, size: 16),
                     ]),
@@ -1162,7 +1176,7 @@ class _FoodReviewPageState extends State<FoodReviewPage> with SingleTickerProvid
                     child: Row(children: [
                       ic(FI.spark, kWarn, size: 18, fill: true),
                       const SizedBox(width: 8),
-                      Expanded(child: Text('دۆخی نموونە: AI ـی ڕاستەقینە هێشتا نەبەستراوە، بۆیە وێنەی خۆت وەک «دڵنیا نییە» دێت — خواردنی ڕاست هەڵبژێرە.', style: ku(12, h: 1.5))),
+                      Expanded(child: Text('دۆخی نموونە: AI ـی ڕاستەقینە هێشتا نەبەستراوە، بۆیە وێنەی خۆت وەک «دڵنیا نییە» دێت — خواردنی ڕاست هەڵبژێرە.', style: kx(12, h: 1.5))),
                     ]),
                   ),
                   const SizedBox(height: 10),
@@ -1173,7 +1187,7 @@ class _FoodReviewPageState extends State<FoodReviewPage> with SingleTickerProvid
                 if (items.isEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 30),
-                    child: Text('هیچ خواردنێک نییە — زیادی بکە', textAlign: TextAlign.center, style: ku(14, c: V.mu)),
+                    child: Text('هیچ خواردنێک نییە — زیادی بکە', textAlign: TextAlign.center, style: kx(14, c: V.mu)),
                   ),
                 const SizedBox(height: 4),
                 SoftBtn(label: 'خواردنێکی تر زیاد بکە', icon: FI.plus, onTap: _add, key: const ValueKey<String>('fa-add')),
@@ -1231,7 +1245,7 @@ class _WarnChipState extends State<_WarnChip> with SingleTickerProviderStateMixi
             child: child,
           );
         },
-        child: Text('دڵنیا نییە؟', style: ku(11, w: FontWeight.w800, c: const Color(0xFF2A1A00))),
+        child: Text('دڵنیا نییە؟', style: kx(11, w: FontWeight.w800, c: const Color(0xFF2A1A00))),
       ),
     );
   }
@@ -1270,10 +1284,10 @@ Future<Object?> showFixSheet(BuildContext context, FItem it) {
           const SizedBox(width: 12),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('ئەمە چییە؟', style: ku(18, w: FontWeight.w700)),
+              Text('ئەمە چییە؟', style: kx(18, w: FontWeight.w700)),
               Text(
                 it.guess != null ? 'AI ـەکە بە «${it.guess}» ی ناسی بەڵام دڵنیا نییە' : 'خواردنی ڕاست هەڵبژێرە',
-                style: ku(11.5, c: V.mu),
+                style: kx(11.5, c: V.mu),
               ),
             ]),
           ),
@@ -1286,11 +1300,11 @@ Future<Object?> showFixSheet(BuildContext context, FItem it) {
               key: const ValueKey<String>('fa-fix-field'),
               autofocus: true,
               onChanged: (v) => set(() => q = v),
-              style: ku(15, w: FontWeight.w600),
+              style: kx(15, w: FontWeight.w600),
               cursorColor: V.cy,
               decoration: InputDecoration(
                 hintText: 'ناوی خواردنەکە بنووسە…',
-                hintStyle: ku(14, c: V.mu),
+                hintStyle: kx(14, c: V.mu),
                 filled: true,
                 fillColor: V.surf,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -1303,7 +1317,7 @@ Future<Object?> showFixSheet(BuildContext context, FItem it) {
         if (typing && q.trim().isNotEmpty && found.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Text(FoodAiEngine.live ? 'نەدۆزرایەوە — وێنەی نوێ بگرە تا AI بیناسێتەوە' : 'لە نموونەکاندا نییە — وێنەی نوێ بگرە', textAlign: TextAlign.center, style: ku(12.5, c: V.mu)),
+            child: Text(FoodAiEngine.live ? 'نەدۆزرایەوە — وێنەی نوێ بگرە تا AI بیناسێتەوە' : 'لە نموونەکاندا نییە — وێنەی نوێ بگرە', textAlign: TextAlign.center, style: kx(12.5, c: V.mu)),
           ),
         for (var i = 0; i < list.length; i++)
           Press(
@@ -1330,15 +1344,15 @@ Future<Object?> showFixSheet(BuildContext context, FItem it) {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(list[i].name, style: ku(14.5, w: FontWeight.w700)),
-                    Text(list[i].ing, maxLines: 1, overflow: TextOverflow.ellipsis, style: ku(11, c: V.mu)),
+                    Text(list[i].name, style: kx(14.5, w: FontWeight.w700)),
+                    Text(list[i].ing, maxLines: 1, overflow: TextOverflow.ellipsis, style: kx(11, c: V.mu)),
                   ]),
                 ),
                 const SizedBox(width: 6),
                 Text.rich(
                   TextSpan(children: [
                     TextSpan(text: '${list[i].nut(list[i].u0, list[i].q0).k.round()}', style: nu(14, c: V.tx)),
-                    TextSpan(text: ' kcal', style: ku(10.5, c: V.mu)),
+                    TextSpan(text: ' kcal', style: kx(10.5, c: V.mu)),
                   ]),
                   textDirection: TextDirection.ltr,
                 ),
@@ -1411,7 +1425,7 @@ Future<Object?> showDetailSheet(BuildContext context, FItem it) {
             decoration: box(r: 13, color: V.surf),
             child: Column(children: [
               FittedBox(fit: BoxFit.scaleDown, child: Text(v, style: nu(15, c: c ?? V.tx), textDirection: TextDirection.ltr)),
-              Text(l, maxLines: 1, style: ku(10.5, c: V.mu)),
+              Text(l, maxLines: 1, style: kx(10.5, c: V.mu)),
             ]),
           );
       final gTxt = '${d.grams(unit, q).round()} ${d.liquid ? 'ml' : 'g'}';
@@ -1434,8 +1448,8 @@ Future<Object?> showDetailSheet(BuildContext context, FItem it) {
           const SizedBox(width: 12),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(d.name, style: ku(21, w: FontWeight.w700)),
-              Text(d.ing, style: ku(11.5, c: V.mu, h: 1.5)),
+              Text(d.name, style: kx(21, w: FontWeight.w700)),
+              Text(d.ing, style: kx(11.5, c: V.mu, h: 1.5)),
               const SizedBox(height: 7),
               Wrap(spacing: 6, runSpacing: 6, children: [
                 FChip(
@@ -1445,7 +1459,7 @@ Future<Object?> showDetailSheet(BuildContext context, FItem it) {
                     Text('AI ${(it.conf * 100).round()}%', style: nu(11, w: FontWeight.w700, c: V.cy), textDirection: TextDirection.ltr),
                   ]),
                 ),
-                if (d.id.startsWith('mine_')) FChip(color: V.mint, child: Text('خواردنی تۆ', style: ku(11, w: FontWeight.w700, c: V.mint))),
+                if (d.id.startsWith('mine_')) FChip(color: V.mint, child: Text('خواردنی تۆ', style: kx(11, w: FontWeight.w700, c: V.mint))),
               ]),
             ]),
           ),
@@ -1455,7 +1469,7 @@ Future<Object?> showDetailSheet(BuildContext context, FItem it) {
             child: Padding(padding: const EdgeInsets.all(6), child: ic(FI.trash, kFat, size: 20)),
           ),
         ]),
-        Padding(padding: const EdgeInsets.fromLTRB(4, 14, 4, 6), child: Text('یەکە', style: ku(11.5, c: V.mu))),
+        Padding(padding: const EdgeInsets.fromLTRB(4, 14, 4, 6), child: Text('یەکە', style: kx(11.5, c: V.mu))),
         Container(
           padding: const EdgeInsets.all(3),
           decoration: box(r: 14, color: VexTheme.I.isLight ? V.surf2 : const Color(0xFF0B2329)),
@@ -1469,13 +1483,13 @@ Future<Object?> showDetailSheet(BuildContext context, FItem it) {
                     duration: const Duration(milliseconds: 250),
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     decoration: BoxDecoration(color: k == unit ? (VexTheme.I.isLight ? V.surf : const Color(0xFF1C4F59)) : Colors.transparent, borderRadius: BorderRadius.circular(11)),
-                    child: Text(unitOf(k).word, textAlign: TextAlign.center, style: ku(13, w: FontWeight.w700, c: k == unit ? V.tx : V.mu)),
+                    child: Text(unitOf(k).word, textAlign: TextAlign.center, style: kx(13, w: FontWeight.w700, c: k == unit ? V.tx : V.mu)),
                   ),
                 ),
               ),
           ]),
         ),
-        Padding(padding: const EdgeInsets.fromLTRB(4, 12, 4, 6), child: Text('بڕ', style: ku(11.5, c: V.mu))),
+        Padding(padding: const EdgeInsets.fromLTRB(4, 12, 4, 6), child: Text('بڕ', style: kx(11.5, c: V.mu))),
         if (!u.grams)
           Row(children: [
             for (var i = 0; i < _kPies.length; i++) ...[
@@ -1502,7 +1516,7 @@ Future<Object?> showDetailSheet(BuildContext context, FItem it) {
                     child: Column(children: [
                       PortionPie(_kPies[i][0] as double, on: (q - (_kPies[i][0] as double)).abs() < 1e-6),
                       const SizedBox(height: 3),
-                      FittedBox(fit: BoxFit.scaleDown, child: Text(_kPies[i][1] as String, style: ku(12, w: FontWeight.w700))),
+                      FittedBox(fit: BoxFit.scaleDown, child: Text(_kPies[i][1] as String, style: kx(12, w: FontWeight.w700))),
                     ]),
                   ),
                 ),
@@ -1518,7 +1532,7 @@ Future<Object?> showDetailSheet(BuildContext context, FItem it) {
                 const TextSpan(text: ' · '),
                 TextSpan(text: ltr(gTxt), style: nu(12, w: FontWeight.w600, c: V.mu)),
               ]),
-              style: ku(12.5, w: FontWeight.w600, c: V.mu),
+              style: kx(12.5, w: FontWeight.w600, c: V.mu),
             ),
           ),
           QtyStepper(word: qtyWord(q, unit), dir: dir, idx: 99, onMinus: () => stepQ(-1), onPlus: () => stepQ(1)),
@@ -1609,9 +1623,9 @@ Future<List<FItem>?> showFoodTextSheet(BuildContext context) {
       }
 
       return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text('چیت خوارد؟', textAlign: TextAlign.center, style: ku(18, w: FontWeight.w800)),
+        Text('چیت خوارد؟', textAlign: TextAlign.center, style: kx(18, w: FontWeight.w800)),
         const SizedBox(height: 4),
-        Text('بە وشەی ئاسایی بینووسە، بڕەکەش', textAlign: TextAlign.center, style: ku(12, c: V.mu)),
+        Text('بە وشەی ئاسایی بینووسە، بڕەکەش', textAlign: TextAlign.center, style: kx(12, c: V.mu)),
         const SizedBox(height: 12),
         TextField(
           key: const ValueKey<String>('fa-text-field'),
@@ -1620,11 +1634,11 @@ Future<List<FItem>?> showFoodTextSheet(BuildContext context) {
           maxLines: 3,
           onChanged: (v) => set(() => text = v),
           onSubmitted: (_) => go(),
-          style: ku(15, w: FontWeight.w600),
+          style: kx(15, w: FontWeight.w600),
           cursorColor: V.cy,
           decoration: InputDecoration(
             hintText: 'وەک: دوو شیش کەباب و قاپێک برنج و چا',
-            hintStyle: ku(13.5, c: V.mu),
+            hintStyle: kx(13.5, c: V.mu),
             filled: true,
             fillColor: V.surf,
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
@@ -1642,9 +1656,9 @@ Future<List<FItem>?> showFoodTextSheet(BuildContext context) {
             child: Row(children: [
               DishPng(it.dish, size: 34),
               const SizedBox(width: 8),
-              Text(it.dish.name, style: ku(14, w: FontWeight.w700)),
+              Text(it.dish.name, style: kx(14, w: FontWeight.w700)),
               const SizedBox(width: 6),
-              Text(it.word, style: ku(12, c: V.mu)),
+              Text(it.word, style: kx(12, c: V.mu)),
               const Spacer(),
               Text('${it.nut.k.round()} kcal', style: nu(12.5, w: FontWeight.w700), textDirection: TextDirection.ltr),
             ]),
@@ -1655,7 +1669,7 @@ Future<List<FItem>?> showFoodTextSheet(BuildContext context) {
             child: Text(
               err ?? (FoodAiEngine.live ? 'AI دەیناسێتەوە — «زیادکردن» دابگرە' : 'ئەم خواردنە لە نموونەکاندا نییە — وێنەی بگرە'),
               textAlign: TextAlign.center,
-              style: ku(12.5, c: err != null ? kFat : V.mu),
+              style: kx(12.5, c: err != null ? kFat : V.mu),
             ),
           ),
         const SizedBox(height: 6),
@@ -1725,7 +1739,7 @@ class _FoodDonePageState extends State<FoodDonePage> {
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                 Row(children: [
                   _IconBtn(FI.back, () => Navigator.of(context).maybePop()),
-                  Expanded(child: Text('ئەمڕۆ', textAlign: TextAlign.center, style: ku(19, w: FontWeight.w700))),
+                  Expanded(child: Text('ئەمڕۆ', textAlign: TextAlign.center, style: kx(19, w: FontWeight.w700))),
                   const SizedBox(width: 44),
                 ]),
                 SizedBox(
@@ -1808,7 +1822,7 @@ class _FoodDonePageState extends State<FoodDonePage> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('${kMealName[widget.slot]} تۆمارکرا', style: ku(14, w: FontWeight.w700)),
+                      Text('${kMealName[widget.slot]} تۆمارکرا', style: kx(14, w: FontWeight.w700)),
                       Text.rich(
                         TextSpan(children: [
                           TextSpan(text: '${its.length}', style: nu(11.5, w: FontWeight.w700, c: V.mu)),
@@ -1816,7 +1830,7 @@ class _FoodDonePageState extends State<FoodDonePage> {
                           TextSpan(text: fmt(meal.k), style: nu(11.5, w: FontWeight.w700, c: V.mu)),
                           const TextSpan(text: ' kcal زیادکرا بۆ ئەمڕۆ'),
                         ]),
-                        style: ku(11.5, c: V.mu),
+                        style: kx(11.5, c: V.mu),
                       ),
                     ]),
                   ),
@@ -1834,7 +1848,7 @@ class _FoodDonePageState extends State<FoodDonePage> {
       padding: EdgeInsets.only(top: i == 0 ? 0 : 9),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Row(children: [
-          Text(l, style: ku(12)),
+          Text(l, style: kx(12)),
           const Spacer(),
           Text('${v.round()} / ${goal.round()}g', style: nu(11.5, w: FontWeight.w600, c: V.mu), textDirection: TextDirection.ltr),
         ]),

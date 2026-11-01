@@ -356,7 +356,7 @@ void main() {
     await gold(t, '03_detect');
     await run(t, 900);
     for (final id in ['kebab', 'salad', 'dolma', 'doogh']) {
-      await tap(t, find.byKey(ValueKey<String>('fa-sample-$id')), after: 1750);
+      await tap(t, find.byKey(ValueKey<String>('fa-sample-$id')), after: 1900);
     }
     noErr(t, 'camera');
     await gold(t, '04_tray5');
@@ -459,7 +459,7 @@ void main() {
     await openTab(t);
     await tap(t, find.byKey(const ValueKey<String>('fa-open-cam')), after: 700);
     for (final id in ['tea', 'bread', 'hummus', 'kubba', 'kunafa']) {
-      await tap(t, find.byKey(ValueKey<String>('fa-sample-$id')), after: 1750);
+      await tap(t, find.byKey(ValueKey<String>('fa-sample-$id')), after: 1900);
     }
     await tap(t, find.byKey(const ValueKey<String>('fa-go')), after: 4500);
     await run(t, 4500);
@@ -478,7 +478,7 @@ void main() {
     await gold(t, '21_light_tab');
     await tap(t, find.byKey(const ValueKey<String>('fa-open-cam')), after: 700);
     for (final id in ['rice', 'kebab', 'salad']) {
-      await tap(t, find.byKey(ValueKey<String>('fa-sample-$id')), after: 1750);
+      await tap(t, find.byKey(ValueKey<String>('fa-sample-$id')), after: 1900);
     }
     await tap(t, find.byKey(const ValueKey<String>('fa-go')), after: 4200);
     await run(t, 3500);
@@ -510,14 +510,14 @@ void main() {
     await run(t, 1600);
     await gold(t, '30_app_home');
 
-    final nav = find.descendant(of: find.byType(VNav), matching: find.text('VEX AI'));
+    final nav = find.descendant(of: find.byType(VNav), matching: find.text('AI'));
     await tap(t, nav, after: 1400);
     noErr(t, 'tab');
     await gold(t, '31_app_vexai');
     await tap(t, find.byKey(const ValueKey<String>('fa-open-cam')), after: 900);
     await tap(t, find.byKey(const ValueKey<String>('fa-sample-rice')), after: 1900);
     for (final id in ['kebab', 'salad', 'dolma', 'doogh']) {
-      await tap(t, find.byKey(ValueKey<String>('fa-sample-$id')), after: 1750);
+      await tap(t, find.byKey(ValueKey<String>('fa-sample-$id')), after: 1900);
     }
     await tap(t, find.byKey(const ValueKey<String>('fa-go')), after: 4300);
     await run(t, 3200);

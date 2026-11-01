@@ -289,7 +289,7 @@ const List<FDish> kAltDishes = [
     ing: 'شیری مانگا',
     units: {'kup': 250, 'ml': 1},
     q0: 1,
-    k: 61, p: 3.2, c: 4.8, f: 3.3, sug: 5, fib: 0, salt: 0.1, chol: 10,
+    k: 61, p: 3.2, c: 5, f: 3.3, sug: 5, fib: 0, salt: 0.1, chol: 10,
     alias: ['شیری مانگا', 'milk'],
     liquid: true,
     img: '${_a}milk.webp',
