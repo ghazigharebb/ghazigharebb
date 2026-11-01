@@ -105,6 +105,15 @@ void main() {
     s.markSynced(now.subtract(const Duration(minutes: 3)));
   }
 
+  void noErr(WidgetTester t) {
+    final e = t.takeException();
+    if (e != null) {
+      // ignore: avoid_print
+      print('ERR>>> $e');
+    }
+    expect(e, isNull);
+  }
+
   Future<void> settle(WidgetTester t, [int n = 20]) async {
     await t.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 300)));
     for (var i = 0; i < n; i++) {
@@ -159,8 +168,8 @@ void main() {
   for (final range in ['d7', 'h24', 'd30', 'd3']) {
     testWidgets('report $range', (t) async {
       await page(t, range, h: 9000);
-      expect(t.takeException(), isNull);
       await expectLater(find.byType(GeneralReportPage), matchesGoldenFile('goldens/report_${range}_full.png'));
+      noErr(t);
       await t.binding.setSurfaceSize(const Size(400, 860));
       await t.pump(const Duration(milliseconds: 200));
       await expectLater(find.byType(GeneralReportPage), matchesGoldenFile('goldens/report_${range}_top.png'));
@@ -169,6 +178,7 @@ void main() {
 
   testWidgets('sync everything', (t) async {
     await page(t, 'd7', h: 860);
+    noErr(t);
     await t.tap(find.text('هاوکاتکردنی هەموو'));
     for (var i = 0; i < 6; i++) {
       await t.pump(const Duration(milliseconds: 120));
@@ -180,11 +190,12 @@ void main() {
       await t.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 60)));
       await t.pump(const Duration(milliseconds: 100));
     }
-    expect(t.takeException(), isNull);
+    noErr(t);
   });
 
   testWidgets('calendar', (t) async {
     await page(t, 'd7', h: 900);
+    noErr(t);
     await t.tap(find.byKey(const ValueKey('rng-c'))); // دوگمەی ڕۆژژمێر
     await settle(t, 10);
     final today = DateTime.now();
@@ -196,22 +207,22 @@ void main() {
     await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/report_calendar.png'));
     await t.tap(find.textContaining('پیشاندانی'));
     await settle(t, 10);
-    expect(t.takeException(), isNull);
+    noErr(t);
     await expectLater(find.byType(GeneralReportPage), matchesGoldenFile('goldens/report_custom_top.png'));
   });
 
   for (final lang in ['en', 'ar', 'kmr', 'fa', 'tr']) {
     testWidgets('report $lang', (t) async {
       await page(t, 'd7', h: 860, lang: lang);
-      expect(t.takeException(), isNull);
       await expectLater(find.byType(GeneralReportPage), matchesGoldenFile('goldens/report_lang_$lang.png'));
+      noErr(t);
     });
   }
 
   testWidgets('report light', (t) async {
-    await page(t, 'h24', h: 860, light: true);
-    expect(t.takeException(), isNull);
+    await page(t, 'h24', h: 2600, light: true);
     await expectLater(find.byType(GeneralReportPage), matchesGoldenFile('goldens/report_light.png'));
+    noErr(t);
   });
 
   for (final range in ['d30', 'h24']) {

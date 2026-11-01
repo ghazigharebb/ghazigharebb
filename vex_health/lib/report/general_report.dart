@@ -27,6 +27,7 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
@@ -86,7 +87,7 @@ const List<String> _monS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Au
 const List<String> _monL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 /// دەقی لاتینی/ژمارە لەناو دەقی ڕاست‌بۆ‌چەپ (LRI … PDI) تا ڕیزبەندییەکەی تێک نەچێت
-String _ltr(String s) => '⁦$s⁩';
+String _ltr(String s) => '\u2066$s\u2069';
 
 /// بەروار بە مانگی ئینگلیزی: «1 Nov 2026»
 String _dEn(DateTime d, {bool year = true}) => '${d.day} ${_monS[d.month - 1]}${year ? ' ${d.year}' : ''}';
@@ -1418,8 +1419,12 @@ const String kReportIconSvg =
     '<ellipse cx="63" cy="63.5" rx="4.5" ry="2.4" fill="#ffffff" opacity=".45" transform="rotate(-30 63 63.5)"/></svg>';
 
 // ═════════════════════════════ پارچە بچووکەکان ═════════════════════════════
+/// دەقی کوردی/عەرەبی؛ پیت و ژمارەی لاتینی ناوی (Band، Oct، ECG) بە Sora
+TextStyle _ks(double size, {FontWeight w = FontWeight.w400, Color? c, double? h}) =>
+    ku(size, w: w, c: c, h: h).copyWith(fontFamilyFallback: [GoogleFonts.sora(fontWeight: w).fontFamily!]);
+
 Widget _tx(String s, double size, Color c, {FontWeight w = FontWeight.w700, double? h, TextAlign? a}) =>
-    Text(s, textAlign: a, style: ku(size, w: w, c: c, h: h));
+    Text(s, textAlign: a, style: _ks(size, w: w, c: c, h: h));
 Widget _nm(String s, double size, Color c, {FontWeight w = FontWeight.w800}) =>
     Text(s, textDirection: TextDirection.ltr, style: nu(size, w: w, c: c));
 
@@ -1460,7 +1465,7 @@ Widget _flagW(_P p, _Flag f) {
     child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
-      child: Text(f.t, maxLines: 1, style: ku(10.5, w: FontWeight.w800, c: fg)),
+      child: Text(f.t, maxLines: 1, style: _ks(10.5, w: FontWeight.w800, c: fg)),
     ),
   );
 }
@@ -1500,7 +1505,7 @@ Widget _row(_P p, String label, String value, String ref, _Flag f) => Container(
     );
 
 Widget _para(_P p, String s, {bool muted = false, double size = 12.5}) =>
-    Text(s, style: ku(size, w: FontWeight.w600, c: muted ? p.mu : p.ink, h: 1.85));
+    Text(s, style: _ks(size, w: FontWeight.w600, c: muted ? p.mu : p.ink, h: 1.85));
 
 Widget _note(_P p, String s) => Container(
       margin: const EdgeInsets.only(top: 10),
@@ -1908,8 +1913,8 @@ List<List<Widget>> _blocks(_Rep r, _P p, {bool print = false}) {
         if (r.conds.isNotEmpty) ...[
           _gap(10),
           Text.rich(TextSpan(children: [
-            TextSpan(text: '${_t('conds')}: ', style: ku(12, w: FontWeight.w600, c: p.mu)),
-            TextSpan(text: _join([for (final c in r.conds) _g('cn', c)]), style: ku(12, w: FontWeight.w800, c: p.ink)),
+            TextSpan(text: '${_t('conds')}: ', style: _ks(12, w: FontWeight.w600, c: p.mu)),
+            TextSpan(text: _join([for (final c in r.conds) _g('cn', c)]), style: _ks(12, w: FontWeight.w800, c: p.ink)),
           ])),
         ],
         _gap(12),
@@ -2158,10 +2163,10 @@ List<List<Widget>> _blocks(_Rep r, _P p, {bool print = false}) {
           Expanded(
             child: Text.rich(
               TextSpan(children: [
-                TextSpan(text: '${_t('docT')} ', style: ku(12, w: FontWeight.w800, c: p.wbc, h: 1.8)),
+                TextSpan(text: '${_t('docT')} ', style: _ks(12, w: FontWeight.w800, c: p.wbc, h: 1.8)),
                 TextSpan(
                   text: _t('docX') + (r.conds.isNotEmpty ? ' ${_f(_t('docC'), {'x': _join([for (final c in r.conds) _g('cn', c)])})}' : ''),
-                  style: ku(12, w: FontWeight.w600, c: p.wbc, h: 1.8),
+                  style: _ks(12, w: FontWeight.w600, c: p.wbc, h: 1.8),
                 ),
               ]),
             ),
@@ -2724,7 +2729,7 @@ class _GeneralReportPageState extends State<GeneralReportPage> {
               Expanded(
                 child: Text.rich(
                   TextSpan(children: [
-                    TextSpan(text: '${_t('custom')} · ', style: ku(12, w: FontWeight.w700, c: V.mu)),
+                    TextSpan(text: '${_t('custom')} · ', style: _ks(12, w: FontWeight.w700, c: V.mu)),
                     TextSpan(text: _ltr(rg.dates), style: nu(12, w: FontWeight.w700, c: fg)),
                   ]),
                 ),
@@ -2980,7 +2985,7 @@ Future<Uint8List> _makePdf(_Rep r) async {
           child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
             const CircularProgressIndicator(),
             const SizedBox(height: 14),
-            Text(_t('pdfW'), textDirection: _dir, style: ku(14, w: FontWeight.w700, c: V.tx)),
+            Text(_t('pdfW'), textDirection: _dir, style: _ks(14, w: FontWeight.w700, c: V.tx)),
           ])),
         ),
       ),
@@ -3099,8 +3104,8 @@ class ReportCard extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(_t('t'), style: ku(16, w: FontWeight.w800, c: V.tx, h: 1.5)),
-                    Text(_t('sub'), style: ku(11.5, w: FontWeight.w600, c: V.mu, h: 1.5)),
+                    Text(_t('t'), style: _ks(16, w: FontWeight.w800, c: V.tx, h: 1.5)),
+                    Text(_t('sub'), style: _ks(11.5, w: FontWeight.w600, c: V.mu, h: 1.5)),
                   ]),
                 ),
                 Container(
