@@ -99,14 +99,14 @@ class DishOnTable extends StatelessWidget {
       height: size,
       child: Stack(clipBehavior: Clip.none, children: [
         Positioned(
-          left: size * .16,
-          right: size * .16,
-          bottom: size * .07,
-          height: size * .14,
+          left: size * .2,
+          right: size * .2,
+          bottom: size * .1,
+          height: size * .1,
           child: DecoratedBox(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.all(Radius.elliptical(size * .34, size * .07)),
-              boxShadow: [BoxShadow(color: Colors.black.withAlpha((150 * strength).round().clamp(0, 255)), blurRadius: size * .07, spreadRadius: size * .015, offset: Offset(0, size * .02))],
+              borderRadius: BorderRadius.all(Radius.elliptical(size * .3, size * .05)),
+              boxShadow: [BoxShadow(color: Colors.black.withAlpha((70 * strength).round().clamp(0, 255)), blurRadius: size * .05, offset: Offset(0, size * .015))],
             ),
           ),
         ),
