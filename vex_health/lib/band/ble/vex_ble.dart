@@ -256,7 +256,7 @@ class VexBand extends ChangeNotifier {
         if (w == null || !_ready && frame[0] != VexCmd.setTime) {
           if (w == null) throw StateError('Band پەیوەست نییە');
         }
-        await w!.write(frame, withoutResponse: false);
+        await w.write(frame, withoutResponse: false);
         await Future<void>.delayed(const Duration(milliseconds: 40));
         c.complete();
       } catch (e) {

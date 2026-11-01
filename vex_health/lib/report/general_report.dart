@@ -1466,12 +1466,14 @@ void _evaluate(_Rep r, {bool record = false}) {
   if (v['st'] != null) gb(v['st']!.k == 'ok', 'st');
   if (v['stp'] != null) gb(v['stp']!.k == 'ok', 'stp');
   if (v['tp'] != null && v['tp']!.k != 'ok') r.att.add(_g('g', 'tp'));
-  if (nf['kc'] != null) gb(nf['kc']!.k == 'ok', 'kc');
-  if (nf['pr'] != null) gb(nf['pr']!.k == 'ok', 'pr');
-  if (nf['fb'] != null && nf['fb']!.k != 'ok') r.att.add(_g('g', 'fb'));
-  if (nf['sg'] != null && nf['sg']!.k != 'ok') r.att.add(_g('g', 'sg'));
-  if (nf['sa'] != null && nf['sa']!.k != 'ok') r.att.add(_g('g', 'sa'));
-  if (nf['wa'] != null && nf['wa']!.k != 'ok') r.att.add(_g('g', 'wa'));
+  // «زانیاری» (ڕۆژی نیوەچڵ) نە باشە نە خراپ
+  bool bad(_Flag? f) => f != null && (f.k == 'lo' || f.k == 'hi');
+  if (nf['kc'] != null && nf['kc']!.k != 'inf') gb(nf['kc']!.k == 'ok', 'kc');
+  if (nf['pr'] != null && nf['pr']!.k != 'inf') gb(nf['pr']!.k == 'ok', 'pr');
+  if (bad(nf['fb'])) r.att.add(_g('g', 'fb'));
+  if (bad(nf['sg'])) r.att.add(_g('g', 'sg'));
+  if (bad(nf['sa'])) r.att.add(_g('g', 'sa'));
+  if (bad(nf['wa'])) r.att.add(_g('g', 'wa'));
   if (r.bmi > 0) gb(r.bmi >= 18.5 && r.bmi < 25, 'bmi');
 
   void rc(String k, [Map<String, Object?> o = const {}]) => r.recs.add(_f(_g('r', k), o));
