@@ -38,8 +38,11 @@ flutter:
     - assets/brand/
     - assets/data/
     - assets/foods/
+    - assets/food_ai/
     - assets/pay/
     - assets/chars/
+    - assets/arena/
+    - assets/google_fonts/
     - assets/ecg/
   fonts:
     - family: NotoAr

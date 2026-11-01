@@ -1,52 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- VEX — ئاگادارکردنەوەی هەنگاو (کراوە): گەشتی ئەمڕۆ بۆ ئامانج -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="wrap_content"
-    android:orientation="vertical" android:background="@drawable/vex_bg"
-    android:layoutDirection="rtl" android:padding="12dp">
+    android:orientation="vertical" android:layoutDirection="rtl"
+    android:paddingTop="2dp" android:paddingBottom="4dp">
+
+    <TextView android:id="@+id/tvHead"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:textColor="#FF9FB7BD" android:textSize="12sp" android:text="گەشتی ئەمڕۆ بۆ ئامانج" />
 
     <LinearLayout
         android:layout_width="match_parent" android:layout_height="wrap_content"
         android:orientation="horizontal" android:gravity="center_vertical">
-        <TextView android:id="@+id/tvSteps"
-            android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:textColor="#FFFFFFFF" android:textSize="22sp" android:textStyle="bold"
-            android:layoutDirection="ltr" android:text="0" />
-        <TextView android:id="@+id/tvUnit"
-            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:textColor="#FF8CB7BF" android:textSize="13sp" android:text="هەنگاو" />
+        <ImageView android:id="@+id/imHero"
+            android:layout_width="wrap_content" android:layout_height="40dp"
+            android:adjustViewBounds="true" android:scaleType="fitStart" />
         <TextView android:id="@+id/tvPct"
-            android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:textColor="#FF2FE6F3" android:textSize="15sp" android:textStyle="bold"
+            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+            android:gravity="end"
+            android:textColor="#FF2FE6F3" android:textSize="19sp" android:textStyle="bold"
             android:layoutDirection="ltr" android:text="0%" />
     </LinearLayout>
 
-    <ProgressBar android:id="@+id/bar"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent" android:layout_height="7dp"
-        android:layout_marginTop="9dp" android:layout_marginBottom="9dp"
-        android:max="100" android:progress="0"
-        android:progressDrawable="@drawable/vex_bar" />
+    <ImageView android:id="@+id/imTrack"
+        android:layout_width="match_parent" android:layout_height="52dp"
+        android:layout_marginTop="4dp"
+        android:scaleType="fitCenter" />
 
     <LinearLayout
         android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
         android:orientation="horizontal" android:gravity="center_vertical">
-        <TextView android:id="@+id/tvKm"
-            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
-            android:textColor="#FFFFFFFF" android:textSize="13sp" android:textStyle="bold"
-            android:layoutDirection="ltr" android:textAlignment="viewStart" android:text="" />
-        <TextView android:id="@+id/tvKcal"
-            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
-            android:textColor="#FFFFFFFF" android:textSize="13sp" android:textStyle="bold"
-            android:layoutDirection="ltr" android:textAlignment="center" android:text="" />
-        <TextView android:id="@+id/tvHr"
-            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
-            android:textColor="#FFFFFFFF" android:textSize="13sp" android:textStyle="bold"
-            android:layoutDirection="ltr" android:textAlignment="viewEnd" android:text="" />
+        <TextView android:id="@+id/tvRem"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:background="@drawable/vx_pill_mint" android:paddingStart="9dp" android:paddingEnd="10dp"
+            android:paddingTop="3dp" android:paddingBottom="3dp"
+            android:drawableStart="@drawable/ic_vx_flag14" android:drawablePadding="5dp"
+            android:textColor="#FF9FF6FB" android:textSize="12sp" android:textStyle="bold" android:text="" />
+        <TextView android:id="@+id/tvRemKm"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/vx_pill_sky" android:paddingStart="9dp" android:paddingEnd="10dp"
+            android:paddingTop="3dp" android:paddingBottom="3dp"
+            android:drawableStart="@drawable/ic_vx_route14" android:drawablePadding="5dp"
+            android:textColor="#FFB6E8FF" android:textSize="12sp" android:textStyle="bold" android:text="" />
+        <TextView android:id="@+id/tvRemMin"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/vx_pill_violet" android:paddingStart="9dp" android:paddingEnd="10dp"
+            android:paddingTop="3dp" android:paddingBottom="3dp"
+            android:drawableStart="@drawable/ic_vx_clock14" android:drawablePadding="5dp"
+            android:textColor="#FFD4C9FF" android:textSize="12sp" android:textStyle="bold" android:text="" />
     </LinearLayout>
 
-    <TextView android:id="@+id/tvRem"
+    <LinearLayout
         android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:textColor="#FF8CB7BF" android:textSize="12sp" android:text="" />
+        android:layout_marginTop="9dp"
+        android:orientation="horizontal" android:gravity="center_vertical">
+        <TextView android:id="@+id/tvKm"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:drawableStart="@drawable/ic_vx_route14b" android:drawablePadding="5dp"
+            android:textColor="#FFFFFFFF" android:textSize="13sp" android:textStyle="bold" android:text="" />
+        <TextView android:id="@+id/tvKcal"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:drawableStart="@drawable/ic_vx_flame14" android:drawablePadding="5dp"
+            android:textColor="#FFFFFFFF" android:textSize="13sp" android:textStyle="bold" android:text="" />
+        <TextView android:id="@+id/tvHr"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:drawableStart="@drawable/ic_vx_heart14" android:drawablePadding="5dp"
+            android:textColor="#FFFFFFFF" android:textSize="13sp" android:textStyle="bold" android:text="" />
+    </LinearLayout>
 </LinearLayout>

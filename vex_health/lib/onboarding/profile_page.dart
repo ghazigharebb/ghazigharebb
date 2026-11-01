@@ -26,6 +26,7 @@ import 'reg_data.dart';
 import 'reg_widgets.dart';
 import '../arena/arena_host.dart';
 import '../plus/gate.dart';
+import '../report/general_report.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key, this.onTab});
@@ -66,6 +67,7 @@ class ProfilePage extends StatelessWidget {
                     ),
                   ),
                   Rise(delayMs: 80, child: _PlusCard()),
+                  const Rise(delayMs: 90, child: ReportCard()),
                   Rise(delayMs: 100, child: _BandCard()),
                   Rise(
                     delayMs: 150,

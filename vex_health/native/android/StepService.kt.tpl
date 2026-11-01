@@ -195,10 +195,18 @@ class StepService : Service(), SensorEventListener {
         main.postDelayed(repost, REPOST_MS)
     }
 
+    private val pending = Runnable { refresh(true) }
+
     fun refresh(force: Boolean) {
         if (!started || dismissed) return
         val now = System.currentTimeMillis()
-        if (!force && now - lastPost < MIN_REFRESH_MS) return
+        if (!force && now - lastPost < MIN_REFRESH_MS) {
+            // زۆر زوو هاتووە: دوای ماوەی ماوە یەک جار نوێ دەکرێتەوە (هیچ هەنگاوێک ون نابێت)
+            main.removeCallbacks(pending)
+            main.postDelayed(pending, MIN_REFRESH_MS - (now - lastPost))
+            return
+        }
+        main.removeCallbacks(pending)
         lastPost = now
         try {
             (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).notify(NOTIF_ID, build())
@@ -234,26 +242,50 @@ class StepService : Service(), SensorEventListener {
         val pct = min(100, (steps * 100L / goal).toInt())
         val done = rem == 0
 
-        val remTxt = if (done) "🎉 ئامانجی ئەمڕۆ تەواو بوو"
-        else "ماوە ${fmt(rem)} هەنگاو  ·  ${String.format(Locale.US, "%.1f", remKm)} km  ·  نزیکەی $remMin خولەک"
-        val kmTxt = "🛣  ${String.format(Locale.US, "%.2f", km)} km"
-        val kcalTxt = "🔥  ${kcal.toInt()} kcal"
-        val hrTxt = if (hr in 30..220) "❤  $hr bpm" else ""
+        val dark = StepArt.isDark(this)
+        val tx = if (dark) 0xFFFFFFFF.toInt() else 0xFF0B1F26.toInt()
+        val mu = if (dark) 0xFF9FB7BD.toInt() else 0xFF4D6B73.toInt()
+        val f1 = String.format(Locale.US, "%.1f", remKm)
+        val f2 = String.format(Locale.US, "%.2f", km)
+        val pctTxt = "$pct%"
+        val remTxt = if (done) "ئامانجی ئەمڕۆ تەواو بوو" else "ماوە ${fmt(rem)}"
+        val heroS = StepArt.hero(this, steps, goal, 24f, dark, done)
+        val heroB = StepArt.hero(this, steps, goal, 40f, dark, done)
+        val p = StepArt.pct(steps, goal)
 
+        // کورتکراوە
         val small = RemoteViews(packageName, R.layout.vex_notif_small)
-        small.setTextViewText(R.id.tvSteps, fmt(steps))
-        small.setTextViewText(R.id.tvPct, "$pct%")
-        small.setProgressBar(R.id.bar, 100, pct, false)
-        small.setTextViewText(R.id.tvRem, remTxt)
+        small.setImageViewBitmap(R.id.imHero, heroS)
+        small.setTextColor(R.id.tvUnit, mu)
+        small.setTextViewText(R.id.tvPct, pctTxt)
+        small.setTextColor(R.id.tvPct, if (done) 0xFF3CF08A.toInt() else 0xFF2FE6F3.toInt())
+        small.setImageViewBitmap(R.id.imTrack, StepArt.track(this, p, done, false, dark, goal))
 
+        // کراوە
         val big = RemoteViews(packageName, R.layout.vex_notif_big)
-        big.setTextViewText(R.id.tvSteps, fmt(steps))
-        big.setTextViewText(R.id.tvPct, "$pct%")
-        big.setProgressBar(R.id.bar, 100, pct, false)
-        big.setTextViewText(R.id.tvKm, kmTxt)
-        big.setTextViewText(R.id.tvKcal, kcalTxt)
-        big.setTextViewText(R.id.tvHr, hrTxt)
+        big.setTextColor(R.id.tvHead, mu)
+        big.setTextViewText(R.id.tvHead, if (done) "گەشتی ئەمڕۆ تەواو بوو" else "گەشتی ئەمڕۆ بۆ ئامانج")
+        big.setImageViewBitmap(R.id.imHero, heroB)
+        big.setTextViewText(R.id.tvPct, pctTxt)
+        big.setTextColor(R.id.tvPct, if (done) 0xFF3CF08A.toInt() else 0xFF2FE6F3.toInt())
+        big.setImageViewBitmap(R.id.imTrack, StepArt.track(this, p, done, true, dark, goal))
         big.setTextViewText(R.id.tvRem, remTxt)
+        big.setTextViewText(R.id.tvRemKm, "$f1 کم")
+        big.setTextViewText(R.id.tvRemMin, "$remMin خولەک")
+        big.setViewVisibility(R.id.tvRemKm, if (done) android.view.View.GONE else android.view.View.VISIBLE)
+        big.setViewVisibility(R.id.tvRemMin, if (done) android.view.View.GONE else android.view.View.VISIBLE)
+        big.setTextViewText(R.id.tvKm, "$f2 کم")
+        big.setTextViewText(R.id.tvKcal, "${kcal.toInt()} kcal")
+        big.setTextViewText(R.id.tvHr, if (hr in 30..220) "$hr bpm" else "")
+        big.setViewVisibility(R.id.tvHr, if (hr in 30..220) android.view.View.VISIBLE else android.view.View.GONE)
+        for (id in intArrayOf(R.id.tvKm, R.id.tvKcal, R.id.tvHr)) big.setTextColor(id, tx)
+        if (!dark) {
+            // لە دۆخی ڕووناکدا ڕەنگی تۆختر بۆ خوێندنەوە لەسەر کارتی سپی
+            big.setTextColor(R.id.tvRem, 0xFF0A7F8A.toInt())
+            big.setTextColor(R.id.tvRemKm, 0xFF1F6FA3.toInt())
+            big.setTextColor(R.id.tvRemMin, 0xFF5A48B8.toInt())
+        }
+        val sub = if (done) remTxt else "$remTxt هەنگاو · $f1 کم · نزیکەی $remMin خولەک"
 
         val imm = if (Build.VERSION.SDK_INT >= 23) PendingIntent.FLAG_IMMUTABLE else 0
         val open = packageManager.getLaunchIntentForPackage(packageName)?.let {
@@ -269,9 +301,9 @@ class StepService : Service(), SensorEventListener {
         )
 
         val b = NotificationCompat.Builder(this, CH_ID)
-            .setSmallIcon(R.drawable.ic_stat_steps)
-            .setContentTitle("${fmt(steps)} هەنگاو")
-            .setContentText(remTxt)
+            .setSmallIcon(R.drawable.ic_stat_vx)
+            .setContentTitle("${fmt(steps)} هەنگاو · $pct%")
+            .setContentText(sub)
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .setCustomContentView(small)
             .setCustomBigContentView(big)
@@ -284,10 +316,10 @@ class StepService : Service(), SensorEventListener {
             .setColor(0xFF2FE6F3.toInt())
             .setDeleteIntent(del)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
-            .addAction(R.drawable.ic_stat_steps, "ئاو +١", water)
+            .addAction(R.drawable.ic_stat_vx, "ئاو +١", water)
         if (open != null) {
             b.setContentIntent(open)
-            b.addAction(R.drawable.ic_stat_steps, "کردنەوە", open)
+            b.addAction(R.drawable.ic_stat_vx, "کردنەوە", open)
         }
         return b.build()
     }

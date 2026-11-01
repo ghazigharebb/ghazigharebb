@@ -63,15 +63,16 @@ struct VexWidgetView: View {
         default:
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    VexRing(pct: e.m.pct, done: e.m.done, line: 5).frame(width: 46, height: 46)
+                    Text("هەنگاوی ئەمڕۆ").font(.system(size: 11, weight: .medium)).foregroundColor(VexColor.mute)
                     Spacer()
+                    Text("\(Int((e.m.pct * 100).rounded()))%")
+                        .font(.system(size: 13, weight: .heavy, design: .rounded))
+                        .foregroundColor(e.m.done ? VexColor.mint : VexColor.cy)
                 }
-                Text(VexShared.fmt(e.m.steps))
-                    .font(.system(size: 26, weight: .heavy, design: .rounded))
-                    .foregroundColor(.white)
-                    .minimumScaleFactor(0.7)
-                Text("هەنگاو · \(String(format: "%.1f", e.m.km)) km")
-                    .font(.system(size: 12, weight: .semibold))
+                VexHero(s: e.m, size: 26)
+                VexTrack(s: e.m)
+                Text("\(String(format: "%.2f", e.m.km)) کم · \(e.m.kcal) kcal")
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(VexColor.mute)
                     .lineLimit(1)
             }

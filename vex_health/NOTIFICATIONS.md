@@ -1,6 +1,10 @@
 # ئاگادارکردنەوەی هەنگاو — Android و iOS
 
-هەنگاو، کالۆری، کیلۆمەتر، دڵ و ماوەی ئامانج، هەمیشە لەسەر شاشەی مۆبایل. هەمان ئەو دیزاینەیە کە لە وێب بینیتت (`vex-steps-notif`).
+هەنگاو، کالۆری، کیلۆمەتر، دڵ و ماوەی ئامانج، هەمیشە لەسەر شاشەی مۆبایل. دیزاینی «گەشت»: ڕێگای ماڵ ← ڕاکەر ← ئاڵا،
+ژمارەی هەنگاو بە فۆنتی Sora، ئایکۆنی شریتی سەرەوە لۆگۆی VX (`ic_stat_vx`).
+
+**چۆن کێشراوە (Android):** RemoteViews فۆنتی تایبەت قبوڵ ناکات، بۆیە `StepArt.kt` ژمارەکە و ڕێگاکە وەک وێنە دەکێشێت
+(فۆنتی Sora لە `assets/google_fonts/` ی Flutter ـەوە دەخوێنرێتەوە) و دەقە کوردییەکان TextView ن. دۆخی ڕووناک / تاریکی سیستەم خۆی دەناسێتەوە.
 
 | | Android | iOS |
 |---|---|---|
@@ -9,42 +13,29 @@
 | swipe و گەڕانەوە دوای 1 خولەک | **بەڵێ** (خۆکار) | نا — iOS ڕێگا نادات (بڕوانە خوارەوە) |
 | دوگمەی ئاو +١ | بەڵێ | نا |
 
-## 1) Flutter (هەر دووکیان)
+## دانان — 3 هەنگاو
 ```bash
-flutter create .          # ئەگەر android/ و ios/ ـت نییە
+flutter create .                 # تەنها ئەگەر android/ و ios/ ـت نییە
 flutter pub get
+
+# Android (لە هەر کۆمپیوتەرێک)
+python3 tools/setup_native.py    # Kotlin، layout، ئایکۆن، مۆڵەت، desugaring و compileSdk خۆی دادەنێت
+
+# iOS (لەسەر Mac)
+gem install xcodeproj            # یەک جار
+ruby tools/setup_ios.rb          # Widget Extension، App Group، Info.plist و AppDelegate خۆی دادەنێت
 ```
+پاشان لە Xcode (`open ios/Runner.xcworkspace`): **Signing & Capabilities ‹ Team** بۆ `Runner` و `VexStepsWidget` هەڵبژێرە. ئینجا `flutter run`.
+
+هەردوو سکریپت دووبارە جێبەجێکردنیان بێ مەترسییە (هیچ شتێک دووبارە زیاد ناکەن).
 لە ئەپەکە: **پرۆفایل ‹ ئاگادارکردنەوەی هەنگاو** سویچەکە بکەرەوە. مۆڵەتەکان دەپرسرێن.
 
-## 2) Android
-```bash
-python3 tools/setup_native.py
-flutter run
-```
-سکریپتەکە خۆی ئەمانە دەکات: Kotlin ـەکان، layout و drawable ـەکان، مۆڵەتەکان و `service`/`receiver` لە AndroidManifest. دووبارە جێبەجێکردنی بێ مەترسییە.
+**Band:** کاتێک VEX Band پەیوەستە، هەنگاوی ئەمڕۆی Band دەبێتە بنەما و هەنگاوی مۆبایل لەسەری زیاد دەبێت؛ هەر کاتێک Band هاوکات دەکات یان جیا دەبێتەوە، ئاگادارکردنەوەکە خۆی نوێ دەبێتەوە. بێ Band تەنها سێنسەری مۆبایل بەکاردێت. ئامانج = ئامانجی کەسی بەکارهێنەر لە پلانی تۆمارکردن.
 
-پێویستی: `compileSdk 34+` (هەموو پڕۆژەی نوێی Flutter وایە).
-Android 13+: مۆڵەتی ئاگادارکردنەوە؛ Android 10+: مۆڵەتی «چالاکی جەستەیی».
+**پشکنراوە:** هەردوو سکریپت لەسەر پڕۆژەیەکی نوێی `flutter create` جێبەجێ کران و `flutter build apk` و `flutter build ios --no-codesign` سەرکەوتوو بوون (VexStepsWidget.appex لەناو ئەپەکەدایە).
 
-**چۆن کار دەکات:** `StepService` هەنگاو لە `TYPE_STEP_COUNTER` دەژمێرێت و هەموو 3 چرکە/1 خولەک نوێی دەکاتەوە. ئەگەر Flutter داتای Band نارد، ئەوە دەبێتە بنەما و هەنگاوی مۆبایل لەسەری زیاد دەبێت. ئەگەر بەکارهێنەر notification ـەکە swipe بکات، دوای 60 چرکە خۆی دەگەڕێتەوە. دوای ڕیستارتی مۆبایل خۆی دەست پێدەکاتەوە (ئەگەر سویچەکە کرابێت).
-
-⚠️ کارخانەی Xiaomi/Huawei/Oppo/Samsung ڕەنگە ئەپ لە پشتەوە بکوژن: بەکارهێنەر دەبێت «Battery ‹ Unrestricted» بۆ VEX Health دابنێت.
-
-## 3) iOS (Xcode — یەک جار)
-Widget Extension تەنها لە Xcode دروست دەکرێت، هەنگاوەکان:
-
-1. `open ios/Runner.xcworkspace`
-2. **Runner ‹ Signing & Capabilities ‹ + Capability ‹ App Groups** — گرووپێک دروست بکە، نموونە `group.com.xxx.vexhealth` (xxx = Bundle ID ی خۆت).
-3. **File ‹ New ‹ Target ‹ Widget Extension** — ناوی `VexStepsWidget`، تیکی «Include Live Activity» و «Include Configuration App Intent» **مەکە** (کۆدەکەمان هەیە). لە پرسیاری Activate: Activate.
-4. لە Target ی `VexStepsWidget`: **Deployment Target = iOS 16.2**، و هەمان **App Groups** capability (هەمان گرووپ).
-5. فایلە خۆکارەکانی Xcode بۆ ئەو Target (`VexStepsWidget.swift` …) **بسڕەوە**، و ئەمانە زیاد بکە (Add Files):
-   - `native/ios/VexStepsWidget/*.swift` ← تەنها Target ی `VexStepsWidget`
-   - `native/ios/Shared_VexShared.swift` ← **هەردوو** Target (Runner و VexStepsWidget)
-   - `native/ios/Runner/StepsBridge.swift` ← تەنها Runner
-6. `Shared_VexShared.swift`: `appGroup` بگۆڕە بۆ گرووپەکەی خۆت.
-7. `ios/Runner/AppDelegate.swift`: ئەو 3 دێڕەی `VexSteps` لە `native/ios/Runner/AppDelegate_snippet.swift` زیاد بکە.
-8. `ios/Runner/Info.plist`: ناوەڕۆکی `native/ios/Info_plist_additions.xml` زیاد بکە.
-9. دەبێت لەسەر **iPhone ی ڕاستەقینە** تاقی بکرێتەوە (Simulator ی Dynamic Island هەیە بەڵام هەنگاو نییە). iOS 16.2+ پێویستە. لە Settings ‹ VEX Health ‹ Live Activities چالاک بێت.
+⚠️ Xiaomi/Huawei/Oppo/Samsung ڕەنگە ئەپ لە پشتەوە بکوژن: «Battery ‹ Unrestricted» بۆ VEX Health.
+iOS: دەبێت لەسەر **iPhone ی ڕاستەقینە** تاقی بکرێتەوە، iOS 16.2+، و Settings ‹ VEX Health ‹ Live Activities چالاک بێت.
 
 ## سنووردارییەکانی iOS (ڕاستگۆیانە)
 - **بێ سێرڤەر:** Live Activity تەنها کاتێک نوێ دەبێتەوە کە ئەپ کراوەیە یان تازە داخراوە. ئەپ دابخرێت (swipe up) هەنگاو دەوەستێت تا جارێکی تر بیکەیتەوە. ئەگەر ئەپ لە پشتەوە بمێنێت، iOS دەتوانێت بیوەستێنێت.

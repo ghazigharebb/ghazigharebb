@@ -21,7 +21,6 @@ import '../core/icons.dart';
 import '../core/theme.dart';
 import 'band_state.dart';
 import 'ble/vex_ble.dart';
-import 'band_widgets.dart';
 
 // ============================================================
 // دۆخی ئامێر (بەپێی ڕێکخستنی بەکارهێنەر؛ لە ئامێر هەڵدەگیرێت)

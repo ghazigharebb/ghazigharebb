@@ -40,6 +40,71 @@ def find_package():
     return None
 
 
+def patch_gradle():
+    """desugaring (پێویستە بۆ flutter_local_notifications) + compileSdk ی پلەگینە کۆنەکان — دووبارە بێ مەترسییە"""
+    for n in ('build.gradle.kts', 'build.gradle'):
+        p = os.path.join(APP, n)
+        if not os.path.exists(p):
+            continue
+        s = read(p)
+        kts = n.endswith('.kts')
+        if 'oreLibraryDesugaring' not in s:
+            flag = 'isCoreLibraryDesugaringEnabled = true' if kts else 'coreLibraryDesugaringEnabled true'
+            if 'compileOptions {' in s:
+                s = s.replace('compileOptions {', 'compileOptions {\n        ' + flag, 1)
+            else:
+                s = s.replace('android {', 'android {\n    compileOptions {\n        ' + flag + '\n    }', 1)
+            dep = ('    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")' if kts
+                   else "    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'")
+            s += '\n// VEX: desugaring\ndependencies {\n' + dep + '\n}\n'
+            print('  + %s (desugaring)' % n)
+        # minSdk کەمترین 24
+        if kts:
+            s = re.sub(r'minSdk\s*=\s*flutter\.minSdkVersion', 'minSdk = 24', s)
+        else:
+            s = re.sub(r'minSdkVersion\s+flutter\.minSdkVersion', 'minSdkVersion 24', s)
+            s = re.sub(r'minSdk\s*=\s*flutter\.minSdkVersion', 'minSdk = 24', s)
+        write(p, s)
+    root = os.path.join(ROOT, 'android')
+    for n in ('build.gradle.kts', 'build.gradle'):
+        p = os.path.join(root, n)
+        if not os.path.exists(p):
+            continue
+        s = read(p)
+        if 'VEX: compileSdk' in s:
+            break
+        if n.endswith('.kts'):
+            s += """
+// VEX: compileSdk ی پلەگینە کۆنەکان (geocoding، image_picker …)
+subprojects {
+    if (name != "app") {
+        afterEvaluate {
+            if (project.hasProperty("android")) {
+                val ext = project.extensions.getByName("android") as com.android.build.gradle.BaseExtension
+                ext.compileSdkVersion(36)
+            }
+        }
+    }
+}
+"""
+        else:
+            s += """
+// VEX: compileSdk ی پلەگینە کۆنەکان (geocoding، image_picker …)
+subprojects {
+    if (name != 'app') {
+        afterEvaluate {
+            if (project.hasProperty('android')) {
+                project.android.compileSdkVersion 36
+            }
+        }
+    }
+}
+"""
+        write(p, s)
+        print('  + android/%s (compileSdk 36)' % n)
+        break
+
+
 def main():
     if not os.path.isdir(APP):
         sys.exit('پۆشەی android/ نییە. یەکەم جار لە فۆڵدەری پڕۆژە `flutter create .` جێبەجێ بکە.')
@@ -55,7 +120,7 @@ def main():
     for d in (kdir, jdir):
         if os.path.exists(os.path.join(d, 'MainActivity.kt')):
             outdir = d
-    for name in ('StepService', 'StepReceiver', 'StepsChannel'):
+    for name in ('StepService', 'StepReceiver', 'StepsChannel', 'StepArt'):
         write(os.path.join(outdir, name + '.kt'), read(os.path.join(SRC, name + '.kt.tpl')).replace('__PKG__', pkg))
         print('  +', name + '.kt')
 
@@ -117,8 +182,9 @@ def main():
         write(mp, m)
         print('  + AndroidManifest.xml (ئاگادارکەرەوەکان)')
 
+    patch_gradle()
+
     print('\nتەواو بوو. دەتوانیت `flutter run` بکەیت.')
-    print('ڕێکخستنی ڕاستەوخۆ: بۆ flutter_local_notifications دەبێت desugaring چالاک بکەیت (بڕوانە ALERTS.md).')
     print('تێبینی: compileSdk دەبێت 34 یان زیاتر بێت (flutter create ی نوێ خۆی وایە).')
 
 

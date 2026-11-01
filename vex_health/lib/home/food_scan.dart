@@ -8,11 +8,12 @@ import 'package:image_picker/image_picker.dart';
 import '../core/ai_service.dart';
 import '../core/store.dart';
 import '../core/theme.dart';
-import '../food/food_page.dart';
+import '../food_ai/food_ai_flow.dart';
+import '../food_ai/food_ai_tab.dart';
 import '../scan/scan_page.dart';
 
-/// کامێرای سەرەکی (یان گەلەری) ← پەڕەی سکانی خواردن (lib/scan)
-Future<void> pickAndAnalyse(ImageSource src) => openFoodScan(source: src);
+/// کامێرای سەرەکی (یان گەلەری) ← VEX AI Food v2 (تا 5 وێنە)
+Future<void> pickAndAnalyse(ImageSource src) => openFoodCapture(gallery: src == ImageSource.gallery);
 
 /// نووسین ← پەڕەی سکانی خواردن
 void showAnalyseSheet({Uint8List? image, String? text}) {
@@ -24,7 +25,7 @@ void showAnalyseSheet({Uint8List? image, String? text}) {
 }
 
 void showTypeSheet() {
-  showVSheet<void>(builder: (_) => const _TypeView());
+  openFoodWrite();
 }
 
 const Map<String, List<String>> kMeals = {
@@ -118,7 +119,7 @@ class FoodScanCard extends StatelessWidget {
                   ],
                 ),
               ),
-              LinkBtn('بەشی خواردن ‹', onTap: () => openFoodPage()),
+              LinkBtn('بەشی خواردن ‹', onTap: goFoodTab),
             ],
           ),
           const SizedBox(height: 12),
@@ -126,7 +127,7 @@ class FoodScanCard extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              Expanded(child: _sub('🔎 خواردنەکان', () => openFoodPage())),
+              Expanded(child: _sub('✨ VEX AI', goFoodTab)),
               const SizedBox(width: 8),
               Expanded(child: _sub('🖼️ گەلەری', () => pickAndAnalyse(ImageSource.gallery))),
               const SizedBox(width: 8),
@@ -920,75 +921,10 @@ class _AnalyseViewState extends State<AnalyseView> with TickerProviderStateMixin
           Expanded(child: VBtn('📸 وێنەیەکی تر', kind: BtnKind.ai, onTap: _again)),
           const SizedBox(width: 8),
           Expanded(
-            child: VBtn('🍽️ بەشی خواردن', onTap: () {
-              Navigator.of(context).pop();
-              toast('دەچێتە بەشی خواردن (لە ئەپی ڕاستەقینەدا)');
-            }),
+            child: VBtn('🍽️ بەشی خواردن', onTap: goFoodTab),
           ),
         ],
       ),
     ];
   }
 }
-
-// ---- نووسینی خواردن ----
-class _TypeView extends StatefulWidget {
-  const _TypeView();
-
-  @override
-  State<_TypeView> createState() => _TypeViewState();
-}
-
-class _TypeViewState extends State<_TypeView> {
-  final TextEditingController _c = TextEditingController();
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  void _go() {
-    final t = _c.text.trim();
-    if (t.isEmpty) return;
-    Navigator.of(context).pop();
-    showAnalyseSheet(text: t);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    OutlineInputBorder b(Color c) => OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: c),
-        );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const SheetTitle('✍️ چیت خوارد؟'),
-        const SizedBox(height: 6),
-        TextField(
-          controller: _c,
-          autofocus: true,
-          minLines: 2,
-          maxLines: 4,
-          style: ku(14),
-          cursorColor: V.cy,
-          decoration: InputDecoration(
-            hintText: vxTr('بۆ نموونە: 8 دانە دۆڵمە و پەرداخێک دۆ'),
-            hintStyle: ku(14, c: V.mu),
-            filled: true,
-            fillColor: V.surf2,
-            contentPadding: const EdgeInsets.all(12),
-            border: b(V.line),
-            enabledBorder: b(V.line),
-            focusedBorder: b(V.cy),
-          ),
-        ),
-        const SizedBox(height: 10),
-        VBtn('✨ شیکاری بکە', kind: BtnKind.ai, onTap: _go),
-      ],
-    );
-  }
-}
-

@@ -92,6 +92,32 @@ class VexBand extends ChangeNotifier {
     } catch (_) {}
   }
 
+  bool _reconnecting = false;
+
+  /// پەیوەستبوونەوە بە دوایین Band ئەگەر پچڕابێت. [ask]: داوای مۆڵەت بکات (تەنها لە دوگمەی بەکارهێنەر)
+  Future<bool> reconnect({bool ask = false}) async {
+    if (_ready) return true;
+    if (_reconnecting) return false;
+    _reconnecting = true;
+    try {
+      final sp = await SharedPreferences.getInstance();
+      final id = sp.getString(_kId);
+      if (id == null || id.isEmpty) return false;
+      if (ask) {
+        if (!await _perm()) return false;
+      } else if (defaultTargetPlatform == TargetPlatform.android && !await Permission.bluetoothConnect.isGranted) {
+        return false;
+      }
+      await _open(BluetoothDevice.fromId(id));
+      return _ready;
+    } catch (e) {
+      debugPrint('VexBand reconnect: $e');
+      return false;
+    } finally {
+      _reconnecting = false;
+    }
+  }
+
   Future<bool> _perm() async {
     if (defaultTargetPlatform == TargetPlatform.android) {
       final r = await [Permission.bluetoothScan, Permission.bluetoothConnect, Permission.locationWhenInUse].request();
@@ -230,7 +256,7 @@ class VexBand extends ChangeNotifier {
         if (w == null || !_ready && frame[0] != VexCmd.setTime) {
           if (w == null) throw StateError('Band پەیوەست نییە');
         }
-        await w!.write(frame, withoutResponse: false);
+        await w.write(frame, withoutResponse: false);
         await Future<void>.delayed(const Duration(milliseconds: 40));
         c.complete();
       } catch (e) {
@@ -391,8 +417,39 @@ class VexBand extends ChangeNotifier {
 
   // ───────────── ئاستی بەرز ─────────────
   /// خوێندنەوەی هەموو مێژوو. onProgress(0..1)
-  Future<void> syncAll({void Function(double)? onProgress}) async {
+  ///
+  /// ئەگەر هاوکاتکردنێک لە کاردا بێت، هەمان هاوکاتکردن دەگەڕێنێتەوە (دوو هاوکاتکردن پێکەوە ناکرێن)
+  Future<void> syncAll({void Function(double)? onProgress}) {
+    if (onProgress != null) _syncCbs.add(onProgress);
+    final f = _syncF ??= _syncAll().whenComplete(() {
+      _syncF = null;
+      _syncCbs.clear();
+    });
+    return f;
+  }
+
+  Future<void>? _syncF;
+  final List<void Function(double)> _syncCbs = [];
+
+  /// هاوکاتکردنی مێژوو لە کاردایە
+  bool get syncing => _syncF != null;
+
+  /// پێوانەی ECG/PPG لە کاردایە (هاوکاتکردنی خۆکار ڕادەوەستێت)
+  bool get busy => _busy;
+
+  /// دوایین هاوکاتکردنی تەواوی مێژوو
+  DateTime? lastHistorySync;
+
+  Future<void> _syncAll() async {
     if (!_ready) return;
+    void onProgress(double v) {
+      for (final c in List.of(_syncCbs)) {
+        try {
+          c(v);
+        } catch (_) {}
+      }
+    }
+
     final steps = <Future<void> Function()>[
       () => _readSteps(),
       () => _read(VexFrame.hrStatic, (m) => m is VexSeries ? m.samples : null, hrRest),
@@ -410,9 +467,10 @@ class VexBand extends ChangeNotifier {
       } catch (e) {
         debugPrint('VexBand sync step $i: $e');
       }
-      onProgress?.call((i + 1) / steps.length);
+      onProgress((i + 1) / steps.length);
     }
     final t = DateTime.now();
+    lastHistorySync = t;
     BandState.I.lastSync = '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
     notifyListeners();
   }

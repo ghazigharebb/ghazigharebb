@@ -16,6 +16,7 @@ import 'package:flutter/services.dart';
 
 import '../band/band_emblem.dart';
 import '../core/icons.dart';
+import '../welcome/vex_welcome.dart';
 import '../core/theme.dart';
 import 'account.dart';
 import 'reg_build.dart';
@@ -26,7 +27,6 @@ import '../plus/plus_state.dart';
 import 'reg_gauge.dart';
 import 'reg_icons.dart';
 import 'reg_lang.dart';
-import 'reg_lang_data.dart';
 import 'reg_lang_state.dart';
 import 'reg_widgets.dart';
 
@@ -746,6 +746,27 @@ class _RegFlowState extends State<RegFlow> {
       return Material(color: RC.bg, child: IgnorePointer(child: SizedBox.expand(child: _RegBg())));
     }
     final mq = MediaQuery.of(context);
+    if (cur == 'welcome') {
+      // شاشەی بەخێرهاتن: lib/welcome/vex_welcome.dart (دەقەکان: vex_welcome_i18n.dart)
+      return PopScope(
+        canPop: false,
+        // ignore: deprecated_member_use
+        onPopInvoked: (didPop) {
+          if (!didPop) _onSystemBack();
+        },
+        child: VexWelcome(
+          key: ValueKey<String>('welcome-${LangState.I.code}'),
+          lang: LangState.I.code,
+          dark: !VexTheme.I.isLight,
+          onStart: busy ? () {} : _onGo,
+          onLogin: busy ? () {} : _onAlt,
+          onLangTap: () {
+            pickL = LangState.I.code;
+            _go('lang', back: true);
+          },
+        ),
+      );
+    }
     return PopScope(
       canPop: false,
       // ignore: deprecated_member_use
@@ -892,7 +913,7 @@ class _RegFlowState extends State<RegFlow> {
       },
       child: KeyedSubtree(
         key: key,
-        child: cur == 'welcome' ? _welcome(compact: compact, tight: tight) : _stepScroll(compact, tight, kb),
+        child: _stepScroll(compact, tight, kb),
       ),
     );
   }
@@ -919,133 +940,6 @@ class _RegFlowState extends State<RegFlow> {
       if (!kb) _p(RPara(sub, compact: compact)),
       if (kb) const SizedBox(height: 6),
     ];
-  }
-
-  // ---------- بەخێرهاتن ----------
-  Widget _welcome({required bool compact, required bool tight}) {
-    return LayoutBuilder(
-      builder: (context, cons) {
-        final h = cons.maxHeight;
-        final logo = (h * 0.17).clamp(96.0, 136.0);
-        final L = LangState.I.cur;
-        return Stack(
-          children: [
-        SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: h),
-            child: Padding(
-              padding: const EdgeInsets.only(top: 10, bottom: 6),
-              child: Directionality(
-                textDirection: dirOfLang(L),
-                child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Rise(child: RLogo(width: logo)),
-                  const SizedBox(height: 4),
-                  Rise(
-                    delayMs: 80,
-                    child: Column(
-                      children: [
-                        VText(LangState.I.t('wt'),
-                            textAlign: TextAlign.center,
-                            style: langStyle(L, tight ? 21 : (compact ? 23 : 26), w: FontWeight.w800, h: 1.4)),
-                        ShaderMask(
-                          shaderCallback: (r) =>
-                              LinearGradient(colors: [vk(0xFF8FF3F9), vk(0xFF3CF08A)]).createShader(r),
-                          blendMode: BlendMode.srcIn,
-                          child: VText('VEX Health',
-                              textDirection: TextDirection.ltr,
-                              style: nu(tight ? 27 : (compact ? 30 : 34), c: kW, h: 1.25)),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: tight ? 8 : 6),
-                  if (!tight)
-                    Rise(
-                      delayMs: 140,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 34),
-                        child: VText(
-                          LangState.I.t('wp'),
-                          textAlign: TextAlign.center,
-                          style: langStyle(L, 13.5, c: RC.p, h: 1.75),
-                        ),
-                      ),
-                    ),
-                  SizedBox(height: compact ? 10 : 16),
-                  Rise(delayMs: 180, child: _p(_stats())),
-                  SizedBox(height: compact ? 10 : 16),
-                  RMarquee(compact: tight),
-                ],
-              ),
-              ),
-            ),
-          ),
-        ),
-            PositionedDirectional(
-              top: 6,
-              start: 18,
-              child: Rise(
-                delayMs: 200,
-                child: RLangChip(onTap: () {
-                  pickL = LangState.I.code;
-                  _go('lang', back: true);
-                }),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _stats() {
-    Widget dot() => Container(
-          width: 4,
-          height: 4,
-          margin: const EdgeInsets.symmetric(horizontal: 9),
-          decoration: BoxDecoration(shape: BoxShape.circle, color: vk(0xFF3D6870)),
-        );
-    final st = langStyle(LangState.I.cur, 12.5, w: FontWeight.w700, c: RC.p);
-    return SizedBox(
-      height: 28,
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            TweenAnimationBuilder<double>(
-              tween: Tween<double>(begin: 0, end: kFeatCount.toDouble()),
-              duration: const Duration(milliseconds: 1300),
-              curve: Curves.easeOutCubic,
-              builder: (context, v, _) => SizedBox(
-                width: 28,
-                child: ShaderMask(
-                  shaderCallback: (r) =>
-                      LinearGradient(colors: [vk(0xFF8FF3F9), vk(0xFF3CF08A)]).createShader(r),
-                  blendMode: BlendMode.srcIn,
-                  child: VText('${v.round()}', textAlign: TextAlign.center, style: nu(19, c: kW, h: 1.2)),
-                ),
-              ),
-            ),
-            const SizedBox(width: 4),
-            VText(LangState.I.t('s1'), style: st),
-            dot(),
-            VText.rich(TextSpan(children: [
-              TextSpan(text: 'AI', style: nu(12.5, c: V.tx)),
-              TextSpan(text: ' ${LangState.I.t('s2')}'),
-            ]), style: st),
-            dot(),
-            VText.rich(TextSpan(children: [
-              TextSpan(text: ltr('24/7'), style: nu(12.5, c: V.tx)),
-              TextSpan(text: ' ${LangState.I.t('s3')}'),
-            ]), style: st),
-          ],
-        ),
-      ),
-    );
   }
 
   // ---------- هەنگاوەکان ----------
