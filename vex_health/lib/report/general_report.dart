@@ -1967,9 +1967,8 @@ List<List<Widget>> _blocks(_Rep r, _P p, {bool print = false}) {
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           SizedBox(height: 74, child: CustomPaint(painter: _EcgPainter(tr, p.ecgg, p.ecgl))),
           _gap(4),
-          Row(children: [
+          Wrap(alignment: WrapAlignment.spaceBetween, spacing: 10, runSpacing: 2, children: [
             _nm('Lead I · 25 mm/s · 10 mm/mV', 10, p.ecgx, w: FontWeight.w600),
-            const Spacer(),
             _tx('${_t('lst')}: ${_ltr('${_dEn(e.at)} · ${_hhmm(e.at)}')}', 10.5, p.ecgx, w: FontWeight.w600),
           ]),
         ]),
