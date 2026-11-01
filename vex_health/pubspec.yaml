@@ -38,6 +38,7 @@ flutter:
     - assets/brand/
     - assets/data/
     - assets/foods/
+    - assets/food_ai/
     - assets/pay/
     - assets/chars/
     - assets/arena/

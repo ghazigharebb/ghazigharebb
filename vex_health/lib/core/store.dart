@@ -26,6 +26,7 @@ class FoodItem {
     this.v = 'ok',
     this.e = '🍽️',
     this.slot = '',
+    this.ref = '',
   });
 
   final String n;
@@ -40,7 +41,10 @@ class FoodItem {
   /// ژەم: b بەیانی، l نیوەڕۆ، s سووک، d ئێوارە، n شەو
   final String slot;
 
-  Map<String, dynamic> toJson() => {'n': n, 'kcal': kcal, 'p': p, 'c': c, 'f': f, 'at': at, 'v': v, 'e': e, 'slot': slot};
+  /// سەرچاوە (بۆ نموونە ai2:<id> بۆ VEX AI Food v2) — بۆ سڕینەوەی دروست
+  final String ref;
+
+  Map<String, dynamic> toJson() => {'n': n, 'kcal': kcal, 'p': p, 'c': c, 'f': f, 'at': at, 'v': v, 'e': e, 'slot': slot, if (ref.isNotEmpty) 'ref': ref};
 
   static FoodItem fromJson(Map<String, dynamic> j) => FoodItem(
         n: '${j['n'] ?? ''}',
@@ -52,6 +56,7 @@ class FoodItem {
         v: '${j['v'] ?? 'ok'}',
         e: '${j['e'] ?? '🍽️'}',
         slot: '${j['slot'] ?? ''}',
+        ref: '${j['ref'] ?? ''}',
       );
 }
 
@@ -173,6 +178,14 @@ class Store extends ChangeNotifier {
   void removeFirst() {
     if (food.isEmpty) return;
     food.removeAt(0);
+    _saveFood();
+    notifyListeners();
+  }
+
+  void removeFoodWhere(bool Function(FoodItem) test) {
+    final n = food.length;
+    food.removeWhere(test);
+    if (food.length == n) return;
     _saveFood();
     notifyListeners();
   }

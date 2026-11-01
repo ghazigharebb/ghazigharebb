@@ -12,6 +12,8 @@ import 'core/store.dart';
 import 'core/theme.dart';
 import 'family/family_data.dart';
 import 'food/food_db.dart';
+import 'food_ai/food_ai_store.dart';
+import 'food_ai/food_ai_tab.dart';
 import 'health/health_screen.dart';
 import 'home/home_screen.dart';
 import 'notify/step_notify.dart';
@@ -39,6 +41,7 @@ Future<void> main() async {
   await BandState.I.load(); // دۆخی پەیوەستبوونی Band
   await VitalAgeEngine.I.init(); // تەمەنی ژیانی (٢١ ڕۆژ)
   await ReportStore.I.init(); // ڕاپۆرتی گشتی: داتای Band ڕۆژانە کۆدەکاتەوە و هەڵیدەگرێت
+  await FoodAiStore.I.init(); // VEX AI Food v2: ژەمەکانی ئەمڕۆ و خواردنەکانی تۆ
   await VexBand.I.init(); // BLE ی ڕاستەقینەی Band (پەیوەستبوونەوەی خۆکار)
   await FoodDb.I.load(); // لیستی 500 خواردنەکە
   await BandAlerts.I.load(); // کاتژمێر و کاتی وەرزش
@@ -109,18 +112,26 @@ class _ShellState extends State<Shell> {
     super.initState();
     Account.I.addListener(_onAccount);
     LangState.I.addListener(_onLang);
+    appTabRequest.addListener(_onTabReq);
   }
 
   @override
   void dispose() {
     Account.I.removeListener(_onAccount);
     LangState.I.removeListener(_onLang);
+    appTabRequest.removeListener(_onTabReq);
     super.dispose();
   }
 
   /// زمان گۆڕا ← بەشی ژێرەوە (سەرەکی، تەندروستی، پرۆفایل) لە سەرەتاوە دروست دەکرێتەوە
   void _onLang() {
     if (mounted) setState(() {});
+  }
+
+  /// داواکاری گۆڕینی تاب (بۆ نموونە «بەشی خواردن» ← VEX AI)
+  void _onTabReq() {
+    final t = appTabRequest.value;
+    if (t != null && mounted && t != tab) setState(() => tab = t);
   }
 
   /// دوای چوونە دەرەوە بەشی سەرەتا دەگەڕێتەوە
@@ -175,14 +186,17 @@ class _ShellState extends State<Shell> {
                             ? const HealthScreen(key: ValueKey<int>(1))
                             : tab == 4
                                 ? ProfilePage(key: const ValueKey<int>(4), onTab: (i) => setState(() => tab = i))
-                                : GatePage(
-                                    key: ValueKey<int>(tab),
-                                    kind: GateKind.plus,
-                                    closable: false,
-                                    id: tab == 2 ? 'ai' : 'workout',
-                                    onAlt: tab == 3 ? () => toast('ئەم بەشە لە ئەپی ڕاستەقینەدا دەکرێتەوە') : null,
-                                    child: SoonPage(title: _names[tab]),
-                                  ),
+                                : tab == 2
+                                    // VEX AI ← بەشی خواردن (Food v2): بۆ هەمووان؛ سکانی AI بۆ بەخۆڕایی 3 جار لە ڕۆژێکدا
+                                    ? const FoodAiTab(key: ValueKey<int>(2))
+                                    : GatePage(
+                                        key: ValueKey<int>(tab),
+                                        kind: GateKind.plus,
+                                        closable: false,
+                                        id: 'workout',
+                                        onAlt: () => toast('ئەم بەشە لە ئەپی ڕاستەقینەدا دەکرێتەوە'),
+                                        child: SoonPage(title: _names[tab]),
+                                      ),
                   ),
                 ),
                 Positioned(

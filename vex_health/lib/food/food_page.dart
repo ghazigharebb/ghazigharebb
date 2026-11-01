@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/store.dart';
 import '../core/theme.dart';
+import '../food_ai/food_ai_tab.dart' show goFoodTab;
 import '../scan/scan_model.dart' show kSlotName, mealSlotNow, nf, parseQ;
 import 'food_db.dart';
 
@@ -26,6 +27,11 @@ class FoodPick {
 bool _open = false;
 
 Future<FoodPick?> openFoodPage({bool pick = false, String? query}) async {
+  // بەشی خواردن ئێستا VEX AI Food v2 ـە (بێ لیستی خواردن): تەنها هەڵبژاردن بۆ پەڕەی سکانی کۆن لێرە دەمێنێتەوە
+  if (!pick) {
+    goFoodTab();
+    return null;
+  }
   final nav = navKey.currentState;
   if (nav == null || _open) return null;
   _open = true;
