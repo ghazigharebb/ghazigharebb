@@ -1,12 +1,12 @@
 // VEX Health — ڕاپۆرتی گشتی (general_report.dart)
 //
-// ڕاپۆرتێکی تەواوی تەندروستی بۆ 30 ڕۆژی ڕابردوو، بە دیزاینی کلینیکی (A)، لە 6 زمان و
+// ڕاپۆرتێکی تەواوی تەندروستی بۆ 24 کاتژمێر / 3 / 7 / 30 ڕۆژ یان ماوەی دیاریکراو، بە دیزاینی کلینیکی (A)، لە 6 زمان و
 // ڕووناک/تاریک/خۆکار، لەگەڵ داگرتنی PDF (A4).
 //
 // سەرچاوەی داتا (هەمووی ڕاستەقینەیە، هیچ ژمارەیەکی ساختە نییە):
 //   • VEX Band (BLE · J-STYLE V8 SDK) ← VexBand.I: هەنگاو 0x51، دڵ 0x55 + 0x54، SpO₂ 0x66،
 //     پلەی گەرمی 0x65، HRV/سترێس/هەناسە 0x56، خەو 0x53، Realtime 0x09، پێوانەی دەستی (پەستان).
-//     ReportStore هەموو ئەوانە ڕۆژانە کۆدەکاتەوە و لە مۆبایلەکە هەڵیدەگرێت (120 ڕۆژ)،
+//     ReportStore هەموو ئەوانە ڕۆژانە و کاتژمێر بە کاتژمێر کۆدەکاتەوە و لە مۆبایلەکە هەڵیدەگرێت (تەنها 30 ڕۆژ؛ ڕۆژی 31 خۆکار دەسڕێتەوە)،
 //     بۆیە دوای داخستنی ئەپیش ڕاپۆرتەکە داتاکەی هەیە.
 //   • ECG ← EcgHistory (هەمان پێوانەکانی بەشی ECG، لەگەڵ شەپۆلی ڕاستەقینە)
 //   • خواردن، ئاو و کێش ← بەشی خواردن (vexfd_v1) یان تۆماری ئەمڕۆی سەرەکی (Store)
@@ -68,7 +68,6 @@ String _join(List<String> a) {
 
 String _p2(int n) => n.toString().padLeft(2, '0');
 String _key(DateTime d) => '${d.year}-${_p2(d.month)}-${_p2(d.day)}';
-String _dmy(DateTime d) => '${_p2(d.day)}.${_p2(d.month)}.${d.year}';
 String _f1(num v) => ((v * 10).round() / 10).toStringAsFixed(1);
 String _hm(num min) {
   var h = min ~/ 60;
@@ -82,11 +81,94 @@ String _hm(num min) {
 
 double? _avg(Iterable<num> l) => l.isEmpty ? null : l.fold<double>(0, (a, b) => a + b) / l.length;
 
+// ───── بەروار (مانگی ئینگلیزی) ─────
+const List<String> _monS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const List<String> _monL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+/// دەقی لاتینی/ژمارە لەناو دەقی ڕاست‌بۆ‌چەپ (LRI … PDI) تا ڕیزبەندییەکەی تێک نەچێت
+String _ltr(String s) => '⁦$s⁩';
+
+/// بەروار بە مانگی ئینگلیزی: «1 Nov 2026»
+String _dEn(DateTime d, {bool year = true}) => '${d.day} ${_monS[d.month - 1]}${year ? ' ${d.year}' : ''}';
+String _hhmm(DateTime d) => '${_p2(d.hour)}:${_p2(d.minute)}';
+DateTime _d0(DateTime d) => DateTime(d.year, d.month, d.day);
+DateTime _addDays(DateTime d, int n) => DateTime(d.year, d.month, d.day + n);
+int _dayDiff(DateTime a, DateTime b) => DateTime.utc(b.year, b.month, b.day).difference(DateTime.utc(a.year, a.month, a.day)).inDays;
+bool _sameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
+
+/// کلیلی کاتژمێر: «2026-11-01 19»
+String _hk(DateTime d) => '${_key(d)} ${_p2(d.hour)}';
+
+// ═════════════════════════════ ماوەی ڕاپۆرت ═════════════════════════════
+/// ماوەی ڕاپۆرت: 24 کاتژمێری ڕابردوو، N ڕۆژی کۆتایی (1–30)، یان ماوەیەکی دیاریکراو لەناو 30 ڕۆژی کۆتاییدا
+class ReportRange {
+  const ReportRange._(this.kind, this.days, this.from, this.to);
+
+  /// h24 | d | c
+  final String kind;
+
+  /// ژمارەی ڕۆژەکان (بۆ 24 کاتژمێر: 1)
+  final int days;
+  final DateTime from, to;
+
+  static ReportRange h24([DateTime? now]) {
+    final t = now ?? DateTime.now();
+    return ReportRange._('h24', 1, t.subtract(const Duration(hours: 24)), t);
+  }
+
+  static ReportRange lastDays(int n, [DateTime? now]) {
+    final t = now ?? DateTime.now();
+    final k = n.clamp(1, ReportStore.keepDays).toInt();
+    return ReportRange._('d', k, _addDays(_d0(t), -(k - 1)), t);
+  }
+
+  /// ماوەی دیاریکراو: هەردوو ڕۆژەکە دەخرێنە ناو 30 ڕۆژی کۆتایی
+  static ReportRange custom(DateTime a, DateTime b, [DateTime? now]) {
+    final t = now ?? DateTime.now();
+    final lo = ReportStore.firstDay(t), hi = _d0(t);
+    var x = _d0(a), y = _d0(b);
+    if (y.isBefore(x)) {
+      final s = x;
+      x = y;
+      y = s;
+    }
+    if (x.isBefore(lo)) x = lo;
+    if (x.isAfter(hi)) x = hi;
+    if (y.isBefore(lo)) y = lo;
+    if (y.isAfter(hi)) y = hi;
+    final end = _sameDay(y, t) ? t : DateTime(y.year, y.month, y.day, 23, 59, 59);
+    return ReportRange._('c', _dayDiff(x, y) + 1, x, end);
+  }
+
+  bool get hourly => kind == 'h24';
+  String get id => hourly ? 'h24' : (kind == 'd' ? 'd$days' : 'c');
+  String get fromKey => _key(from);
+  String get toKey => _key(to);
+
+  /// هەموو ڕۆژەکانی ماوەکە (کۆن ← نوێ)
+  List<String> get dayKeys => [for (var i = 0; i <= _dayDiff(from, to); i++) _key(_addDays(from, i))];
+  bool has(DateTime t) => !t.isBefore(from) && !t.isAfter(to);
+  bool hasKey(String k) => k.compareTo(fromKey) >= 0 && k.compareTo(toKey) <= 0;
+
+  /// «26 Oct – 1 Nov 2026» یان «31 Oct 19:06 – 1 Nov 19:06»
+  String get dates {
+    if (hourly) return '${_dEn(from, year: false)} ${_hhmm(from)} – ${_dEn(to, year: false)} ${_hhmm(to)}';
+    if (days == 1) return _dEn(from);
+    return '${_dEn(from, year: from.year != to.year)} – ${_dEn(to)}';
+  }
+
+  /// «ماوە: 7 ڕۆژی ڕابردوو»
+  String get title => hourly ? _t('per24') : _f(kind == 'd' ? _t('perN') : _t('perC'), {'n': days});
+}
+
 // ═════════════════════════════ کۆگای داتای Band ═════════════════════════════
 /// کورتەی یەک ڕۆژ لە داتای Band
 class RDay {
   double? hrA, sp, tp, km, kc;
   int? hrN, hrX, rhr, spN, hrv, st, br, sl, dp, lt, rm, aw, bed, wake, stp, act, bpH, bpL;
+
+  /// ژمارەی پێوانە خاوەکانی ئەو ڕۆژە (دڵ، SpO₂، پلەی گەرمی، HRV …)
+  int? cnt;
 
   RDay();
 
@@ -121,6 +203,7 @@ class RDay {
     s('ac', act);
     s('bh', bpH);
     s('bl', bpL);
+    s('n', cnt);
     return m;
   }
 
@@ -150,7 +233,8 @@ class RDay {
       ..kc = d('kc')
       ..act = i('ac')
       ..bpH = i('bh')
-      ..bpL = i('bl');
+      ..bpL = i('bl')
+      ..cnt = i('n');
   }
 
   /// تێکەڵکردن: تەنها خانە پڕەکانی [o] دەنووسرێن
@@ -180,23 +264,172 @@ class RDay {
     }
     bpH = o.bpH ?? bpH;
     bpL = o.bpL ?? bpL;
+    if (o.cnt != null && (cnt == null || o.cnt! > cnt!)) cnt = o.cnt;
   }
 }
 
-/// هەموو داتای Band بۆ ڕاپۆرت کۆدەکاتەوە و هەڵیدەگرێت (هەمیشە کار دەکات، تەنانەت ئەگەر ڕاپۆرت نەکرابێتەوە)
+/// کورتەی یەک کاتژمێر لە داتای Band (بۆ ڕاپۆرتی 24 کاتژمێر و تۆماری کاتژمێر بە کاتژمێر)
+class RHour {
+  RHour();
+
+  // لێدانی دڵ: کۆ، ژمارە، کەمترین، زۆرترین + لێدانە ئارامەکان
+  int hs = 0, hn = 0, hlo = 0, hhi = 0;
+  List<int> rr = [];
+  // SpO₂
+  int ss = 0, sn = 0, slo = 0;
+  // پلەی گەرمی
+  double ts = 0;
+  int tn = 0;
+  // HRV، فشاری دەروونی، هەناسە
+  int vs = 0, vn = 0, xs = 0, xn = 0, bs = 0, bn = 0;
+  // پەستانی خوێن (پێوانەی دەستی) و هەنگاوی کۆکراوەی ئەو ڕۆژە تا ئەم کاتژمێرە
+  int? bpH, bpL, sc;
+
+  bool get any => hn > 0 || sn > 0 || tn > 0 || vn > 0 || xn > 0;
+  int get cnt => hn + sn + tn + vn + xn + bn + (bpH != null ? 1 : 0);
+  double? get hr => hn > 0 ? hs / hn : null;
+  double? get sp => sn > 0 ? ss / sn : null;
+  double? get tp => tn > 0 ? ts / tn : null;
+  double? get st => xn > 0 ? xs / xn : null;
+
+  void addHr(int v) {
+    if (hn == 0) {
+      hlo = v;
+      hhi = v;
+    } else {
+      hlo = math.min(hlo, v);
+      hhi = math.max(hhi, v);
+    }
+    hs += v;
+    hn++;
+  }
+
+  void addSp(int v) {
+    slo = sn == 0 ? v : math.min(slo, v);
+    ss += v;
+    sn++;
+  }
+
+  String get sig => '$hs,$hn,$hlo,$hhi,${rr.length},$ss,$sn,$slo,${ts.toStringAsFixed(2)},$tn,$vs,$vn,$xs,$xn,$bs,$bn';
+
+  /// داتای Band دەنووسێتەوە؛ هەنگاو و پەستانی خوێن وەک خۆیان دەمێننەوە
+  void takeBand(RHour o) {
+    hs = o.hs;
+    hn = o.hn;
+    hlo = o.hlo;
+    hhi = o.hhi;
+    rr = List<int>.of(o.rr);
+    ss = o.ss;
+    sn = o.sn;
+    slo = o.slo;
+    ts = o.ts;
+    tn = o.tn;
+    vs = o.vs;
+    vn = o.vn;
+    xs = o.xs;
+    xn = o.xn;
+    bs = o.bs;
+    bn = o.bn;
+  }
+
+  Map<String, dynamic> toJson() {
+    final m = <String, dynamic>{};
+    if (hn > 0) m['h'] = [hs, hn, hlo, hhi];
+    if (rr.isNotEmpty) m['r'] = rr;
+    if (sn > 0) m['s'] = [ss, sn, slo];
+    if (tn > 0) m['t'] = [double.parse(ts.toStringAsFixed(2)), tn];
+    if (vn > 0) m['v'] = [vs, vn];
+    if (xn > 0) m['x'] = [xs, xn];
+    if (bn > 0) m['b'] = [bs, bn];
+    if (bpH != null && bpL != null) m['p'] = [bpH, bpL];
+    if (sc != null) m['c'] = sc;
+    return m;
+  }
+
+  factory RHour.fromJson(Map j) {
+    List<num> l(String k) => j[k] is List ? [for (final x in j[k] as List) if (x is num) x] : const [];
+    final o = RHour();
+    final h = l('h'), s = l('s'), t = l('t'), v = l('v'), x = l('x'), b = l('b'), p = l('p');
+    if (h.length == 4) {
+      o.hs = h[0].round();
+      o.hn = h[1].round();
+      o.hlo = h[2].round();
+      o.hhi = h[3].round();
+    }
+    o.rr = [for (final e in l('r')) e.round()];
+    if (s.length == 3) {
+      o.ss = s[0].round();
+      o.sn = s[1].round();
+      o.slo = s[2].round();
+    }
+    if (t.length == 2) {
+      o.ts = t[0].toDouble();
+      o.tn = t[1].round();
+    }
+    if (v.length == 2) {
+      o.vs = v[0].round();
+      o.vn = v[1].round();
+    }
+    if (x.length == 2) {
+      o.xs = x[0].round();
+      o.xn = x[1].round();
+    }
+    if (b.length == 2) {
+      o.bs = b[0].round();
+      o.bn = b[1].round();
+    }
+    if (p.length == 2) {
+      o.bpH = p[0].round();
+      o.bpL = p[1].round();
+    }
+    o.sc = (j['c'] as num?)?.round();
+    return o;
+  }
+}
+
+/// یەک دانیشتنی خەو وەک خۆی لە Band: دەستپێک، یەکەی خولەک، ڕیزی کوالیتی (1 قووڵ، 2 سووک، 3 REM، تر بێدار)
+class RSleep {
+  const RSleep(this.start, this.unit, this.q);
+  final DateTime start;
+  final int unit;
+  final List<int> q;
+  DateTime get end => start.add(Duration(minutes: q.length * unit));
+}
+
+/// هەموو داتای Band بۆ ڕاپۆرت کۆدەکاتەوە و هەڵیدەگرێت (هەمیشە کار دەکات، تەنانەت ئەگەر ڕاپۆرت نەکرابێتەوە).
+/// تەنها 30 ڕۆژی کۆتایی هەڵدەگیرێت: هەر نیوەشەوێک ڕۆژی 31 خۆکار دەسڕێتەوە.
 class ReportStore extends ChangeNotifier {
   ReportStore._();
   static final ReportStore I = ReportStore._();
 
   static const String _kDays = 'vex_report_days_v1';
+  static const String _kHours = 'vex_report_hours_v1';
+  static const String _kSleep = 'vex_report_sleep_v1';
   static const String _kHist = 'vex_report_hist_v1';
-  static const int keepDays = 120;
+  static const String _kSync = 'vex_report_sync_v1';
 
+  /// ئەمڕۆ + 29 ڕۆژی پێشوو
+  static const int keepDays = 30;
+
+  /// یەکەم ڕۆژی هەڵگیراو (ئەمڕۆ − 29)
+  static DateTime firstDay([DateTime? now]) => _addDays(_d0(now ?? DateTime.now()), -(keepDays - 1));
+
+  /// کورتەی ڕۆژانە («2026-11-01»)
   final Map<String, RDay> days = {};
+
+  /// کورتەی کاتژمێری («2026-11-01 19»)
+  final Map<String, RHour> hours = {};
+
+  /// دانیشتنەکانی خەو (کلیل: دەستپێک بە میلی‌چرکە)
+  final Map<int, RSleep> sleeps = {};
   final Map<String, int> scoreHist = {};
+
+  /// دوایین «هاوکاتکردنی هەموو»
+  DateTime? lastSyncAt;
+
   SharedPreferences? _sp;
   bool _inited = false;
-  Timer? _deb;
+  Timer? _deb, _saveT, _mid;
   StreamSubscription<VexMsg>? _raw;
 
   Future<void> init() async {
@@ -205,29 +438,76 @@ class ReportStore extends ChangeNotifier {
     try {
       final sp = await SharedPreferences.getInstance();
       _sp = sp;
-      final raw = sp.getString(_kDays);
-      if (raw != null && raw.isNotEmpty) {
-        final j = jsonDecode(raw);
-        if (j is Map) {
-          j.forEach((k, v) {
-            if (v is Map) days['$k'] = RDay.fromJson(v);
-          });
+      Object? js(String k) {
+        final raw = sp.getString(k);
+        if (raw == null || raw.isEmpty) return null;
+        try {
+          return jsonDecode(raw);
+        } catch (_) {
+          return null;
         }
       }
-      final h = sp.getString(_kHist);
-      if (h != null && h.isNotEmpty) {
-        final j = jsonDecode(h);
-        if (j is Map) {
-          j.forEach((k, v) {
-            if (v is num) scoreHist['$k'] = v.round();
-          });
-        }
+
+      final dj = js(_kDays);
+      if (dj is Map) {
+        dj.forEach((k, v) {
+          if (v is Map) days['$k'] = RDay.fromJson(v);
+        });
       }
+      final hj = js(_kHours);
+      if (hj is Map) {
+        hj.forEach((k, v) {
+          if (v is Map && '$k'.length == 13) hours['$k'] = RHour.fromJson(v);
+        });
+      }
+      final sj = js(_kSleep);
+      if (sj is Map) {
+        sj.forEach((k, v) {
+          final ms = int.tryParse('$k');
+          if (ms == null || v is! List || v.length != 2 || v[0] is! num || v[1] is! List) return;
+          final q = [for (final x in v[1] as List) if (x is num) x.round()];
+          final u = (v[0] as num).round();
+          if (q.isNotEmpty && u > 0) sleeps[ms] = RSleep(DateTime.fromMillisecondsSinceEpoch(ms), u, q);
+        });
+      }
+      final h = js(_kHist);
+      if (h is Map) {
+        h.forEach((k, v) {
+          if (v is num) scoreHist['$k'] = v.round();
+        });
+      }
+      final ls = sp.getString(_kSync);
+      if (ls != null) lastSyncAt = DateTime.tryParse(ls);
     } catch (_) {}
+    if (prune()) _save();
     VexBand.I.addListener(_onBand);
     _raw = VexBand.I.raw.stream.listen(_onMsg, onError: (_) {});
     ingest(VexBand.I);
+    _armMidnight();
     notifyListeners();
+  }
+
+  /// هەر نیوەشەوێک: سڕینەوەی ڕۆژی 31
+  void _armMidnight() {
+    _mid?.cancel();
+    final now = DateTime.now();
+    final next = _addDays(_d0(now), 1).add(const Duration(seconds: 2));
+    _mid = Timer(next.difference(now), () {
+      if (prune()) _save();
+      notifyListeners();
+      _armMidnight();
+    });
+  }
+
+  /// هەر داتایەک کۆنتر بێت لە 30 ڕۆژ دەیسڕێتەوە. true ئەگەر شتێک سڕابێتەوە
+  bool prune([DateTime? now]) {
+    final first = firstDay(now);
+    final cut = _key(first);
+    final n0 = days.length + hours.length + sleeps.length;
+    days.removeWhere((k, _) => k.compareTo(cut) < 0);
+    hours.removeWhere((k, _) => k.substring(0, 10).compareTo(cut) < 0);
+    sleeps.removeWhere((_, s) => s.end.isBefore(first));
+    return days.length + hours.length + sleeps.length != n0;
   }
 
   void _onBand() {
@@ -238,20 +518,38 @@ class ReportStore extends ChangeNotifier {
   /// پێوانەی دەستیی پەستانی خوێن (ئەگەر Band بینێرێت)
   void _onMsg(VexMsg m) {
     if (m is VexMeasureResult && !m.stopped && m.high >= 70 && m.high <= 230 && m.low >= 40 && m.low < m.high) {
-      final k = _key(DateTime.now());
-      final d = days.putIfAbsent(k, RDay.new);
+      final now = DateTime.now();
+      final d = days.putIfAbsent(_key(now), RDay.new);
       d.bpH = m.high;
       d.bpL = m.low;
+      final h = hours.putIfAbsent(_hk(now), RHour.new);
+      h.bpH = m.high;
+      h.bpL = m.low;
       _save();
     }
   }
 
-  /// کۆکردنەوەی هەموو مێژووی Band (دوای هەر هاوکاتکردنێک)
+  /// کۆکردنەوەی هەموو مێژووی Band (دوای هەر هاوکاتکردنێک و هەر گۆڕانێکی ڕاستەوخۆ)
   void ingest(VexBand b) {
     final now = DateTime.now();
-    bool ok(DateTime? t) => t != null && !t.isAfter(now.add(const Duration(days: 1))) && now.difference(t).inDays < keepDays;
+    final first = firstDay(now);
+    final lim = now.add(const Duration(hours: 2));
+    bool ok(DateTime? t) => t != null && !t.isBefore(first) && !t.isAfter(lim);
     final n = <String, RDay>{};
+    final nh = <String, RHour>{};
     RDay d(DateTime t) => n.putIfAbsent(_key(t), RDay.new);
+    RHour hb(DateTime t) => nh.putIfAbsent(_hk(t), RHour.new);
+    var changed = false;
+
+    // هەنگاوی کۆکراوە تا ئەم کاتژمێرە (بۆ هەنگاوی 24 کاتژمێر و کاتژمێر بە کاتژمێر)
+    void snap(int steps) {
+      if (steps <= 0) return;
+      final x = hours.putIfAbsent(_hk(now), RHour.new);
+      if ((x.sc ?? -1) < steps) {
+        x.sc = steps;
+        changed = true;
+      }
+    }
 
     for (final s in b.stepsDays) {
       if (!ok(s.day) || s.steps <= 0) continue;
@@ -260,6 +558,7 @@ class ReportStore extends ChangeNotifier {
       x.km = s.km;
       x.kc = s.kcal;
       x.act = s.minutes;
+      if (_sameDay(s.day!, now)) snap(s.steps);
     }
     final lv = b.live;
     if (lv != null && lv.steps > 0) {
@@ -270,6 +569,7 @@ class ReportStore extends ChangeNotifier {
         x.kc = lv.kcal;
         x.act = lv.minutes;
       }
+      snap(lv.steps);
     }
 
     final hr = <String, List<int>>{}, rest = <String, List<int>>{};
@@ -279,11 +579,17 @@ class ReportStore extends ChangeNotifier {
       if (v < 30 || v > 220) continue;
       (hr[_key(s.at!)] ??= []).add(v);
       (rest[_key(s.at!)] ??= []).add(v);
+      final h = hb(s.at!);
+      h.addHr(v);
+      h.rr.add(v);
     }
     for (final r in b.hrDyn) {
       if (!ok(r.at)) continue;
       for (final v in r.bpm) {
-        if (v >= 30 && v <= 220) (hr[_key(r.at!)] ??= []).add(v);
+        if (v >= 30 && v <= 220) {
+          (hr[_key(r.at!)] ??= []).add(v);
+          hb(r.at!).addHr(v);
+        }
       }
     }
     hr.forEach((k, l) {
@@ -302,7 +608,10 @@ class ReportStore extends ChangeNotifier {
     for (final s in b.spo2Hist) {
       if (!ok(s.at)) continue;
       final v = s.value.round();
-      if (v >= 70 && v <= 100) (sp[_key(s.at!)] ??= []).add(v);
+      if (v >= 70 && v <= 100) {
+        (sp[_key(s.at!)] ??= []).add(v);
+        hb(s.at!).addSp(v);
+      }
     }
     sp.forEach((k, l) {
       final x = n.putIfAbsent(k, RDay.new);
@@ -313,7 +622,12 @@ class ReportStore extends ChangeNotifier {
     final tp = <String, List<double>>{};
     for (final s in b.tempHist) {
       if (!ok(s.at)) continue;
-      if (s.value >= 28 && s.value <= 42) (tp[_key(s.at!)] ??= []).add(s.value);
+      if (s.value >= 28 && s.value <= 42) {
+        (tp[_key(s.at!)] ??= []).add(s.value);
+        final h = hb(s.at!);
+        h.ts += s.value;
+        h.tn++;
+      }
     }
     tp.forEach((k, l) => n.putIfAbsent(k, RDay.new).tp = _avg(l));
 
@@ -321,9 +635,22 @@ class ReportStore extends ChangeNotifier {
     for (final r in b.hrvHist) {
       if (!ok(r.at)) continue;
       final k = _key(r.at!);
-      if (r.hrv > 0 && r.hrv < 300) (hv[k] ??= []).add(r.hrv);
-      if (r.stress > 0 && r.stress <= 100) (st[k] ??= []).add(r.stress);
-      if (r.breath >= 5 && r.breath <= 40) (br[k] ??= []).add(r.breath);
+      final h = hb(r.at!);
+      if (r.hrv > 0 && r.hrv < 300) {
+        (hv[k] ??= []).add(r.hrv);
+        h.vs += r.hrv;
+        h.vn++;
+      }
+      if (r.stress > 0 && r.stress <= 100) {
+        (st[k] ??= []).add(r.stress);
+        h.xs += r.stress;
+        h.xn++;
+      }
+      if (r.breath >= 5 && r.breath <= 40) {
+        (br[k] ??= []).add(r.breath);
+        h.bs += r.breath;
+        h.bn++;
+      }
     }
     hv.forEach((k, l) => n.putIfAbsent(k, RDay.new).hrv = _avg(l)!.round());
     st.forEach((k, l) => n.putIfAbsent(k, RDay.new).st = _avg(l)!.round());
@@ -337,6 +664,12 @@ class ReportStore extends ChangeNotifier {
       if (s0 == null || r.quality.isEmpty || r.unitMinutes <= 0) continue;
       final end = s0.add(Duration(minutes: r.quality.length * r.unitMinutes));
       if (!ok(end)) continue;
+      final ms = s0.millisecondsSinceEpoch;
+      final old = sleeps[ms];
+      if (old == null || old.unit != r.unitMinutes || old.q.length != r.quality.length || old.q.join() != r.quality.join()) {
+        sleeps[ms] = RSleep(s0, r.unitMinutes, List<int>.of(r.quality));
+        changed = true;
+      }
       final k = _key(end);
       final a = sl[k] ??= [0, 0, 0, 0];
       for (final q in r.quality) {
@@ -360,8 +693,25 @@ class ReportStore extends ChangeNotifier {
       if (wk != null) x.wake = wk.hour * 60 + wk.minute;
     });
 
-    if (n.isEmpty) return;
-    var changed = false;
+    // ژمارەی پێوانەکانی هەر ڕۆژێک
+    final cnt = <String, int>{};
+    nh.forEach((k, h) => cnt[k.substring(0, 10)] = (cnt[k.substring(0, 10)] ?? 0) + h.cnt);
+    cnt.forEach((k, c) {
+      if (c > 0) n.putIfAbsent(k, RDay.new).cnt = c;
+    });
+
+    nh.forEach((k, v) {
+      if (!v.any) return;
+      final cur = hours[k];
+      if (cur == null) {
+        hours[k] = v;
+        changed = true;
+      } else if (cur.sig != v.sig) {
+        cur.takeBand(v);
+        changed = true;
+      }
+    });
+
     n.forEach((k, v) {
       final cur = days[k];
       if (cur == null) {
@@ -375,25 +725,44 @@ class ReportStore extends ChangeNotifier {
         if (jsonEncode(cur.toJson()) != before) changed = true;
       }
     });
-    if (changed) _save();
+    if (changed) _saveSoon();
+  }
+
+  /// پاشەکەوتکردنی دواخراو (بۆ گۆڕانی ڕاستەوخۆی هەنگاو)
+  void _saveSoon() {
+    _saveT?.cancel();
+    _saveT = Timer(const Duration(seconds: 4), _save);
+    notifyListeners();
   }
 
   void _save() {
-    final keys = days.keys.toList()..sort();
-    while (keys.length > keepDays) {
-      days.remove(keys.removeAt(0));
-    }
+    _saveT?.cancel();
+    prune();
     try {
+      final hk = hours.keys.toList()..sort();
       _sp?.setString(_kDays, jsonEncode(days.map((k, v) => MapEntry(k, v.toJson()))));
+      _sp?.setString(_kHours, jsonEncode({for (final k in hk) k: hours[k]!.toJson()}));
+      _sp?.setString(_kSleep, jsonEncode({for (final e in sleeps.entries) '${e.key}': [e.value.unit, e.value.q]}));
     } catch (_) {}
     notifyListeners();
   }
 
+  /// دوای «هاوکاتکردنی هەموو»: پاشەکەوتی ڕاستەوخۆ + کاتی هاوکاتکردن
+  void markSynced([DateTime? at]) {
+    lastSyncAt = at ?? DateTime.now();
+    try {
+      _sp?.setString(_kSync, lastSyncAt!.toIso8601String());
+    } catch (_) {}
+    _save();
+  }
+
+  /// ئەو ڕۆژانەی داتای Band یان تێدایە (بۆ خاڵی سەوزی ڕۆژژمێر)
+  bool hasBand(String dayKey) => days[dayKey]?.any ?? false;
+
   /// نمرەی مانگی ئێستا هەڵدەگرێت و نمرەی مانگی پێشوو دەگەڕێنێتەوە
   int? recordScore(int score) {
+    final p = prevScore();
     final mon = _key(DateTime.now()).substring(0, 7);
-    final prev = scoreHist.keys.where((k) => k.compareTo(mon) < 0).toList()..sort();
-    final p = prev.isEmpty ? null : scoreHist[prev.last];
     if (scoreHist[mon] != score) {
       scoreHist[mon] = score;
       try {
@@ -403,9 +772,19 @@ class ReportStore extends ChangeNotifier {
     return p;
   }
 
+  /// نمرەی مانگی پێشوو (بێ نووسین)
+  int? prevScore() {
+    final mon = _key(DateTime.now()).substring(0, 7);
+    final prev = scoreHist.keys.where((k) => k.compareTo(mon) < 0).toList()..sort();
+    return prev.isEmpty ? null : scoreHist[prev.last];
+  }
+
   @override
   void dispose() {
     _raw?.cancel();
+    _deb?.cancel();
+    _saveT?.cancel();
+    _mid?.cancel();
     super.dispose();
   }
 }
@@ -424,7 +803,17 @@ class _Goals {
   int kcal = 0, p = 0, c = 0, f = 0, fib = 0, sug = 0, water = 0, steps = 8000;
 }
 
+/// یەک ڕیزی تۆماری ڕۆژ بە ڕۆژ / کاتژمێر بە کاتژمێر
+class _Log {
+  const _Log(this.label, this.cells, this.any);
+  final String label;
+  final List<String> cells;
+  final bool any;
+}
+
 class _Rep {
+  // ماوە
+  ReportRange rg = ReportRange.lastDays(30);
   // کەس
   String name = '', sex = '', goal = '';
   int age = 0;
@@ -434,6 +823,12 @@ class _Rep {
   bool connected = false, linked = false;
   String lastSync = '';
   int bandDays = 0, nights = 0;
+
+  /// ڕۆژ (یان کاتژمێر لە 24 کاتژمێردا) کە داتای Band یان تێدایە
+  int cover = 0;
+
+  /// ژمارەی پێوانە خاوەکان لەم ماوەیەدا
+  int readings = 0;
   double? hr, rhr, sp, tp, hrv, st, br, sl, eff, stp, bpH, bpL;
   int? hrMin, hrMax, spMin;
   Map<String, double>? stg;
@@ -460,14 +855,17 @@ class _Rep {
   final List<String> good = [], att = [], recs = [];
   String no = '';
   int pts = 0;
+  // تۆماری ورد (نوێ ← کۆن) + هێڵکاری (کۆن ← نوێ)
+  final List<_Log> log = [];
+  final List<double?> chSteps = [], chHr = [];
+  final List<String> chLab = [];
 }
 
-_Rep _build(List<EcgResult> ecgAll, Map? fd) {
-  final r = _Rep();
+/// دروستکردنی ڕاپۆرت بۆ ماوەی [rg]. [record]: نمرەکە وەک نمرەی ئەم مانگە هەڵدەگیرێت (تەنها 30 ڕۆژ)
+_Rep _build(List<EcgResult> ecgAll, Map? fd, ReportRange rg, {bool record = false}) {
+  final r = _Rep()..rg = rg;
   final now = DateTime.now();
   final today = _key(now);
-  final cut30 = _key(now.subtract(const Duration(days: 29)));
-  final cut90 = _key(now.subtract(const Duration(days: 89)));
 
   // ───── کەس ─────
   final u = Account.I.user ?? const <String, dynamic>{};
@@ -533,72 +931,16 @@ _Rep _build(List<EcgResult> ecgAll, Map? fd) {
   }
   g.steps = const {'sed': 6000, 'light': 8000, 'active': 10000, 'very': 12000}['${u['act']}'] ?? 8000;
 
-  // ───── Band ─────
-  final bs = BandState.I;
-  r.connected = bs.connected;
-  r.linked = VexBand.I.linked;
-  r.lastSync = bs.lastSync;
-  final rs = ReportStore.I;
-  final dk = rs.days.keys.where((k) => k.compareTo(cut30) >= 0 && k.compareTo(today) <= 0).toList()..sort();
-  final dd = [for (final k in dk) rs.days[k]!];
-  r.bandDays = dd.where((d) => d.any).length;
-  r.pts += r.bandDays * 24;
-  List<num> col(num? Function(RDay) f) => [for (final d in dd) if (f(d) != null) f(d)!];
-  r.hr = _avg(col((d) => d.hrA));
-  final hn = col((d) => d.hrN), hx = col((d) => d.hrX);
-  if (hn.isNotEmpty) r.hrMin = hn.reduce(math.min).round();
-  if (hx.isNotEmpty) r.hrMax = hx.reduce(math.max).round();
-  r.rhr = _avg(col((d) => d.rhr));
-  r.sp = _avg(col((d) => d.sp));
-  final sn = col((d) => d.spN);
-  if (sn.isNotEmpty) r.spMin = sn.reduce(math.min).round();
-  r.tp = _avg(col((d) => d.tp));
-  r.hrv = _avg(col((d) => d.hrv));
-  r.st = _avg(col((d) => d.st));
-  r.br = _avg(col((d) => d.br));
-  final sls = dd.where((d) => d.sl != null).toList();
-  r.nights = sls.length;
-  if (sls.isNotEmpty) {
-    r.sl = _avg(sls.map((d) => d.sl!));
-    final asleep = sls.fold<int>(0, (a, d) => a + d.sl!), awake = sls.fold<int>(0, (a, d) => a + (d.aw ?? 0));
-    r.eff = asleep + awake > 0 ? asleep / (asleep + awake) * 100 : null;
-    final ln = sls.last;
-    final tot = (ln.dp ?? 0) + (ln.lt ?? 0) + (ln.rm ?? 0) + (ln.aw ?? 0);
-    if (tot > 0) r.stg = {'D': (ln.dp ?? 0) / tot * 100, 'R': (ln.rm ?? 0) / tot * 100, 'L': (ln.lt ?? 0) / tot * 100, 'A': (ln.aw ?? 0) / tot * 100};
-    if (ln.bed != null && ln.wake != null) r.lnT = '${_p2(ln.bed! ~/ 60)}:${_p2(ln.bed! % 60)} – ${_p2(ln.wake! ~/ 60)}:${_p2(ln.wake! % 60)}';
-  }
-  var stDays = dd.where((d) => (d.stp ?? 0) > 0).toList();
-  final stPast = [for (var i = 0; i < dk.length; i++) if (dk[i] != today && (dd[i].stp ?? 0) > 0) dd[i]];
-  if (stPast.isNotEmpty) stDays = stPast;
-  if (stDays.isNotEmpty) {
-    r.stp = _avg(stDays.map((d) => d.stp!));
-    final am = stDays.where((d) => d.act != null).map((d) => d.act!);
-    if (am.isNotEmpty) r.actWeek = _avg(am)! * 7;
-    final kc = dd.where((d) => d.kc != null).map((d) => d.kc!);
-    if (kc.isNotEmpty) r.burned = kc.fold<double>(0, (a, b) => a + b);
-  }
-  final bp = dd.where((d) => d.bpH != null && d.bpL != null).toList();
-  if (bp.isNotEmpty) {
-    r.bpH = _avg(bp.map((d) => d.bpH!));
-    r.bpL = _avg(bp.map((d) => d.bpL!));
-  }
-
-  // ───── ECG ─────
-  final e30 = ecgAll.where((e) => _key(e.at).compareTo(cut30) >= 0).toList();
-  r.ecg = e30.isNotEmpty ? e30 : ecgAll.take(10).toList();
-  r.irr = r.ecg.where((e) => e.stats.irregular).length;
-  final eh = r.ecg.where((e) => (e.hrv ?? 0) > 0).map((e) => e.hrv!);
-  r.ecgHrv = _avg(eh);
-  r.hrv ??= r.ecgHrv;
-  r.pts += r.ecg.length * 30;
-
-  // ───── خواردن و ئاو ─────
-  final fdays = <Map<String, double>>[];
+  // ───── خواردن و ئاو (بۆ هەر ڕۆژێک) ─────
+  Map<String, double> zero() => {'kcal': 0, 'p': 0, 'c': 0, 'f': 0, 'fib': 0, 'sug': 0, 'salt': 0, 'saltN': 0, 'n': 0};
+  final fByDay = <String, Map<String, double>>{};
+  // لە 24 کاتژمێردا: تۆماری ئەمڕۆ (خواردن بە ڕۆژ تۆمار دەکرێت)
+  bool foodDay(String k) => rg.hourly ? k == today : rg.hasKey(k);
   if (fd?['days'] is Map) {
     (fd!['days'] as Map).forEach((k, v) {
       final key = '$k';
-      if (key.compareTo(cut30) < 0 || key.compareTo(today) > 0 || v is! Map || v['m'] is! Map) return;
-      final t = <String, double>{'kcal': 0, 'p': 0, 'c': 0, 'f': 0, 'fib': 0, 'sug': 0, 'salt': 0, 'saltN': 0, 'n': 0};
+      if (!foodDay(key) || key.compareTo(today) > 0 || v is! Map || v['m'] is! Map) return;
+      final t = zero();
       (v['m'] as Map).forEach((_, l) {
         if (l is! List) return;
         for (final x in l) {
@@ -618,12 +960,12 @@ _Rep _build(List<EcgResult> ecgAll, Map? fd) {
       });
       if (t['n']! > 0) {
         t['water'] = asD(v['water']) * 250;
-        fdays.add(t);
+        fByDay[key] = t;
       }
     });
   }
-  if (fdays.isEmpty && Store.I.food.isNotEmpty) {
-    final t = <String, double>{'kcal': 0, 'p': 0, 'c': 0, 'f': 0, 'fib': 0, 'sug': 0, 'salt': 0, 'saltN': 0, 'n': 0};
+  if (fByDay.isEmpty && Store.I.food.isNotEmpty && foodDay(today)) {
+    final t = zero();
     for (final x in Store.I.food) {
       t['kcal'] = t['kcal']! + x.kcal;
       t['p'] = t['p']! + x.p;
@@ -632,8 +974,216 @@ _Rep _build(List<EcgResult> ecgAll, Map? fd) {
       t['n'] = t['n']! + 1;
     }
     t['water'] = (Store.I.waterN * Store.glassMl).toDouble();
-    fdays.add(t);
+    fByDay[today] = t;
   }
+
+  // ───── Band ─────
+  final bs = BandState.I;
+  r.connected = bs.connected;
+  r.linked = VexBand.I.linked;
+  r.lastSync = bs.lastSync;
+  final rs = ReportStore.I;
+  List<num> colOf<T>(Iterable<T> l, num? Function(T) f) => [for (final d in l) if (f(d) != null) f(d)!];
+
+  if (!rg.hourly) {
+    final dk = [for (final k in rg.dayKeys) if (rs.days.containsKey(k)) k];
+    final dd = [for (final k in dk) rs.days[k]!];
+    r.bandDays = dd.where((d) => d.any).length;
+    r.cover = r.bandDays;
+    r.readings = dd.fold<int>(0, (a, d) => a + (d.cnt ?? 0));
+    r.hr = _avg(colOf(dd, (d) => d.hrA));
+    final hn = colOf(dd, (d) => d.hrN), hx = colOf(dd, (d) => d.hrX);
+    if (hn.isNotEmpty) r.hrMin = hn.reduce(math.min).round();
+    if (hx.isNotEmpty) r.hrMax = hx.reduce(math.max).round();
+    r.rhr = _avg(colOf(dd, (d) => d.rhr));
+    r.sp = _avg(colOf(dd, (d) => d.sp));
+    final sn = colOf(dd, (d) => d.spN);
+    if (sn.isNotEmpty) r.spMin = sn.reduce(math.min).round();
+    r.tp = _avg(colOf(dd, (d) => d.tp));
+    r.hrv = _avg(colOf(dd, (d) => d.hrv));
+    r.st = _avg(colOf(dd, (d) => d.st));
+    r.br = _avg(colOf(dd, (d) => d.br));
+    final sls = dd.where((d) => d.sl != null).toList();
+    r.nights = sls.length;
+    if (sls.isNotEmpty) {
+      r.sl = _avg(sls.map((d) => d.sl!));
+      final asleep = sls.fold<int>(0, (a, d) => a + d.sl!), awake = sls.fold<int>(0, (a, d) => a + (d.aw ?? 0));
+      r.eff = asleep + awake > 0 ? asleep / (asleep + awake) * 100 : null;
+      final ln = sls.last;
+      final tot = (ln.dp ?? 0) + (ln.lt ?? 0) + (ln.rm ?? 0) + (ln.aw ?? 0);
+      if (tot > 0) r.stg = {'D': (ln.dp ?? 0) / tot * 100, 'R': (ln.rm ?? 0) / tot * 100, 'L': (ln.lt ?? 0) / tot * 100, 'A': (ln.aw ?? 0) / tot * 100};
+      if (ln.bed != null && ln.wake != null) r.lnT = '${_p2(ln.bed! ~/ 60)}:${_p2(ln.bed! % 60)} – ${_p2(ln.wake! ~/ 60)}:${_p2(ln.wake! % 60)}';
+    }
+    // هەنگاوی ڕۆژانە: تێکڕای ڕۆژە تەواوەکان (ئەمڕۆ هێشتا تەواو نەبووە) — ئەگەر تەنها ئەمڕۆ هەبێت، ئەمڕۆ
+    var stDays = dd.where((d) => (d.stp ?? 0) > 0).toList();
+    final stPast = [for (var i = 0; i < dk.length; i++) if (dk[i] != today && (dd[i].stp ?? 0) > 0) dd[i]];
+    if (stPast.isNotEmpty) stDays = stPast;
+    if (stDays.isNotEmpty) {
+      r.stp = _avg(stDays.map((d) => d.stp!));
+      final am = stDays.where((d) => d.act != null).map((d) => d.act!);
+      if (am.isNotEmpty) r.actWeek = _avg(am)! * 7;
+      final kc = dd.where((d) => d.kc != null).map((d) => d.kc!);
+      if (kc.isNotEmpty) r.burned = kc.fold<double>(0, (a, b) => a + b);
+    }
+    final bp = dd.where((d) => d.bpH != null && d.bpL != null).toList();
+    if (bp.isNotEmpty) {
+      r.bpH = _avg(bp.map((d) => d.bpH!));
+      r.bpL = _avg(bp.map((d) => d.bpL!));
+    }
+
+    // تۆماری ڕۆژ بە ڕۆژ
+    for (final k in rg.dayKeys) {
+      final d = rs.days[k];
+      final day = DateTime.parse(k);
+      r.chLab.add(_dEn(day, year: false));
+      r.chSteps.add((d?.stp ?? 0) > 0 ? d!.stp!.toDouble() : null);
+      r.chHr.add(d?.hrA);
+    }
+    for (final k in rg.dayKeys.reversed) {
+      final d = rs.days[k];
+      final f = fByDay[k];
+      final day = DateTime.parse(k);
+      final cells = [
+        (d?.stp ?? 0) > 0 ? fmt(d!.stp!) : '—',
+        d?.hrA != null ? '${d!.hrA!.round()}' : '—',
+        d?.sp != null ? '${d!.sp!.round()}%' : '—',
+        d?.sl != null ? _hm(d!.sl!) : '—',
+        d?.st != null ? '${d!.st}' : '—',
+        f != null ? fmt(f['kcal']!) : '—',
+      ];
+      r.log.add(_Log(k == today ? _t('today') : _dEn(day, year: false), cells, (d?.any ?? false) || (d?.stp ?? 0) > 0 || f != null));
+    }
+  } else {
+    // ───── 24 کاتژمێر: لە کورتە کاتژمێرییەکان ─────
+    final f0 = rg.from;
+    final hks = <String>[];
+    final hts = <DateTime>[];
+    for (var i = 1; i <= 24; i++) {
+      final t = DateTime(f0.year, f0.month, f0.day, f0.hour + i);
+      hts.add(t);
+      hks.add(_hk(t));
+    }
+    final hx = [for (final k in hks) rs.hours[k]];
+    final hl = [for (final h in hx) if (h != null) h];
+    r.cover = hl.where((h) => h.any).length;
+    r.bandDays = r.cover > 0 ? 1 : 0;
+    r.readings = hl.fold<int>(0, (a, h) => a + h.cnt);
+    final hn = hl.fold<int>(0, (a, h) => a + h.hn);
+    if (hn > 0) {
+      r.hr = hl.fold<int>(0, (a, h) => a + h.hs) / hn;
+      r.hrMin = hl.where((h) => h.hn > 0).map((h) => h.hlo).reduce(math.min);
+      r.hrMax = hl.where((h) => h.hn > 0).map((h) => h.hhi).reduce(math.max);
+    }
+    final rr = [for (final h in hl) ...h.rr]..sort();
+    if (rr.isNotEmpty) {
+      final low = rr.sublist(0, (rr.length / 2).ceil());
+      r.rhr = low[low.length ~/ 2].toDouble();
+    }
+    final sn = hl.fold<int>(0, (a, h) => a + h.sn);
+    if (sn > 0) {
+      r.sp = hl.fold<int>(0, (a, h) => a + h.ss) / sn;
+      r.spMin = hl.where((h) => h.sn > 0).map((h) => h.slo).reduce(math.min);
+    }
+    final tn = hl.fold<int>(0, (a, h) => a + h.tn);
+    if (tn > 0) r.tp = hl.fold<double>(0, (a, h) => a + h.ts) / tn;
+    final vn = hl.fold<int>(0, (a, h) => a + h.vn);
+    if (vn > 0) r.hrv = hl.fold<int>(0, (a, h) => a + h.vs) / vn;
+    final xn = hl.fold<int>(0, (a, h) => a + h.xn);
+    if (xn > 0) r.st = hl.fold<int>(0, (a, h) => a + h.xs) / xn;
+    final bn = hl.fold<int>(0, (a, h) => a + h.bn);
+    if (bn > 0) r.br = hl.fold<int>(0, (a, h) => a + h.bs) / bn;
+    final bp = hl.where((h) => h.bpH != null && h.bpL != null).toList();
+    if (bp.isNotEmpty) {
+      r.bpH = _avg(bp.map((h) => h.bpH!));
+      r.bpL = _avg(bp.map((h) => h.bpL!));
+    }
+
+    // خەو: دانیشتنەکان کە لەناو 24 کاتژمێرەکەدا کۆتاییان هاتووە
+    final ses = rs.sleeps.values.where((s) => rg.has(s.end)).toList()..sort((a, b) => a.start.compareTo(b.start));
+    if (ses.isNotEmpty) {
+      final a = [0, 0, 0, 0];
+      for (final s in ses) {
+        for (final q in s.q) {
+          a[q == 1 ? 0 : (q == 2 ? 1 : (q == 3 ? 2 : 3))] += s.unit;
+        }
+      }
+      final asleep = a[0] + a[1] + a[2];
+      if (asleep >= 30) {
+        r.nights = 1;
+        r.sl = asleep.toDouble();
+        r.eff = asleep + a[3] > 0 ? asleep / (asleep + a[3]) * 100 : null;
+        final tot = asleep + a[3];
+        r.stg = {'D': a[0] / tot * 100, 'R': a[2] / tot * 100, 'L': a[1] / tot * 100, 'A': a[3] / tot * 100};
+        r.lnT = '${_hhmm(ses.first.start)} – ${_hhmm(ses.last.end)}';
+      }
+    }
+
+    // هەنگاو لە 24 کاتژمێردا = هەنگاوی ئەمڕۆ + بەشی دوای ئەم کاتەی دوێنێ
+    final tk = _key(rg.to), yk = _key(rg.from);
+    int? maxSc(String day, bool Function(int hour) f) {
+      int? m;
+      rs.hours.forEach((k, h) {
+        if (h.sc == null || !k.startsWith(day)) return;
+        final hr = int.tryParse(k.substring(11)) ?? 0;
+        if (f(hr) && (m == null || h.sc! > m!)) m = h.sc;
+      });
+      return m;
+    }
+
+    final tSnap = maxSc(tk, (_) => true);
+    final tDay = rs.days[tk]?.stp;
+    final todaySt = math.max(tSnap ?? 0, tDay ?? 0);
+    final yTot = rs.days[yk]?.stp;
+    final yCut = maxSc(yk, (h) => h <= f0.hour);
+    if (todaySt > 0 || (yTot ?? 0) > 0) {
+      r.stp = (todaySt + (yTot != null && yCut != null ? math.max(0, yTot - yCut) : 0)).toDouble();
+    }
+    final td = rs.days[tk];
+    if (td?.act != null) r.actWeek = td!.act!.toDouble();
+    if (td?.kc != null) r.burned = td!.kc;
+
+    // هەنگاوی هەر کاتژمێرێک (لە جیاوازیی دوو وێنەی یەک لەدوای یەک)
+    int? stepsAt(int i) {
+      final h = hx[i];
+      if (h?.sc == null) return null;
+      final t = hts[i];
+      if (t.hour == 0) return h!.sc;
+      final pk = _hk(DateTime(t.year, t.month, t.day, t.hour - 1));
+      final p = rs.hours[pk]?.sc;
+      if (p == null) return null;
+      return math.max(0, h!.sc! - p);
+    }
+
+    for (var i = 0; i < 24; i++) {
+      r.chLab.add('${_p2(hts[i].hour)}:00');
+      final s = stepsAt(i);
+      r.chSteps.add(s?.toDouble());
+      r.chHr.add(hx[i]?.hr);
+    }
+    for (var i = 23; i >= 0; i--) {
+      final h = hx[i];
+      final s = stepsAt(i);
+      final cells = [
+        s != null ? fmt(s) : '—',
+        h?.hr != null ? '${h!.hr!.round()}' : '—',
+        h != null && h.hn > 0 ? '${h.hlo}–${h.hhi}' : '—',
+        h?.sp != null ? '${h!.sp!.round()}%' : '—',
+        h?.st != null ? '${h!.st!.round()}' : '—',
+        h?.tp != null ? _f1(h!.tp!) : '—',
+      ];
+      r.log.add(_Log('${_p2(hts[i].hour)}:00', cells, (h?.any ?? false) || s != null));
+    }
+  }
+
+  // ───── ECG (تەنها لەناو ماوەکەدا) ─────
+  r.ecg = ecgAll.where((e) => rg.has(e.at)).toList()..sort((a, b) => b.at.compareTo(a.at));
+  r.irr = r.ecg.where((e) => e.stats.irregular).length;
+  final eh = r.ecg.where((e) => (e.hrv ?? 0) > 0).map((e) => e.hrv!);
+  r.ecgHrv = _avg(eh);
+  r.hrv ??= r.ecgHrv;
+
+  // ───── خواردن: تێکڕای ڕۆژانە ─────
+  final fdays = fByDay.values.toList();
   r.foodDays = fdays.length;
   if (fdays.isNotEmpty) {
     final fa = <String, double>{};
@@ -643,21 +1193,22 @@ _Rep _build(List<EcgResult> ecgAll, Map? fd) {
     final sd = fdays.where((t) => (t['saltN'] ?? 0) > 0).toList();
     if (sd.isNotEmpty) fa['salt'] = _avg(sd.map((t) => t['salt']!))!;
     r.fa = fa;
-    r.pts += fdays.fold<int>(0, (a, t) => a + (t['n'] ?? 0).round());
   }
 
-  // ───── کێش ─────
-  final w90 = ws.where((x) => x.$1.compareTo(cut90) >= 0).toList();
-  r.wCount = w90.length;
-  r.pts += w90.length;
-  if (w90.length >= 2) r.wChange = w90.last.$2 - w90.first.$2;
+  // ───── کێش (لەناو ماوەکەدا) ─────
+  final wIn = ws.where((x) => rg.hasKey(x.$1.length >= 10 ? x.$1.substring(0, 10) : x.$1)).toList();
+  r.wCount = wIn.length;
+  if (wIn.length >= 2) r.wChange = wIn.last.$2 - wIn.first.$2;
+
+  // ───── خاڵەکانی داتا ─────
+  r.pts = r.readings + r.ecg.length * 30 + fdays.fold<int>(0, (a, t) => a + (t['n'] ?? 0).round()) + r.wCount + r.nights * 10;
 
   // ───── تەمەنی لەش ─────
   final ve = VitalAgeEngine.I;
   r.va = ve.preview ? null : ve.compute();
   r.vaCollected = ve.preview ? 0 : ve.collected;
 
-  _evaluate(r);
+  _evaluate(r, record: record);
   r.no = 'VX-${now.year}-${_p2(now.month)}-${_hash('${r.name}|${r.h}|${u['year'] ?? r.age}')}';
   return r;
 }
@@ -670,7 +1221,7 @@ int _hash(String s) {
   return 1000 + h % 9000;
 }
 
-void _evaluate(_Rep r) {
+void _evaluate(_Rep r, {bool record = false}) {
   final v = r.v, nf = r.nf, g = r.goals;
   if (r.hr != null) v['hr'] = r.hr! < 50 ? _fl('lo') : (r.hr! > 100 ? _fl('hi') : _fl('ok'));
   if (r.rhr != null) v['rhr'] = r.rhr! < 45 ? _fl('lo') : (r.rhr! > 90 ? _fl('hi') : _fl('ok'));
@@ -726,7 +1277,7 @@ void _evaluate(_Rep r) {
     }
     r.score = (sv / sw).round();
     r.lvl = r.score! >= 88 ? 0 : (r.score! >= 72 ? 1 : (r.score! >= 55 ? 2 : 3));
-    r.prev = ReportStore.I.recordScore(r.score!);
+    r.prev = record ? ReportStore.I.recordScore(r.score!) : ReportStore.I.prevScore();
   }
 
   // ───── مەترسی ─────
@@ -972,6 +1523,173 @@ Widget _bar(double frac, Color c, Color track, {double h = 6}) => Directionality
       ),
     );
 
+/// هێڵکاریی بچووک: ستوون (هەنگاو) یان هێڵ (لێدانی دڵ). null = داتا نییە
+class _ChartPainter extends CustomPainter {
+  _ChartPainter(this.vals, this.color, this.track, {this.line = false, this.goal});
+  final List<double?> vals;
+  final Color color, track;
+  final bool line;
+  final double? goal;
+
+  @override
+  void paint(Canvas c, Size s) {
+    if (vals.isEmpty) return;
+    final have = [for (final v in vals) if (v != null) v];
+    var lo = 0.0, hi = have.isEmpty ? 1.0 : have.reduce(math.max);
+    if (goal != null) hi = math.max(hi, goal!);
+    if (line && have.isNotEmpty) {
+      lo = math.max(0, have.reduce(math.min) - 8);
+      hi = hi + 6;
+    }
+    if (hi <= lo) hi = lo + 1;
+    final n = vals.length;
+    final w = s.width / n;
+    double y(double v) => s.height - (v - lo) / (hi - lo) * (s.height - 4);
+    final base = Paint()..color = track;
+    for (var i = 0; i < n; i++) {
+      final x = i * w;
+      c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x + w * .18, s.height - 2, w * .64, 2), const Radius.circular(1)), base);
+    }
+    if (goal != null) {
+      final gy = y(goal!);
+      final gp = Paint()
+        ..color = op(color, .45)
+        ..strokeWidth = 1;
+      for (double x = 0; x < s.width; x += 6) {
+        c.drawLine(Offset(x, gy), Offset(math.min(x + 3, s.width), gy), gp);
+      }
+    }
+    if (!line) {
+      final bp = Paint()..color = color;
+      for (var i = 0; i < n; i++) {
+        final v = vals[i];
+        if (v == null || v <= 0) continue;
+        final top = y(v).clamp(0.0, s.height - 3).toDouble();
+        c.drawRRect(
+          RRect.fromRectAndCorners(Rect.fromLTRB(i * w + w * .18, top, i * w + w * .82, s.height),
+              topLeft: Radius.circular(w * .3), topRight: Radius.circular(w * .3)),
+          bp,
+        );
+      }
+    } else {
+      final lp = Paint()
+        ..color = color
+        ..strokeWidth = 2
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round;
+      final dp = Paint()..color = color;
+      Path? path;
+      for (var i = 0; i < n; i++) {
+        final v = vals[i];
+        if (v == null) {
+          if (path != null) c.drawPath(path, lp);
+          path = null;
+          continue;
+        }
+        final o = Offset(i * w + w / 2, y(v));
+        if (path == null) {
+          path = Path()..moveTo(o.dx, o.dy);
+        } else {
+          path.lineTo(o.dx, o.dy);
+        }
+        c.drawCircle(o, n > 20 ? 1.8 : 2.6, dp);
+      }
+      if (path != null) c.drawPath(path, lp);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ChartPainter o) => o.vals != vals || o.color != color || o.line != line || o.goal != goal;
+}
+
+Widget _chart(_P p, String title, List<double?> vals, List<String> labs, Color color, {bool line = false, double? goal, String Function(double)? f}) {
+  final have = [for (final v in vals) if (v != null) v];
+  String fv(double v) => f != null ? f(v) : fmt(v);
+  final summary = have.isEmpty ? '—' : (line ? '${fv(have.reduce(math.min))}–${fv(have.reduce(math.max))}' : '${fv(have.reduce(math.max))} max');
+  final mid = labs.length ~/ 2;
+  return Container(
+    padding: const EdgeInsets.fromLTRB(10, 9, 10, 8),
+    decoration: BoxDecoration(color: p.kvb, borderRadius: BorderRadius.circular(12), border: Border.all(color: p.kvl)),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Row(children: [
+        Container(width: 8, height: 8, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3))),
+        const SizedBox(width: 6),
+        Expanded(child: _tx(title, 11.5, p.ink, w: FontWeight.w800)),
+        _nm(summary, 10.5, p.mu, w: FontWeight.w700),
+      ]),
+      _gap(8),
+      // کات هەمیشە چەپ ← ڕاست (کۆن ← نوێ)، وەک هەموو هێڵکارییە پزیشکییەکان
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          SizedBox(height: 64, child: CustomPaint(painter: _ChartPainter(vals, color, p.trk, line: line, goal: goal))),
+          _gap(5),
+          if (labs.isNotEmpty)
+            Row(children: [
+              _nm(labs.first, 9.5, p.mu, w: FontWeight.w600),
+              const Spacer(),
+              if (labs.length > 2) _nm(labs[mid], 9.5, p.mu, w: FontWeight.w600),
+              if (labs.length > 2) const Spacer(),
+              _nm(labs.last, 9.5, p.mu, w: FontWeight.w600),
+            ]),
+        ]),
+      ),
+    ]),
+  );
+}
+
+const List<int> _lcols = [74, 56, 44, 50, 52, 46, 50];
+
+Widget _logRow(_P p, List<String> cells, {bool head = false, bool dim = false, bool first = false}) {
+  final c = head ? p.mu : (dim ? op(p.mu, .75) : p.ink);
+  return Container(
+    padding: EdgeInsets.symmetric(vertical: head ? 6 : 7, horizontal: 2),
+    decoration: BoxDecoration(
+      color: head ? p.kvb : null,
+      borderRadius: head ? BorderRadius.circular(8) : null,
+      border: head || first ? null : Border(top: BorderSide(color: p.ln)),
+    ),
+    child: Row(children: [
+      for (var i = 0; i < cells.length; i++)
+        Expanded(
+          flex: _lcols[i],
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: i == 0 ? AlignmentDirectional.centerStart : Alignment.center,
+            child: head || (i == 0 && !RegExp(r'^[0-9]').hasMatch(cells[i]))
+                ? _tx(cells[i], head ? 10 : 11.5, c, w: head ? FontWeight.w700 : FontWeight.w800)
+                : _nm(cells[i], 11.5, c, w: i == 0 ? FontWeight.w800 : FontWeight.w700),
+          ),
+        ),
+    ]),
+  );
+}
+
+/// بەشی «تۆماری ورد»: هێڵکاری + خشتەی ڕۆژ بە ڕۆژ (یان کاتژمێر بە کاتژمێر لە 24 کاتژمێردا)
+List<Widget> _logBlock(_Rep r, _P p, Widget Function(String, [String]) sec) {
+  final hourly = r.rg.hourly;
+  final head = hourly
+      ? [_t('cHh'), _t('cS'), _t('cH'), '↓–↑', 'SpO₂', _t('cT'), _t('cG')]
+      : [_t('cD'), _t('cS'), _t('cH'), 'SpO₂', _t('cL'), _t('cT'), 'kcal'];
+  final out = <Widget>[
+    Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      sec(hourly ? 'lgH' : 'lgD', r.readings > 0 ? _f(_t('rdN'), {'n': fmt(r.readings)}) : ''),
+      _chart(p, _t('chS'), r.chSteps, r.chLab, p.acc, goal: hourly ? null : r.goals.steps.toDouble()),
+      _gap(8),
+      _chart(p, _t('chH'), r.chHr, r.chLab, const Color(0xFFFF5C7A), line: true, f: (v) => '${v.round()}'),
+      _gap(12),
+      _logRow(p, head, head: true),
+    ]),
+  ];
+  for (var i = 0; i < r.log.length; i++) {
+    final l = r.log[i];
+    out.add(_logRow(p, [l.label, ...l.cells], dim: !l.any, first: i == 0));
+  }
+  out.add(Padding(padding: const EdgeInsets.only(top: 8), child: _para(p, '${_t('lgNote')} ${_t('keep')}', muted: true, size: 11)));
+  return out;
+}
+
 class _EcgPainter extends CustomPainter {
   _EcgPainter(this.trace, this.grid, this.line);
   final List<double> trace;
@@ -1069,8 +1787,8 @@ List<List<Widget>> _blocks(_Rep r, _P p, {bool print = false}) {
         _tx(_t('doc'), 20, Colors.white, w: FontWeight.w800, h: 1.4),
         _gap(8),
         Wrap(spacing: 14, runSpacing: 4, alignment: WrapAlignment.spaceBetween, children: [
-          _tx('${_t('per')} · ${_dmy(now.subtract(const Duration(days: 29)))} – ${_dmy(now)}', 11.5, const Color(0xFFB9D6DC), w: FontWeight.w600),
-          _tx('${_t('iss')}: ${_dmy(now)}', 11.5, const Color(0xFFB9D6DC), w: FontWeight.w600),
+          _tx('${r.rg.title} · ${_ltr(r.rg.dates)}', 11.5, const Color(0xFFB9D6DC), w: FontWeight.w600),
+          _tx('${_t('iss')}: ${_ltr('${_dEn(now)} · ${_hhmm(now)}')}', 11.5, const Color(0xFFB9D6DC), w: FontWeight.w600),
         ]),
       ]),
     ),
@@ -1180,7 +1898,9 @@ List<List<Widget>> _blocks(_Rep r, _P p, {bool print = false}) {
         ], 3),
         _gap(10),
         Wrap(spacing: 6, runSpacing: 6, children: [
-          r.bandDays > 0 ? chip(_f(_t('cvB'), {'n': r.bandDays}), true) : chip(_t('cvBo'), false),
+          r.cover > 0
+              ? chip(_f(r.rg.hourly ? _t('cvBh') : _t('cvBd'), {'a': r.cover, 'n': r.rg.days}), true)
+              : chip(r.linked || r.connected ? _f(r.rg.hourly ? _t('cvBh') : _t('cvBd'), {'a': 0, 'n': r.rg.days}) : _t('cvBo'), false),
           chip(_f(_t('cvF'), {'n': r.foodDays}), r.foodDays > 0),
           chip(_f(_t('cvE'), {'n': r.ecg.length}), r.ecg.isNotEmpty),
           chip(_f(_t('cvW'), {'n': r.wCount}), r.wCount > 0),
@@ -1218,11 +1938,11 @@ List<List<Widget>> _blocks(_Rep r, _P p, {bool print = false}) {
     _row(p, _t('st'), v0(r.st, (x) => '${x.round()}'), '< 50', r.v['st'] ?? na),
     if (r.br != null) _row(p, _t('br'), '${r.br!.round()} /min', '12–20', r.v['br']!),
     _row(p, _t('sl'), v0(r.sl, (x) => _hm(x)), '7–9 h', r.v['sl'] ?? na),
-    _row(p, _t('stp'), v0(r.stp, (x) => fmt(x)), '≥ ${fmt(r.goals.steps)}', r.v['stp'] ?? na),
+    _row(p, r.rg.hourly ? _t('stp24') : _t('stp'), v0(r.stp, (x) => fmt(x)), '≥ ${fmt(r.goals.steps)}', r.v['stp'] ?? na),
   ];
   out.add([
     Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      sec('s1', r.bandDays > 0 ? _f(_t('bandDays'), {'n': r.bandDays}) : ''),
+      sec('s1', r.cover > 0 ? _f(r.rg.hourly ? _t('bandH') : _t('bandDays'), {'n': r.cover}) : ''),
       th,
       vit.first,
     ]),
@@ -1245,7 +1965,7 @@ List<List<Widget>> _blocks(_Rep r, _P p, {bool print = false}) {
           Row(children: [
             _nm('Lead I · 25 mm/s · 10 mm/mV', 10, p.ecgx, w: FontWeight.w600),
             const Spacer(),
-            _tx('${_t('lst')}: ${_dmy(e.at)}', 10.5, p.ecgx, w: FontWeight.w600),
+            _tx('${_t('lst')}: ${_ltr('${_dEn(e.at)} · ${_hhmm(e.at)}')}', 10.5, p.ecgx, w: FontWeight.w600),
           ]),
         ]),
       ));
@@ -1265,7 +1985,7 @@ List<List<Widget>> _blocks(_Rep r, _P p, {bool print = false}) {
   out.add([Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: ecgW)]);
 
   // ───── 03 خەو ─────
-  final slW = <Widget>[sec('s3', r.nights > 0 ? _f(_t('bandDays'), {'n': r.nights}) : '')];
+  final slW = <Widget>[sec('s3', r.nights > 0 && !r.rg.hourly ? _f(_t('bandDays'), {'n': r.nights}) : '')];
   if (r.sl != null) {
     slW.add(_grid([
       _kvN(p, _t('sla'), _hm(r.sl!)),
@@ -1330,12 +2050,12 @@ List<List<Widget>> _blocks(_Rep r, _P p, {bool print = false}) {
     ];
     out.add([
       Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        sec('s4', _f(_t('bandDays'), {'n': r.foodDays})),
+        sec('s4', r.rg.hourly ? _t('today') : _f(_t('bandDays'), {'n': r.foodDays})),
         _th(p, [_t('thE'), _t('thD'), _t('thG'), _t('thS')]),
         rows.first,
       ]),
       ...rows.skip(1),
-      Padding(padding: const EdgeInsets.only(top: 8), child: _para(p, _f(_t('fdays'), {'n': r.foodDays}), muted: true, size: 11.5)),
+      Padding(padding: const EdgeInsets.only(top: 8), child: _para(p, _f(_t('fdR'), {'n': r.foodDays}), muted: true, size: 11.5)),
     ]);
   } else {
     out.add([Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [sec('s4'), _para(p, _t('fnone'), muted: true)])]);
@@ -1348,9 +2068,9 @@ List<List<Widget>> _blocks(_Rep r, _P p, {bool print = false}) {
     Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       sec('s5'),
       _grid([
-        _kvN(p, _t('stp'), r.stp == null ? '—' : fmt(r.stp!)),
-        _kvN(p, _t('am'), r.actWeek == null ? '—' : '${fmt(r.actWeek!)} / 150'),
-        _kvN(p, _t('bn'), r.burned == null ? '—' : '${fmt(r.burned!)} kcal'),
+        _kvN(p, r.rg.hourly ? _t('stp24') : _t('stp'), r.stp == null ? '—' : fmt(r.stp!)),
+        _kvN(p, r.rg.hourly ? _t('amD') : _t('am'), r.actWeek == null ? '—' : (r.rg.hourly ? fmt(r.actWeek!) : '${fmt(r.actWeek!)} / 150')),
+        _kvN(p, r.rg.hourly ? _t('bnD') : _t('bn'), r.burned == null ? '—' : '${fmt(r.burned!)} kcal'),
         _kv(
             p,
             _t('wc'),
@@ -1365,7 +2085,10 @@ List<List<Widget>> _blocks(_Rep r, _P p, {bool print = false}) {
     ]),
   ]);
 
-  // ───── 06 مەترسی ─────
+  // ───── 06 تۆماری ورد (ڕۆژ بە ڕۆژ / کاتژمێر بە کاتژمێر) ─────
+  out.add(_logBlock(r, p, sec));
+
+  // ───── 07 مەترسی ─────
   const rc = [Color(0xFF16A34A), Color(0xFFEA580C), Color(0xFFDC2626)];
   out.add([
     Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -1493,29 +2216,78 @@ Future<Map?> _loadFood() async {
 }
 
 /// PDF ی ڕاپۆرتی گشتی بە بایت (بۆ ناردن یان هەڵگرتن لە هەر شوێنێکی ئەپ)
-Future<Uint8List> generalReportPdf() async {
+Future<Uint8List> generalReportPdf({ReportRange? range}) async {
   await ReportStore.I.init();
   final e = await EcgHistory.load();
   final fd = await _loadFood();
-  return _makePdf(_build(e, fd));
+  return _makePdf(_build(e, fd, range ?? ReportRange.lastDays(ReportStore.keepDays)));
 }
 
 class GeneralReportPage extends StatefulWidget {
-  const GeneralReportPage({super.key});
+  const GeneralReportPage({super.key, this.initialRange});
+
+  /// ماوەی سەرەتا: h24 | d3 | d7 | d30 (ئەگەر نەدرێت، دوایین هەڵبژاردن یان 7 ڕۆژ)
+  final String? initialRange;
   @override
   State<GeneralReportPage> createState() => _GeneralReportPageState();
 }
 
+// ئایکۆنەکانی هاوکاتکردن و ماوە
+const String _iCal = '<rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/>';
+const String _iWatch = '<rect x="7" y="6" width="10" height="12" rx="3"/><path d="M9 6l1-3h4l1 3M9 18l1 3h4l1-3"/>';
+const String _iScale = '<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 10a5 5 0 0 1 7 0M12 10l1.5-1.5"/>';
+const String _iFood = '<path d="M7 3v18M4.5 3v5a2.5 2.5 0 0 0 5 0V3M17 21V3c-2.5 1.2-3.5 4-3.5 7.5V13H17"/>';
+const String _iDoc = '<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/>';
+const String _iOk = '<path d="M5 12.5l4.5 4.5L19 7.5"/>';
+const String _iNo = '<path d="M7 7l10 10M17 7L7 17"/>';
+
+/// قۆناغێکی «هاوکاتکردنی هەموو»: 0 چاوەڕێ، 1 لە کاردایە، 2 تەواو، 3 پەیوەست نییە
+class _Stage {
+  _Stage(this.key, this.icon);
+  final String key, icon;
+  int state = 0;
+  String detail = '';
+}
+
 class _GeneralReportPageState extends State<GeneralReportPage> {
+  static const String _kRange = 'vex_report_range_v1';
+  static const List<String> _presets = ['h24', 'd3', 'd7', 'd30'];
+
   List<EcgResult> _ecg = const [];
   Map? _fd;
-  bool _loaded = false, _busy = false, _sync = false;
-  double _syncP = 0;
+  bool _loaded = false, _busy = false, _sync = false, _done = false;
+  double _bandP = 0;
+  String _rid = 'd7';
+  DateTime? _cFrom, _cTo;
   final GlobalKey _btnKey = GlobalKey();
+  final List<_Stage> _stages = [
+    _Stage('sB', _iWatch),
+    _Stage('sW', _iScale),
+    _Stage('sF', _iFood),
+    _Stage('sE', _iPulse),
+    _Stage('sR', _iDoc),
+  ];
+
+  ReportRange get _range {
+    switch (_rid) {
+      case 'h24':
+        return ReportRange.h24();
+      case 'd3':
+        return ReportRange.lastDays(3);
+      case 'd30':
+        return ReportRange.lastDays(30);
+      case 'c':
+        if (_cFrom != null && _cTo != null) return ReportRange.custom(_cFrom!, _cTo!);
+        return ReportRange.lastDays(7);
+      default:
+        return ReportRange.lastDays(7);
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+    if (_presets.contains(widget.initialRange)) _rid = widget.initialRange!;
     _load();
   }
 
@@ -1523,28 +2295,114 @@ class _GeneralReportPageState extends State<GeneralReportPage> {
     await ReportStore.I.init();
     final e = await EcgHistory.load();
     final fd = await _loadFood();
+    String? saved;
+    try {
+      saved = (await SharedPreferences.getInstance()).getString(_kRange);
+    } catch (_) {}
     if (!mounted) return;
     setState(() {
       _ecg = e;
       _fd = fd;
       _loaded = true;
+      if (widget.initialRange == null && _presets.contains(saved)) _rid = saved!;
     });
   }
 
-  Future<void> _doSync() async {
-    if (_sync || !VexBand.I.linked) return;
+  void _setRange(String id, {DateTime? a, DateTime? b}) {
+    setState(() {
+      _rid = id;
+      if (a != null && b != null) {
+        _cFrom = a;
+        _cTo = b;
+      }
+    });
+    if (_presets.contains(id)) {
+      SharedPreferences.getInstance().then((sp) => sp.setString(_kRange, id)).catchError((_) => false);
+    }
+  }
+
+  // ───────────── هاوکاتکردنی هەموو ─────────────
+  _Stage _s(String k) => _stages.firstWhere((s) => s.key == k);
+
+  void _st(String k, int state, [String detail = '']) {
+    if (!mounted) return;
+    setState(() {
+      _s(k)
+        ..state = state
+        ..detail = detail;
+    });
+  }
+
+  double get _syncP {
+    final rest = _stages.skip(1).where((s) => s.state >= 2).length;
+    return (_bandP * .6 + rest * .1).clamp(0.0, 1.0).toDouble();
+  }
+
+  Future<void> _tick() => Future<void>.delayed(const Duration(milliseconds: 260));
+
+  Future<void> _syncAll() async {
+    if (_sync) return;
     setState(() {
       _sync = true;
-      _syncP = 0;
+      _done = false;
+      _bandP = 0;
+      for (final s in _stages) {
+        s.state = 0;
+        s.detail = '';
+      }
     });
-    try {
-      await VexBand.I.syncAll(onProgress: (v) {
-        if (mounted) setState(() => _syncP = v);
-      });
+
+    // 1) Band: هەنگاو، دڵ، SpO₂، پلەی گەرمی، HRV/سترێس، خەو
+    _st('sB', 1);
+    if (VexBand.I.linked) {
+      try {
+        await VexBand.I.syncAll(onProgress: (v) {
+          if (mounted) setState(() => _bandP = v);
+        });
+      } catch (e) {
+        debugPrint('report sync band: $e');
+      }
       ReportStore.I.ingest(VexBand.I);
-      VitalAgeEngine.I.ingest(VexBand.I);
-      toast(_t('synced'));
-    } catch (_) {}
+      try {
+        VitalAgeEngine.I.ingest(VexBand.I);
+      } catch (_) {}
+      final r = _build(_ecg, _fd, _range);
+      _st('sB', 2, _f(_range.hourly ? _t('bandH') : _t('dN'), {'n': r.cover}));
+    } else {
+      _st('sB', 3, _t('off'));
+    }
+    if (mounted) setState(() => _bandP = 1);
+
+    // 2) کێش و 3) خواردن (لە بەشی خواردن)
+    _st('sW', 1);
+    final fd = await _loadFood();
+    await _tick();
+    if (!mounted) return;
+    _fd = fd;
+    final r1 = _build(_ecg, _fd, _range);
+    _st('sW', 2, r1.w > 0 ? '${_f1(r1.w)} kg' : _f(_t('nR'), {'n': r1.wCount}));
+    _st('sF', 1);
+    await _tick();
+    _st('sF', 2, _f(_t('dN'), {'n': r1.foodDays}));
+
+    // 4) ECG
+    _st('sE', 1);
+    final e = await EcgHistory.load();
+    await _tick();
+    if (!mounted) return;
+    _ecg = e;
+    final r2 = _build(_ecg, _fd, _range);
+    _st('sE', 2, _f(_t('nR'), {'n': r2.ecg.length}));
+
+    // 5) دروستکردنەوەی ڕاپۆرت
+    _st('sR', 1);
+    ReportStore.I.markSynced();
+    await _tick();
+    _st('sR', 2, r2.readings > 0 ? _f(_t('rdN'), {'n': fmt(r2.readings)}) : '');
+    if (!mounted) return;
+    setState(() => _done = true);
+    toast(_t('allOk'));
+    await Future<void>.delayed(const Duration(milliseconds: 1500));
     if (mounted) setState(() => _sync = false);
   }
 
@@ -1559,7 +2417,7 @@ class _GeneralReportPageState extends State<GeneralReportPage> {
     setState(() => _busy = true);
     try {
       final bytes = await _makePdf(r);
-      final name = 'VEX-Report-${_key(DateTime.now())}.pdf';
+      final name = r.rg.hourly ? 'VEX-Report-24h-${_key(r.rg.to)}.pdf' : 'VEX-Report-${r.rg.fromKey}_${r.rg.toKey}.pdf';
       await Share.shareXFiles(
         [XFile.fromData(bytes, mimeType: 'application/pdf', name: name)],
         fileNameOverrides: [name],
@@ -1573,6 +2431,12 @@ class _GeneralReportPageState extends State<GeneralReportPage> {
     if (mounted) setState(() => _busy = false);
   }
 
+  Future<void> _openCalendar(_P p) async {
+    final rg = _range;
+    final res = await _pickRange(context, p, _rid == 'c' ? rg.from : null, _rid == 'c' ? rg.to : null);
+    if (res != null && mounted) _setRange('c', a: res.$1, b: res.$2);
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -1580,7 +2444,8 @@ class _GeneralReportPageState extends State<GeneralReportPage> {
       builder: (context, _) {
         final p = VexTheme.I.isLight ? _pLight : _pDark;
         final mq = MediaQuery.of(context);
-        final r = _build(_ecg, _fd);
+        final rg = _range;
+        final r = _build(_ecg, _fd, rg, record: rg.id == 'd30');
         final blocks = _loaded ? _blocks(r, p) : const <List<Widget>>[];
         final fg = p.dark ? const Color(0xFFEFFEFF) : const Color(0xFF062832);
         Widget ib(String icon, VoidCallback? f, {Key? key, bool flip = false}) => Press(
@@ -1617,28 +2482,36 @@ class _GeneralReportPageState extends State<GeneralReportPage> {
                           ib(_iDl, _loaded && !_busy ? () => _pdf(r) : null),
                         ]),
                         _gap(12),
-                        if (r.linked || r.lastSync.isNotEmpty) _syncBar(p, r, fg),
+                        _syncCard(p, r, fg),
+                        _gap(12),
+                        _rangeBar(p, rg, fg),
+                        _gap(12),
                         if (!_loaded)
                           const Padding(padding: EdgeInsets.all(60), child: Center(child: CircularProgressIndicator()))
                         else
-                          Container(
-                            clipBehavior: Clip.antiAlias,
-                            decoration: BoxDecoration(
-                              color: p.paper,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: p.kvl),
-                              boxShadow: [BoxShadow(color: p.dark ? const Color(0x59000000) : const Color(0x170E2A33), blurRadius: 32, offset: const Offset(0, 14))],
-                            ),
-                            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                              for (var i = 0; i < blocks.length; i++)
-                                Rise(
-                                  delayMs: math.min(i, 8) * 50,
-                                  child: Padding(
-                                    padding: i == 0 ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 16),
-                                    child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: blocks[i]),
+                          AnimatedOpacity(
+                            duration: const Duration(milliseconds: 250),
+                            opacity: _sync && !_done ? .45 : 1,
+                            child: Container(
+                              key: ValueKey('rep-${rg.id}-${rg.fromKey}-${rg.toKey}'),
+                              clipBehavior: Clip.antiAlias,
+                              decoration: BoxDecoration(
+                                color: p.paper,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: p.kvl),
+                                boxShadow: [BoxShadow(color: p.dark ? const Color(0x59000000) : const Color(0x170E2A33), blurRadius: 32, offset: const Offset(0, 14))],
+                              ),
+                              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                                for (var i = 0; i < blocks.length; i++)
+                                  Rise(
+                                    delayMs: math.min(i, 8) * 50,
+                                    child: Padding(
+                                      padding: i == 0 ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 16),
+                                      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: blocks[i]),
+                                    ),
                                   ),
-                                ),
-                            ]),
+                              ]),
+                            ),
                           ),
                         _gap(18),
                         Press(
@@ -1676,44 +2549,388 @@ class _GeneralReportPageState extends State<GeneralReportPage> {
     );
   }
 
-  Widget _syncBar(_P p, _Rep r, Color fg) {
-    final on = r.linked;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
-      decoration: BoxDecoration(
+  BoxDecoration _cardBox(_P p, {double r = 18}) => BoxDecoration(
         color: p.dark ? const Color(0x940C3A48) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(r),
         border: Border.all(color: p.dark ? const Color(0x218CEBF5) : const Color(0xFFDCE5E8)),
-      ),
-      child: Row(children: [
-        Container(width: 8, height: 8, decoration: BoxDecoration(shape: BoxShape.circle, color: r.connected ? const Color(0xFF3CF08A) : const Color(0xFFE5405F))),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _tx(
-            _sync ? '${_t('syncing')} ${(_syncP * 100).round()}%' : (r.lastSync.isNotEmpty ? _f(_t('lastSync'), {'t': r.lastSync}) : 'VEX Band'),
-            12,
-            V.mu,
+      );
+
+  String _lastText(_Rep r) {
+    final at = ReportStore.I.lastSyncAt;
+    if (at != null) {
+      final t = _sameDay(at, DateTime.now()) ? _hhmm(at) : '${_dEn(at, year: false)} · ${_hhmm(at)}';
+      return _f(_t('lastSync'), {'t': _ltr(t)});
+    }
+    if (r.lastSync.isNotEmpty) return _f(_t('lastSync'), {'t': _ltr(r.lastSync)});
+    return _t('never');
+  }
+
+  /// کارتی هاوکاتکردن: ئاسایی (دوایین کات + دوگمە) یان کاتی هاوکاتکردن (هەر سەرچاوەیەک جیا)
+  Widget _syncCard(_P p, _Rep r, Color fg) {
+    const green = Color(0xFF3CF08A), red = Color(0xFFE5405F);
+    final child = !_sync
+        ? Padding(
+            key: const ValueKey('idle'),
+            padding: const EdgeInsetsDirectional.fromSTEB(14, 10, 10, 10),
+            child: Row(children: [
+              Container(width: 8, height: 8, decoration: BoxDecoration(shape: BoxShape.circle, color: r.linked || r.connected ? green : red)),
+              const SizedBox(width: 8),
+              Expanded(child: _tx(_lastText(r), 12, V.mu, w: FontWeight.w600)),
+              const SizedBox(width: 8),
+              Press(
+                onTap: _syncAll,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+                  decoration: BoxDecoration(color: op(p.acc, .12), borderRadius: BorderRadius.circular(13), border: Border.all(color: op(p.acc, .45))),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    _svg(_iSync, p.acc, 16, sw: 2.3),
+                    const SizedBox(width: 7),
+                    _tx(_t('syncAll'), 12.5, p.dark ? fg : p.acc, w: FontWeight.w800),
+                  ]),
+                ),
+              ),
+            ]),
+          )
+        : Padding(
+            key: const ValueKey('busy'),
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Row(children: [
+                Expanded(child: _tx(_done ? _t('allOk') : _t('syncT'), 13.5, fg, w: FontWeight.w800)),
+                _nm('${(_syncP * 100).round()}%', 13, _done ? green : p.acc),
+              ]),
+              _gap(8),
+              Directionality(
+                textDirection: _dir,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    height: 6,
+                    color: p.trk,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: AnimatedFractionallySizedBox(
+                      duration: const Duration(milliseconds: 300),
+                      widthFactor: _syncP,
+                      heightFactor: 1,
+                      child: Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [p.acc, green]))),
+                    ),
+                  ),
+                ),
+              ),
+              _gap(6),
+              for (final s in _stages)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 5),
+                  child: Row(children: [
+                    Container(
+                      width: 30,
+                      height: 30,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(color: op(p.acc, p.dark ? .1 : .08), borderRadius: BorderRadius.circular(10)),
+                      child: _svg(s.icon, s.state == 3 ? V.mu : p.acc, 16, sw: 2.1),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(child: _tx(_t(s.key), 12.5, s.state == 0 ? V.mu : fg, w: FontWeight.w700)),
+                    const SizedBox(width: 6),
+                    if (s.state == 1)
+                      SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2.2, color: p.acc))
+                    else if (s.state == 2)
+                      Row(mainAxisSize: MainAxisSize.min, children: [
+                        if (s.detail.isNotEmpty) _tx(s.detail, 11, green, w: FontWeight.w700),
+                        const SizedBox(width: 4),
+                        _svg(_iOk, green, 16, sw: 2.6),
+                      ])
+                    else if (s.state == 3)
+                      Row(mainAxisSize: MainAxisSize.min, children: [
+                        _tx(s.detail, 11, red, w: FontWeight.w700),
+                        const SizedBox(width: 4),
+                        _svg(_iNo, red, 14, sw: 2.6),
+                      ])
+                    else
+                      _tx(_t('wait'), 11, V.mu, w: FontWeight.w600),
+                  ]),
+                ),
+            ]),
+          );
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      decoration: _cardBox(p),
+      child: AnimatedSize(duration: const Duration(milliseconds: 250), alignment: Alignment.topCenter, child: child),
+    );
+  }
+
+  /// دوگمەکانی ماوە: 24 کاتژمێر · 3 · 7 · 30 ڕۆژ · ڕۆژژمێر
+  Widget _rangeBar(_P p, ReportRange rg, Color fg) {
+    final on = p.dark ? const [Color(0xFF2FE6F3), Color(0xFF3CF08A)] : p.btn;
+    final onX = p.dark ? const Color(0xFF04252B) : p.btnx;
+    Widget label(String tpl, int n, Color c) {
+      final parts = tpl.split('{n}');
+      return Row(mainAxisSize: MainAxisSize.min, children: [
+        if (parts.first.trim().isNotEmpty) ...[_tx(parts.first.trim(), 13, c, w: FontWeight.w700), const SizedBox(width: 4)],
+        _nm('$n', 14, c),
+        if (parts.length > 1 && parts[1].trim().isNotEmpty) ...[const SizedBox(width: 4), _tx(parts[1].trim(), 13, c, w: FontWeight.w700)],
+      ]);
+    }
+
+    Widget pill(String id, Widget Function(Color) inner, {int flex = 10}) {
+      final sel = _rid == id;
+      return Expanded(
+        flex: flex,
+        child: Press(
+          key: ValueKey('rng-$id'),
+          onTap: () => id == 'c' ? _openCalendar(p) : _setRange(id),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            height: 44,
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              gradient: sel ? LinearGradient(colors: on) : null,
+              color: sel ? null : (p.dark ? const Color(0x940C3A48) : Colors.white),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: sel ? Colors.transparent : (p.dark ? const Color(0x2E8CEBF5) : const Color(0xFFDCE5E8))),
+              boxShadow: sel ? [BoxShadow(color: op(on.first, .45), blurRadius: 18, offset: const Offset(0, 6), spreadRadius: -6)] : null,
+            ),
+            child: FittedBox(fit: BoxFit.scaleDown, child: inner(sel ? onX : fg)),
           ),
         ),
-        if (on)
-          Press(
-            onTap: _sync ? null : _doSync,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-              decoration: BoxDecoration(color: op(p.acc, .12), borderRadius: BorderRadius.circular(12), border: Border.all(color: op(p.acc, .4))),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                _sync
-                    ? SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: p.acc))
-                    : _svg(_iSync, p.acc, 15, sw: 2.2),
-                const SizedBox(width: 6),
-                _tx(_t('sync'), 12, p.acc, w: FontWeight.w800),
+      );
+    }
+
+    final dTpl = _t('dN');
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Padding(padding: const EdgeInsetsDirectional.only(start: 4, bottom: 7), child: _tx(_t('rng'), 12, V.mu, w: FontWeight.w600)),
+      Row(children: [
+        pill('h24', (c) => label(_t('h24').replaceFirst('24', '{n}'), 24, c), flex: 12),
+        const SizedBox(width: 6),
+        pill('d3', (c) => label(dTpl, 3, c)),
+        const SizedBox(width: 6),
+        pill('d7', (c) => label(dTpl, 7, c)),
+        const SizedBox(width: 6),
+        pill('d30', (c) => label(dTpl, 30, c), flex: 11),
+        const SizedBox(width: 6),
+        pill('c', (c) => _svg(_iCal, c, 18, sw: 2.2), flex: 7),
+      ]),
+      if (_rid == 'c') ...[
+        _gap(8),
+        Press(
+          onTap: () => _openCalendar(p),
+          child: Container(
+            padding: const EdgeInsetsDirectional.fromSTEB(12, 9, 12, 9),
+            decoration: _cardBox(p, r: 14),
+            child: Row(children: [
+              _svg(_iCal, p.acc, 17, sw: 2.2),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(children: [
+                    TextSpan(text: '${_t('custom')} · ', style: ku(12, w: FontWeight.w700, c: V.mu)),
+                    TextSpan(text: _ltr(rg.dates), style: nu(12, w: FontWeight.w700, c: fg)),
+                  ]),
+                ),
+              ),
+              _tx(_t('change'), 12, p.acc, w: FontWeight.w800),
+            ]),
+          ),
+        ),
+      ],
+    ]);
+  }
+}
+
+/// ڕۆژژمێری هەڵبژاردنی ماوە (تەنها 30 ڕۆژی کۆتایی). (لە، بۆ) دەگەڕێنێتەوە
+Future<(DateTime, DateTime)?> _pickRange(BuildContext context, _P p, DateTime? a0, DateTime? b0) {
+  final now = DateTime.now();
+  final lo = ReportStore.firstDay(now), hi = _d0(now);
+  DateTime? a = a0 == null ? null : _d0(a0), b = b0 == null ? null : _d0(b0);
+  final wd = ((_T['wd'] ?? _T0['wd']) as List).map((e) => '$e').toList();
+  final ws = ((_T['ws'] ?? _T0['ws']) as num).toInt();
+  final bg = p.dark ? const Color(0xFF0E2A32) : Colors.white;
+  final fg = p.dark ? const Color(0xFFEFFEFF) : const Color(0xFF062832);
+  final band = p.dark ? const Color(0xFF17505A) : const Color(0xFFD9F3F6);
+  final grad = p.dark ? const [Color(0xFF2FE6F3), Color(0xFF3CF08A)] : p.btn;
+  final onX = p.dark ? const Color(0xFF04252B) : p.btnx;
+  // مانگەکان لە یەکەم ڕۆژی هەڵگیراوەوە تا ئەمڕۆ
+  final months = <DateTime>[];
+  for (var m = DateTime(lo.year, lo.month); !m.isAfter(DateTime(hi.year, hi.month)); m = DateTime(m.year, m.month + 1)) {
+    months.add(m);
+  }
+
+  return showModalBottomSheet<(DateTime, DateTime)>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (ctx) => Directionality(
+      textDirection: _dir,
+      child: StatefulBuilder(builder: (ctx, set) {
+        final x = a, y = b ?? a;
+        final n = x == null ? 0 : _dayDiff(x, y!) + 1;
+        void tap(DateTime d) => set(() {
+              if (a == null || b != null) {
+                a = d;
+                b = null;
+              } else if (d.isBefore(a!)) {
+                b = a;
+                a = d;
+              } else {
+                b = d;
+              }
+            });
+
+        Widget field(String label, DateTime? d, bool active) => Expanded(
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 9),
+                decoration: BoxDecoration(
+                  color: p.kvb,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: active ? p.acc : p.kvl, width: active ? 1.6 : 1),
+                ),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  _tx(label, 11, p.mu, w: FontWeight.w600),
+                  _nm(d == null ? '—' : _dEn(d), 15, fg),
+                ]),
+              ),
+            );
+
+        Widget dayCell(DateTime d) {
+          final off = d.isBefore(lo) || d.isAfter(hi);
+          final isS = x != null && _sameDay(d, x), isE = y != null && _sameDay(d, y);
+          final inR = x != null && y != null && !d.isBefore(x) && !d.isAfter(y);
+          final sel = isS || isE;
+          final today = _sameDay(d, hi);
+          final has = !off && ReportStore.I.hasBand(_key(d));
+          return Expanded(
+            child: GestureDetector(
+              key: ValueKey('day-${_key(d)}'),
+              behavior: HitTestBehavior.opaque,
+              onTap: off ? null : () => tap(d),
+              child: SizedBox(
+                height: 42,
+                child: Stack(alignment: Alignment.center, children: [
+                  if (inR && !(isS && isE))
+                    Positioned.fill(
+                      top: 3,
+                      bottom: 3,
+                      child: Row(children: [
+                        Expanded(child: Container(color: isS ? Colors.transparent : band)),
+                        Expanded(child: Container(color: isE ? Colors.transparent : band)),
+                      ]),
+                    ),
+                  if (sel)
+                    Container(
+                      width: 38,
+                      height: 36,
+                      decoration: BoxDecoration(gradient: LinearGradient(colors: grad), borderRadius: BorderRadius.circular(12)),
+                    )
+                  else if (today)
+                    Container(
+                      width: 36,
+                      height: 34,
+                      decoration: BoxDecoration(border: Border.all(color: p.acc, width: 1.4), borderRadius: BorderRadius.circular(11)),
+                    ),
+                  _nm('${d.day}', 13.5, sel ? onX : (off ? op(p.mu, .35) : fg), w: FontWeight.w700),
+                  if (has)
+                    Positioned(
+                      bottom: 6,
+                      child: Container(width: 4, height: 4, decoration: BoxDecoration(shape: BoxShape.circle, color: sel ? onX : const Color(0xFF3CF08A))),
+                    ),
+                ]),
+              ),
+            ),
+          );
+        }
+
+        Widget month(DateTime m) {
+          final first = DateTime(m.year, m.month, 1);
+          final lead = (first.weekday - 1 - ws + 7) % 7;
+          final dim = DateTime(m.year, m.month + 1, 0).day;
+          final cells = <Widget>[for (var i = 0; i < lead; i++) const Expanded(child: SizedBox(height: 42))];
+          for (var d = 1; d <= dim; d++) {
+            cells.add(dayCell(DateTime(m.year, m.month, d)));
+          }
+          while (cells.length % 7 != 0) {
+            cells.add(const Expanded(child: SizedBox(height: 42)));
+          }
+          return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 6, bottom: 6),
+              child: Text('${_monL[m.month - 1]} ${m.year}', textDirection: TextDirection.ltr, textAlign: TextAlign.center, style: nu(15, w: FontWeight.w800, c: fg)),
+            ),
+            Row(children: [for (var i = 0; i < 7; i++) Expanded(child: Center(child: _tx(wd[(ws + i) % 7], 11, p.mu, w: FontWeight.w600)))]),
+            _gap(2),
+            for (var i = 0; i < cells.length; i += 7) Row(children: cells.sublist(i, i + 7)),
+          ]);
+        }
+
+        final mq = MediaQuery.of(ctx);
+        return Container(
+          constraints: BoxConstraints(maxHeight: mq.size.height * .9),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+            border: Border.all(color: p.kvl),
+          ),
+          child: SafeArea(
+            top: false,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+              child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                Center(child: Container(width: 44, height: 5, decoration: BoxDecoration(color: op(p.mu, .45), borderRadius: BorderRadius.circular(5)))),
+                _gap(12),
+                _tx(_t('custom'), 17, fg, w: FontWeight.w800),
+                _tx(_t('pickH'), 12, p.mu, w: FontWeight.w600, h: 1.6),
+                _gap(10),
+                Row(children: [
+                  field(_t('from'), x, a == null || b != null),
+                  const SizedBox(width: 8),
+                  field(_t('to'), b ?? a, a != null && b == null),
+                ]),
+                _gap(6),
+                for (final m in months) month(m),
+                _gap(8),
+                Row(children: [
+                  Container(width: 5, height: 5, decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF3CF08A))),
+                  const SizedBox(width: 6),
+                  Expanded(child: _tx(_t('dot'), 11, p.mu, w: FontWeight.w600)),
+                ]),
+                _gap(4),
+                _tx(_t('keep'), 11, p.mu, w: FontWeight.w600, h: 1.6),
+                _gap(12),
+                Row(children: [
+                  Press(
+                    onTap: () => Navigator.of(ctx).pop(),
+                    child: Container(
+                      height: 50,
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(15), border: Border.all(color: p.kvl)),
+                      child: _tx(_t('cancel'), 13.5, p.mu, w: FontWeight.w700),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Press(
+                      onTap: x == null ? null : () => Navigator.of(ctx).pop((x, y!)),
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 200),
+                        opacity: x == null ? .4 : 1,
+                        child: Container(
+                          height: 50,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(gradient: LinearGradient(colors: grad), borderRadius: BorderRadius.circular(15)),
+                          child: _tx(_f(_t('show'), {'n': n == 0 ? '' : n}), 14.5, onX, w: FontWeight.w800),
+                        ),
+                      ),
+                    ),
+                  ),
+                ]),
               ]),
             ),
           ),
-      ]),
-    );
-  }
+        );
+      }),
+    ),
+  );
 }
 
 // ═════════════════════════════ PDF (A4) ═════════════════════════════
@@ -1837,7 +3054,7 @@ Future<Uint8List> _makePdf(_Rep r) async {
         padding: const pw.EdgeInsets.only(top: 5),
         decoration: const pw.BoxDecoration(border: pw.Border(top: pw.BorderSide(color: PdfColor.fromInt(0xFFE3EAED), width: .8))),
         child: pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
-          pw.Text('VEX Health - ${_dmy(now)}', style: const pw.TextStyle(fontSize: 8, color: grey)),
+          pw.Text('VEX Health - ${_dEn(now)} - ${r.rg.dates.replaceAll('–', '-')}', style: const pw.TextStyle(fontSize: 8, color: grey)),
           pw.Text('${ctx.pageNumber} / ${ctx.pagesCount}', style: const pw.TextStyle(fontSize: 8, color: grey)),
         ]),
       ),
@@ -1907,4 +3124,4 @@ class ReportCard extends StatelessWidget {
 }
 
 // ═════════════════════════════ وەرگێڕان (6 زمان) ═════════════════════════════
-const Map<String, dynamic> _kTX = {"ckb": {"dir": "rtl", "t": "ڕاپۆرتی گشتی", "doc": "ڕاپۆرتی گشتیی تەندروستی", "per": "ماوە: 30 ڕۆژی ڕابردوو", "iss": "دەرچوون", "nm": "ناو", "age": "تەمەن / ڕەگەز", "ht": "باڵا", "wt": "کێش", "src": "سەرچاوە", "m": "نێر", "f": "مێ", "yrs": "ساڵ", "srcB": "ئەپ و \u2068VEX Band\u2069", "srcA": "تۆمارەکانی ئەپ", "conds": "دۆخی تەندروستی", "cvB": "{n} ڕۆژ داتای Band", "cvBo": "Band پەیوەست نییە", "cvF": "{n} ڕۆژ خواردن", "cvE": "{n} تۆماری ECG", "cvW": "{n} پێوانەی کێش", "score": "نمرەی گشتی", "lv": ["زۆر باش", "باش", "مامناوەند", "پێویستی بە سەرنجە"], "dUp": "لە {a} بۆ {b} بەرز بووەتەوە", "dDn": "لە {a} بۆ {b} دابەزیوە", "dEq": "وەک ڕاپۆرتی پێشوو", "dNew": "یەکەم ڕاپۆرتی تۆ", "va": "تەمەنی لەش (VitalAge)", "vaLock": "پێویستی بە {n} ڕۆژ داتای تەواوی Band هەیە", "vaBand": "پێویستی بە VEX Band هەیە", "nights": "ڕۆژ", "vaY": "{n} ساڵ گەنجتر لە تەمەنت", "vaO": "{n} ساڵ گەورەتر لە تەمەنت", "vaE": "هاوتای تەمەنی خۆتە", "s1": "نیشانە ژیانییەکان", "s2": "دڵ و ECG", "s3": "خەو", "s4": "خۆراک و ئاو", "s5": "جووڵە و کێش", "s6": "هەڵسەنگاندنی مەترسی", "s7": "پوختەی شیکاری", "s8": "ڕاسپاردەکان (بە ڕیزی گرنگی)", "thT": "پشکنین", "thR": "ئەنجام", "thN": "ئاسایی", "thS": "دۆخ", "hr": "لێدانی دڵ (تێکڕا)", "hrr": "کەمترین – زۆرترین لێدان", "hrv": "HRV (گۆڕانی لێدان)", "sp": "ئۆکسجینی خوێن SpO₂", "spl": "نزمترین SpO₂", "tp": "پلەی گەرمی پێست", "st": "فشاری دەروونی", "sl": "کاتی خەو", "stp": "هەنگاوی ڕۆژانە", "ok": "ئاسایی", "hi": "بەرز ↑", "lo": "کەم ↓", "mid": "مامناوەند", "na": "پەیوەست نییە", "nod": "داتا نییە", "good": "باش", "much": "زۆر ↑", "inf": "زانیاری", "bandOff": "VEX Band پەیوەست نییە، بۆیە پێوانەکانی Band لەم ڕاپۆرتەدا نین. Band ـەکەت پەیوەست بکە و هاوکاتی بکە.", "bandDays": "{n} ڕۆژ", "rh": "ڕیتمی دڵ", "rhOk": "ڕیتمی ڕێک", "rec": "تۆمارەکان", "recN": "{n} تۆمار · 0 ناڕێک", "lhr": "تێکڕای لێدان (دوایین)", "q": "کوالیتیی ئاماژە", "lst": "دوایین تۆمار", "ecgOk": "لە هەموو تۆمارەکاندا ڕیتمی دڵ ڕێک بووە و هیچ نیشانەیەکی لێدانی ناڕێک نەبینراوە.", "ecgNo": "هێشتا هیچ پێوانەیەکی ECG ت نییە. لە بەشی ECG ـەوە 30 چرکە پێوانە بکە تا لێرە دەربکەوێت.", "sla": "تێکڕای خەو", "eff": "کارایی خەو", "ln": "دوایین شەو", "dp": "قووڵ", "rm": "REM", "lt": "سووک", "aw": "بێدار", "debt": "قەرزی خەو: نزیکەی {h} کاتژمێر لە هەفتەیەکدا.", "slOk": "تێکڕای خەوت لە سنووری پێشنیارکراودایە (7–9 کاتژمێر).", "thE": "توخم", "thD": "تێکڕای ڕۆژ", "thG": "ئامانج", "kc": "کالۆری", "pr": "پرۆتین", "cb": "کارب", "ft": "چەوری", "fb": "فایبەر", "sg": "شەکر", "sa": "خوێ", "wa": "ئاو", "fdays": "لەسەر بنەمای {n} ڕۆژی تۆمارکراو لە 30 ڕۆژی ڕابردوودا", "fnone": "هێشتا هیچ خواردنێک تۆمار نەکراوە. لە بەشی خواردنەوە ژەمەکانت تۆمار بکە تا ئێرە پڕ بێتەوە.", "am": "خولەکی چالاک / هەفتە", "wo": "ڕاهێنان (30 ڕۆژ)", "bn": "کالۆری سووتاو (ڕاهێنان)", "wc": "گۆڕانی کێش", "bt": "BMR / TDEE", "one": "یەک پێوانە", "rc": "دڵ و خوێنبەر", "rmt": "مێتابۆلیزم و کێش", "rs": "خەو و ماندووبوون", "ra": "کەم جووڵەیی", "low": "نزم", "mod": "مامناوەند", "high": "بەرز", "sIn": "دۆخی گشتی: {lvl} — نمرەی {s} لە 100.", "sGood": "ئەم بەشانە باشن: {x}.", "sAtt": "ئەم بەشانە پێویستیان بە سەرنجە: {x}.", "sAll": "هیچ خاڵێکی پێویست بە سەرنج نەبینرا؛ بەم شێوەیە بەردەوام بە.", "and": " و ", "sep": "، ", "g": {"hr": "لێدانی دڵ", "sp": "ئۆکسجینی خوێن", "ecg": "ڕیتمی دڵ (ECG)", "sl": "خەو", "st": "فشاری دەروونی", "stp": "جووڵە", "kc": "کالۆری", "pr": "پرۆتین", "fb": "فایبەر", "sg": "شەکر", "sa": "خوێ", "wa": "ئاو", "bmi": "کێش (BMI)", "tp": "پلەی گەرمی"}, "r": {"salt": "خوێ بگەیەنە ژێر 5 گرام لە ڕۆژێکدا؛ ترشی، پەنیری سوێر و خواردنی ئامادە کەم بکەرەوە.", "sleep": "کاتێکی جێگیر بۆ نووستن دابنێ و شەوانە لانیکەم 7 کاتژمێر بخەوە.", "stress": "ڕۆژانە 2–3 جار 5 خولەک هەناسەی قووڵ هەڵبکێشە و پشووی کورت لە شاشە وەربگرە.", "prot": "ڕۆژانە نزیکەی {n} گرام پرۆتینی زیاتر بخۆ: هێلکە، ماست، نیسک، مریشک یان ماسی.", "fib": "فایبەر زیاد بکە: سەوزە لە هەموو ژەمێکدا و نانی جۆ لە جیاتی نانی سپی.", "water": "ڕۆژانە نزیکەی {n} پەرداخ ئاوی زیاتر بخۆرەوە.", "steps": "ڕۆژانە نزیکەی {n} هەنگاوی زیاتر بڕۆ؛ 10 خولەک پیاسە دوای نانخواردن یارمەتیدەرە.", "sug": "شەکر کەم بکەرەوە: خواردنەوەی شیرین و شیرینی لە ڕۆژانەوە بکە بە جارجار.", "kcalHi": "کالۆری ڕۆژانەت لە ئامانج زیاترە؛ بڕی ژەمەکان و ژەمە سووکەکان کەم بکەرەوە.", "kcalLo": "کالۆری ڕۆژانەت زۆر لە ئامانج کەمترە؛ ژەمەکانت بە پرۆتین و دانەوێڵەی تەواو پڕتر بکە.", "bmi": "کەمکردنەوەی کێش بە هێواشی (نزیکەی 0.5 کیلۆ لە هەفتەیەکدا) کاریگەریی باشی لەسەر دڵ و شەکری خوێن دەبێت.", "ecg": "مانگانە لانیکەم یەک پێوانەی ECG بکە بۆ چاودێریی ڕیتمی دڵ.", "food": "ژەمەکانت لە بەشی خواردن تۆمار بکە تا شیکاری خۆراک وردتر بێت.", "band": "VEX Band پەیوەست بکە بۆ ئەوەی لێدانی دڵ، خەو، ئۆکسجین و فشاری دەروونی لە ڕاپۆرتەکەدا بن.", "keep": "پێوەرەکانت باشن؛ هەمان شێوازی ژیان بەردەوام بکە و مانگی داهاتوو دووبارە ڕاپۆرت وەربگرە."}, "docT": "کەی سەردانی پزیشک بکەیت؟", "docX": "ئەگەر ئازار یان تەنگیی سنگ، سەرگێژخواردن، هەناسەتەنگی یان لێدانی ناڕێکت هەست پێ کرد، یان ئۆکسجینی خوێنت بە بەردەوامی لە 92% کەمتر بوو، دەستبەجێ سەردانی پزیشک بکە.", "docC": "بەهۆی ({x})، ئەم ڕاپۆرتە لە سەردانی داهاتوودا پیشانی پزیشکەکەت بدە.", "by": "شیکاری لەلایەن", "eng": "VEX AI · بزوێنەری تەندروستی", "pts": "{n} خاڵی داتا", "disc": "ئەم ڕاپۆرتە لەسەر بنەمای داتای VEX Band و تۆمارەکانی ناو ئەپ دروست کراوە و دەستنیشانکردنی نەخۆشی (تشخیص) نییە. بۆ هەر بڕیارێکی پزیشکی، ڕاپۆرتەکە پیشانی پزیشکەکەت بدە.", "pdf": "داگرتنی PDF", "pdfW": "ئامادەکردنی PDF…", "pdfOk": "PDF ئامادە کرا ✓", "pdfNo": "داگرتنی فایل لێرە بەردەست نییە؛ لاپەڕەکانی ڕاپۆرت لێرە دەبینیت.", "pdfErr": "دروستکردنی PDF سەرکەوتوو نەبوو؛ دووبارە هەوڵ بدەرەوە.", "pdfDec": "داگرتن هەڵوەشێنرایەوە", "pdfNote": "PDF ـەکە بە قەبارەی A4 ئامادە دەکرێت و بۆ پیشاندان بە پزیشک گونجاوە.", "pv": "پێشبینینی ڕاپۆرت", "pg": "لاپەڕە {a} لە {b}", "back": "گەڕانەوە", "cn": {"diab": "شەکرە", "bp": "فشاری خوێن", "chol": "کۆلیسترۆڵ", "heart": "نەخۆشی دڵ", "kid": "نەخۆشی گورچیلە", "gout": "نیقرس", "gerd": "ڕیفلاکس", "preg": "دووگیانی", "bf": "شیردان", "asth": "ڕەبۆ", "thy": "تیرۆید"}, "sync": "هاوکاتکردنی Band", "syncing": "هاوکاتکردن…", "lastSync": "دوایین هاوکاتکردن: {t}", "synced": "هاوکاتکرا ✓", "bp": "پەستانی خوێن (خەمڵاندن)", "br": "ڕێژەی هەناسە", "rhr": "لێدانی دڵی ئارام", "irr": "{n} تۆماری ناڕێک", "rhIrr": "ناڕێکی دەبینرێت", "ecgIrr": "لە {n} تۆماردا لێدانی ناڕێک بینراوە؛ ئەم ڕاپۆرتە پیشانی پزیشکەکەت بدە.", "g_bp": "پەستانی خوێن", "sub": "پشکنینی گشتی و شیکاری · PDF", "share": "ڕاپۆرتی گشتیی VEX Health"}, "kmr": {"dir": "rtl", "t": "ڕاپۆرتا گشتی", "doc": "ڕاپۆرتا گشتی یا ساخلەمیێ", "per": "ماوە: 30 ڕۆژێن بۆری", "iss": "دەرچوون", "nm": "ناڤ", "age": "ژی / ڕەگەز", "ht": "درێژی", "wt": "کێش", "src": "ژێدەر", "m": "نێر", "f": "مێ", "yrs": "ساڵ", "srcB": "ئەپ و \u2068VEX Band\u2069", "srcA": "تۆمارێن ئەپێ", "conds": "ڕەوشا ساخلەمیێ", "cvB": "{n} ڕۆژێن داتایێن Band", "cvBo": "Band نەگرێدایە", "cvF": "{n} ڕۆژێن خوارنێ", "cvE": "{n} تۆمارێن ECG", "cvW": "{n} پیڤانێن کێشێ", "score": "نمرا گشتی", "lv": ["گەلەک باش", "باش", "ناڤنجی", "پێدڤی ب سەرنجێ یە"], "dUp": "ژ {a} بۆ {b} بلند بوویە", "dDn": "ژ {a} بۆ {b} نزم بوویە", "dEq": "وەکی ڕاپۆرتا بەری", "dNew": "ئێکەم ڕاپۆرتا تە", "va": "ژیێ لەشی (VitalAge)", "vaLock": "پێدڤی ب {n} ڕۆژێن داتایێن تەمامێن Band هەیە", "vaBand": "پێدڤی ب VEX Band هەیە", "nights": "ڕۆژ", "vaY": "{n} ساڵان گەنجترە ژ ژیێ تە", "vaO": "{n} ساڵان مەزنترە ژ ژیێ تە", "vaE": "وەکی ژیێ تە یە", "s1": "نیشانێن ژیانێ", "s2": "دل و ECG", "s3": "خەو", "s4": "خوارن و ئاڤ", "s5": "لڤین و کێش", "s6": "هەلسەنگاندنا مەترسیێ", "s7": "کورتیا شلۆڤەکرنێ", "s8": "ڕاسپاردە (ل دویڤ گرنگیێ)", "thT": "پشکنین", "thR": "ئەنجام", "thN": "ئاسایی", "thS": "ڕەوش", "hr": "لێدانا دلی (تێکڕا)", "hrr": "کێمترین – زێدەترین لێدان", "hrv": "HRV (گوهۆڕینا لێدانێ)", "sp": "ئۆکسجینا خوینێ SpO₂", "spl": "نزمترین SpO₂", "tp": "پلا گەرمیا پێستی", "st": "فشارا دەروونی", "sl": "دەمێ خەوێ", "stp": "پێنگاڤێن ڕۆژانە", "ok": "ئاسایی", "hi": "بلند ↑", "lo": "کێم ↓", "mid": "ناڤنجی", "na": "نەگرێدایە", "nod": "داتا نینە", "good": "باش", "much": "زێدە ↑", "inf": "زانیاری", "bandOff": "VEX Band نەگرێدایە، لەوما پیڤانێن Band د ڤێ ڕاپۆرتێ دا نینن. Band ـا خۆ گرێبدە و هاوکات بکە.", "bandDays": "{n} ڕۆژ", "rh": "ڕیتما دلی", "rhOk": "ڕیتما ڕێک", "rec": "تۆمار", "recN": "{n} تۆمار · 0 نەڕێک", "lhr": "تێکڕایا لێدانێ (دوماهیک)", "q": "کوالیتیا ئاماژێ", "lst": "دوماهیک تۆمار", "ecgOk": "د هەمی تۆماران دا ڕیتما دلی ڕێک بوو و چ نیشانێن لێدانا نەڕێک نەهاتنە دیتن.", "ecgNo": "هێشتا چ پیڤانێن ECG نینن. ژ پشکا ECG ـێ 30 چرکەیان بپیڤە دا ل ڤێرە دیار ببیت.", "sla": "تێکڕایا خەوێ", "eff": "کارینەریا خەوێ", "ln": "دوماهیک شەڤ", "dp": "کویر", "rm": "REM", "lt": "سڤک", "aw": "هشیار", "debt": "قەرزێ خەوێ: نێزیکی {h} دەمژمێران د حەفتیێ دا.", "slOk": "تێکڕایا خەوا تە د سنوورێ پێشنیارکری دایە (7–9 دەمژمێر).", "thE": "توخم", "thD": "تێکڕایا ڕۆژێ", "thG": "ئارمانج", "kc": "کالۆری", "pr": "پرۆتین", "cb": "کارب", "ft": "چەوری", "fb": "فایبەر", "sg": "شەکر", "sa": "خوێ", "wa": "ئاڤ", "fdays": "ل سەر بنیاتێ {n} ڕۆژێن تۆمارکری د 30 ڕۆژێن بۆری دا", "fnone": "هێشتا چ خوارن نەهاتینە تۆمارکرن. ژ پشکا خوارنێ ژەمێن خۆ تۆمار بکە دا ئەڤ پشکە پڕ ببیت.", "am": "خولەکێن چالاک / حەفتی", "wo": "ڕاهێنان (30 ڕۆژ)", "bn": "کالۆریێن سۆتی (ڕاهێنان)", "wc": "گوهۆڕینا کێشێ", "bt": "BMR / TDEE", "one": "ئێک پیڤان", "rc": "دل و خوینبەر", "rmt": "مێتابۆلیزم و کێش", "rs": "خەو و وەستیان", "ra": "کێم لڤین", "low": "نزم", "mod": "ناڤنجی", "high": "بلند", "sIn": "ڕەوشا گشتی: {lvl} — نمرا {s} ژ 100.", "sGood": "ئەڤ پشکە باشن: {x}.", "sAtt": "ئەڤ پشکە پێدڤی ب سەرنجێ نە: {x}.", "sAll": "چ خاڵێن پێدڤی ب سەرنجێ نەهاتنە دیتن؛ ب ڤی ڕەنگی بەردەوام بە.", "and": " و ", "sep": "، ", "g": {"hr": "لێدانا دلی", "sp": "ئۆکسجینا خوینێ", "ecg": "ڕیتما دلی (ECG)", "sl": "خەو", "st": "فشارا دەروونی", "stp": "لڤین", "kc": "کالۆری", "pr": "پرۆتین", "fb": "فایبەر", "sg": "شەکر", "sa": "خوێ", "wa": "ئاڤ", "bmi": "کێش (BMI)", "tp": "پلا گەرمیێ"}, "r": {"salt": "خوێیێ بگەهینە بن 5 گرامان د ڕۆژێ دا؛ ترشی، پەنیرێ سوێر و خوارنێن ئامادە کێم بکە.", "sleep": "دەمەکێ جێگیر بۆ نڤستنێ دانە و شەڤانە کێمتر نە ژ 7 دەمژمێران بنڤە.", "stress": "ڕۆژانە 2–3 جاران 5 خولەکان هەناسێن کویر بکێشە و بێهنڤەدانێن کورت ژ شاشێ وەربگرە.", "prot": "ڕۆژانە نێزیکی {n} گرامان پرۆتینا زێدەتر بخۆ: هێک، ماست، نیسک، مریشک یان ماسی.", "fib": "فایبەرێ زێدە بکە: سەوزە د هەمی ژەمان دا و نانێ جەهی ل جهێ نانێ سپی.", "water": "ڕۆژانە نێزیکی {n} پەرداخێن ئاڤێ زێدەتر ڤەخۆ.", "steps": "ڕۆژانە نێزیکی {n} پێنگاڤێن زێدەتر بهاڤێژە؛ 10 خولەک پیاسە پشتی خوارنێ هاریکارە.", "sug": "شەکرێ کێم بکە: ڤەخوارنێن شرین و شرینیان ژ ڕۆژانە بکە جار جار.", "kcalHi": "کالۆریێن ڕۆژانە یێن تە ژ ئارمانجێ زێدەترن؛ بڕێ ژەمان و ژەمێن سڤک کێم بکە.", "kcalLo": "کالۆریێن ڕۆژانە یێن تە گەلەک ژ ئارمانجێ کێمترن؛ ژەمێن خۆ ب پرۆتین و دانەوێڵێن تەمام پڕتر بکە.", "bmi": "کێمکرنا کێشێ ب هێدیکی (نێزیکی 0.5 کیلۆ د حەفتیێ دا) کارتێکرنەکا باش ل سەر دلی و شەکرا خوینێ دکەت.", "ecg": "هەر هەیڤ کێمتر نە ژ ئێک پیڤانا ECG بکە بۆ چاڤدێریا ڕیتما دلی.", "food": "ژەمێن خۆ ل پشکا خوارنێ تۆمار بکە دا شلۆڤەکرنا خوارنێ دروستتر ببیت.", "band": "VEX Band گرێبدە دا لێدانا دلی، خەو، ئۆکسجین و فشارا دەروونی د ڕاپۆرتێ دا هەبن.", "keep": "پیڤەرێن تە باشن؛ ب هەمان شێوازێ ژیانێ بەردەوام بە و هەیڤا بهێت دووبارە ڕاپۆرتێ وەربگرە."}, "docT": "کەنگی سەرەدانا نۆژداری بکەی؟", "docX": "ئەگەر ئێش یان تەنگیا سنگی، گێژبوون، هەناسەتەنگی یان لێدانا نەڕێک هەست پێ کر، یان ئۆکسجینا خوینا تە ب بەردەوامی ژ 92% کێمتر بوو، دەستبەجێ سەرەدانا نۆژداری بکە.", "docC": "ژ بەر ({x})، ڤێ ڕاپۆرتێ د سەرەدانا بهێت دا نیشا نۆژدارێ خۆ بدە.", "by": "شلۆڤەکرن ژ لایێ", "eng": "VEX AI · بزوێنەرێ ساخلەمیێ", "pts": "{n} خاڵێن داتایان", "disc": "ئەڤ ڕاپۆرتە ل سەر بنیاتێ داتایێن VEX Band و تۆمارێن ناڤ ئەپێ هاتیە دروستکرن و دەستنیشانکرنا نەخۆشیێ (تشخیص) نینە. بۆ هەر بڕیارەکا پزیشکی، ڕاپۆرتێ نیشا نۆژدارێ خۆ بدە.", "pdf": "داگرتنا PDF", "pdfW": "ئامادەکرنا PDF…", "pdfOk": "PDF ئامادە بوو ✓", "pdfNo": "داگرتنا فایلان ل ڤێرە بەردەست نینە؛ لاپەڕێن ڕاپۆرتێ ل ڤێرە دبینی.", "pdfErr": "دروستکرنا PDF سەرنەکەفت؛ دووبارە هەوڵ بدە.", "pdfDec": "داگرتن هاتە هەڵوەشاندن", "pdfNote": "PDF ب قەبارێ A4 دهێتە ئامادەکرن و بۆ نیشادانا نۆژداری گونجایە.", "pv": "پێشدیتنا ڕاپۆرتێ", "pg": "لاپەڕە {a} ژ {b}", "back": "زڤڕین", "cn": {"diab": "شەکرە", "bp": "فشارا خوینێ", "chol": "کۆلیسترۆڵ", "heart": "نەخۆشیا دلی", "kid": "نەخۆشیا گورچیلێ", "gout": "نیقرس", "gerd": "ڕیفلاکس", "preg": "دووگیانی", "bf": "شیردان", "asth": "ڕەبۆ", "thy": "تیرۆید"}, "sync": "هاوکاتکرنا Band", "syncing": "هاوکاتکرن…", "lastSync": "دوماهیک هاوکاتکرن: {t}", "synced": "هاتە هاوکاتکرن ✓", "bp": "فشارا خوینێ (خەمڵاندن)", "br": "ڕێژا هەناسێ", "rhr": "لێدانا دلێ ئارام", "irr": "{n} تۆمارێن نەڕێک", "rhIrr": "نەڕێکی دهێتە دیتن", "ecgIrr": "د {n} تۆماران دا لێدانا نەڕێک هاتە دیتن؛ ڤێ ڕاپۆرتێ نیشا نۆژدارێ خۆ بدە.", "g_bp": "فشارا خوینێ", "sub": "پشکنینا گشتی و شلۆڤەکرن · PDF", "share": "ڕاپۆرتا گشتی یا VEX Health"}, "en": {"dir": "ltr", "t": "General Report", "doc": "General Health Report", "per": "Period: last 30 days", "iss": "Issued", "nm": "Name", "age": "Age / Sex", "ht": "Height", "wt": "Weight", "src": "Source", "m": "Male", "f": "Female", "yrs": "yrs", "srcB": "VEX Band + app", "srcA": "App records", "conds": "Health conditions", "cvB": "{n} days of Band data", "cvBo": "Band not connected", "cvF": "{n} food days", "cvE": "{n} ECG recordings", "cvW": "{n} weigh-ins", "score": "Overall score", "lv": ["Excellent", "Good", "Fair", "Needs attention"], "dUp": "Up from {a} to {b}", "dDn": "Down from {a} to {b}", "dEq": "Same as last report", "dNew": "Your first report", "va": "Body age (VitalAge)", "vaLock": "Needs {n} complete days of Band data", "vaBand": "Requires VEX Band", "nights": "days", "vaY": "{n} years younger than your age", "vaO": "{n} years older than your age", "vaE": "Same as your age", "s1": "Vital signs", "s2": "Heart & ECG", "s3": "Sleep", "s4": "Nutrition & water", "s5": "Activity & weight", "s6": "Risk assessment", "s7": "Summary", "s8": "Recommendations (by priority)", "thT": "Test", "thR": "Result", "thN": "Normal", "thS": "Status", "hr": "Heart rate (avg)", "hrr": "Lowest – highest rate", "hrv": "HRV (heart rate variability)", "sp": "Blood oxygen SpO₂", "spl": "Lowest SpO₂", "tp": "Skin temperature", "st": "Stress", "sl": "Sleep duration", "stp": "Daily steps", "ok": "Normal", "hi": "High ↑", "lo": "Low ↓", "mid": "Moderate", "na": "Not connected", "nod": "No data", "good": "Good", "much": "High ↑", "inf": "Info", "bandOff": "VEX Band is not connected, so Band measurements are not in this report. Connect and sync your Band.", "bandDays": "{n} days", "rh": "Heart rhythm", "rhOk": "Regular rhythm", "rec": "Recordings", "recN": "{n} recordings · 0 irregular", "lhr": "Average rate (latest)", "q": "Signal quality", "lst": "Latest recording", "ecgOk": "Heart rhythm was regular in every recording, with no signs of an irregular heartbeat.", "ecgNo": "No ECG measurements yet. Take a 30-second measurement in the ECG section and it will appear here.", "sla": "Average sleep", "eff": "Sleep efficiency", "ln": "Last night", "dp": "Deep", "rm": "REM", "lt": "Light", "aw": "Awake", "debt": "Sleep debt: about {h} hours per week.", "slOk": "Your average sleep is within the recommended range (7–9 hours).", "thE": "Nutrient", "thD": "Daily avg", "thG": "Target", "kc": "Calories", "pr": "Protein", "cb": "Carbs", "ft": "Fat", "fb": "Fiber", "sg": "Sugar", "sa": "Salt", "wa": "Water", "fdays": "Based on {n} logged days in the last 30 days", "fnone": "No food logged yet. Log your meals in the Food section to fill this part.", "am": "Active minutes / week", "wo": "Workouts (30 days)", "bn": "Calories burned (workouts)", "wc": "Weight change", "bt": "BMR / TDEE", "one": "One weigh-in", "rc": "Heart & circulation", "rmt": "Metabolism & weight", "rs": "Sleep & fatigue", "ra": "Inactivity", "low": "Low", "mod": "Moderate", "high": "High", "sIn": "Overall status: {lvl} — score {s} of 100.", "sGood": "Doing well: {x}.", "sAtt": "Needs attention: {x}.", "sAll": "Nothing needs attention right now; keep it up.", "and": " and ", "sep": ", ", "g": {"hr": "heart rate", "sp": "blood oxygen", "ecg": "heart rhythm (ECG)", "sl": "sleep", "st": "stress", "stp": "activity", "kc": "calories", "pr": "protein", "fb": "fiber", "sg": "sugar", "sa": "salt", "wa": "water", "bmi": "weight (BMI)", "tp": "temperature"}, "r": {"salt": "Keep salt under 5 g a day; cut down on pickles, salty cheese and processed food.", "sleep": "Set a fixed bedtime and sleep at least 7 hours a night.", "stress": "Take 5 minutes of deep breathing 2–3 times a day and short breaks from screens.", "prot": "Eat about {n} g more protein a day: eggs, yogurt, lentils, chicken or fish.", "fib": "Add fiber: vegetables with every meal and whole-grain bread instead of white bread.", "water": "Drink about {n} more glasses of water a day.", "steps": "Walk about {n} more steps a day; a 10-minute walk after meals helps.", "sug": "Cut sugar: make sweet drinks and desserts occasional rather than daily.", "kcalHi": "Your daily calories are above target; reduce portion sizes and snacks.", "kcalLo": "Your daily calories are well below target; make meals fuller with protein and whole grains.", "bmi": "Losing weight gradually (about 0.5 kg a week) benefits your heart and blood sugar.", "ecg": "Take at least one ECG measurement a month to track your heart rhythm.", "food": "Log your meals in the Food section for a more accurate nutrition analysis.", "band": "Connect VEX Band so heart rate, sleep, oxygen and stress are included in the report.", "keep": "Your measurements look good; keep the same routine and generate a new report next month."}, "docT": "When to see a doctor", "docX": "See a doctor right away if you feel chest pain or tightness, dizziness, shortness of breath or an irregular heartbeat, or if your blood oxygen stays below 92%.", "docC": "Because of ({x}), show this report to your doctor at your next visit.", "by": "Analysis by", "eng": "VEX AI · Health engine", "pts": "{n} data points", "disc": "This report is generated from VEX Band data and records in the app. It is not a medical diagnosis. For any medical decision, show this report to your doctor.", "pdf": "Download PDF", "pdfW": "Preparing PDF…", "pdfOk": "PDF ready ✓", "pdfNo": "File download is not available here; you can view the report pages below.", "pdfErr": "Could not create the PDF; please try again.", "pdfDec": "Download cancelled", "pdfNote": "The PDF is A4 sized and ready to show your doctor.", "pv": "Report preview", "pg": "Page {a} of {b}", "back": "Back", "cn": {"diab": "Diabetes", "bp": "High blood pressure", "chol": "Cholesterol", "heart": "Heart disease", "kid": "Kidney disease", "gout": "Gout", "gerd": "Reflux", "preg": "Pregnancy", "bf": "Breastfeeding", "asth": "Asthma", "thy": "Thyroid"}, "sync": "Sync Band", "syncing": "Syncing…", "lastSync": "Last sync: {t}", "synced": "Synced ✓", "bp": "Blood pressure (estimate)", "br": "Breathing rate", "rhr": "Resting heart rate", "irr": "{n} irregular recordings", "rhIrr": "Irregularity seen", "ecgIrr": "An irregular heartbeat was seen in {n} recordings; show this report to your doctor.", "g_bp": "blood pressure", "sub": "Full check-up & analysis · PDF", "share": "VEX Health General Report"}, "ar": {"dir": "rtl", "t": "التقرير العام", "doc": "التقرير الصحي العام", "per": "المدة: آخر 30 يومًا", "iss": "تاريخ الإصدار", "nm": "الاسم", "age": "العمر / الجنس", "ht": "الطول", "wt": "الوزن", "src": "المصدر", "m": "ذكر", "f": "أنثى", "yrs": "سنة", "srcB": "التطبيق و \u2068VEX Band\u2069", "srcA": "سجلات التطبيق", "conds": "الحالة الصحية", "cvB": "{n} أيام من بيانات السوار", "cvBo": "السوار غير متصل", "cvF": "{n} أيام طعام", "cvE": "{n} تسجيلات ECG", "cvW": "{n} قياسات وزن", "score": "النتيجة العامة", "lv": ["ممتاز", "جيد", "متوسط", "يحتاج إلى اهتمام"], "dUp": "ارتفعت من {a} إلى {b}", "dDn": "انخفضت من {a} إلى {b}", "dEq": "مثل التقرير السابق", "dNew": "تقريرك الأول", "va": "عمر الجسم (VitalAge)", "vaLock": "يحتاج إلى {n} يومًا من بيانات السوار الكاملة", "vaBand": "يتطلب سوار VEX Band", "nights": "أيام", "vaY": "أصغر من عمرك بـ {n} سنوات", "vaO": "أكبر من عمرك بـ {n} سنوات", "vaE": "مطابق لعمرك", "s1": "العلامات الحيوية", "s2": "القلب وتخطيط القلب", "s3": "النوم", "s4": "التغذية والماء", "s5": "النشاط والوزن", "s6": "تقييم المخاطر", "s7": "ملخص التحليل", "s8": "التوصيات (حسب الأولوية)", "thT": "الفحص", "thR": "النتيجة", "thN": "الطبيعي", "thS": "الحالة", "hr": "نبض القلب (المتوسط)", "hrr": "أدنى – أعلى نبض", "hrv": "تقلب نبض القلب HRV", "sp": "أكسجين الدم SpO₂", "spl": "أدنى SpO₂", "tp": "حرارة الجلد", "st": "التوتر", "sl": "مدة النوم", "stp": "الخطوات اليومية", "ok": "طبيعي", "hi": "مرتفع ↑", "lo": "منخفض ↓", "mid": "متوسط", "na": "غير متصل", "nod": "لا بيانات", "good": "جيد", "much": "مرتفع ↑", "inf": "معلومة", "bandOff": "سوار VEX Band غير متصل، لذلك لا تظهر قياساته في هذا التقرير. قم بتوصيله ومزامنته.", "bandDays": "{n} أيام", "rh": "نظم القلب", "rhOk": "نظم منتظم", "rec": "التسجيلات", "recN": "{n} تسجيلات · 0 غير منتظم", "lhr": "متوسط النبض (الأخير)", "q": "جودة الإشارة", "lst": "آخر تسجيل", "ecgOk": "كان نظم القلب منتظمًا في جميع التسجيلات، ولم تظهر أي علامة على عدم انتظام الضربات.", "ecgNo": "لا توجد قياسات ECG بعد. قم بقياس لمدة 30 ثانية من قسم ECG ليظهر هنا.", "sla": "متوسط النوم", "eff": "كفاءة النوم", "ln": "آخر ليلة", "dp": "عميق", "rm": "REM", "lt": "خفيف", "aw": "استيقاظ", "debt": "دَين النوم: حوالي {h} ساعات أسبوعيًا.", "slOk": "متوسط نومك ضمن المدى الموصى به (7–9 ساعات).", "thE": "العنصر", "thD": "متوسط اليوم", "thG": "الهدف", "kc": "السعرات", "pr": "البروتين", "cb": "الكربوهيدرات", "ft": "الدهون", "fb": "الألياف", "sg": "السكر", "sa": "الملح", "wa": "الماء", "fdays": "بناءً على {n} أيام مسجلة خلال آخر 30 يومًا", "fnone": "لم يُسجَّل أي طعام بعد. سجّل وجباتك من قسم الطعام ليمتلئ هذا الجزء.", "am": "دقائق النشاط / أسبوع", "wo": "التمارين (30 يومًا)", "bn": "السعرات المحروقة (تمارين)", "wc": "تغيّر الوزن", "bt": "BMR / TDEE", "one": "قياس واحد", "rc": "القلب والدورة الدموية", "rmt": "الأيض والوزن", "rs": "النوم والإرهاق", "ra": "قلة الحركة", "low": "منخفض", "mod": "متوسط", "high": "مرتفع", "sIn": "الحالة العامة: {lvl} — النتيجة {s} من 100.", "sGood": "جوانب جيدة: {x}.", "sAtt": "جوانب تحتاج إلى اهتمام: {x}.", "sAll": "لا توجد جوانب تحتاج إلى اهتمام حاليًا؛ استمر على هذا النحو.", "and": " و", "sep": "، ", "g": {"hr": "نبض القلب", "sp": "أكسجين الدم", "ecg": "نظم القلب (ECG)", "sl": "النوم", "st": "التوتر", "stp": "النشاط", "kc": "السعرات", "pr": "البروتين", "fb": "الألياف", "sg": "السكر", "sa": "الملح", "wa": "الماء", "bmi": "الوزن (BMI)", "tp": "الحرارة"}, "r": {"salt": "اجعل الملح أقل من 5 غرامات يوميًا؛ قلّل المخللات والأجبان المالحة والأطعمة الجاهزة.", "sleep": "حدّد موعدًا ثابتًا للنوم ونَم 7 ساعات على الأقل كل ليلة.", "stress": "خذ 5 دقائق من التنفس العميق 2–3 مرات يوميًا واستراحات قصيرة بعيدًا عن الشاشات.", "prot": "تناول حوالي {n} غرامًا إضافيًا من البروتين يوميًا: بيض، لبن، عدس، دجاج أو سمك.", "fib": "زِد الألياف: خضار مع كل وجبة وخبز أسمر بدل الخبز الأبيض.", "water": "اشرب حوالي {n} أكواب إضافية من الماء يوميًا.", "steps": "امشِ حوالي {n} خطوة إضافية يوميًا؛ المشي 10 دقائق بعد الأكل مفيد.", "sug": "قلّل السكر: اجعل المشروبات المحلاة والحلويات من حين لآخر بدل كل يوم.", "kcalHi": "سعراتك اليومية أعلى من الهدف؛ قلّل حجم الحصص والوجبات الخفيفة.", "kcalLo": "سعراتك اليومية أقل بكثير من الهدف؛ اجعل وجباتك أغنى بالبروتين والحبوب الكاملة.", "bmi": "إنقاص الوزن تدريجيًا (حوالي 0.5 كغ أسبوعيًا) مفيد للقلب وسكر الدم.", "ecg": "قم بقياس ECG مرة واحدة على الأقل شهريًا لمتابعة نظم القلب.", "food": "سجّل وجباتك في قسم الطعام ليصبح تحليل التغذية أدق.", "band": "وصّل سوار VEX Band ليشمل التقرير نبض القلب والنوم والأكسجين والتوتر.", "keep": "قياساتك جيدة؛ استمر على نفس نمط الحياة وأنشئ تقريرًا جديدًا الشهر القادم."}, "docT": "متى تراجع الطبيب؟", "docX": "راجع الطبيب فورًا إذا شعرت بألم أو ضيق في الصدر، أو دوخة، أو ضيق تنفس، أو خفقان غير منتظم، أو إذا بقي أكسجين الدم أقل من 92%.", "docC": "بسبب ({x})، اعرض هذا التقرير على طبيبك في زيارتك القادمة.", "by": "تحليل بواسطة", "eng": "VEX AI · محرك الصحة", "pts": "{n} نقطة بيانات", "disc": "أُعدّ هذا التقرير من بيانات VEX Band وسجلات التطبيق، وهو ليس تشخيصًا طبيًا. لأي قرار طبي، اعرض التقرير على طبيبك.", "pdf": "تنزيل PDF", "pdfW": "جارٍ تجهيز PDF…", "pdfOk": "ملف PDF جاهز ✓", "pdfNo": "تنزيل الملفات غير متاح هنا؛ يمكنك عرض صفحات التقرير أدناه.", "pdfErr": "تعذّر إنشاء PDF؛ حاول مرة أخرى.", "pdfDec": "أُلغي التنزيل", "pdfNote": "يُجهَّز ملف PDF بحجم A4 وهو مناسب لعرضه على الطبيب.", "pv": "معاينة التقرير", "pg": "صفحة {a} من {b}", "back": "رجوع", "cn": {"diab": "السكري", "bp": "ضغط الدم", "chol": "الكوليسترول", "heart": "أمراض القلب", "kid": "أمراض الكلى", "gout": "النقرس", "gerd": "الارتجاع", "preg": "الحمل", "bf": "الرضاعة", "asth": "الربو", "thy": "الغدة الدرقية"}, "sync": "مزامنة السوار", "syncing": "جارٍ المزامنة…", "lastSync": "آخر مزامنة: {t}", "synced": "تمت المزامنة ✓", "bp": "ضغط الدم (تقديري)", "br": "معدل التنفس", "rhr": "نبض الراحة", "irr": "{n} تسجيلات غير منتظمة", "rhIrr": "لوحظ عدم انتظام", "ecgIrr": "لوحظ نبض غير منتظم في {n} تسجيلات؛ اعرض هذا التقرير على طبيبك.", "g_bp": "ضغط الدم", "sub": "فحص شامل وتحليل · PDF", "share": "التقرير العام من VEX Health"}, "fa": {"dir": "rtl", "t": "گزارش کلی", "doc": "گزارش کلی سلامت", "per": "بازه: 30 روز گذشته", "iss": "تاریخ صدور", "nm": "نام", "age": "سن / جنسیت", "ht": "قد", "wt": "وزن", "src": "منبع", "m": "مرد", "f": "زن", "yrs": "سال", "srcB": "اپ و \u2068VEX Band\u2069", "srcA": "ثبت‌های اپ", "conds": "وضعیت سلامت", "cvB": "{n} روز داده Band", "cvBo": "Band متصل نیست", "cvF": "{n} روز غذا", "cvE": "{n} ثبت ECG", "cvW": "{n} وزن‌کشی", "score": "امتیاز کلی", "lv": ["عالی", "خوب", "متوسط", "نیازمند توجه"], "dUp": "از {a} به {b} افزایش یافته", "dDn": "از {a} به {b} کاهش یافته", "dEq": "مانند گزارش قبلی", "dNew": "نخستین گزارش شما", "va": "سن بدن (VitalAge)", "vaLock": "به {n} روز داده کامل Band نیاز دارد", "vaBand": "به VEX Band نیاز دارد", "nights": "روز", "vaY": "{n} سال جوان‌تر از سن شما", "vaO": "{n} سال مسن‌تر از سن شما", "vaE": "برابر با سن شما", "s1": "علائم حیاتی", "s2": "قلب و ECG", "s3": "خواب", "s4": "تغذیه و آب", "s5": "فعالیت و وزن", "s6": "ارزیابی خطر", "s7": "خلاصه تحلیل", "s8": "توصیه‌ها (به ترتیب اهمیت)", "thT": "آزمایش", "thR": "نتیجه", "thN": "طبیعی", "thS": "وضعیت", "hr": "ضربان قلب (میانگین)", "hrr": "کمترین – بیشترین ضربان", "hrv": "HRV (تغییرپذیری ضربان)", "sp": "اکسیژن خون SpO₂", "spl": "کمترین SpO₂", "tp": "دمای پوست", "st": "استرس", "sl": "مدت خواب", "stp": "قدم روزانه", "ok": "طبیعی", "hi": "بالا ↑", "lo": "پایین ↓", "mid": "متوسط", "na": "متصل نیست", "nod": "بدون داده", "good": "خوب", "much": "زیاد ↑", "inf": "اطلاعات", "bandOff": "VEX Band متصل نیست، بنابراین اندازه‌گیری‌های آن در این گزارش نیست. Band خود را متصل و همگام کنید.", "bandDays": "{n} روز", "rh": "ریتم قلب", "rhOk": "ریتم منظم", "rec": "ثبت‌ها", "recN": "{n} ثبت · 0 نامنظم", "lhr": "میانگین ضربان (آخرین)", "q": "کیفیت سیگنال", "lst": "آخرین ثبت", "ecgOk": "در همه ثبت‌ها ریتم قلب منظم بود و هیچ نشانه‌ای از ضربان نامنظم دیده نشد.", "ecgNo": "هنوز اندازه‌گیری ECG ندارید. از بخش ECG یک اندازه‌گیری 30 ثانیه‌ای انجام دهید تا اینجا نمایش داده شود.", "sla": "میانگین خواب", "eff": "بازده خواب", "ln": "شب گذشته", "dp": "عمیق", "rm": "REM", "lt": "سبک", "aw": "بیدار", "debt": "کمبود خواب: حدود {h} ساعت در هفته.", "slOk": "میانگین خواب شما در محدوده توصیه‌شده است (7–9 ساعت).", "thE": "ماده", "thD": "میانگین روزانه", "thG": "هدف", "kc": "کالری", "pr": "پروتئین", "cb": "کربوهیدرات", "ft": "چربی", "fb": "فیبر", "sg": "قند", "sa": "نمک", "wa": "آب", "fdays": "بر اساس {n} روز ثبت‌شده در 30 روز گذشته", "fnone": "هنوز غذایی ثبت نشده است. وعده‌های خود را در بخش غذا ثبت کنید تا این بخش پر شود.", "am": "دقیقه فعال / هفته", "wo": "تمرین‌ها (30 روز)", "bn": "کالری سوزانده (تمرین)", "wc": "تغییر وزن", "bt": "BMR / TDEE", "one": "یک وزن‌کشی", "rc": "قلب و گردش خون", "rmt": "متابولیسم و وزن", "rs": "خواب و خستگی", "ra": "کم‌تحرکی", "low": "پایین", "mod": "متوسط", "high": "بالا", "sIn": "وضعیت کلی: {lvl} — امتیاز {s} از 100.", "sGood": "موارد خوب: {x}.", "sAtt": "موارد نیازمند توجه: {x}.", "sAll": "در حال حاضر موردی نیازمند توجه نیست؛ همین‌طور ادامه دهید.", "and": " و ", "sep": "، ", "g": {"hr": "ضربان قلب", "sp": "اکسیژن خون", "ecg": "ریتم قلب (ECG)", "sl": "خواب", "st": "استرس", "stp": "فعالیت", "kc": "کالری", "pr": "پروتئین", "fb": "فیبر", "sg": "قند", "sa": "نمک", "wa": "آب", "bmi": "وزن (BMI)", "tp": "دما"}, "r": {"salt": "نمک را زیر 5 گرم در روز نگه دارید؛ ترشی، پنیر شور و غذاهای آماده را کم کنید.", "sleep": "ساعت ثابتی برای خواب تعیین کنید و هر شب دست‌کم 7 ساعت بخوابید.", "stress": "روزانه 2–3 بار 5 دقیقه تنفس عمیق انجام دهید و از صفحه‌نمایش استراحت‌های کوتاه بگیرید.", "prot": "روزانه حدود {n} گرم پروتئین بیشتر بخورید: تخم‌مرغ، ماست، عدس، مرغ یا ماهی.", "fib": "فیبر را افزایش دهید: سبزی در هر وعده و نان سبوس‌دار به جای نان سفید.", "water": "روزانه حدود {n} لیوان آب بیشتر بنوشید.", "steps": "روزانه حدود {n} قدم بیشتر راه بروید؛ 10 دقیقه پیاده‌روی پس از غذا کمک می‌کند.", "sug": "قند را کم کنید: نوشیدنی‌های شیرین و شیرینی را به جای هر روز، گاه‌به‌گاه مصرف کنید.", "kcalHi": "کالری روزانه شما بیشتر از هدف است؛ اندازه وعده‌ها و میان‌وعده‌ها را کم کنید.", "kcalLo": "کالری روزانه شما بسیار کمتر از هدف است؛ وعده‌ها را با پروتئین و غلات کامل کامل‌تر کنید.", "bmi": "کاهش تدریجی وزن (حدود 0.5 کیلو در هفته) برای قلب و قند خون مفید است.", "ecg": "دست‌کم ماهی یک بار ECG بگیرید تا ریتم قلب را پیگیری کنید.", "food": "وعده‌های خود را در بخش غذا ثبت کنید تا تحلیل تغذیه دقیق‌تر شود.", "band": "VEX Band را متصل کنید تا ضربان قلب، خواب، اکسیژن و استرس در گزارش بیایند.", "keep": "شاخص‌های شما خوب است؛ همین سبک زندگی را ادامه دهید و ماه آینده گزارش تازه بگیرید."}, "docT": "چه زمانی به پزشک مراجعه کنید؟", "docX": "اگر درد یا فشار قفسه سینه، سرگیجه، تنگی نفس یا ضربان نامنظم احساس کردید، یا اکسیژن خون شما مدام زیر 92% بود، فوراً به پزشک مراجعه کنید.", "docC": "به دلیل ({x})، این گزارش را در مراجعه بعدی به پزشک خود نشان دهید.", "by": "تحلیل توسط", "eng": "VEX AI · موتور سلامت", "pts": "{n} داده", "disc": "این گزارش بر پایه داده‌های VEX Band و ثبت‌های داخل اپ تهیه شده و تشخیص پزشکی نیست. برای هر تصمیم پزشکی، گزارش را به پزشک خود نشان دهید.", "pdf": "دانلود PDF", "pdfW": "در حال آماده‌سازی PDF…", "pdfOk": "PDF آماده شد ✓", "pdfNo": "دانلود فایل اینجا در دسترس نیست؛ صفحه‌های گزارش را در زیر می‌بینید.", "pdfErr": "ساخت PDF ناموفق بود؛ دوباره تلاش کنید.", "pdfDec": "دانلود لغو شد", "pdfNote": "PDF در اندازه A4 آماده می‌شود و برای نشان دادن به پزشک مناسب است.", "pv": "پیش‌نمایش گزارش", "pg": "صفحه {a} از {b}", "back": "بازگشت", "cn": {"diab": "دیابت", "bp": "فشار خون", "chol": "کلسترول", "heart": "بیماری قلبی", "kid": "بیماری کلیه", "gout": "نقرس", "gerd": "ریفلاکس", "preg": "بارداری", "bf": "شیردهی", "asth": "آسم", "thy": "تیروئید"}, "sync": "همگام‌سازی Band", "syncing": "در حال همگام‌سازی…", "lastSync": "آخرین همگام‌سازی: {t}", "synced": "همگام شد ✓", "bp": "فشار خون (تخمینی)", "br": "تعداد تنفس", "rhr": "ضربان استراحت", "irr": "{n} ثبت نامنظم", "rhIrr": "نامنظمی دیده شد", "ecgIrr": "در {n} ثبت ضربان نامنظم دیده شد؛ این گزارش را به پزشک خود نشان دهید.", "g_bp": "فشار خون", "sub": "بررسی کامل و تحلیل · PDF", "share": "گزارش کلی VEX Health"}, "tr": {"dir": "ltr", "t": "Genel Rapor", "doc": "Genel Sağlık Raporu", "per": "Dönem: son 30 gün", "iss": "Düzenlenme", "nm": "Ad", "age": "Yaş / Cinsiyet", "ht": "Boy", "wt": "Kilo", "src": "Kaynak", "m": "Erkek", "f": "Kadın", "yrs": "yaş", "srcB": "VEX Band + uygulama", "srcA": "Uygulama kayıtları", "conds": "Sağlık durumları", "cvB": "{n} gün Band verisi", "cvBo": "Band bağlı değil", "cvF": "{n} gün yemek", "cvE": "{n} EKG kaydı", "cvW": "{n} tartı", "score": "Genel puan", "lv": ["Mükemmel", "İyi", "Orta", "Dikkat gerektiriyor"], "dUp": "{a} puandan {b} puana yükseldi", "dDn": "{a} puandan {b} puana düştü", "dEq": "Önceki raporla aynı", "dNew": "İlk raporun", "va": "Vücut yaşı (VitalAge)", "vaLock": "{n} günlük tam Band verisi gerekiyor", "vaBand": "VEX Band gerekiyor", "nights": "gün", "vaY": "Yaşından {n} yıl genç", "vaO": "Yaşından {n} yıl büyük", "vaE": "Yaşınla aynı", "s1": "Yaşamsal bulgular", "s2": "Kalp ve EKG", "s3": "Uyku", "s4": "Beslenme ve su", "s5": "Aktivite ve kilo", "s6": "Risk değerlendirmesi", "s7": "Özet", "s8": "Öneriler (önem sırasına göre)", "thT": "Ölçüm", "thR": "Sonuç", "thN": "Normal", "thS": "Durum", "hr": "Nabız (ortalama)", "hrr": "En düşük – en yüksek nabız", "hrv": "HRV (kalp hızı değişkenliği)", "sp": "Kan oksijeni SpO₂", "spl": "En düşük SpO₂", "tp": "Cilt sıcaklığı", "st": "Stres", "sl": "Uyku süresi", "stp": "Günlük adım", "ok": "Normal", "hi": "Yüksek ↑", "lo": "Düşük ↓", "mid": "Orta", "na": "Bağlı değil", "nod": "Veri yok", "good": "İyi", "much": "Fazla ↑", "inf": "Bilgi", "bandOff": "VEX Band bağlı değil, bu yüzden Band ölçümleri bu raporda yok. Band'ini bağla ve senkronize et.", "bandDays": "{n} gün", "rh": "Kalp ritmi", "rhOk": "Düzenli ritim", "rec": "Kayıtlar", "recN": "{n} kayıt · 0 düzensiz", "lhr": "Ortalama nabız (son)", "q": "Sinyal kalitesi", "lst": "Son kayıt", "ecgOk": "Tüm kayıtlarda kalp ritmi düzenliydi; düzensiz kalp atışına dair bir işaret görülmedi.", "ecgNo": "Henüz EKG ölçümün yok. EKG bölümünden 30 saniyelik bir ölçüm yap, burada görünsün.", "sla": "Ortalama uyku", "eff": "Uyku verimi", "ln": "Son gece", "dp": "Derin", "rm": "REM", "lt": "Hafif", "aw": "Uyanık", "debt": "Uyku borcu: haftada yaklaşık {h} saat.", "slOk": "Ortalama uykun önerilen aralıkta (7–9 saat).", "thE": "Besin", "thD": "Günlük ort.", "thG": "Hedef", "kc": "Kalori", "pr": "Protein", "cb": "Karbonhidrat", "ft": "Yağ", "fb": "Lif", "sg": "Şeker", "sa": "Tuz", "wa": "Su", "fdays": "Son 30 gündeki {n} kayıtlı güne göre", "fnone": "Henüz yemek kaydı yok. Bu bölümü doldurmak için öğünlerini Yemek bölümünden kaydet.", "am": "Aktif dakika / hafta", "wo": "Antrenman (30 gün)", "bn": "Yakılan kalori (antrenman)", "wc": "Kilo değişimi", "bt": "BMR / TDEE", "one": "Tek tartı", "rc": "Kalp ve dolaşım", "rmt": "Metabolizma ve kilo", "rs": "Uyku ve yorgunluk", "ra": "Hareketsizlik", "low": "Düşük", "mod": "Orta", "high": "Yüksek", "sIn": "Genel durum: {lvl} — 100 üzerinden {s} puan.", "sGood": "İyi gidenler: {x}.", "sAtt": "Dikkat gerektirenler: {x}.", "sAll": "Şu an dikkat gerektiren bir şey yok; böyle devam et.", "and": " ve ", "sep": ", ", "g": {"hr": "nabız", "sp": "kan oksijeni", "ecg": "kalp ritmi (EKG)", "sl": "uyku", "st": "stres", "stp": "aktivite", "kc": "kalori", "pr": "protein", "fb": "lif", "sg": "şeker", "sa": "tuz", "wa": "su", "bmi": "kilo (BMI)", "tp": "sıcaklık"}, "r": {"salt": "Tuzu günde 5 gramın altında tut; turşu, tuzlu peynir ve hazır gıdaları azalt.", "sleep": "Sabit bir yatma saati belirle ve her gece en az 7 saat uyu.", "stress": "Günde 2–3 kez 5 dakika derin nefes al ve ekrandan kısa molalar ver.", "prot": "Günde yaklaşık {n} g daha fazla protein ye: yumurta, yoğurt, mercimek, tavuk ya da balık.", "fib": "Lifi artır: her öğünde sebze ve beyaz ekmek yerine tam tahıllı ekmek.", "water": "Günde yaklaşık {n} bardak daha fazla su iç.", "steps": "Günde yaklaşık {n} adım daha fazla yürü; yemekten sonra 10 dakikalık yürüyüş işe yarar.", "sug": "Şekeri azalt: şekerli içecekleri ve tatlıları her gün yerine ara sıra tüket.", "kcalHi": "Günlük kalorin hedefin üzerinde; porsiyonları ve atıştırmalıkları azalt.", "kcalLo": "Günlük kalorin hedefin çok altında; öğünlerini protein ve tam tahıllarla zenginleştir.", "bmi": "Kademeli kilo vermek (haftada yaklaşık 0,5 kg) kalbine ve kan şekerine iyi gelir.", "ecg": "Kalp ritmini izlemek için ayda en az bir EKG ölçümü yap.", "food": "Daha doğru bir beslenme analizi için öğünlerini Yemek bölümüne kaydet.", "band": "Nabız, uyku, oksijen ve stresin rapora girmesi için VEX Band'i bağla.", "keep": "Ölçümlerin iyi görünüyor; aynı düzene devam et ve gelecek ay yeni bir rapor oluştur."}, "docT": "Ne zaman doktora gitmeli?", "docX": "Göğüs ağrısı veya sıkışma, baş dönmesi, nefes darlığı ya da düzensiz kalp atışı hissedersen veya kan oksijenin sürekli %92'nin altındaysa hemen doktora git.", "docC": "({x}) nedeniyle bu raporu bir sonraki ziyaretinde doktoruna göster.", "by": "Analiz", "eng": "VEX AI · Sağlık motoru", "pts": "{n} veri noktası", "disc": "Bu rapor VEX Band verilerinden ve uygulamadaki kayıtlardan oluşturulmuştur; tıbbi bir teşhis değildir. Her tıbbi karar için raporu doktoruna göster.", "pdf": "PDF indir", "pdfW": "PDF hazırlanıyor…", "pdfOk": "PDF hazır ✓", "pdfNo": "Burada dosya indirme kullanılamıyor; rapor sayfalarını aşağıda görebilirsin.", "pdfErr": "PDF oluşturulamadı; lütfen tekrar dene.", "pdfDec": "İndirme iptal edildi", "pdfNote": "PDF A4 boyutunda hazırlanır ve doktoruna göstermeye uygundur.", "pv": "Rapor önizlemesi", "pg": "Sayfa {a} / {b}", "back": "Geri", "cn": {"diab": "Diyabet", "bp": "Yüksek tansiyon", "chol": "Kolesterol", "heart": "Kalp hastalığı", "kid": "Böbrek hastalığı", "gout": "Gut", "gerd": "Reflü", "preg": "Gebelik", "bf": "Emzirme", "asth": "Astım", "thy": "Tiroid"}, "sync": "Band'i senkronize et", "syncing": "Senkronize ediliyor…", "lastSync": "Son senkronizasyon: {t}", "synced": "Senkronize edildi ✓", "bp": "Tansiyon (tahmini)", "br": "Solunum hızı", "rhr": "Dinlenik nabız", "irr": "{n} düzensiz kayıt", "rhIrr": "Düzensizlik görüldü", "ecgIrr": "{n} kayıtta düzensiz kalp atışı görüldü; bu raporu doktoruna göster.", "g_bp": "tansiyon", "sub": "Genel kontrol ve analiz · PDF", "share": "VEX Health Genel Rapor"}};
+const Map<String, dynamic> _kTX = {"ckb": {"dir": "rtl", "t": "ڕاپۆرتی گشتی", "doc": "ڕاپۆرتی گشتیی تەندروستی", "per": "ماوە: 30 ڕۆژی ڕابردوو", "iss": "دەرچوون", "nm": "ناو", "age": "تەمەن / ڕەگەز", "ht": "باڵا", "wt": "کێش", "src": "سەرچاوە", "m": "نێر", "f": "مێ", "yrs": "ساڵ", "srcB": "ئەپ و \u2068VEX Band\u2069", "srcA": "تۆمارەکانی ئەپ", "conds": "دۆخی تەندروستی", "cvB": "{n} ڕۆژ داتای Band", "cvBo": "Band پەیوەست نییە", "cvF": "{n} ڕۆژ خواردن", "cvE": "{n} تۆماری ECG", "cvW": "{n} پێوانەی کێش", "score": "نمرەی گشتی", "lv": ["زۆر باش", "باش", "مامناوەند", "پێویستی بە سەرنجە"], "dUp": "لە {a} بۆ {b} بەرز بووەتەوە", "dDn": "لە {a} بۆ {b} دابەزیوە", "dEq": "وەک ڕاپۆرتی پێشوو", "dNew": "یەکەم ڕاپۆرتی تۆ", "va": "تەمەنی لەش (VitalAge)", "vaLock": "پێویستی بە {n} ڕۆژ داتای تەواوی Band هەیە", "vaBand": "پێویستی بە VEX Band هەیە", "nights": "ڕۆژ", "vaY": "{n} ساڵ گەنجتر لە تەمەنت", "vaO": "{n} ساڵ گەورەتر لە تەمەنت", "vaE": "هاوتای تەمەنی خۆتە", "s1": "نیشانە ژیانییەکان", "s2": "دڵ و ECG", "s3": "خەو", "s4": "خۆراک و ئاو", "s5": "جووڵە و کێش", "s6": "هەڵسەنگاندنی مەترسی", "s7": "پوختەی شیکاری", "s8": "ڕاسپاردەکان (بە ڕیزی گرنگی)", "thT": "پشکنین", "thR": "ئەنجام", "thN": "ئاسایی", "thS": "دۆخ", "hr": "لێدانی دڵ (تێکڕا)", "hrr": "کەمترین – زۆرترین لێدان", "hrv": "HRV (گۆڕانی لێدان)", "sp": "ئۆکسجینی خوێن SpO₂", "spl": "نزمترین SpO₂", "tp": "پلەی گەرمی پێست", "st": "فشاری دەروونی", "sl": "کاتی خەو", "stp": "هەنگاوی ڕۆژانە", "ok": "ئاسایی", "hi": "بەرز ↑", "lo": "کەم ↓", "mid": "مامناوەند", "na": "پەیوەست نییە", "nod": "داتا نییە", "good": "باش", "much": "زۆر ↑", "inf": "زانیاری", "bandOff": "VEX Band پەیوەست نییە، بۆیە پێوانەکانی Band لەم ڕاپۆرتەدا نین. Band ـەکەت پەیوەست بکە و هاوکاتی بکە.", "bandDays": "{n} ڕۆژ", "rh": "ڕیتمی دڵ", "rhOk": "ڕیتمی ڕێک", "rec": "تۆمارەکان", "recN": "{n} تۆمار · 0 ناڕێک", "lhr": "تێکڕای لێدان (دوایین)", "q": "کوالیتیی ئاماژە", "lst": "دوایین تۆمار", "ecgOk": "لە هەموو تۆمارەکاندا ڕیتمی دڵ ڕێک بووە و هیچ نیشانەیەکی لێدانی ناڕێک نەبینراوە.", "ecgNo": "هێشتا هیچ پێوانەیەکی ECG ت نییە. لە بەشی ECG ـەوە 30 چرکە پێوانە بکە تا لێرە دەربکەوێت.", "sla": "تێکڕای خەو", "eff": "کارایی خەو", "ln": "دوایین شەو", "dp": "قووڵ", "rm": "REM", "lt": "سووک", "aw": "بێدار", "debt": "قەرزی خەو: نزیکەی {h} کاتژمێر لە هەفتەیەکدا.", "slOk": "تێکڕای خەوت لە سنووری پێشنیارکراودایە (7–9 کاتژمێر).", "thE": "توخم", "thD": "تێکڕای ڕۆژ", "thG": "ئامانج", "kc": "کالۆری", "pr": "پرۆتین", "cb": "کارب", "ft": "چەوری", "fb": "فایبەر", "sg": "شەکر", "sa": "خوێ", "wa": "ئاو", "fdays": "لەسەر بنەمای {n} ڕۆژی تۆمارکراو لە 30 ڕۆژی ڕابردوودا", "fnone": "هێشتا هیچ خواردنێک تۆمار نەکراوە. لە بەشی خواردنەوە ژەمەکانت تۆمار بکە تا ئێرە پڕ بێتەوە.", "am": "خولەکی چالاک / هەفتە", "wo": "ڕاهێنان (30 ڕۆژ)", "bn": "کالۆری سووتاو (ڕاهێنان)", "wc": "گۆڕانی کێش", "bt": "BMR / TDEE", "one": "یەک پێوانە", "rc": "دڵ و خوێنبەر", "rmt": "مێتابۆلیزم و کێش", "rs": "خەو و ماندووبوون", "ra": "کەم جووڵەیی", "low": "نزم", "mod": "مامناوەند", "high": "بەرز", "sIn": "دۆخی گشتی: {lvl} — نمرەی {s} لە 100.", "sGood": "ئەم بەشانە باشن: {x}.", "sAtt": "ئەم بەشانە پێویستیان بە سەرنجە: {x}.", "sAll": "هیچ خاڵێکی پێویست بە سەرنج نەبینرا؛ بەم شێوەیە بەردەوام بە.", "and": " و ", "sep": "، ", "g": {"hr": "لێدانی دڵ", "sp": "ئۆکسجینی خوێن", "ecg": "ڕیتمی دڵ (ECG)", "sl": "خەو", "st": "فشاری دەروونی", "stp": "جووڵە", "kc": "کالۆری", "pr": "پرۆتین", "fb": "فایبەر", "sg": "شەکر", "sa": "خوێ", "wa": "ئاو", "bmi": "کێش (BMI)", "tp": "پلەی گەرمی"}, "r": {"salt": "خوێ بگەیەنە ژێر 5 گرام لە ڕۆژێکدا؛ ترشی، پەنیری سوێر و خواردنی ئامادە کەم بکەرەوە.", "sleep": "کاتێکی جێگیر بۆ نووستن دابنێ و شەوانە لانیکەم 7 کاتژمێر بخەوە.", "stress": "ڕۆژانە 2–3 جار 5 خولەک هەناسەی قووڵ هەڵبکێشە و پشووی کورت لە شاشە وەربگرە.", "prot": "ڕۆژانە نزیکەی {n} گرام پرۆتینی زیاتر بخۆ: هێلکە، ماست، نیسک، مریشک یان ماسی.", "fib": "فایبەر زیاد بکە: سەوزە لە هەموو ژەمێکدا و نانی جۆ لە جیاتی نانی سپی.", "water": "ڕۆژانە نزیکەی {n} پەرداخ ئاوی زیاتر بخۆرەوە.", "steps": "ڕۆژانە نزیکەی {n} هەنگاوی زیاتر بڕۆ؛ 10 خولەک پیاسە دوای نانخواردن یارمەتیدەرە.", "sug": "شەکر کەم بکەرەوە: خواردنەوەی شیرین و شیرینی لە ڕۆژانەوە بکە بە جارجار.", "kcalHi": "کالۆری ڕۆژانەت لە ئامانج زیاترە؛ بڕی ژەمەکان و ژەمە سووکەکان کەم بکەرەوە.", "kcalLo": "کالۆری ڕۆژانەت زۆر لە ئامانج کەمترە؛ ژەمەکانت بە پرۆتین و دانەوێڵەی تەواو پڕتر بکە.", "bmi": "کەمکردنەوەی کێش بە هێواشی (نزیکەی 0.5 کیلۆ لە هەفتەیەکدا) کاریگەریی باشی لەسەر دڵ و شەکری خوێن دەبێت.", "ecg": "مانگانە لانیکەم یەک پێوانەی ECG بکە بۆ چاودێریی ڕیتمی دڵ.", "food": "ژەمەکانت لە بەشی خواردن تۆمار بکە تا شیکاری خۆراک وردتر بێت.", "band": "VEX Band پەیوەست بکە بۆ ئەوەی لێدانی دڵ، خەو، ئۆکسجین و فشاری دەروونی لە ڕاپۆرتەکەدا بن.", "keep": "پێوەرەکانت باشن؛ هەمان شێوازی ژیان بەردەوام بکە و مانگی داهاتوو دووبارە ڕاپۆرت وەربگرە."}, "docT": "کەی سەردانی پزیشک بکەیت؟", "docX": "ئەگەر ئازار یان تەنگیی سنگ، سەرگێژخواردن، هەناسەتەنگی یان لێدانی ناڕێکت هەست پێ کرد، یان ئۆکسجینی خوێنت بە بەردەوامی لە 92% کەمتر بوو، دەستبەجێ سەردانی پزیشک بکە.", "docC": "بەهۆی ({x})، ئەم ڕاپۆرتە لە سەردانی داهاتوودا پیشانی پزیشکەکەت بدە.", "by": "شیکاری لەلایەن", "eng": "VEX AI · بزوێنەری تەندروستی", "pts": "{n} خاڵی داتا", "disc": "ئەم ڕاپۆرتە لەسەر بنەمای داتای VEX Band و تۆمارەکانی ناو ئەپ دروست کراوە و دەستنیشانکردنی نەخۆشی (تشخیص) نییە. بۆ هەر بڕیارێکی پزیشکی، ڕاپۆرتەکە پیشانی پزیشکەکەت بدە.", "pdf": "داگرتنی PDF", "pdfW": "ئامادەکردنی PDF…", "pdfOk": "PDF ئامادە کرا ✓", "pdfNo": "داگرتنی فایل لێرە بەردەست نییە؛ لاپەڕەکانی ڕاپۆرت لێرە دەبینیت.", "pdfErr": "دروستکردنی PDF سەرکەوتوو نەبوو؛ دووبارە هەوڵ بدەرەوە.", "pdfDec": "داگرتن هەڵوەشێنرایەوە", "pdfNote": "PDF ـەکە بە قەبارەی A4 ئامادە دەکرێت و بۆ پیشاندان بە پزیشک گونجاوە.", "pv": "پێشبینینی ڕاپۆرت", "pg": "لاپەڕە {a} لە {b}", "back": "گەڕانەوە", "cn": {"diab": "شەکرە", "bp": "فشاری خوێن", "chol": "کۆلیسترۆڵ", "heart": "نەخۆشی دڵ", "kid": "نەخۆشی گورچیلە", "gout": "نیقرس", "gerd": "ڕیفلاکس", "preg": "دووگیانی", "bf": "شیردان", "asth": "ڕەبۆ", "thy": "تیرۆید"}, "sync": "هاوکاتکردنی Band", "syncing": "هاوکاتکردن…", "lastSync": "دوایین هاوکاتکردن: {t}", "synced": "هاوکاتکرا ✓", "bp": "پەستانی خوێن (خەمڵاندن)", "br": "ڕێژەی هەناسە", "rhr": "لێدانی دڵی ئارام", "irr": "{n} تۆماری ناڕێک", "rhIrr": "ناڕێکی دەبینرێت", "ecgIrr": "لە {n} تۆماردا لێدانی ناڕێک بینراوە؛ ئەم ڕاپۆرتە پیشانی پزیشکەکەت بدە.", "g_bp": "پەستانی خوێن", "sub": "پشکنینی گشتی و شیکاری · PDF", "share": "ڕاپۆرتی گشتیی VEX Health", "rng": "ماوەی ڕاپۆرت", "h24": "24 کاتژمێر", "dN": "{n} ڕۆژ", "per24": "ماوە: 24 کاتژمێری ڕابردوو", "perN": "ماوە: {n} ڕۆژی ڕابردوو", "perC": "ماوە: {n} ڕۆژی دیاریکراو", "syncAll": "هاوکاتکردنی هەموو", "syncT": "هاوکاتکردنی هەموو…", "sB": "Band — هەنگاو، دڵ، خەو، SpO₂", "sW": "کێش و BMI", "sF": "خواردن و ئاو", "sE": "ECG", "sR": "دروستکردنەوەی ڕاپۆرت", "wait": "چاوەڕێ", "off": "پەیوەست نییە", "nR": "{n} تۆمار", "allOk": "هەموو شت نوێکرایەوە ✓", "custom": "ماوەی دیاریکراو", "pickH": "ڕۆژی دەستپێک و کۆتایی هەڵبژێرە", "from": "لە", "to": "بۆ", "show": "پیشاندانی {n} ڕۆژ", "cancel": "پاشگەزبوونەوە", "dot": "ڕۆژی داتای Band ی هەیە", "change": "گۆڕین", "cvBd": "Band · {a}/{n} ڕۆژ", "cvBh": "Band · {a}/24 کاتژمێر", "bandH": "{n} کاتژمێر", "stp24": "هەنگاو (24 کاتژمێر)", "amD": "خولەکی چالاک (ئەمڕۆ)", "bnD": "کالۆری سووتاو (ئەمڕۆ)", "fdR": "لەسەر بنەمای {n} ڕۆژی تۆمارکراو لەم ماوەیەدا", "lgD": "تۆماری ڕۆژ بە ڕۆژ", "lgH": "تۆماری کاتژمێر بە کاتژمێر", "rdN": "{n} پێوانە", "cD": "ڕۆژ", "cHh": "کات", "cS": "هەنگاو", "cH": "دڵ", "cL": "خەو", "cT": "سترێس", "cG": "گەرمی", "chS": "هەنگاو", "chH": "لێدانی دڵ (bpm)", "lgNote": "«—» واتە ئەو کاتە داتا تۆمار نەکراوە.", "keep": "داتا تەنها 30 ڕۆژ هەڵدەگیرێت؛ ڕۆژی 31 خۆکار دەسڕێتەوە.", "never": "هێشتا هاوکات نەکراوە", "today": "ئەمڕۆ", "wd": ["د", "س", "چ", "پ", "ه", "ش", "ی"], "ws": 5}, "kmr": {"dir": "rtl", "t": "ڕاپۆرتا گشتی", "doc": "ڕاپۆرتا گشتی یا ساخلەمیێ", "per": "ماوە: 30 ڕۆژێن بۆری", "iss": "دەرچوون", "nm": "ناڤ", "age": "ژی / ڕەگەز", "ht": "درێژی", "wt": "کێش", "src": "ژێدەر", "m": "نێر", "f": "مێ", "yrs": "ساڵ", "srcB": "ئەپ و \u2068VEX Band\u2069", "srcA": "تۆمارێن ئەپێ", "conds": "ڕەوشا ساخلەمیێ", "cvB": "{n} ڕۆژێن داتایێن Band", "cvBo": "Band نەگرێدایە", "cvF": "{n} ڕۆژێن خوارنێ", "cvE": "{n} تۆمارێن ECG", "cvW": "{n} پیڤانێن کێشێ", "score": "نمرا گشتی", "lv": ["گەلەک باش", "باش", "ناڤنجی", "پێدڤی ب سەرنجێ یە"], "dUp": "ژ {a} بۆ {b} بلند بوویە", "dDn": "ژ {a} بۆ {b} نزم بوویە", "dEq": "وەکی ڕاپۆرتا بەری", "dNew": "ئێکەم ڕاپۆرتا تە", "va": "ژیێ لەشی (VitalAge)", "vaLock": "پێدڤی ب {n} ڕۆژێن داتایێن تەمامێن Band هەیە", "vaBand": "پێدڤی ب VEX Band هەیە", "nights": "ڕۆژ", "vaY": "{n} ساڵان گەنجترە ژ ژیێ تە", "vaO": "{n} ساڵان مەزنترە ژ ژیێ تە", "vaE": "وەکی ژیێ تە یە", "s1": "نیشانێن ژیانێ", "s2": "دل و ECG", "s3": "خەو", "s4": "خوارن و ئاڤ", "s5": "لڤین و کێش", "s6": "هەلسەنگاندنا مەترسیێ", "s7": "کورتیا شلۆڤەکرنێ", "s8": "ڕاسپاردە (ل دویڤ گرنگیێ)", "thT": "پشکنین", "thR": "ئەنجام", "thN": "ئاسایی", "thS": "ڕەوش", "hr": "لێدانا دلی (تێکڕا)", "hrr": "کێمترین – زێدەترین لێدان", "hrv": "HRV (گوهۆڕینا لێدانێ)", "sp": "ئۆکسجینا خوینێ SpO₂", "spl": "نزمترین SpO₂", "tp": "پلا گەرمیا پێستی", "st": "فشارا دەروونی", "sl": "دەمێ خەوێ", "stp": "پێنگاڤێن ڕۆژانە", "ok": "ئاسایی", "hi": "بلند ↑", "lo": "کێم ↓", "mid": "ناڤنجی", "na": "نەگرێدایە", "nod": "داتا نینە", "good": "باش", "much": "زێدە ↑", "inf": "زانیاری", "bandOff": "VEX Band نەگرێدایە، لەوما پیڤانێن Band د ڤێ ڕاپۆرتێ دا نینن. Band ـا خۆ گرێبدە و هاوکات بکە.", "bandDays": "{n} ڕۆژ", "rh": "ڕیتما دلی", "rhOk": "ڕیتما ڕێک", "rec": "تۆمار", "recN": "{n} تۆمار · 0 نەڕێک", "lhr": "تێکڕایا لێدانێ (دوماهیک)", "q": "کوالیتیا ئاماژێ", "lst": "دوماهیک تۆمار", "ecgOk": "د هەمی تۆماران دا ڕیتما دلی ڕێک بوو و چ نیشانێن لێدانا نەڕێک نەهاتنە دیتن.", "ecgNo": "هێشتا چ پیڤانێن ECG نینن. ژ پشکا ECG ـێ 30 چرکەیان بپیڤە دا ل ڤێرە دیار ببیت.", "sla": "تێکڕایا خەوێ", "eff": "کارینەریا خەوێ", "ln": "دوماهیک شەڤ", "dp": "کویر", "rm": "REM", "lt": "سڤک", "aw": "هشیار", "debt": "قەرزێ خەوێ: نێزیکی {h} دەمژمێران د حەفتیێ دا.", "slOk": "تێکڕایا خەوا تە د سنوورێ پێشنیارکری دایە (7–9 دەمژمێر).", "thE": "توخم", "thD": "تێکڕایا ڕۆژێ", "thG": "ئارمانج", "kc": "کالۆری", "pr": "پرۆتین", "cb": "کارب", "ft": "چەوری", "fb": "فایبەر", "sg": "شەکر", "sa": "خوێ", "wa": "ئاڤ", "fdays": "ل سەر بنیاتێ {n} ڕۆژێن تۆمارکری د 30 ڕۆژێن بۆری دا", "fnone": "هێشتا چ خوارن نەهاتینە تۆمارکرن. ژ پشکا خوارنێ ژەمێن خۆ تۆمار بکە دا ئەڤ پشکە پڕ ببیت.", "am": "خولەکێن چالاک / حەفتی", "wo": "ڕاهێنان (30 ڕۆژ)", "bn": "کالۆریێن سۆتی (ڕاهێنان)", "wc": "گوهۆڕینا کێشێ", "bt": "BMR / TDEE", "one": "ئێک پیڤان", "rc": "دل و خوینبەر", "rmt": "مێتابۆلیزم و کێش", "rs": "خەو و وەستیان", "ra": "کێم لڤین", "low": "نزم", "mod": "ناڤنجی", "high": "بلند", "sIn": "ڕەوشا گشتی: {lvl} — نمرا {s} ژ 100.", "sGood": "ئەڤ پشکە باشن: {x}.", "sAtt": "ئەڤ پشکە پێدڤی ب سەرنجێ نە: {x}.", "sAll": "چ خاڵێن پێدڤی ب سەرنجێ نەهاتنە دیتن؛ ب ڤی ڕەنگی بەردەوام بە.", "and": " و ", "sep": "، ", "g": {"hr": "لێدانا دلی", "sp": "ئۆکسجینا خوینێ", "ecg": "ڕیتما دلی (ECG)", "sl": "خەو", "st": "فشارا دەروونی", "stp": "لڤین", "kc": "کالۆری", "pr": "پرۆتین", "fb": "فایبەر", "sg": "شەکر", "sa": "خوێ", "wa": "ئاڤ", "bmi": "کێش (BMI)", "tp": "پلا گەرمیێ"}, "r": {"salt": "خوێیێ بگەهینە بن 5 گرامان د ڕۆژێ دا؛ ترشی، پەنیرێ سوێر و خوارنێن ئامادە کێم بکە.", "sleep": "دەمەکێ جێگیر بۆ نڤستنێ دانە و شەڤانە کێمتر نە ژ 7 دەمژمێران بنڤە.", "stress": "ڕۆژانە 2–3 جاران 5 خولەکان هەناسێن کویر بکێشە و بێهنڤەدانێن کورت ژ شاشێ وەربگرە.", "prot": "ڕۆژانە نێزیکی {n} گرامان پرۆتینا زێدەتر بخۆ: هێک، ماست، نیسک، مریشک یان ماسی.", "fib": "فایبەرێ زێدە بکە: سەوزە د هەمی ژەمان دا و نانێ جەهی ل جهێ نانێ سپی.", "water": "ڕۆژانە نێزیکی {n} پەرداخێن ئاڤێ زێدەتر ڤەخۆ.", "steps": "ڕۆژانە نێزیکی {n} پێنگاڤێن زێدەتر بهاڤێژە؛ 10 خولەک پیاسە پشتی خوارنێ هاریکارە.", "sug": "شەکرێ کێم بکە: ڤەخوارنێن شرین و شرینیان ژ ڕۆژانە بکە جار جار.", "kcalHi": "کالۆریێن ڕۆژانە یێن تە ژ ئارمانجێ زێدەترن؛ بڕێ ژەمان و ژەمێن سڤک کێم بکە.", "kcalLo": "کالۆریێن ڕۆژانە یێن تە گەلەک ژ ئارمانجێ کێمترن؛ ژەمێن خۆ ب پرۆتین و دانەوێڵێن تەمام پڕتر بکە.", "bmi": "کێمکرنا کێشێ ب هێدیکی (نێزیکی 0.5 کیلۆ د حەفتیێ دا) کارتێکرنەکا باش ل سەر دلی و شەکرا خوینێ دکەت.", "ecg": "هەر هەیڤ کێمتر نە ژ ئێک پیڤانا ECG بکە بۆ چاڤدێریا ڕیتما دلی.", "food": "ژەمێن خۆ ل پشکا خوارنێ تۆمار بکە دا شلۆڤەکرنا خوارنێ دروستتر ببیت.", "band": "VEX Band گرێبدە دا لێدانا دلی، خەو، ئۆکسجین و فشارا دەروونی د ڕاپۆرتێ دا هەبن.", "keep": "پیڤەرێن تە باشن؛ ب هەمان شێوازێ ژیانێ بەردەوام بە و هەیڤا بهێت دووبارە ڕاپۆرتێ وەربگرە."}, "docT": "کەنگی سەرەدانا نۆژداری بکەی؟", "docX": "ئەگەر ئێش یان تەنگیا سنگی، گێژبوون، هەناسەتەنگی یان لێدانا نەڕێک هەست پێ کر، یان ئۆکسجینا خوینا تە ب بەردەوامی ژ 92% کێمتر بوو، دەستبەجێ سەرەدانا نۆژداری بکە.", "docC": "ژ بەر ({x})، ڤێ ڕاپۆرتێ د سەرەدانا بهێت دا نیشا نۆژدارێ خۆ بدە.", "by": "شلۆڤەکرن ژ لایێ", "eng": "VEX AI · بزوێنەرێ ساخلەمیێ", "pts": "{n} خاڵێن داتایان", "disc": "ئەڤ ڕاپۆرتە ل سەر بنیاتێ داتایێن VEX Band و تۆمارێن ناڤ ئەپێ هاتیە دروستکرن و دەستنیشانکرنا نەخۆشیێ (تشخیص) نینە. بۆ هەر بڕیارەکا پزیشکی، ڕاپۆرتێ نیشا نۆژدارێ خۆ بدە.", "pdf": "داگرتنا PDF", "pdfW": "ئامادەکرنا PDF…", "pdfOk": "PDF ئامادە بوو ✓", "pdfNo": "داگرتنا فایلان ل ڤێرە بەردەست نینە؛ لاپەڕێن ڕاپۆرتێ ل ڤێرە دبینی.", "pdfErr": "دروستکرنا PDF سەرنەکەفت؛ دووبارە هەوڵ بدە.", "pdfDec": "داگرتن هاتە هەڵوەشاندن", "pdfNote": "PDF ب قەبارێ A4 دهێتە ئامادەکرن و بۆ نیشادانا نۆژداری گونجایە.", "pv": "پێشدیتنا ڕاپۆرتێ", "pg": "لاپەڕە {a} ژ {b}", "back": "زڤڕین", "cn": {"diab": "شەکرە", "bp": "فشارا خوینێ", "chol": "کۆلیسترۆڵ", "heart": "نەخۆشیا دلی", "kid": "نەخۆشیا گورچیلێ", "gout": "نیقرس", "gerd": "ڕیفلاکس", "preg": "دووگیانی", "bf": "شیردان", "asth": "ڕەبۆ", "thy": "تیرۆید"}, "sync": "هاوکاتکرنا Band", "syncing": "هاوکاتکرن…", "lastSync": "دوماهیک هاوکاتکرن: {t}", "synced": "هاتە هاوکاتکرن ✓", "bp": "فشارا خوینێ (خەمڵاندن)", "br": "ڕێژا هەناسێ", "rhr": "لێدانا دلێ ئارام", "irr": "{n} تۆمارێن نەڕێک", "rhIrr": "نەڕێکی دهێتە دیتن", "ecgIrr": "د {n} تۆماران دا لێدانا نەڕێک هاتە دیتن؛ ڤێ ڕاپۆرتێ نیشا نۆژدارێ خۆ بدە.", "g_bp": "فشارا خوینێ", "sub": "پشکنینا گشتی و شلۆڤەکرن · PDF", "share": "ڕاپۆرتا گشتی یا VEX Health", "rng": "ماوەیا ڕاپۆرتێ", "h24": "24 دەمژمێر", "dN": "{n} ڕۆژ", "per24": "ماوە: 24 دەمژمێرێن بۆری", "perN": "ماوە: {n} ڕۆژێن بۆری", "perC": "ماوە: {n} ڕۆژێن دیارکری", "syncAll": "هاوکاتکرنا هەمییێ", "syncT": "هاوکاتکرنا هەمییێ…", "sB": "Band — پێنگاڤ، دل، خەو، SpO₂", "sW": "کێش و BMI", "sF": "خوارن و ئاڤ", "sE": "ECG", "sR": "دروستکرنا ڕاپۆرتێ ژ نوی", "wait": "چاڤەڕێ", "off": "گرێدای نینە", "nR": "{n} تۆمار", "allOk": "هەمی تشت هاتنە نویکرن ✓", "custom": "ماوەیا دیارکری", "pickH": "ڕۆژا دەستپێکێ و دوماهیێ هەلبژێرە", "from": "ژ", "to": "بۆ", "show": "نیشاندانا {n} ڕۆژان", "cancel": "پاشگەزبوون", "dot": "ڕۆژا داتایێن Band تێدا", "change": "گوهۆڕین", "cvBd": "Band · {a}/{n} ڕۆژ", "cvBh": "Band · {a}/24 دەمژمێر", "bandH": "{n} دەمژمێر", "stp24": "پێنگاڤ (24 دەمژمێر)", "amD": "خولەکێن چالاک (ئەڤرۆ)", "bnD": "کالۆریێن سوتی (ئەڤرۆ)", "fdR": "ل سەر بنیاتێ {n} ڕۆژێن تۆمارکری د ڤێ ماوەیێ دا", "lgD": "تۆمارا ڕۆژ ب ڕۆژ", "lgH": "تۆمارا دەمژمێر ب دەمژمێر", "rdN": "{n} پێڤان", "cD": "ڕۆژ", "cHh": "دەم", "cS": "پێنگاڤ", "cH": "دل", "cL": "خەو", "cT": "سترێس", "cG": "گەرمی", "chS": "پێنگاڤ", "chH": "لێدانا دلی (bpm)", "lgNote": "«—» یانی د وی دەمی دا داتا نەهاتیە تۆمارکرن.", "keep": "داتا تنێ 30 ڕۆژان دهێتە پاراستن؛ ڕۆژا 31 ب خۆ دهێتە ژێبرن.", "never": "هێشتا نەهاتیە هاوکاتکرن", "today": "ئەڤرۆ", "wd": ["د", "س", "چ", "پ", "ئ", "ش", "ی"], "ws": 5}, "en": {"dir": "ltr", "t": "General Report", "doc": "General Health Report", "per": "Period: last 30 days", "iss": "Issued", "nm": "Name", "age": "Age / Sex", "ht": "Height", "wt": "Weight", "src": "Source", "m": "Male", "f": "Female", "yrs": "yrs", "srcB": "VEX Band + app", "srcA": "App records", "conds": "Health conditions", "cvB": "{n} days of Band data", "cvBo": "Band not connected", "cvF": "{n} food days", "cvE": "{n} ECG recordings", "cvW": "{n} weigh-ins", "score": "Overall score", "lv": ["Excellent", "Good", "Fair", "Needs attention"], "dUp": "Up from {a} to {b}", "dDn": "Down from {a} to {b}", "dEq": "Same as last report", "dNew": "Your first report", "va": "Body age (VitalAge)", "vaLock": "Needs {n} complete days of Band data", "vaBand": "Requires VEX Band", "nights": "days", "vaY": "{n} years younger than your age", "vaO": "{n} years older than your age", "vaE": "Same as your age", "s1": "Vital signs", "s2": "Heart & ECG", "s3": "Sleep", "s4": "Nutrition & water", "s5": "Activity & weight", "s6": "Risk assessment", "s7": "Summary", "s8": "Recommendations (by priority)", "thT": "Test", "thR": "Result", "thN": "Normal", "thS": "Status", "hr": "Heart rate (avg)", "hrr": "Lowest – highest rate", "hrv": "HRV (heart rate variability)", "sp": "Blood oxygen SpO₂", "spl": "Lowest SpO₂", "tp": "Skin temperature", "st": "Stress", "sl": "Sleep duration", "stp": "Daily steps", "ok": "Normal", "hi": "High ↑", "lo": "Low ↓", "mid": "Moderate", "na": "Not connected", "nod": "No data", "good": "Good", "much": "High ↑", "inf": "Info", "bandOff": "VEX Band is not connected, so Band measurements are not in this report. Connect and sync your Band.", "bandDays": "{n} days", "rh": "Heart rhythm", "rhOk": "Regular rhythm", "rec": "Recordings", "recN": "{n} recordings · 0 irregular", "lhr": "Average rate (latest)", "q": "Signal quality", "lst": "Latest recording", "ecgOk": "Heart rhythm was regular in every recording, with no signs of an irregular heartbeat.", "ecgNo": "No ECG measurements yet. Take a 30-second measurement in the ECG section and it will appear here.", "sla": "Average sleep", "eff": "Sleep efficiency", "ln": "Last night", "dp": "Deep", "rm": "REM", "lt": "Light", "aw": "Awake", "debt": "Sleep debt: about {h} hours per week.", "slOk": "Your average sleep is within the recommended range (7–9 hours).", "thE": "Nutrient", "thD": "Daily avg", "thG": "Target", "kc": "Calories", "pr": "Protein", "cb": "Carbs", "ft": "Fat", "fb": "Fiber", "sg": "Sugar", "sa": "Salt", "wa": "Water", "fdays": "Based on {n} logged days in the last 30 days", "fnone": "No food logged yet. Log your meals in the Food section to fill this part.", "am": "Active minutes / week", "wo": "Workouts (30 days)", "bn": "Calories burned (workouts)", "wc": "Weight change", "bt": "BMR / TDEE", "one": "One weigh-in", "rc": "Heart & circulation", "rmt": "Metabolism & weight", "rs": "Sleep & fatigue", "ra": "Inactivity", "low": "Low", "mod": "Moderate", "high": "High", "sIn": "Overall status: {lvl} — score {s} of 100.", "sGood": "Doing well: {x}.", "sAtt": "Needs attention: {x}.", "sAll": "Nothing needs attention right now; keep it up.", "and": " and ", "sep": ", ", "g": {"hr": "heart rate", "sp": "blood oxygen", "ecg": "heart rhythm (ECG)", "sl": "sleep", "st": "stress", "stp": "activity", "kc": "calories", "pr": "protein", "fb": "fiber", "sg": "sugar", "sa": "salt", "wa": "water", "bmi": "weight (BMI)", "tp": "temperature"}, "r": {"salt": "Keep salt under 5 g a day; cut down on pickles, salty cheese and processed food.", "sleep": "Set a fixed bedtime and sleep at least 7 hours a night.", "stress": "Take 5 minutes of deep breathing 2–3 times a day and short breaks from screens.", "prot": "Eat about {n} g more protein a day: eggs, yogurt, lentils, chicken or fish.", "fib": "Add fiber: vegetables with every meal and whole-grain bread instead of white bread.", "water": "Drink about {n} more glasses of water a day.", "steps": "Walk about {n} more steps a day; a 10-minute walk after meals helps.", "sug": "Cut sugar: make sweet drinks and desserts occasional rather than daily.", "kcalHi": "Your daily calories are above target; reduce portion sizes and snacks.", "kcalLo": "Your daily calories are well below target; make meals fuller with protein and whole grains.", "bmi": "Losing weight gradually (about 0.5 kg a week) benefits your heart and blood sugar.", "ecg": "Take at least one ECG measurement a month to track your heart rhythm.", "food": "Log your meals in the Food section for a more accurate nutrition analysis.", "band": "Connect VEX Band so heart rate, sleep, oxygen and stress are included in the report.", "keep": "Your measurements look good; keep the same routine and generate a new report next month."}, "docT": "When to see a doctor", "docX": "See a doctor right away if you feel chest pain or tightness, dizziness, shortness of breath or an irregular heartbeat, or if your blood oxygen stays below 92%.", "docC": "Because of ({x}), show this report to your doctor at your next visit.", "by": "Analysis by", "eng": "VEX AI · Health engine", "pts": "{n} data points", "disc": "This report is generated from VEX Band data and records in the app. It is not a medical diagnosis. For any medical decision, show this report to your doctor.", "pdf": "Download PDF", "pdfW": "Preparing PDF…", "pdfOk": "PDF ready ✓", "pdfNo": "File download is not available here; you can view the report pages below.", "pdfErr": "Could not create the PDF; please try again.", "pdfDec": "Download cancelled", "pdfNote": "The PDF is A4 sized and ready to show your doctor.", "pv": "Report preview", "pg": "Page {a} of {b}", "back": "Back", "cn": {"diab": "Diabetes", "bp": "High blood pressure", "chol": "Cholesterol", "heart": "Heart disease", "kid": "Kidney disease", "gout": "Gout", "gerd": "Reflux", "preg": "Pregnancy", "bf": "Breastfeeding", "asth": "Asthma", "thy": "Thyroid"}, "sync": "Sync Band", "syncing": "Syncing…", "lastSync": "Last sync: {t}", "synced": "Synced ✓", "bp": "Blood pressure (estimate)", "br": "Breathing rate", "rhr": "Resting heart rate", "irr": "{n} irregular recordings", "rhIrr": "Irregularity seen", "ecgIrr": "An irregular heartbeat was seen in {n} recordings; show this report to your doctor.", "g_bp": "blood pressure", "sub": "Full check-up & analysis · PDF", "share": "VEX Health General Report", "rng": "Report period", "h24": "24 hours", "dN": "{n} days", "per24": "Period: last 24 hours", "perN": "Period: last {n} days", "perC": "Period: {n} selected days", "syncAll": "Sync everything", "syncT": "Syncing everything…", "sB": "Band — steps, heart, sleep, SpO₂", "sW": "Weight & BMI", "sF": "Food & water", "sE": "ECG", "sR": "Rebuilding the report", "wait": "Waiting", "off": "Not connected", "nR": "{n} records", "allOk": "Everything is up to date ✓", "custom": "Custom range", "pickH": "Pick the first and last day", "from": "From", "to": "To", "show": "Show {n} days", "cancel": "Cancel", "dot": "Day with Band data", "change": "Change", "cvBd": "Band · {a}/{n} days", "cvBh": "Band · {a}/24 hours", "bandH": "{n} hours", "stp24": "Steps (24 h)", "amD": "Active minutes (today)", "bnD": "Calories burned (today)", "fdR": "Based on {n} logged days in this period", "lgD": "Day-by-day log", "lgH": "Hour-by-hour log", "rdN": "{n} readings", "cD": "Day", "cHh": "Time", "cS": "Steps", "cH": "HR", "cL": "Sleep", "cT": "Stress", "cG": "Temp", "chS": "Steps", "chH": "Heart rate (bpm)", "lgNote": "“—” means no data was recorded at that time.", "keep": "Data is kept for 30 days only; day 31 is deleted automatically.", "never": "Not synced yet", "today": "Today", "wd": ["M", "T", "W", "T", "F", "S", "S"], "ws": 0}, "ar": {"dir": "rtl", "t": "التقرير العام", "doc": "التقرير الصحي العام", "per": "المدة: آخر 30 يومًا", "iss": "تاريخ الإصدار", "nm": "الاسم", "age": "العمر / الجنس", "ht": "الطول", "wt": "الوزن", "src": "المصدر", "m": "ذكر", "f": "أنثى", "yrs": "سنة", "srcB": "التطبيق و \u2068VEX Band\u2069", "srcA": "سجلات التطبيق", "conds": "الحالة الصحية", "cvB": "{n} أيام من بيانات السوار", "cvBo": "السوار غير متصل", "cvF": "{n} أيام طعام", "cvE": "{n} تسجيلات ECG", "cvW": "{n} قياسات وزن", "score": "النتيجة العامة", "lv": ["ممتاز", "جيد", "متوسط", "يحتاج إلى اهتمام"], "dUp": "ارتفعت من {a} إلى {b}", "dDn": "انخفضت من {a} إلى {b}", "dEq": "مثل التقرير السابق", "dNew": "تقريرك الأول", "va": "عمر الجسم (VitalAge)", "vaLock": "يحتاج إلى {n} يومًا من بيانات السوار الكاملة", "vaBand": "يتطلب سوار VEX Band", "nights": "أيام", "vaY": "أصغر من عمرك بـ {n} سنوات", "vaO": "أكبر من عمرك بـ {n} سنوات", "vaE": "مطابق لعمرك", "s1": "العلامات الحيوية", "s2": "القلب وتخطيط القلب", "s3": "النوم", "s4": "التغذية والماء", "s5": "النشاط والوزن", "s6": "تقييم المخاطر", "s7": "ملخص التحليل", "s8": "التوصيات (حسب الأولوية)", "thT": "الفحص", "thR": "النتيجة", "thN": "الطبيعي", "thS": "الحالة", "hr": "نبض القلب (المتوسط)", "hrr": "أدنى – أعلى نبض", "hrv": "تقلب نبض القلب HRV", "sp": "أكسجين الدم SpO₂", "spl": "أدنى SpO₂", "tp": "حرارة الجلد", "st": "التوتر", "sl": "مدة النوم", "stp": "الخطوات اليومية", "ok": "طبيعي", "hi": "مرتفع ↑", "lo": "منخفض ↓", "mid": "متوسط", "na": "غير متصل", "nod": "لا بيانات", "good": "جيد", "much": "مرتفع ↑", "inf": "معلومة", "bandOff": "سوار VEX Band غير متصل، لذلك لا تظهر قياساته في هذا التقرير. قم بتوصيله ومزامنته.", "bandDays": "{n} أيام", "rh": "نظم القلب", "rhOk": "نظم منتظم", "rec": "التسجيلات", "recN": "{n} تسجيلات · 0 غير منتظم", "lhr": "متوسط النبض (الأخير)", "q": "جودة الإشارة", "lst": "آخر تسجيل", "ecgOk": "كان نظم القلب منتظمًا في جميع التسجيلات، ولم تظهر أي علامة على عدم انتظام الضربات.", "ecgNo": "لا توجد قياسات ECG بعد. قم بقياس لمدة 30 ثانية من قسم ECG ليظهر هنا.", "sla": "متوسط النوم", "eff": "كفاءة النوم", "ln": "آخر ليلة", "dp": "عميق", "rm": "REM", "lt": "خفيف", "aw": "استيقاظ", "debt": "دَين النوم: حوالي {h} ساعات أسبوعيًا.", "slOk": "متوسط نومك ضمن المدى الموصى به (7–9 ساعات).", "thE": "العنصر", "thD": "متوسط اليوم", "thG": "الهدف", "kc": "السعرات", "pr": "البروتين", "cb": "الكربوهيدرات", "ft": "الدهون", "fb": "الألياف", "sg": "السكر", "sa": "الملح", "wa": "الماء", "fdays": "بناءً على {n} أيام مسجلة خلال آخر 30 يومًا", "fnone": "لم يُسجَّل أي طعام بعد. سجّل وجباتك من قسم الطعام ليمتلئ هذا الجزء.", "am": "دقائق النشاط / أسبوع", "wo": "التمارين (30 يومًا)", "bn": "السعرات المحروقة (تمارين)", "wc": "تغيّر الوزن", "bt": "BMR / TDEE", "one": "قياس واحد", "rc": "القلب والدورة الدموية", "rmt": "الأيض والوزن", "rs": "النوم والإرهاق", "ra": "قلة الحركة", "low": "منخفض", "mod": "متوسط", "high": "مرتفع", "sIn": "الحالة العامة: {lvl} — النتيجة {s} من 100.", "sGood": "جوانب جيدة: {x}.", "sAtt": "جوانب تحتاج إلى اهتمام: {x}.", "sAll": "لا توجد جوانب تحتاج إلى اهتمام حاليًا؛ استمر على هذا النحو.", "and": " و", "sep": "، ", "g": {"hr": "نبض القلب", "sp": "أكسجين الدم", "ecg": "نظم القلب (ECG)", "sl": "النوم", "st": "التوتر", "stp": "النشاط", "kc": "السعرات", "pr": "البروتين", "fb": "الألياف", "sg": "السكر", "sa": "الملح", "wa": "الماء", "bmi": "الوزن (BMI)", "tp": "الحرارة"}, "r": {"salt": "اجعل الملح أقل من 5 غرامات يوميًا؛ قلّل المخللات والأجبان المالحة والأطعمة الجاهزة.", "sleep": "حدّد موعدًا ثابتًا للنوم ونَم 7 ساعات على الأقل كل ليلة.", "stress": "خذ 5 دقائق من التنفس العميق 2–3 مرات يوميًا واستراحات قصيرة بعيدًا عن الشاشات.", "prot": "تناول حوالي {n} غرامًا إضافيًا من البروتين يوميًا: بيض، لبن، عدس، دجاج أو سمك.", "fib": "زِد الألياف: خضار مع كل وجبة وخبز أسمر بدل الخبز الأبيض.", "water": "اشرب حوالي {n} أكواب إضافية من الماء يوميًا.", "steps": "امشِ حوالي {n} خطوة إضافية يوميًا؛ المشي 10 دقائق بعد الأكل مفيد.", "sug": "قلّل السكر: اجعل المشروبات المحلاة والحلويات من حين لآخر بدل كل يوم.", "kcalHi": "سعراتك اليومية أعلى من الهدف؛ قلّل حجم الحصص والوجبات الخفيفة.", "kcalLo": "سعراتك اليومية أقل بكثير من الهدف؛ اجعل وجباتك أغنى بالبروتين والحبوب الكاملة.", "bmi": "إنقاص الوزن تدريجيًا (حوالي 0.5 كغ أسبوعيًا) مفيد للقلب وسكر الدم.", "ecg": "قم بقياس ECG مرة واحدة على الأقل شهريًا لمتابعة نظم القلب.", "food": "سجّل وجباتك في قسم الطعام ليصبح تحليل التغذية أدق.", "band": "وصّل سوار VEX Band ليشمل التقرير نبض القلب والنوم والأكسجين والتوتر.", "keep": "قياساتك جيدة؛ استمر على نفس نمط الحياة وأنشئ تقريرًا جديدًا الشهر القادم."}, "docT": "متى تراجع الطبيب؟", "docX": "راجع الطبيب فورًا إذا شعرت بألم أو ضيق في الصدر، أو دوخة، أو ضيق تنفس، أو خفقان غير منتظم، أو إذا بقي أكسجين الدم أقل من 92%.", "docC": "بسبب ({x})، اعرض هذا التقرير على طبيبك في زيارتك القادمة.", "by": "تحليل بواسطة", "eng": "VEX AI · محرك الصحة", "pts": "{n} نقطة بيانات", "disc": "أُعدّ هذا التقرير من بيانات VEX Band وسجلات التطبيق، وهو ليس تشخيصًا طبيًا. لأي قرار طبي، اعرض التقرير على طبيبك.", "pdf": "تنزيل PDF", "pdfW": "جارٍ تجهيز PDF…", "pdfOk": "ملف PDF جاهز ✓", "pdfNo": "تنزيل الملفات غير متاح هنا؛ يمكنك عرض صفحات التقرير أدناه.", "pdfErr": "تعذّر إنشاء PDF؛ حاول مرة أخرى.", "pdfDec": "أُلغي التنزيل", "pdfNote": "يُجهَّز ملف PDF بحجم A4 وهو مناسب لعرضه على الطبيب.", "pv": "معاينة التقرير", "pg": "صفحة {a} من {b}", "back": "رجوع", "cn": {"diab": "السكري", "bp": "ضغط الدم", "chol": "الكوليسترول", "heart": "أمراض القلب", "kid": "أمراض الكلى", "gout": "النقرس", "gerd": "الارتجاع", "preg": "الحمل", "bf": "الرضاعة", "asth": "الربو", "thy": "الغدة الدرقية"}, "sync": "مزامنة السوار", "syncing": "جارٍ المزامنة…", "lastSync": "آخر مزامنة: {t}", "synced": "تمت المزامنة ✓", "bp": "ضغط الدم (تقديري)", "br": "معدل التنفس", "rhr": "نبض الراحة", "irr": "{n} تسجيلات غير منتظمة", "rhIrr": "لوحظ عدم انتظام", "ecgIrr": "لوحظ نبض غير منتظم في {n} تسجيلات؛ اعرض هذا التقرير على طبيبك.", "g_bp": "ضغط الدم", "sub": "فحص شامل وتحليل · PDF", "share": "التقرير العام من VEX Health", "rng": "مدة التقرير", "h24": "24 ساعة", "dN": "{n} أيام", "per24": "المدة: آخر 24 ساعة", "perN": "المدة: آخر {n} أيام", "perC": "المدة: {n} أيام محددة", "syncAll": "مزامنة الكل", "syncT": "جارٍ مزامنة الكل…", "sB": "السوار — الخطوات، القلب، النوم، SpO₂", "sW": "الوزن و BMI", "sF": "الطعام والماء", "sE": "تخطيط القلب ECG", "sR": "إعادة بناء التقرير", "wait": "بالانتظار", "off": "غير متصل", "nR": "{n} سجلات", "allOk": "تم تحديث كل شيء ✓", "custom": "مدة مخصصة", "pickH": "اختر يوم البداية والنهاية", "from": "من", "to": "إلى", "show": "عرض {n} أيام", "cancel": "إلغاء", "dot": "يوم فيه بيانات السوار", "change": "تغيير", "cvBd": "السوار · {a}/{n} أيام", "cvBh": "السوار · {a}/24 ساعة", "bandH": "{n} ساعة", "stp24": "الخطوات (24 ساعة)", "amD": "دقائق النشاط (اليوم)", "bnD": "السعرات المحروقة (اليوم)", "fdR": "بناءً على {n} أيام مسجلة في هذه المدة", "lgD": "السجل اليومي", "lgH": "السجل ساعة بساعة", "rdN": "{n} قراءة", "cD": "اليوم", "cHh": "الوقت", "cS": "الخطوات", "cH": "النبض", "cL": "النوم", "cT": "التوتر", "cG": "الحرارة", "chS": "الخطوات", "chH": "نبض القلب (bpm)", "lgNote": "«—» تعني أنه لم تُسجَّل بيانات في ذلك الوقت.", "keep": "تُحفظ البيانات 30 يومًا فقط؛ ويُحذف اليوم 31 تلقائيًا.", "never": "لم تتم المزامنة بعد", "today": "اليوم", "wd": ["ن", "ث", "ر", "خ", "ج", "س", "ح"], "ws": 5}, "fa": {"dir": "rtl", "t": "گزارش کلی", "doc": "گزارش کلی سلامت", "per": "بازه: 30 روز گذشته", "iss": "تاریخ صدور", "nm": "نام", "age": "سن / جنسیت", "ht": "قد", "wt": "وزن", "src": "منبع", "m": "مرد", "f": "زن", "yrs": "سال", "srcB": "اپ و \u2068VEX Band\u2069", "srcA": "ثبت‌های اپ", "conds": "وضعیت سلامت", "cvB": "{n} روز داده Band", "cvBo": "Band متصل نیست", "cvF": "{n} روز غذا", "cvE": "{n} ثبت ECG", "cvW": "{n} وزن‌کشی", "score": "امتیاز کلی", "lv": ["عالی", "خوب", "متوسط", "نیازمند توجه"], "dUp": "از {a} به {b} افزایش یافته", "dDn": "از {a} به {b} کاهش یافته", "dEq": "مانند گزارش قبلی", "dNew": "نخستین گزارش شما", "va": "سن بدن (VitalAge)", "vaLock": "به {n} روز داده کامل Band نیاز دارد", "vaBand": "به VEX Band نیاز دارد", "nights": "روز", "vaY": "{n} سال جوان‌تر از سن شما", "vaO": "{n} سال مسن‌تر از سن شما", "vaE": "برابر با سن شما", "s1": "علائم حیاتی", "s2": "قلب و ECG", "s3": "خواب", "s4": "تغذیه و آب", "s5": "فعالیت و وزن", "s6": "ارزیابی خطر", "s7": "خلاصه تحلیل", "s8": "توصیه‌ها (به ترتیب اهمیت)", "thT": "آزمایش", "thR": "نتیجه", "thN": "طبیعی", "thS": "وضعیت", "hr": "ضربان قلب (میانگین)", "hrr": "کمترین – بیشترین ضربان", "hrv": "HRV (تغییرپذیری ضربان)", "sp": "اکسیژن خون SpO₂", "spl": "کمترین SpO₂", "tp": "دمای پوست", "st": "استرس", "sl": "مدت خواب", "stp": "قدم روزانه", "ok": "طبیعی", "hi": "بالا ↑", "lo": "پایین ↓", "mid": "متوسط", "na": "متصل نیست", "nod": "بدون داده", "good": "خوب", "much": "زیاد ↑", "inf": "اطلاعات", "bandOff": "VEX Band متصل نیست، بنابراین اندازه‌گیری‌های آن در این گزارش نیست. Band خود را متصل و همگام کنید.", "bandDays": "{n} روز", "rh": "ریتم قلب", "rhOk": "ریتم منظم", "rec": "ثبت‌ها", "recN": "{n} ثبت · 0 نامنظم", "lhr": "میانگین ضربان (آخرین)", "q": "کیفیت سیگنال", "lst": "آخرین ثبت", "ecgOk": "در همه ثبت‌ها ریتم قلب منظم بود و هیچ نشانه‌ای از ضربان نامنظم دیده نشد.", "ecgNo": "هنوز اندازه‌گیری ECG ندارید. از بخش ECG یک اندازه‌گیری 30 ثانیه‌ای انجام دهید تا اینجا نمایش داده شود.", "sla": "میانگین خواب", "eff": "بازده خواب", "ln": "شب گذشته", "dp": "عمیق", "rm": "REM", "lt": "سبک", "aw": "بیدار", "debt": "کمبود خواب: حدود {h} ساعت در هفته.", "slOk": "میانگین خواب شما در محدوده توصیه‌شده است (7–9 ساعت).", "thE": "ماده", "thD": "میانگین روزانه", "thG": "هدف", "kc": "کالری", "pr": "پروتئین", "cb": "کربوهیدرات", "ft": "چربی", "fb": "فیبر", "sg": "قند", "sa": "نمک", "wa": "آب", "fdays": "بر اساس {n} روز ثبت‌شده در 30 روز گذشته", "fnone": "هنوز غذایی ثبت نشده است. وعده‌های خود را در بخش غذا ثبت کنید تا این بخش پر شود.", "am": "دقیقه فعال / هفته", "wo": "تمرین‌ها (30 روز)", "bn": "کالری سوزانده (تمرین)", "wc": "تغییر وزن", "bt": "BMR / TDEE", "one": "یک وزن‌کشی", "rc": "قلب و گردش خون", "rmt": "متابولیسم و وزن", "rs": "خواب و خستگی", "ra": "کم‌تحرکی", "low": "پایین", "mod": "متوسط", "high": "بالا", "sIn": "وضعیت کلی: {lvl} — امتیاز {s} از 100.", "sGood": "موارد خوب: {x}.", "sAtt": "موارد نیازمند توجه: {x}.", "sAll": "در حال حاضر موردی نیازمند توجه نیست؛ همین‌طور ادامه دهید.", "and": " و ", "sep": "، ", "g": {"hr": "ضربان قلب", "sp": "اکسیژن خون", "ecg": "ریتم قلب (ECG)", "sl": "خواب", "st": "استرس", "stp": "فعالیت", "kc": "کالری", "pr": "پروتئین", "fb": "فیبر", "sg": "قند", "sa": "نمک", "wa": "آب", "bmi": "وزن (BMI)", "tp": "دما"}, "r": {"salt": "نمک را زیر 5 گرم در روز نگه دارید؛ ترشی، پنیر شور و غذاهای آماده را کم کنید.", "sleep": "ساعت ثابتی برای خواب تعیین کنید و هر شب دست‌کم 7 ساعت بخوابید.", "stress": "روزانه 2–3 بار 5 دقیقه تنفس عمیق انجام دهید و از صفحه‌نمایش استراحت‌های کوتاه بگیرید.", "prot": "روزانه حدود {n} گرم پروتئین بیشتر بخورید: تخم‌مرغ، ماست، عدس، مرغ یا ماهی.", "fib": "فیبر را افزایش دهید: سبزی در هر وعده و نان سبوس‌دار به جای نان سفید.", "water": "روزانه حدود {n} لیوان آب بیشتر بنوشید.", "steps": "روزانه حدود {n} قدم بیشتر راه بروید؛ 10 دقیقه پیاده‌روی پس از غذا کمک می‌کند.", "sug": "قند را کم کنید: نوشیدنی‌های شیرین و شیرینی را به جای هر روز، گاه‌به‌گاه مصرف کنید.", "kcalHi": "کالری روزانه شما بیشتر از هدف است؛ اندازه وعده‌ها و میان‌وعده‌ها را کم کنید.", "kcalLo": "کالری روزانه شما بسیار کمتر از هدف است؛ وعده‌ها را با پروتئین و غلات کامل کامل‌تر کنید.", "bmi": "کاهش تدریجی وزن (حدود 0.5 کیلو در هفته) برای قلب و قند خون مفید است.", "ecg": "دست‌کم ماهی یک بار ECG بگیرید تا ریتم قلب را پیگیری کنید.", "food": "وعده‌های خود را در بخش غذا ثبت کنید تا تحلیل تغذیه دقیق‌تر شود.", "band": "VEX Band را متصل کنید تا ضربان قلب، خواب، اکسیژن و استرس در گزارش بیایند.", "keep": "شاخص‌های شما خوب است؛ همین سبک زندگی را ادامه دهید و ماه آینده گزارش تازه بگیرید."}, "docT": "چه زمانی به پزشک مراجعه کنید؟", "docX": "اگر درد یا فشار قفسه سینه، سرگیجه، تنگی نفس یا ضربان نامنظم احساس کردید، یا اکسیژن خون شما مدام زیر 92% بود، فوراً به پزشک مراجعه کنید.", "docC": "به دلیل ({x})، این گزارش را در مراجعه بعدی به پزشک خود نشان دهید.", "by": "تحلیل توسط", "eng": "VEX AI · موتور سلامت", "pts": "{n} داده", "disc": "این گزارش بر پایه داده‌های VEX Band و ثبت‌های داخل اپ تهیه شده و تشخیص پزشکی نیست. برای هر تصمیم پزشکی، گزارش را به پزشک خود نشان دهید.", "pdf": "دانلود PDF", "pdfW": "در حال آماده‌سازی PDF…", "pdfOk": "PDF آماده شد ✓", "pdfNo": "دانلود فایل اینجا در دسترس نیست؛ صفحه‌های گزارش را در زیر می‌بینید.", "pdfErr": "ساخت PDF ناموفق بود؛ دوباره تلاش کنید.", "pdfDec": "دانلود لغو شد", "pdfNote": "PDF در اندازه A4 آماده می‌شود و برای نشان دادن به پزشک مناسب است.", "pv": "پیش‌نمایش گزارش", "pg": "صفحه {a} از {b}", "back": "بازگشت", "cn": {"diab": "دیابت", "bp": "فشار خون", "chol": "کلسترول", "heart": "بیماری قلبی", "kid": "بیماری کلیه", "gout": "نقرس", "gerd": "ریفلاکس", "preg": "بارداری", "bf": "شیردهی", "asth": "آسم", "thy": "تیروئید"}, "sync": "همگام‌سازی Band", "syncing": "در حال همگام‌سازی…", "lastSync": "آخرین همگام‌سازی: {t}", "synced": "همگام شد ✓", "bp": "فشار خون (تخمینی)", "br": "تعداد تنفس", "rhr": "ضربان استراحت", "irr": "{n} ثبت نامنظم", "rhIrr": "نامنظمی دیده شد", "ecgIrr": "در {n} ثبت ضربان نامنظم دیده شد؛ این گزارش را به پزشک خود نشان دهید.", "g_bp": "فشار خون", "sub": "بررسی کامل و تحلیل · PDF", "share": "گزارش کلی VEX Health", "rng": "بازه گزارش", "h24": "24 ساعت", "dN": "{n} روز", "per24": "بازه: 24 ساعت گذشته", "perN": "بازه: {n} روز گذشته", "perC": "بازه: {n} روز انتخابی", "syncAll": "همگام‌سازی همه", "syncT": "در حال همگام‌سازی همه…", "sB": "Band — قدم، قلب، خواب، SpO₂", "sW": "وزن و BMI", "sF": "غذا و آب", "sE": "نوار قلب ECG", "sR": "بازسازی گزارش", "wait": "در انتظار", "off": "متصل نیست", "nR": "{n} رکورد", "allOk": "همه چیز به‌روز شد ✓", "custom": "بازه دلخواه", "pickH": "روز شروع و پایان را انتخاب کنید", "from": "از", "to": "تا", "show": "نمایش {n} روز", "cancel": "انصراف", "dot": "روز دارای داده Band", "change": "تغییر", "cvBd": "Band · {a}/{n} روز", "cvBh": "Band · {a}/24 ساعت", "bandH": "{n} ساعت", "stp24": "قدم (24 ساعت)", "amD": "دقیقه فعال (امروز)", "bnD": "کالری سوزانده (امروز)", "fdR": "بر اساس {n} روز ثبت‌شده در این بازه", "lgD": "ثبت روزبه‌روز", "lgH": "ثبت ساعت‌به‌ساعت", "rdN": "{n} اندازه‌گیری", "cD": "روز", "cHh": "زمان", "cS": "قدم", "cH": "ضربان", "cL": "خواب", "cT": "استرس", "cG": "دما", "chS": "قدم", "chH": "ضربان قلب (bpm)", "lgNote": "«—» یعنی در آن زمان داده‌ای ثبت نشده است.", "keep": "داده‌ها فقط 30 روز نگهداری می‌شوند؛ روز 31 خودکار حذف می‌شود.", "never": "هنوز همگام نشده", "today": "امروز", "wd": ["د", "س", "چ", "پ", "ج", "ش", "ی"], "ws": 5}, "tr": {"dir": "ltr", "t": "Genel Rapor", "doc": "Genel Sağlık Raporu", "per": "Dönem: son 30 gün", "iss": "Düzenlenme", "nm": "Ad", "age": "Yaş / Cinsiyet", "ht": "Boy", "wt": "Kilo", "src": "Kaynak", "m": "Erkek", "f": "Kadın", "yrs": "yaş", "srcB": "VEX Band + uygulama", "srcA": "Uygulama kayıtları", "conds": "Sağlık durumları", "cvB": "{n} gün Band verisi", "cvBo": "Band bağlı değil", "cvF": "{n} gün yemek", "cvE": "{n} EKG kaydı", "cvW": "{n} tartı", "score": "Genel puan", "lv": ["Mükemmel", "İyi", "Orta", "Dikkat gerektiriyor"], "dUp": "{a} puandan {b} puana yükseldi", "dDn": "{a} puandan {b} puana düştü", "dEq": "Önceki raporla aynı", "dNew": "İlk raporun", "va": "Vücut yaşı (VitalAge)", "vaLock": "{n} günlük tam Band verisi gerekiyor", "vaBand": "VEX Band gerekiyor", "nights": "gün", "vaY": "Yaşından {n} yıl genç", "vaO": "Yaşından {n} yıl büyük", "vaE": "Yaşınla aynı", "s1": "Yaşamsal bulgular", "s2": "Kalp ve EKG", "s3": "Uyku", "s4": "Beslenme ve su", "s5": "Aktivite ve kilo", "s6": "Risk değerlendirmesi", "s7": "Özet", "s8": "Öneriler (önem sırasına göre)", "thT": "Ölçüm", "thR": "Sonuç", "thN": "Normal", "thS": "Durum", "hr": "Nabız (ortalama)", "hrr": "En düşük – en yüksek nabız", "hrv": "HRV (kalp hızı değişkenliği)", "sp": "Kan oksijeni SpO₂", "spl": "En düşük SpO₂", "tp": "Cilt sıcaklığı", "st": "Stres", "sl": "Uyku süresi", "stp": "Günlük adım", "ok": "Normal", "hi": "Yüksek ↑", "lo": "Düşük ↓", "mid": "Orta", "na": "Bağlı değil", "nod": "Veri yok", "good": "İyi", "much": "Fazla ↑", "inf": "Bilgi", "bandOff": "VEX Band bağlı değil, bu yüzden Band ölçümleri bu raporda yok. Band'ini bağla ve senkronize et.", "bandDays": "{n} gün", "rh": "Kalp ritmi", "rhOk": "Düzenli ritim", "rec": "Kayıtlar", "recN": "{n} kayıt · 0 düzensiz", "lhr": "Ortalama nabız (son)", "q": "Sinyal kalitesi", "lst": "Son kayıt", "ecgOk": "Tüm kayıtlarda kalp ritmi düzenliydi; düzensiz kalp atışına dair bir işaret görülmedi.", "ecgNo": "Henüz EKG ölçümün yok. EKG bölümünden 30 saniyelik bir ölçüm yap, burada görünsün.", "sla": "Ortalama uyku", "eff": "Uyku verimi", "ln": "Son gece", "dp": "Derin", "rm": "REM", "lt": "Hafif", "aw": "Uyanık", "debt": "Uyku borcu: haftada yaklaşık {h} saat.", "slOk": "Ortalama uykun önerilen aralıkta (7–9 saat).", "thE": "Besin", "thD": "Günlük ort.", "thG": "Hedef", "kc": "Kalori", "pr": "Protein", "cb": "Karbonhidrat", "ft": "Yağ", "fb": "Lif", "sg": "Şeker", "sa": "Tuz", "wa": "Su", "fdays": "Son 30 gündeki {n} kayıtlı güne göre", "fnone": "Henüz yemek kaydı yok. Bu bölümü doldurmak için öğünlerini Yemek bölümünden kaydet.", "am": "Aktif dakika / hafta", "wo": "Antrenman (30 gün)", "bn": "Yakılan kalori (antrenman)", "wc": "Kilo değişimi", "bt": "BMR / TDEE", "one": "Tek tartı", "rc": "Kalp ve dolaşım", "rmt": "Metabolizma ve kilo", "rs": "Uyku ve yorgunluk", "ra": "Hareketsizlik", "low": "Düşük", "mod": "Orta", "high": "Yüksek", "sIn": "Genel durum: {lvl} — 100 üzerinden {s} puan.", "sGood": "İyi gidenler: {x}.", "sAtt": "Dikkat gerektirenler: {x}.", "sAll": "Şu an dikkat gerektiren bir şey yok; böyle devam et.", "and": " ve ", "sep": ", ", "g": {"hr": "nabız", "sp": "kan oksijeni", "ecg": "kalp ritmi (EKG)", "sl": "uyku", "st": "stres", "stp": "aktivite", "kc": "kalori", "pr": "protein", "fb": "lif", "sg": "şeker", "sa": "tuz", "wa": "su", "bmi": "kilo (BMI)", "tp": "sıcaklık"}, "r": {"salt": "Tuzu günde 5 gramın altında tut; turşu, tuzlu peynir ve hazır gıdaları azalt.", "sleep": "Sabit bir yatma saati belirle ve her gece en az 7 saat uyu.", "stress": "Günde 2–3 kez 5 dakika derin nefes al ve ekrandan kısa molalar ver.", "prot": "Günde yaklaşık {n} g daha fazla protein ye: yumurta, yoğurt, mercimek, tavuk ya da balık.", "fib": "Lifi artır: her öğünde sebze ve beyaz ekmek yerine tam tahıllı ekmek.", "water": "Günde yaklaşık {n} bardak daha fazla su iç.", "steps": "Günde yaklaşık {n} adım daha fazla yürü; yemekten sonra 10 dakikalık yürüyüş işe yarar.", "sug": "Şekeri azalt: şekerli içecekleri ve tatlıları her gün yerine ara sıra tüket.", "kcalHi": "Günlük kalorin hedefin üzerinde; porsiyonları ve atıştırmalıkları azalt.", "kcalLo": "Günlük kalorin hedefin çok altında; öğünlerini protein ve tam tahıllarla zenginleştir.", "bmi": "Kademeli kilo vermek (haftada yaklaşık 0,5 kg) kalbine ve kan şekerine iyi gelir.", "ecg": "Kalp ritmini izlemek için ayda en az bir EKG ölçümü yap.", "food": "Daha doğru bir beslenme analizi için öğünlerini Yemek bölümüne kaydet.", "band": "Nabız, uyku, oksijen ve stresin rapora girmesi için VEX Band'i bağla.", "keep": "Ölçümlerin iyi görünüyor; aynı düzene devam et ve gelecek ay yeni bir rapor oluştur."}, "docT": "Ne zaman doktora gitmeli?", "docX": "Göğüs ağrısı veya sıkışma, baş dönmesi, nefes darlığı ya da düzensiz kalp atışı hissedersen veya kan oksijenin sürekli %92'nin altındaysa hemen doktora git.", "docC": "({x}) nedeniyle bu raporu bir sonraki ziyaretinde doktoruna göster.", "by": "Analiz", "eng": "VEX AI · Sağlık motoru", "pts": "{n} veri noktası", "disc": "Bu rapor VEX Band verilerinden ve uygulamadaki kayıtlardan oluşturulmuştur; tıbbi bir teşhis değildir. Her tıbbi karar için raporu doktoruna göster.", "pdf": "PDF indir", "pdfW": "PDF hazırlanıyor…", "pdfOk": "PDF hazır ✓", "pdfNo": "Burada dosya indirme kullanılamıyor; rapor sayfalarını aşağıda görebilirsin.", "pdfErr": "PDF oluşturulamadı; lütfen tekrar dene.", "pdfDec": "İndirme iptal edildi", "pdfNote": "PDF A4 boyutunda hazırlanır ve doktoruna göstermeye uygundur.", "pv": "Rapor önizlemesi", "pg": "Sayfa {a} / {b}", "back": "Geri", "cn": {"diab": "Diyabet", "bp": "Yüksek tansiyon", "chol": "Kolesterol", "heart": "Kalp hastalığı", "kid": "Böbrek hastalığı", "gout": "Gut", "gerd": "Reflü", "preg": "Gebelik", "bf": "Emzirme", "asth": "Astım", "thy": "Tiroid"}, "sync": "Band'i senkronize et", "syncing": "Senkronize ediliyor…", "lastSync": "Son senkronizasyon: {t}", "synced": "Senkronize edildi ✓", "bp": "Tansiyon (tahmini)", "br": "Solunum hızı", "rhr": "Dinlenik nabız", "irr": "{n} düzensiz kayıt", "rhIrr": "Düzensizlik görüldü", "ecgIrr": "{n} kayıtta düzensiz kalp atışı görüldü; bu raporu doktoruna göster.", "g_bp": "tansiyon", "sub": "Genel kontrol ve analiz · PDF", "share": "VEX Health Genel Rapor", "rng": "Rapor dönemi", "h24": "24 saat", "dN": "{n} gün", "per24": "Dönem: son 24 saat", "perN": "Dönem: son {n} gün", "perC": "Dönem: seçilen {n} gün", "syncAll": "Tümünü senkronize et", "syncT": "Tümü senkronize ediliyor…", "sB": "Band — adım, kalp, uyku, SpO₂", "sW": "Kilo ve BMI", "sF": "Yemek ve su", "sE": "EKG (ECG)", "sR": "Rapor yeniden oluşturuluyor", "wait": "Bekliyor", "off": "Bağlı değil", "nR": "{n} kayıt", "allOk": "Her şey güncellendi ✓", "custom": "Özel aralık", "pickH": "İlk ve son günü seçin", "from": "Başlangıç", "to": "Bitiş", "show": "{n} günü göster", "cancel": "İptal", "dot": "Band verisi olan gün", "change": "Değiştir", "cvBd": "Band · {a}/{n} gün", "cvBh": "Band · {a}/24 saat", "bandH": "{n} saat", "stp24": "Adım (24 saat)", "amD": "Aktif dakika (bugün)", "bnD": "Yakılan kalori (bugün)", "fdR": "Bu dönemde kaydedilen {n} güne göre", "lgD": "Gün gün kayıt", "lgH": "Saat saat kayıt", "rdN": "{n} ölçüm", "cD": "Gün", "cHh": "Saat", "cS": "Adım", "cH": "Nabız", "cL": "Uyku", "cT": "Stres", "cG": "Isı", "chS": "Adım", "chH": "Nabız (bpm)", "lgNote": "“—” o zaman veri kaydedilmediği anlamına gelir.", "keep": "Veriler yalnızca 30 gün saklanır; 31. gün otomatik silinir.", "never": "Henüz senkronize edilmedi", "today": "Bugün", "wd": ["Pt", "Sa", "Ça", "Pe", "Cu", "Ct", "Pz"], "ws": 0}};
