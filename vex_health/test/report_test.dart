@@ -213,9 +213,19 @@ void main() {
 
   for (final lang in ['en', 'ar', 'kmr', 'fa', 'tr']) {
     testWidgets('report $lang', (t) async {
-      await page(t, 'd7', h: 860, lang: lang);
-      await expectLater(find.byType(GeneralReportPage), matchesGoldenFile('goldens/report_lang_$lang.png'));
+      final prev = FlutterError.onError;
+      FlutterError.onError = (d) {
+        // ignore: avoid_print
+        print('DETAIL>>> ${d.toString()}');
+        prev?.call(d);
+      };
+      await page(t, 'd7', h: 9000, lang: lang);
+      FlutterError.onError = prev;
+      await expectLater(find.byType(GeneralReportPage), matchesGoldenFile('goldens/report_lang_${lang}_full.png'));
       noErr(t);
+      await t.binding.setSurfaceSize(const Size(400, 860));
+      await t.pump(const Duration(milliseconds: 200));
+      await expectLater(find.byType(GeneralReportPage), matchesGoldenFile('goldens/report_lang_$lang.png'));
     });
   }
 
