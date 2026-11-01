@@ -1,0 +1,45 @@
+name: arena-test
+on:
+  push:
+    branches: [arena-today]
+permissions:
+  contents: write
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: fonts for tests
+        working-directory: vex_health
+        run: |
+          mkdir -p tfonts
+          pip install fonttools > /tmp/pip.txt 2>&1
+          python3 ../.github/workflows/tfonts.py > /tmp/fonts.txt 2>&1
+          sed -i 's#    - assets/brand/#    - assets/brand/\n    - tfonts/#' pubspec.yaml
+          sudo apt-get install -y poppler-utils > /dev/null 2>&1 || true
+      - working-directory: vex_health
+        run: flutter pub get
+      - name: test
+        working-directory: vex_health
+        run: |
+          mkdir -p /tmp/o
+          flutter analyze --no-fatal-infos --no-fatal-warnings lib/report lib/band test/report_test.dart > /tmp/o/analyze.txt 2>&1 || true
+          st=0; flutter test test/report_test.dart --update-goldens -r expanded > /tmp/o/out.txt 2>&1 || st=$?
+          echo "exit=$st" >> /tmp/o/out.txt
+          cp /tmp/fonts.txt /tmp/o/ || true
+          if [ -d test/goldens ]; then cp -r test/goldens /tmp/o/; fi
+          for f in /tmp/o/goldens/*.pdf; do [ -f "$f" ] && pdftoppm -png -r 60 "$f" "${f%.pdf}_p" || true; done
+          exit $st
+      - name: publish
+        if: always()
+        run: |
+          mkdir -p /tmp/o
+          cd /tmp/o
+          git init -q
+          git config user.name ci && git config user.email ci@example.com
+          git checkout -q -b ci-out
+          git add -A && git commit -qm out
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-out

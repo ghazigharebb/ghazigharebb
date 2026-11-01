@@ -49,10 +49,10 @@ void main() {
   };
 
   /// داتای 35 ڕۆژ (5 ڕۆژی کۆنتر لە 30 ڕۆژ بۆ تاقیکردنەوەی سڕینەوە)
-  Future<void> seed() async {
+  Future<void> seed([Map? f, Map? user]) async {
     SharedPreferences.setMockInitialValues({
-      'vexuser': jsonEncode({'name': 'kurd story', 'sex': 'm', 'year': now.year - 31, 'h': 178, 'w': 75, 'act': 'light', 'band': {'paired': true}}),
-      'vexfd_v1': jsonEncode(fd),
+      'vexuser': jsonEncode(user ?? {'name': 'kurd story', 'sex': 'm', 'year': now.year - 31, 'h': 178, 'w': 75, 'act': 'light', 'band': {'paired': true}}),
+      'vexfd_v1': jsonEncode(f ?? fd),
     });
     await Account.I.load();
     await BandState.I.load();
@@ -146,6 +146,38 @@ void main() {
     expect(s.days.keys.every((k) => k.compareTo(_k(ReportStore.firstDay(tomorrow))) >= 0), true);
     // ignore: avoid_print
     print('RETENTION days=${s.days.length} hours=${s.hours.length} sleeps=${s.sleeps.length}');
+  });
+
+  test('personalized text differs per person, goal and range', () async {
+    await seed();
+    final a7 = await generalReportText(range: ReportRange.lastDays(7));
+    final a24 = await generalReportText(range: ReportRange.h24());
+    // کەسی دووەم: ئامانجی دابەزاندنی کێش، 96 کگ، تەمەن 67
+    final f2 = Map<String, dynamic>.of(fd);
+    f2['prof'] = {'name': 'Aram', 'sex': 'm', 'age': 67, 'h': 172, 'w': 96, 'goal': 'lose', 'pace': 0.5, 'act': 1.2, 'conds': ['diab', 'bp']};
+    f2['weights'] = [
+      {'d': _k(day.subtract(const Duration(days: 6))), 'kg': 97.4},
+      {'d': _k(day.subtract(const Duration(days: 1))), 'kg': 96.0},
+    ];
+    await seed(f2, {'name': 'Aram', 'sex': 'm', 'year': now.year - 67, 'h': 172, 'w': 96, 'act': 'sed', 'conds': ['diab', 'bp'], 'band': {'paired': true}});
+    final b7 = await generalReportText(range: ReportRange.lastDays(7));
+    for (final lang in ['ckb', 'kmr', 'en', 'ar', 'fa', 'tr']) {
+      LangState.I.code = lang;
+      final x = await generalReportText(range: ReportRange.lastDays(7));
+      // ignore: avoid_print
+      print('STORY[$lang] ${x.story.join(' ¶ ')}\nRECS[$lang] ${x.recs.join(' | ')}');
+      expect(x.story.join().contains('{'), false);
+      expect(x.recs.join().contains('{'), false);
+    }
+    LangState.I.code = 'ckb';
+    // ignore: avoid_print
+    print('A7 ${a7.story.join(' ¶ ')}\nA24 ${a24.story.join(' ¶ ')}\nRECS-A ${a7.recs.join(' | ')}');
+    expect(a7.story.join() == b7.story.join(), false);
+    expect(a7.story.join() == a24.story.join(), false);
+    expect(a7.story.first.contains('kurd story'), true);
+    expect(b7.story.first.contains('Aram'), true);
+    expect(b7.story.join().contains('1.4'), true); // 97.4 → 96.0 = 1.4 کگ کەم
+    expect(b7.recs.any((x) => x.contains('67')), true); // ڕاسپاردەی تەمەن
   });
 
   test('ranges', () {
