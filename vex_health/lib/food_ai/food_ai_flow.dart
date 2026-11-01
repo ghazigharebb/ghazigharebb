@@ -315,15 +315,7 @@ class _FoodCapturePageState extends State<FoodCapturePage> with SingleTickerProv
                   width: ds,
                   height: ds,
                   child: Stack(clipBehavior: Clip.none, children: [
-                    Positioned.fill(
-                      child: Transform.rotate(
-                        angle: _rotOf(d.id),
-                        child: Container(
-                          decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withAlpha(120), blurRadius: 30, offset: const Offset(0, 16))]),
-                          child: DishPng(d, size: ds),
-                        ),
-                      ),
-                    ),
+                    Positioned.fill(child: Transform.rotate(angle: _rotOf(d.id), child: DishOnTable(d, size: ds, strength: 1.2))),
                     // چوارچێوەی ناسینەوە
                     Positioned.fill(
                       child: AnimatedOpacity(
@@ -725,12 +717,17 @@ class _FoodAnalysisPageState extends State<FoodAnalysisPage> with TickerProvider
     final s0 = widget.shots.first;
     final d0 = s0.sample == null ? null : dishById(s0.sample!);
     final ready = _res != null;
+    const rot = -6 * math.pi / 180;
     return Container(
       height: 300,
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(26), border: Border.all(color: V.line)),
       clipBehavior: Clip.antiAlias,
-      child: Stack(fit: StackFit.expand, children: [
-        ShotView(shot: s0, zoom: .95, rot: -6 * math.pi / 180),
+      child: LayoutBuilder(builder: (context, c) {
+      final ps = math.min(c.maxWidth, c.maxHeight) * 0.92 * .95;
+      return Stack(fit: StackFit.expand, children: [
+        ShotView(shot: s0, zoom: .95, rot: rot),
+        // پشتەوە تاریک دەبێت کاتێک خواردنەکە دەبڕدرێت
+        IgnorePointer(child: AnimatedOpacity(opacity: _lift ? 1 : 0, duration: const Duration(milliseconds: 600), child: const ColoredBox(color: Color(0x73000000)))),
         if (!ready || _done.isEmpty) _scanLine(),
         // بازنەی جیاکردنەوە
         if (d0 != null)
@@ -739,7 +736,7 @@ class _FoodAnalysisPageState extends State<FoodAnalysisPage> with TickerProvider
               tween: Tween<double>(begin: 0, end: _seg ? 1 : 0),
               duration: const Duration(milliseconds: 1000),
               curve: Curves.easeInOut,
-              builder: (context, v, _) => SizedBox(width: 250, height: 250, child: CustomPaint(painter: _SegRing(v, _detColor(d0.id)))),
+              builder: (context, v, _) => SizedBox(width: ps * 1.02, height: ps * 1.02, child: CustomPaint(painter: _SegRing(v, _detColor(d0.id)))),
             ),
           ),
         // بڕین و بەرزکردنەوە (PNG)
@@ -749,22 +746,20 @@ class _FoodAnalysisPageState extends State<FoodAnalysisPage> with TickerProvider
               opacity: _lift ? 1 : 0,
               duration: const Duration(milliseconds: 500),
               child: AnimatedSlide(
-                offset: _lift ? const Offset(0, -0.04) : Offset.zero,
+                offset: _lift ? const Offset(0, -0.035) : Offset.zero,
                 duration: const Duration(milliseconds: 700),
                 curve: kEase,
                 child: AnimatedScale(
-                  scale: _lift ? 0.92 : 0.8,
+                  scale: _lift ? 1.07 : 1,
                   duration: const Duration(milliseconds: 700),
                   curve: kEase,
-                  child: Container(
-                    decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withAlpha(150), blurRadius: 28, offset: const Offset(0, 18))]),
-                    child: DishPng(d0, size: 220),
-                  ),
+                  child: Transform.rotate(angle: rot, child: DishOnTable(d0, size: ps, strength: 1.6)),
                 ),
               ),
             ),
           ),
-      ]),
+      ]);
+      }),
     );
   }
 
@@ -965,6 +960,9 @@ class _FoodReviewPageState extends State<FoodReviewPage> with SingleTickerProvid
   }
 
   FNut get _tot => items.fold(FNut.zero, (a, x) => a + x.nut);
+
+  /// کۆی کالۆری = کۆی ژمارەکانی هەر دێڕێک (هەمان ژمارە لە ماڵەوە و ڕاپۆرت)
+  int get _kcal => items.fold<int>(0, (a, x) => a + x.nut.k.round());
   int get _unsure => items.where((x) => !x.sure).length;
 
   FShot? _shotOf(FItem it) => it.shot >= 0 && it.shot < widget.shots.length ? widget.shots[it.shot] : null;
@@ -1074,7 +1072,7 @@ class _FoodReviewPageState extends State<FoodReviewPage> with SingleTickerProvid
             style: kx(13, c: V.mu),
           ),
           const Spacer(),
-          CountNum(t.k, key: const ValueKey<String>('fa-total'), style: nu(28, c: V.tx)),
+          CountNum(_kcal.toDouble(), key: const ValueKey<String>('fa-total'), style: nu(28, c: V.tx)),
           Padding(padding: const EdgeInsets.only(bottom: 5, right: 4), child: Text('kcal', style: nu(13, w: FontWeight.w600, c: V.mu))),
         ]),
         const SizedBox(height: 10),
@@ -1718,7 +1716,6 @@ class _FoodDonePageState extends State<FoodDonePage> {
   @override
   Widget build(BuildContext context) {
     final its = widget.items;
-    final meal = its.fold(FNut.zero, (a, x) => a + x.nut);
     final t = Store.I.totals();
     final goal = Store.I.h.goal.toDouble();
     const pos = [
@@ -1769,10 +1766,7 @@ class _FoodDonePageState extends State<FoodDonePage> {
                                 turns: _in ? 0 : pos[i][4] / 6.28,
                                 duration: const Duration(milliseconds: 800),
                                 curve: kEase,
-                                child: Container(
-                                  decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withAlpha(90), blurRadius: 22, offset: const Offset(0, 12))]),
-                                  child: DishPng(its[i].dish, size: h * pos[i][2]),
-                                ),
+                                child: DishOnTable(its[i].dish, size: h * pos[i][2], strength: .8),
                               ),
                             ),
                           ),
@@ -1827,7 +1821,7 @@ class _FoodDonePageState extends State<FoodDonePage> {
                         TextSpan(children: [
                           TextSpan(text: '${its.length}', style: nu(11.5, w: FontWeight.w700, c: V.mu)),
                           const TextSpan(text: ' خواردن · '),
-                          TextSpan(text: fmt(meal.k), style: nu(11.5, w: FontWeight.w700, c: V.mu)),
+                          TextSpan(text: fmt(its.fold<int>(0, (a, x) => a + x.nut.k.round())), style: nu(11.5, w: FontWeight.w700, c: V.mu)),
                           const TextSpan(text: ' kcal زیادکرا بۆ ئەمڕۆ'),
                         ]),
                         style: kx(11.5, c: V.mu),

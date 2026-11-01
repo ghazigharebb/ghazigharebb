@@ -85,6 +85,37 @@ class DishPng extends StatelessWidget {
   }
 }
 
+/// خواردن لەسەر مێز: سێبەری نەرم لە ژێریدا (نەک بازنەیەکی تاریک)
+class DishOnTable extends StatelessWidget {
+  const DishOnTable(this.d, {super.key, required this.size, this.strength = 1});
+  final FDish d;
+  final double size;
+  final double strength;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(clipBehavior: Clip.none, children: [
+        Positioned(
+          left: size * .16,
+          right: size * .16,
+          bottom: size * .07,
+          height: size * .14,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.all(Radius.elliptical(size * .34, size * .07)),
+              boxShadow: [BoxShadow(color: Colors.black.withAlpha((150 * strength).round().clamp(0, 255)), blurRadius: size * .07, spreadRadius: size * .015, offset: Offset(0, size * .02))],
+            ),
+          ),
+        ),
+        Positioned.fill(child: DishPng(d, size: size)),
+      ]),
+    );
+  }
+}
+
 /// «وێنەی کامێرا»: خواردنەکە لەسەر مێزی دار (نموونە) یان وێنەی ڕاستەقینە
 class ShotView extends StatelessWidget {
   const ShotView({super.key, required this.shot, this.zoom = 1.0, this.rot = 0});
@@ -103,13 +134,7 @@ class ShotView extends StatelessWidget {
         Image.asset(kWood, fit: BoxFit.cover),
         if (d != null)
           Center(
-            child: Transform.rotate(
-              angle: rot,
-              child: Container(
-                decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withAlpha(110), blurRadius: s * .08, offset: Offset(0, s * .04))]),
-                child: DishPng(d, size: s),
-              ),
-            ),
+            child: Transform.rotate(angle: rot, child: DishOnTable(d, size: s)),
           ),
       ]);
     });

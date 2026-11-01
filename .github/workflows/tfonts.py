@@ -30,3 +30,10 @@ for n, w in W:
         print('merged', n)
     except Exception as e:
         print('merge failed', n, e)
+
+# Sora ی سووک (بەشێک لە ئەپ بەکاری دەهێنێت؛ لە مۆبایل لە ئینتەرنێتەوە دێت)
+urllib.request.urlretrieve('https://github.com/google/fonts/raw/main/ofl/sora/Sora%5Bwght%5D.ttf', '/tmp/sora.ttf')
+for n, w in [('Thin', 100), ('ExtraLight', 200), ('Light', 300)]:
+    f = TTFont('/tmp/sora.ttf')
+    instancer.instantiateVariableFont(f, {'wght': w}).save('tfonts/Sora-%s.ttf' % n)
+    print('Sora', n)

@@ -20,7 +20,7 @@ class FUnit {
 
 const List<double> _half = [0.5, 1, 1.5, 2, 2.5, 3, 4];
 const List<double> _count = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 20];
-const List<double> _gram = [25, 50, 75, 100, 150, 200, 250, 300, 400, 500];
+const List<double> _gram = [25, 50, 75, 100, 125, 150, 175, 200, 250, 300, 350, 400, 450, 500, 600, 750, 1000];
 
 const Map<String, FUnit> kUnits = {
   'qap': FUnit('qap', 'قاپ', _half),

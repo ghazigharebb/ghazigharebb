@@ -293,7 +293,7 @@ class _FoodAiTabState extends State<FoodAiTab> {
     for (final s in kMealOrder) {
       final g = l.where((x) => x.slot == s).toList();
       if (g.isEmpty) continue;
-      final k = g.fold<double>(0, (a, x) => a + x.nut.k);
+      final k = g.fold<int>(0, (a, x) => a + x.nut.k.round());
       out.add(Padding(
         padding: const EdgeInsets.fromLTRB(4, 18, 4, 8),
         child: Row(children: [
