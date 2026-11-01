@@ -1546,7 +1546,7 @@ void _story(_Rep r) {
   final p1 = <String>[], p2 = <String>[], p3 = <String>[];
   // ───── سەرەتا و ڕێژەی داتا ─────
   final total = r.rg.hourly ? 24 : r.rg.days;
-  p1.add(nm(_f(r.rg.hourly ? (seed.isEven ? _t('o24a') : _t('o24b')) : (seed.isEven ? _t('oDa') : _t('oDb')), {'a': r.cover, 'n': r.rg.days})));
+  p1.add(_f(nm(r.rg.hourly ? (seed.isEven ? _t('o24a') : _t('o24b')) : (seed.isEven ? _t('oDa') : _t('oDb'))), {'a': r.cover, 'n': r.rg.days}));
   if (r.cover > 0 && r.cover * 2 < total) {
     p1.add(_f(_t('yCov'), {'a': r.cover, 'n': total, 'u': r.rg.hourly ? _t('uH') : _t('uD')}));
   }

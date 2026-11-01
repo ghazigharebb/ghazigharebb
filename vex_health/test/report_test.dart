@@ -55,6 +55,7 @@ void main() {
       'vexfd_v1': jsonEncode(f ?? fd),
     });
     await Account.I.load();
+    Account.I.user = Map<String, dynamic>.from(user ?? {'name': 'kurd story', 'sex': 'm', 'year': now.year - 31, 'h': 178, 'w': 75, 'act': 'light', 'band': {'paired': true}});
     await BandState.I.load();
     await VitalAgeEngine.I.init();
     final b = VexBand.I;
