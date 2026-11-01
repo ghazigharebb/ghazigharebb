@@ -26,7 +26,7 @@ Future<void> openFoodCapture({bool gallery = false}) async {
 }
 
 /// نووسین ← لیستی ژەم
-Future<void> openFoodText() async {
+Future<void> openFoodWrite() async {
   final ctx = navKey.currentContext;
   if (ctx == null) return;
   final items = await showFoodTextSheet(ctx);

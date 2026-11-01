@@ -25,7 +25,7 @@ void showAnalyseSheet({Uint8List? image, String? text}) {
 }
 
 void showTypeSheet() {
-  openFoodText();
+  openFoodWrite();
 }
 
 const Map<String, List<String>> kMeals = {

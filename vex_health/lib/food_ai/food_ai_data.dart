@@ -39,7 +39,7 @@ FUnit unitOf(String id) => kUnits[id] ?? kUnits['g']!;
 const List<String> _num = ['', 'یەک', 'دوو', 'سێ', 'چوار', 'پێنج', 'شەش', 'حەوت', 'هەشت', 'نۆ', 'دە'];
 
 /// ژمارە بە ڕەقەمی ئینگلیزی و ڕاستەوخۆ چەپ‌بۆ‌ڕاست
-String _d(num v) => '⁦${v == v.roundToDouble() ? v.round() : v}⁩';
+String _d(num v) => '\u2066${v == v.roundToDouble() ? v.round() : v}\u2069';
 
 /// بڕ بە وشەی ڕوون: «نیو قاپ»، «یەک قاپ»، «قاپ و نیو»، «دوو شیش»، «150 گرام»
 String qtyWord(double q, String unitId) {

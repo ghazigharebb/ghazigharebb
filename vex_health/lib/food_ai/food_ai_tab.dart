@@ -204,7 +204,7 @@ class _FoodAiTabState extends State<FoodAiTab> {
         Row(children: [
           Expanded(child: SoftBtn(key: const ValueKey<String>('fa-open-gal'), label: 'گەلەری', icon: FI.gal, onTap: () => openFoodCapture(gallery: true))),
           const SizedBox(width: 8),
-          Expanded(child: SoftBtn(key: const ValueKey<String>('fa-open-text'), label: 'بنووسە', icon: FI.edit, onTap: openFoodText)),
+          Expanded(child: SoftBtn(key: const ValueKey<String>('fa-open-text'), label: 'بنووسە', icon: FI.edit, onTap: openFoodWrite)),
         ]),
       ]),
     );
