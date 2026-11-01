@@ -1,0 +1,51 @@
+name: android-build
+on:
+  push:
+    branches: [arena-today]
+permissions:
+  contents: write
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: build
+        working-directory: vex_health
+        run: |
+          mkdir -p /tmp/o
+          st=0
+          prep() {
+            set -e
+            flutter create . --platforms=android --org com.vex --project-name vex_health
+            python3 tools/setup_native.py
+            python3 tools/setup_native.py
+            flutter pub get
+          }
+          prep > /tmp/o/build.txt 2>&1 || st=$?
+          if [ $st -eq 0 ]; then
+            flutter build apk --release --split-per-abi >> /tmp/o/build.txt 2>&1 || st=$?
+            if [ $st -eq 0 ]; then
+              cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk /tmp/o/VEX.apk
+              cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk /tmp/o/VEX-old-phones.apk 2>/dev/null || true
+            else
+              echo "release failed, trying debug" >> /tmp/o/build.txt
+              st=0; flutter build apk --debug >> /tmp/o/build.txt 2>&1 || st=$?
+              cp build/app/outputs/flutter-apk/app-debug.apk /tmp/o/VEX.apk 2>/dev/null || true
+            fi
+          fi
+          echo "exit=$st" >> /tmp/o/build.txt
+          exit $st
+      - name: publish
+        if: always()
+        run: |
+          cd /tmp/o
+          git init -q && git config user.name ci && git config user.email ci@example.com
+          git checkout -q -b ci-build && git add -A && git commit -qm out
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-build
