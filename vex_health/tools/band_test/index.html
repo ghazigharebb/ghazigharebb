@@ -54,6 +54,7 @@ h1 i{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg
   <h1><i>VX</i>VEX Band Test</h1>
   <p class="sub">تاقیکردنەوەی ڕاستەقینەی «Band لە دەستە یان نا» · هەمان لۆجیکی ئەپ (VEX Skin Sense v3)</p>
 
+  <div id="useChrome" class="err" hidden><b>ئەم پەنجەرەیە بلووتوسی نییە</b> (بۆ نموونە وێبگەڕی ناو ئەپی Claude). ئەم لینکە لە <b>Google Chrome</b> بکەرەوە:<br><span class="n" style="font-size:11.5px;word-break:break-all" id="myUrl"></span><br><button class="btn" id="bCopyUrl" style="margin-top:8px;padding:10px">📋 کۆپیکردنی لینک</button></div>
   <div id="noBt" class="err" hidden>ئەم وێبگەڕە بلووتوسی نییە. ئەم فایلە بە <b>Google Chrome</b> بکەرەوە (لە ماک یان ئەندرۆید). Safari و Brave پشتگیری ناکەن.</div>
   <div class="warn">پێش پەیوەستکردن: ئەپی VEX Health لە مۆبایلەکەت <b>بە تەواوی دابخە</b> (یان بلووتوسی مۆبایل بکوژێنەوە)، چونکە Band لە یەک کاتدا تەنها بە یەک ئامێر پەیوەست دەبێت.</div>
 
@@ -220,7 +221,8 @@ setInterval(()=>{if(eng){render();check()}renderSteps()},250);
 
 // ═══════════ پەیوەستبوون ═══════════
 async function connect(){
-  if(!navigator.bluetooth){$('noBt').hidden=false;return}
+  if(!navigator.bluetooth){$('noBt').hidden=false;$('useChrome').hidden=false;return}
+  const t0=Date.now();
   try{
     $('conn').textContent='Band هەڵبژێرە…';
     dev=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:[SVC]});
@@ -235,7 +237,10 @@ async function connect(){
     await send(F.setTime(new Date())).catch(()=>{});await send(F.battery()).catch(()=>{});await send(F.ntc()).catch(()=>{});await send(F.realtime(true)).catch(()=>{});
     await arm(Date.now(),false);
     clearInterval(timer);timer=setInterval(tick,1000);render();renderSteps();
-  }catch(e){$('conn').textContent='نەکرا: '+e.message;addLog(Date.now(),'connect error: '+e.message,'off')}}
+  }catch(e){const fast=Date.now()-t0<1500;
+    if(fast&&/cancel|permissions policy|not allowed|NotFound|Security/i.test(e.name+' '+e.message)){$('useChrome').hidden=false;$('conn').textContent='ئەم پەنجەرەیە لیستی بلووتوس پیشان نادات — لە Google Chrome بیکەرەوە'}
+    else $('conn').textContent=/cancel/i.test(e.message)?'هیچ Band ێک هەڵنەبژێردرا — دووبارە هەوڵ بدە':'نەکرا: '+e.message;
+    addLog(Date.now(),'connect error: '+e.name+': '+e.message,'off')}}
 function onDown(){addLog(Date.now(),'BLE disconnected','off');clearInterval(timer);wr=null;nt=null;eng=null;lastState='';$('conn').textContent='پچڕا — دووبارە پەیوەستی بکە';$('bConn').disabled=false;$('bDisc').disabled=true;render();renderSteps()}
 async function disconnect(){try{if(wr)await send(F.measure(2,false,SESSION_SEC))}catch(e){}try{dev&&dev.gatt.disconnect()}catch(e){}onDown()}
 $('bConn').onclick=connect;$('bDisc').onclick=disconnect;
@@ -243,7 +248,9 @@ $('bRaw').onclick=()=>{showRaw=!showRaw;$('bRaw').textContent=showRaw?'شارد�
 function logText(){return LOG.map(l=>ts(l.t)+'  '+l.s).join('\n')+'\n\nRESULTS: '+JSON.stringify(res)}
 $('bCopy').onclick=async()=>{try{await navigator.clipboard.writeText(logText());$('bCopy').textContent='✓ کۆپی کرا'}catch(e){$('bCopy').textContent='نەکرا'}setTimeout(()=>$('bCopy').textContent='کۆپی',1500)};
 $('bSave').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([logText()],{type:'text/plain'}));a.download='vex_band_test_log.txt';a.click()};
-if(!navigator.bluetooth)$('noBt').hidden=false;
+if(!navigator.bluetooth){$('noBt').hidden=false;$('useChrome').hidden=false}
+$('myUrl').textContent=location.href;
+$('bCopyUrl').onclick=async()=>{try{await navigator.clipboard.writeText(location.href);$('bCopyUrl').textContent='✓ کۆپی کرا — لە Chrome دایبنێ'}catch(e){const r=document.createRange();r.selectNode($('myUrl'));getSelection().removeAllRanges();getSelection().addRange(r)}};
 render();renderSteps();
 window.__VX={WearEngine,CFG,frame,F};
 </script>
