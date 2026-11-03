@@ -53,7 +53,7 @@ class SkinSenseCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         VText('هەستەوەری دەست', style: ku(14, w: FontWeight.w800, h: 1.4)),
-                        VText('دڵی ڕووناکی + گەرمیی پێست · هەر چرکەیەک', style: ku(11.5, c: V.mu, h: 1.4)),
+                        VText('هەستەوەری ڕووناکیی خاو (PPG) · ٥٠ جار لە چرکەیەکدا', style: ku(11.5, c: V.mu, h: 1.4)),
                       ],
                     ),
                   ),

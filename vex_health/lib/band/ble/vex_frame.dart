@@ -27,6 +27,7 @@ class VexCmd {
   static const hrDynamic = 0x54, hrStatic = 0x55, hrv = 0x56;
   static const sleepDetail = 0x6b, temp = 0x62, spo2 = 0x66;
   static const ntcTemp = 0x14;
+  static const ppgRaw = 0x78, ppgRawData = 0x3a; // PPG ی خاو (BleSDK.ppgWithMode) ← پاکێتی 0x3a
   static const setAlarm = 0x23, getAlarm = 0x24;
 }
 
@@ -131,6 +132,9 @@ class VexFrame {
 
   /// شەپۆلی PPG ی ڕاستەوخۆ لە کاتی پێوانەی HRV
   static Uint8List ppgStream(bool on) => _f(VexCmd.ppg, {1: on ? 1 : 0});
+
+  /// PPG ی خاو (٥٠ Hz) — BleSDK.ppgWithMode. mode: 1 دەستپێک · 3 ڕاگرتن · 5 دەرچوون
+  static Uint8List ppgRaw(int mode, {int status = 0}) => _f(VexCmd.ppgRaw, {1: mode, if (mode != 1) 2: status});
 
   // ---- پێوانەی خۆکار ----
   /// kind: 1 دڵ، 2 SpO2، 3 گەرما، 4 HRV. weekMask بیت-ماسک (بەپێی SDK)
