@@ -20,6 +20,9 @@ import '../onboarding/reg_lang_data.dart' show RLang;
 
 /// وشە و ڕستەی کورتی سۆرانی ← تورکی
 const Map<String, String> kTrDict = {
+  "Band دەپشکنرێت…": "Band kontrol ediliyor…",
+  "Band لە دەستت نییە": "Band bileğinde değil",
+  "Band پەیوەست دەبێتەوە…": "Band yeniden bağlanıyor…",
   "ئاب": "Ağustos",
   "ئارام": "sakin",
   "ئارامترین کاتت": "en sakin zamanın",

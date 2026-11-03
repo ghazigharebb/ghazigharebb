@@ -19,6 +19,7 @@ import '../alerts/alerts_sheets.dart';
 import '../alerts/band_alerts.dart';
 import '../core/icons.dart';
 import '../core/theme.dart';
+import 'skin_sense_card.dart';
 import 'band_state.dart';
 import 'ble/vex_ble.dart';
 
@@ -249,6 +250,7 @@ class _DevicePageState extends State<DevicePage> with SingleTickerProviderStateM
                         children: [
                           _top(),
                           _hero(st, col, low),
+                          const SkinSenseCard(),
                           IgnorePointer(
                             ignoring: dim,
                             child: AnimatedOpacity(

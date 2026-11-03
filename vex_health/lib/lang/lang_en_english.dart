@@ -23,6 +23,9 @@ const String STOP_PATTERN = r"""^(?:(?:min|h|m|sec|kcal|cal|kg|km|g|ml|l|bpm|ms|
 
 /// وشە و ڕستەی کورتی کوردی ← ئینگلیزی
 const Map<String, String> kEnDict = {
+  "Band دەپشکنرێت…": "Band is being checked…",
+  "Band لە دەستت نییە": "Band is not on your wrist",
+  "Band پەیوەست دەبێتەوە…": "Band is reconnecting…",
   "ئاب": "August",
   "ئارام": "Calm",
   "ئارامترین کاتت": "Your calmest time",

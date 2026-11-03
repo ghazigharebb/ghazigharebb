@@ -47,6 +47,12 @@ class VexBattery extends VexMsg {
   const VexBattery(this.percent, this.chargeState, this.millivolt);
 }
 
+/// پلەی گەرمیی NTC ی ڕاستەوخۆ (0x14)
+class VexNtc extends VexMsg {
+  final double tempC;
+  const VexNtc(this.tempC);
+}
+
 class VexVersion extends VexMsg {
   final String version;
   const VexVersion(this.version);
@@ -190,6 +196,8 @@ class VexParser {
         return VexDeviceTime(null, _u(v, 1)); // وەڵام: MTU
       case VexCmd.realtime:
         return _realtime(v);
+      case VexCmd.ntcTemp:
+        return VexNtc((_u(v, 1) + (_u(v, 2) << 8)) * 0.1);
       case VexCmd.totalSteps:
         return _steps(v);
       case VexCmd.hrStatic:

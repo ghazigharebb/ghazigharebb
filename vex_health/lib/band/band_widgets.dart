@@ -52,7 +52,7 @@ class ReconnectButton extends StatelessWidget {
     return ListenableBuilder(
       listenable: BandState.I,
       builder: (context, _) {
-        final busy = BandState.I.reconnecting;
+        final busy = BandState.I.reconnecting || BandState.I.checking;
         return Press(
           onTap: busy ? null : showBandPair,
           child: Container(
@@ -95,14 +95,14 @@ class BandBanner extends StatelessWidget {
               Container(
                 width: 10,
                 height: 10,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: BandColors.dot),
+                decoration: BoxDecoration(shape: BoxShape.circle, color: BandState.I.reconnecting || BandState.I.checking ? V.amber : BandColors.dot),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    VText('Band پەیوەست نییە', style: ku(14, w: FontWeight.w800, h: 1.5)),
+                    VText(BandState.I.statusText, style: ku(14, w: FontWeight.w800, h: 1.5)),
                     lastSyncText(),
                   ],
                 ),

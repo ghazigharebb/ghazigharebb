@@ -14,6 +14,7 @@ import '../core/theme.dart';
 import '../onboarding/account.dart';
 import '../plus/plus_state.dart';
 import 'ble/vex_ble.dart';
+import 'ble/vex_wear.dart';
 
 class BandState extends ChangeNotifier {
   BandState._();
@@ -36,22 +37,39 @@ class BandState extends ChangeNotifier {
   /// Band ی BLE ی پەیوەستە، بەڵام لە دەستت نییە (VexBand ـەوە دیاری دەکرێت)
   bool offWrist = false;
 
-  /// «پەیوەستە» = BLE ئامادەیە + Band لە دەستە. لە دەست نەبێت هەموو شاشەکان وەک پچڕاو (سوور و «—») نیشان دەدەن.
-  bool get connected => _connected && !offWrist;
+  /// BLE پەیوەستە و Band دەپشکنرێت (لە دەستە یان نا) — ~٣–٩ چرکە دوای پەیوەستبوون
+  bool checking = false;
 
-  /// ئایا BLE خۆی ئامادەیە (بێ گوێدان بە لە دەست بوون)؟
-  bool get bleUp => _connected;
+  /// «پەیوەستە» = BLE ئامادەیە + Band لە دەستە (پشتڕاستکراوە). ئەگەر نا، هەموو شاشەکان «—» نیشان دەدەن.
+  bool get connected => _connected && !offWrist && !checking;
 
-  void setOffWrist(bool v) {
-    if (offWrist == v) return;
-    offWrist = v;
-    if (v) {
+  /// دەقی دۆخ بۆ بانەر و کارتەکان
+  String get statusText {
+    if (_connected && checking) return 'Band دەپشکنرێت…';
+    if (_connected && offWrist) return 'Band لە دەستت نییە';
+    if (reconnecting) return 'Band پەیوەست دەبێتەوە…';
+    return 'Band پەیوەست نییە';
+  }
+
+  /// لە VexBand ـەوە: دۆخی «لە دەستە»
+  void setWear(WearState s) {
+    final off = s == WearState.off, chk = s == WearState.unknown;
+    if (off == offWrist && chk == checking) return;
+    final wasOn = connected;
+    offWrist = off;
+    checking = chk;
+    if (wasOn && !connected) {
       final t = DateTime.now();
       lastSync = '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
       _sp?.setString(_kLast, lastSync);
     }
     notifyListeners();
   }
+
+  /// ئایا BLE خۆی ئامادەیە (بێ گوێدان بە لە دەست بوون)؟
+  bool get bleUp => _connected;
+
+  void setOffWrist(bool v) => setWear(v ? WearState.off : WearState.worn);
 
   /// ئایا ئەم هەژمارە هەرگیز Band ی پەیوەست کردووە؟ (نەخێر ← کارتی «پەیوەستکردن / کڕین»)
   bool get everPaired => _paired() || lastSync.isNotEmpty || (_override ?? false);
@@ -89,7 +107,10 @@ class BandState extends ChangeNotifier {
   void setConnected(bool on, {String? lastSync}) {
     _override = on;
     _connected = on;
-    if (!on) offWrist = false;
+    if (!on) {
+      offWrist = false;
+      checking = false;
+    }
     reconnecting = false;
     if (!on && lastSync != null && lastSync.isNotEmpty) this.lastSync = lastSync;
     final sp = _sp;

@@ -12,6 +12,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -38,7 +39,7 @@ class _Waiter {
   _Waiter(this.cmd);
 }
 
-class VexBand extends ChangeNotifier {
+class VexBand extends ChangeNotifier with WidgetsBindingObserver {
   VexBand._();
   static final VexBand I = VexBand._();
 
@@ -75,6 +76,11 @@ class VexBand extends ChangeNotifier {
 
   // ───────────── دەستپێک ─────────────
   Future<void> init() async {
+    try {
+      WidgetsBinding.instance.addObserver(this);
+      final ls = WidgetsBinding.instance.lifecycleState;
+      if (ls != null) wear.foreground = ls == AppLifecycleState.resumed;
+    } catch (_) {}
     try {
       final sp = await SharedPreferences.getInstance();
       final id = sp.getString(_kId);
@@ -199,7 +205,12 @@ class VexBand extends ChangeNotifier {
     await nt.setNotifyValue(true);
     _nSub = nt.onValueReceived.listen((v) => _onData(Uint8List.fromList(v)));
     _ready = true;
+    _wantLink = true;
+    _retryN = 0;
+    _retry?.cancel();
+    _retry = null;
     BandState.I.setConnected(true);
+    BandState.I.setWear(WearState.unknown); // تا «لە دەستە» پشتڕاست دەبێتەوە هیچ ژمارەیەک نیشان نادرێت
     notifyListeners();
     // دانانی کات (پێویستە بۆ مێژوو) + باتری + وەشان
     await send(VexFrame.setTime(DateTime.now()));
@@ -220,9 +231,44 @@ class VexBand extends ChangeNotifier {
     final t = DateTime.now();
     BandState.I.setConnected(false, lastSync: '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}');
     notifyListeners();
+    _scheduleRetry(); // پچڕانی BLE ← خێرا دووبارە پەیوەست دەبێتەوە
+  }
+
+  // ───────────── پەیوەستبوونەوەی خۆکار (دوای پچڕانی BLE) ─────────────
+  bool _wantLink = false;
+  Timer? _retry;
+  int _retryN = 0;
+  static const List<int> _retryAfter = [1, 2, 3, 5, 8, 12, 20, 30];
+
+  void _scheduleRetry() {
+    if (!_wantLink || _retry != null) return;
+    final sec = _retryAfter[_retryN.clamp(0, _retryAfter.length - 1)];
+    // یەکەم ~٣٠ چرکە: «پەیوەست دەبێتەوە…» (نەک «پەیوەست نییە»)
+    if (_retryN < 5) {
+      BandState.I.reconnecting = true;
+      BandState.I.notifyListeners();
+    }
+    _retry = Timer(Duration(seconds: sec), () async {
+      _retry = null;
+      if (_ready || !_wantLink) return;
+      _retryN++;
+      final ok = await reconnect();
+      if (!ok && _wantLink && !_ready) {
+        if (_retryN >= 5 && BandState.I.reconnecting) {
+          BandState.I.reconnecting = false;
+          BandState.I.notifyListeners();
+        }
+        _scheduleRetry();
+      }
+    });
   }
 
   Future<void> disconnect({bool forget = true}) async {
+    if (forget) {
+      _wantLink = false;
+      _retry?.cancel();
+      _retry = null;
+    }
     await _nSub?.cancel();
     await _cSub?.cancel();
     _nSub = _cSub = null;
@@ -318,14 +364,28 @@ class VexBand extends ChangeNotifier {
         battery = b.percent;
         charging = b.chargeState != 0;
         wear.onBattery(charging: charging);
+      case VexNtc x:
+        skinTemp = x.tempC;
+        wear.onTemp(x.tempC);
       case VexVersion x:
         version = x.version;
       case VexMac x:
         mac = x.mac;
       case VexRealtime r:
-        live = offWrist ? null : r;
-        wear.onLive(hr: r.hr, spo2: r.spo2, tempC: r.tempC);
+        wear.onSteps(r.steps);
+        final h = _sessionHr;
+        // دڵی ڕاستەوخۆی پێوانەی ڕووناکی لە پاکێتی هەنگاودا (کە کۆنە یان 0 ـە) بەکاردێت
+        live = offWrist || wear.checking ? null : (h != null && h > 0 ? _withHr(r, h) : r);
       case VexMeasureResult r:
+        if (!_busy && r.kind == 2) {
+          wear.onHeart(r.hr);
+          if (r.hr >= 35 && r.hr <= 220) {
+            _sessionHr = r.hr;
+            final l = live;
+            if (l != null && wear.isWorn) live = _withHr(l, r.hr);
+          }
+          break;
+        }
         lastMeasure = r;
       case VexPpg p:
         ppgStream.add(p);
@@ -342,77 +402,49 @@ class VexBand extends ChangeNotifier {
   bool _busy = false;
   late final WearDetector wear = WearDetector(
     isReady: () => _ready,
-    isBusy: () => _busy,
-    samplePpg: _samplePpg,
-    liveOn: () => liveSteps(true),
+    isBusy: () => _busy || syncing,
+    startSession: () => send(VexFrame.measure(2, start: true, seconds: WearDetector.sessionSeconds)),
+    stopSession: () => send(VexFrame.measure(2, start: false, seconds: WearDetector.sessionSeconds)),
+    readTemp: () => send(VexFrame.ntcTemp()),
+    readBattery: () => send(VexFrame.battery()),
     onChanged: _onWear,
   );
+
+  /// گەرمیی ڕاستەوخۆی پێست (NTC، °C)
+  double? skinTemp;
+  int? _sessionHr;
 
   /// Band ی BLE ی پەیوەستە بەڵام لە دەست نییە
   bool get offWrist => wear.isOff;
 
-  Timer? _batTimer;
+  static VexRealtime _withHr(VexRealtime r, int hr) => VexRealtime(
+      steps: r.steps, kcal: r.kcal, km: r.km, minutes: r.minutes, activeSeconds: r.activeSeconds, hr: hr, tempC: r.tempC, spo2: r.spo2);
 
   void _startWear() {
     wear.start();
-    // باتری هەر ١ خولەک: «لەسەر شەحنە» = لە دەست نییە (بەڵگەی یەکسەر)
-    _batTimer?.cancel();
-    _batTimer = Timer.periodic(const Duration(seconds: 60), (_) {
-      if (_ready) unawaited(send(VexFrame.battery()).catchError((_) {}));
-    });
+    unawaited(liveSteps(true).catchError((_) {}));
   }
 
   void _stopWear() {
-    _batTimer?.cancel();
-    _batTimer = null;
-    final was = wear.isOff;
     wear.stop();
-    if (was) BandState.I.setOffWrist(false);
+    _sessionHr = null;
   }
 
   void _onWear(WearState s) {
-    final off = s == WearState.off;
-    if (off) {
+    if (s != WearState.worn) {
       live = null;
       lastMeasure = null;
+      _sessionHr = null;
     }
-    BandState.I.setOffWrist(off);
+    if (_ready) BandState.I.setWear(s);
     notifyListeners();
   }
 
-  /// ٧ چرکە شەپۆلی PPG ی ڕاستەقینە (هەمان ڕێگای ECG) بۆ پشکنینی دەست
-  Future<(List<double>, double)?> _samplePpg() async {
-    if (!_ready || _busy) return null;
-    _busy = true;
-    final buf = <double>[];
-    DateTime? t0, t1;
-    final sub = ppgStream.stream.listen((p) {
-      final now = DateTime.now();
-      t0 ??= now;
-      t1 = now;
-      for (final s in p.samples) {
-        buf.add(s.toDouble());
-      }
-    });
-    try {
-      await send(VexFrame.measure(4, start: true, seconds: 50 * 1000));
-      await send(VexFrame.ppgStream(true));
-      await Future<void>.delayed(const Duration(seconds: 7));
-    } finally {
-      await sub.cancel();
-      try {
-        await send(VexFrame.measure(4, start: false, seconds: 50 * 1000));
-        await send(VexFrame.ppgStream(false));
-      } catch (_) {}
-      _busy = false;
-    }
-    if (t0 == null || t1 == null || buf.length < 40) return null;
-    final secs = t1!.difference(t0!).inMilliseconds / 1000.0;
-    if (secs < 1.5) return null;
-    // ٢ چرکەی یەکەم ڕادەکێشرێت (دەستپێکردنی سێنسەر)؛ ڕێژە = نموونە/چرکە
-    final rate = buf.length / secs;
-    final skip = (rate * 1.5).round().clamp(0, buf.length ~/ 2).toInt();
-    return (buf.sublist(skip), rate);
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final fg = state == AppLifecycleState.resumed;
+    wear.setForeground(fg);
+    if (fg && !_ready && _wantLink && _retry == null) unawaited(reconnect());
   }
 
   // ───────────── ئاستی بەرز ─────────────
@@ -507,6 +539,9 @@ class VexBand extends ChangeNotifier {
   Future<VexMeasureResult?> measure(VexMeasure k, {int seconds = 50}) async {
     final kind = switch (k) { VexMeasure.heart => 2, VexMeasure.spo2 => 3, VexMeasure.hrv => 4 };
     lastMeasure = null;
+    _busy = true;
+    wear.pause();
+    try {
     final c = Completer<VexMeasureResult?>();
     final sub = raw.stream.where((m) => m is VexMeasureResult).listen((m) {
       final r = m as VexMeasureResult;
@@ -517,12 +552,17 @@ class VexBand extends ChangeNotifier {
     await sub.cancel();
     await send(VexFrame.measure(kind, start: false, seconds: seconds));
     return r;
+    } finally {
+      _busy = false;
+      wear.resume();
+    }
   }
 
   /// شەپۆلی زیندووی «ECG» ی Band (هەمان ڕێگای ئەپی فرۆشیار: PPGActivity.java).
   /// پاکێتەکان لە `ppgStream` دێن. پێویستە `stopWaveform()` بانگ بکرێت.
   Future<void> startWaveform() async {
     _busy = true; // لە کاتی ECG دا پشکنینی «لە دەستە» ڕادەوەستێت
+    wear.pause();
     await send(VexFrame.measure(4, start: true, seconds: 50 * 1000));
     // SDK (iOS ppgView): شەپۆلی ECG دوای وەڵامی فرمانی پێوانە چالاک دەکرێت
     await Future<void>.delayed(const Duration(milliseconds: 350));
@@ -533,6 +573,7 @@ class VexBand extends ChangeNotifier {
     await send(VexFrame.measure(4, start: false, seconds: 50 * 1000));
     await send(VexFrame.ppgStream(false));
     _busy = false;
+    wear.resume();
   }
 
   Future<void> find() => send(VexFrame.find());

@@ -195,10 +195,10 @@ class BandStatus extends StatelessWidget {
           Container(
             width: 8,
             height: 8,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: BandColors.dot),
+            decoration: BoxDecoration(shape: BoxShape.circle, color: BandState.I.reconnecting || BandState.I.checking ? V.amber : BandColors.dot),
           ),
           const SizedBox(width: 8),
-          VText('Band پەیوەست نییە', style: ku(12, w: FontWeight.w700, c: BandColors.dot)),
+          VText(BandState.I.statusText, style: ku(12, w: FontWeight.w700, c: BandState.I.reconnecting || BandState.I.checking ? V.amber : BandColors.dot)),
           const SizedBox(width: 6),
           Expanded(
             child: VText.rich(

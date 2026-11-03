@@ -20,6 +20,9 @@ import '../onboarding/reg_lang_data.dart' show RLang;
 
 /// وشە و ڕستەی کورتی سۆرانی ← عەرەبی
 const Map<String, String> kArDict = {
+  "Band دەپشکنرێت…": "جارٍ فحص Band…",
+  "Band لە دەستت نییە": "Band ليس على معصمك",
+  "Band پەیوەست دەبێتەوە…": "Band يعيد الاتصال…",
   "ئاب": "آب",
   "ئارام": "هادئ",
   "ئارامترین کاتت": "وقتك الأهدأ",

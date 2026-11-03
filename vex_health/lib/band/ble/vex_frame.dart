@@ -81,6 +81,8 @@ class VexFrame {
 
   static Uint8List getTime() => _f(VexCmd.getTime);
   static Uint8List battery() => _f(VexCmd.battery);
+  /// پلەی گەرمیی ڕاستەوخۆ (3 NTC) — بێ LED، خێرا (SDK: RealTimeTemperature)
+  static Uint8List ntcTemp() => _f(VexCmd.ntcTemp);
   static Uint8List version() => _f(VexCmd.version);
   static Uint8List mac() => _f(VexCmd.mac);
   static Uint8List getUser() => _f(VexCmd.getUser);
