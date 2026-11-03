@@ -126,7 +126,7 @@ class WearEngine {
 
   void _log(DateTime t, String s) {
     log.addLast(WearEvent(t, s));
-    while (log.length > 80) {
+    while (log.length > 600) {
       log.removeFirst();
     }
   }
@@ -166,6 +166,7 @@ class WearEngine {
   /// هەر پاکێتێکی 0x28 ی پێوانەی دڵ (hr = 0 کاتێک Band دڵ نادۆزێتەوە)
   WearState hr(int bpm, DateTime t) {
     _lastPacket = t;
+    _log(t, 'hr $bpm');
     if (charging) return state;
     if (_valid(bpm)) {
       lastHr = bpm;
@@ -190,6 +191,7 @@ class WearEngine {
   WearState temp(double c, DateTime t) {
     if (c <= 0 || c > 50) return state;
     lastTemp = c;
+    _log(t, 'temp ${c.toStringAsFixed(1)}');
     // فێربوون: تەنها کاتێک دڵی دروستی نوێ هەیە (= بە دڵنیایی لەسەر پێستە)
     // (تەنها گۆڕانی هێواش فێر دەبێت؛ دابەزینی خێرا = لابردن، فێری نابێت)
     final fresh = _lastValid != null && t.difference(_lastValid!) <= const Duration(milliseconds: 1500);
