@@ -43,6 +43,14 @@ h1 i{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg
 .act{margin-top:10px}
 .big{text-align:center;padding:6px 0 2px}
 .big .ic{font-size:54px;line-height:1.1}
+.hero{text-align:center;padding:18px 8px 10px}
+.hero .ring{width:150px;height:150px;margin:0 auto;border-radius:50%;display:grid;place-items:center;font-size:62px;background:color-mix(in srgb,var(--k) 16%,transparent);border:3px solid var(--k);box-shadow:0 0 60px -12px var(--k);transition:.35s}
+.hero .ring.pulse{animation:pl 1.1s infinite}
+.hero .lbl{font-size:30px;font-weight:800;color:var(--k);margin-top:14px;line-height:1.4}
+.hero .sm{color:var(--mu);font-size:13px}
+.res{width:100%;border-collapse:collapse;margin-top:12px;font-size:13.5px}
+.res td{padding:8px 6px;border-top:1px solid var(--line)}.res td:last-child{text-align:left;font:800 13px Sora;direction:ltr}
+.res .ok{color:var(--mint)}.res .bad{color:var(--coral)}
 .big .ins{font-size:21px;font-weight:800;line-height:1.55;margin:8px 0 4px;color:var(--k,var(--tx))}
 .big .cd{font:800 46px Sora;direction:ltr;color:var(--k,var(--cy))}
 .big .ph{color:var(--mu);font-size:12.5px}
@@ -58,11 +66,11 @@ h1 i{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg
 <body>
 <div class="wrap">
   <h1><i>VX</i>VEX Band Test</h1>
-  <p class="sub">تۆماری هەستەوەری ڕووناکیی Band (PPG) · بۆ دروستکردنی دۆزینەوەی ٪١٠٠ ی «لە دەستتە / لە دەستت نییە»</p>
+  <p class="sub">VEX Skin Sense v4 · هەستەوەری ڕووناکیی خاوی Band (PPG ٥٠ جار لە چرکەیەکدا)</p>
 
-  <div id="useChrome" class="err" hidden><b>ئەم پەنجەرەیە بلووتوسی نییە</b> (بۆ نموونە وێبگەڕی ناو ئەپی Claude). ئەم لینکە لە <b>Google Chrome</b> بکەرەوە:<br><span class="n" style="font-size:11.5px;word-break:break-all" id="myUrl"></span><br><button class="btn" id="bCopyUrl" style="margin-top:8px;padding:10px">📋 کۆپیکردنی لینک</button></div>
-  <div id="noBt" class="err" hidden>ئەم وێبگەڕە بلووتوسی نییە. ئەم پەڕەیە بە <b>Google Chrome</b> بکەرەوە (لە ماک یان ئەندرۆید). Safari و Brave پشتگیری ناکەن.</div>
-  <div class="warn">پێش پەیوەستکردن: ئەپی VEX Health <b>بە تەواوی دابخە</b>، چونکە Band لە یەک کاتدا تەنها بە یەک ئامێر پەیوەست دەبێت.</div>
+  <div id="useChrome" class="err" hidden><b>ئەم پەنجەرەیە بلووتوسی نییە</b>. ئەم لینکە لە <b>Google Chrome</b> بکەرەوە:<br><span class="n" style="font-size:11.5px;word-break:break-all" id="myUrl"></span><br><button class="btn" id="bCopyUrl" style="margin-top:8px;padding:10px">📋 کۆپیکردنی لینک</button></div>
+  <div id="noBt" class="err" hidden>ئەم وێبگەڕە بلووتوسی نییە. بە <b>Google Chrome</b> بیکەرەوە.</div>
+  <div class="warn">پێش پەیوەستکردن: ئەپی VEX Health <b>بە تەواوی دابخە</b>.</div>
 
   <div class="card">
     <div class="row">
@@ -72,27 +80,30 @@ h1 i{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg
     <div class="why" id="conn" style="text-align:center;direction:rtl;font-family:'Noto Sans Arabic',Sora,sans-serif">پەیوەست نییە</div>
   </div>
 
+  <div class="card" id="stCard" style="--k:var(--mu)">
+    <div class="hero">
+      <div class="ring" id="ring">⌚</div>
+      <div class="lbl" id="lbl">پەیوەست نییە</div>
+      <div class="sm" id="since">—</div>
+    </div>
+  </div>
+
   <div class="card" id="recCard" style="--k:var(--cy)">
     <div class="big">
-      <div class="ic" id="rIc">⌚</div>
-      <div class="ins" id="rIns">سەرەتا Band پەیوەست بکە</div>
+      <div class="ins" id="rIns">تاقیکردنەوەی ٪١٠٠: لابردن و لەدەستکردن ٣ جار + ١ خولەک جووڵە</div>
       <div class="cd" id="rCd"></div>
-      <div class="ph" id="rPh">تەنها یەک دوگمە: ~٢ خولەک و نیو · مۆبایلەکە لە بەردەمت بێت و گوێ لە دەنگەکە بگرە</div>
+      <div class="ph" id="rPh">~٣ خولەک و نیو · گوێ لە دەنگەکە بگرە</div>
       <div class="bar"><i id="rBar"></i></div>
     </div>
-    <button class="btn" id="bRec" disabled style="margin-top:14px">🧪 دەستپێکردنی تۆمار</button>
-    <div class="tiles">
-      <div class="tile"><span>دڵ (خاو)</span><b id="tHr">—</b><em>bpm</em></div>
-      <div class="tile"><span>گەرمی</span><b id="tTemp">—</b><em>°C</em></div>
-      <div class="tile"><span>باتری</span><b id="tBat">—</b><em id="tChg">%</em></div>
-      <div class="tile"><span>PPG</span><b id="tPpg">—</b><em>نموونە/چ</em></div>
-    </div>
+    <button class="btn" id="bRec" disabled style="margin-top:14px">🧪 دەستپێکردنی تاقیکردنەوە</button>
+    <table class="res" id="res"></table>
   </div>
 
   <div class="card">
     <div class="hd"><b>لۆگ</b><span class="row" style="flex:none;gap:6px">
       <button class="btn s" id="bCopy" style="width:auto;padding:7px 12px;font-size:12.5px">کۆپی</button>
       <button class="btn s" id="bSave" style="width:auto;padding:7px 12px;font-size:12.5px">داگرتن</button></span></div>
+    <div class="why" id="dbg"></div>
     <div class="log" id="log"></div>
   </div>
 </div>
@@ -104,94 +115,98 @@ const SVC=0xfff0,WR=0xfff6,NT=0xfff7;
 function frame(cmd,b={}){const v=new Uint8Array(16);v[0]=cmd;for(const k in b)v[k]=b[k]&255;let s=0;for(let i=0;i<15;i++)s+=v[i];v[15]=s&255;return v}
 const F={battery:()=>frame(0x13),realtime:on=>frame(0x09,{1:on?1:0,2:1}),
   measure:(kind,start,sec)=>frame(0x28,{1:kind,2:start?1:0,4:sec&255,5:(sec>>8)&255}),
-  ppg07:on=>frame(0x07,{1:on?1:0}),            // BleSDK.setECGRealtimeDuringHRVEnabled
-  ppg78:(mode,st=0)=>frame(0x78,{1:mode,2:mode===1?0:st}), // BleSDK.ppgWithMode: 1 start · 3 stop · 5 exit
+  ppgOn:()=>frame(0x78,{1:1}),ppgStop:()=>frame(0x78,{1:3}),ppgExit:()=>frame(0x78,{1:5}),   // BleSDK.ppgWithMode
   setTime:d=>{const bcd=x=>((Math.floor(x/10)%10)<<4)|(x%10);const off=-d.getTimezoneOffset()/60;return frame(0x01,{1:bcd(d.getFullYear()%100),2:bcd(d.getMonth()+1),3:bcd(d.getDate()),4:bcd(d.getHours()),5:bcd(d.getMinutes()),6:bcd(d.getSeconds()),8:off>=0?0x80+off:-off})}};
+
+// ═══════════ VEX Skin Sense v4 — دۆزینەوە لە PPG ی خاو ═══════════
+// دۆزراوە لە Band ی ڕاستەقینە (JCV8B): لە دۆخی 0x78 دا Band هەر چرکەیەک پاکێتی 0x3a دەنێرێت (٥٠ نموونە، ٤ بایت BE لە بایتی ٣).
+// لەسەر پێست: ئاستێکی جێگیر (~١-٣ ملیۆن) و گۆڕانێکی بچووک (<٠٫٥٪). کاتی لابردن: پاکێتی شێواو (تێر بوون/پچڕان) و پاشان Band
+// خۆی ناردن ڕادەگرێت. کاتی لەدەستکردنەوە: Band خۆی دەست پێدەکاتەوە.
+const PW={win:15,minDC:300000,maxDC:10000000,cleanRel:0.02,chaosRel:0.05,chaosRun:3,gapAfterChaos:1600,gapAfterClean:3000,noDataOff:3500,resendEvery:4000};
+function ppgSamples(v){const o=[];for(let i=3;i+3<v.length;i+=4)o.push(((v[i]<<24)>>>0)+(v[i+1]<<16)+(v[i+2]<<8)+v[i+3]);return o}
+function ppgClass(s,c=PW){const h=s.slice(-c.win);if(h.length<8)return{k:'mid',rel:0,med:0};
+  const so=[...h].sort((a,b)=>a-b),med=so[so.length>>1],mn=so[0],mx=so[so.length-1];let md=0;for(let i=1;i<h.length;i++)md=Math.max(md,Math.abs(h[i]-h[i-1]));
+  const rel=md/Math.max(med,1);let k;if(mn<c.minDC||mx>c.maxDC)k='chaos';else if(rel<c.cleanRel)k='clean';else if(rel>c.chaosRel)k='chaos';else k='mid';return{k,rel,med,mn,mx}}
+class PpgWear{constructor(c=PW,onLog=()=>{}){this.c=c;this.state='unknown';this.reason='';this.start=null;this.last=null;this.lastK=null;this.chaos=0;this.onLog=onLog;this.changedAt=null}
+  begin(t){this.start=t;this.last=null;this.lastK=null;this.chaos=0}
+  set(s,t,why){if(s===this.state)return s;this.state=s;this.reason=why;this.changedAt=t;this.onLog(t,'→ '+s+' ('+why+')',s==='worn'?'w':s==='off'?'o':'u');return s}
+  packet(samples,t){const r=ppgClass(samples,this.c);this.last=t;this.lastK=r.k;
+    if(r.k==='clean'){this.chaos=0;this.set('worn',t,'ppg skin')}
+    else if(r.k==='chaos'){this.chaos++;if(this.chaos>=this.c.chaosRun)this.set('off',t,'ppg chaos x'+this.chaos)}
+    return r}
+  tick(t){const c=this.c;if(this.start==null)return this.state;
+    if(this.last==null){if(t-this.start>=c.noDataOff)this.set('off',t,'no ppg');return this.state}
+    const gap=t-this.last,lim=this.lastK==='clean'?c.gapAfterClean:c.gapAfterChaos;if(gap>=lim)this.set('off',t,'ppg stopped '+(gap/1000).toFixed(1)+'s');return this.state}
+  silentFor(t){return this.last==null?(this.start==null?0:t-this.start):t-this.last}}
 
 // ═══════════ دۆخ و لۆگ ═══════════
 const $=id=>document.getElementById(id);
-let dev=null,wr=null,nt=null,q=Promise.resolve(),timer=null,tickN=0;
-let rec=false,phase=null,battery=null,charging=false,lastHr=null,lastTemp=null;
-const ppgT=[];const seen={};const PH_STATS={};
+let dev=null,wr=null,nt=null,q=Promise.resolve(),timer=null,tickN=0,eng=null,lastSend=0,battery=null,lastTemp=null,lastR=null;
 const LOG=[];
 function ts(t){const d=new Date(t);return d.toTimeString().slice(0,8)+'.'+String(d.getMilliseconds()).padStart(3,'0').slice(0,1)}
-function addLog(t,s,k){LOG.push({t,s,k});if(LOG.length>20000)LOG.shift();renderLog()}
+function addLog(t,s,k){LOG.push({t,s,k});if(LOG.length>30000)LOG.shift();renderLog()}
 let logT=0;function renderLog(){if(logT)return;logT=requestAnimationFrame(()=>{logT=0;const el=$('log'),stick=el.scrollTop+el.clientHeight>=el.scrollHeight-20;
-  el.innerHTML=LOG.slice(-300).map(l=>`<div class="${l.k==='w'?'w':l.k==='o'?'o':l.k==='u'?'u':l.k==='d'?'d':'x'}">${ts(l.t)}  ${l.s.replace(/</g,'&lt;')}</div>`).join('');if(stick)el.scrollTop=el.scrollHeight})}
+  el.innerHTML=LOG.filter(l=>l.k!=='raw').slice(-250).map(l=>`<div class="${l.k}">${ts(l.t)}  ${l.s.replace(/</g,'&lt;')}</div>`).join('');if(stick)el.scrollTop=el.scrollHeight})}
 function hex(v,n=999){return Array.from(v.slice(0,n)).map(b=>b.toString(16).padStart(2,'0')).join(' ')}
-function stats(a){const n=a.length;if(!n)return null;let m=0;for(const x of a)m+=x;m/=n;let sd=0,mn=Infinity,mx=-Infinity;for(const x of a){sd+=(x-m)**2;if(x<mn)mn=x;if(x>mx)mx=x}
-  return{n,mean:Math.round(m),sd:Math.round(Math.sqrt(sd/n)),min:mn,max:mx}}
-function samples(v){ // نموونەکانی PPG بەپێی SDK
-  const out=[];
-  if(v[0]===0x3a){const o=v.length===153?3:3;for(let i=o;i+2<v.length;i+=3)out.push((v[i]<<16)|(v[i+1]<<8)|v[i+2]);return{be:true,out}}
-  for(let i=2;i+2<v.length;i+=3)out.push(v[i]|(v[i+1]<<8)|(v[i+2]<<16));return{be:false,out}}
-function acc(key,field,val){const p=PH_STATS[key]||(PH_STATS[key]={});(p[field]||(p[field]=[])).push(val)}
-
-function send(v){const p=q.then(async()=>{if(!wr)throw new Error('no link');addLog(Date.now(),'→ '+hex(v),'x');
+function send(v,quiet){const p=q.then(async()=>{if(!wr)throw new Error('no link');if(!quiet)addLog(Date.now(),'→ '+hex(v),'x');
   if(wr.properties.write&&wr.writeValueWithResponse)await wr.writeValueWithResponse(v);else if(wr.writeValueWithoutResponse)await wr.writeValueWithoutResponse(v);else await wr.writeValue(v);
-  await new Promise(r=>setTimeout(r,60))});q=p.catch(()=>{});return p}
+  await new Promise(r=>setTimeout(r,50))});q=p.catch(()=>{});return p}
+function ppgOn(t){lastSend=t;return send(F.ppgOn()).catch(()=>{})}
 
-function onData(e){const dv=e.target.value;const v=new Uint8Array(dv.buffer.slice(dv.byteOffset,dv.byteOffset+dv.byteLength));const t=Date.now();if(!v.length)return;
-  const key=phase?phase.key:'idle';const c=v[0];
-  if(c===0x09&&v.length>=25){const hr=v[21],tc=(v[22]|(v[23]<<8))/10,b3031=(v[30]<<8)|v[31];lastHr=hr;if(tc>0)lastTemp=tc;
-    addLog(t,`09 hr=${hr} t=${tc} b24-29=[${Array.from(v.slice(24,30)).join(',')}] b30=${b3031} st=${v[1]|(v[2]<<8)}`,'d');
-    acc(key,'hr',hr);acc(key,'b30',b3031);if(tc>0)acc(key,'temp_x10',Math.round(tc*10))}
-  else if(c===0x13){battery=v[1];charging=v[2]!==0;addLog(t,`13 bat=${v[1]} chg=${v[2]}`,'x')}
-  else if((c===0x3a||c===0x07)&&v.length>16){const s=samples(v);const st=stats(s.out);for(const x of s.out)ppgT.push(t);
-    seen[c]=(seen[c]||0)+1;if(seen[c]<=3)addLog(t,`raw ${hex(v,48)} … len=${v.length}`,'u');
-    if(st){addLog(t,`PPG${c.toString(16)} n=${st.n} mean=${st.mean} sd=${st.sd} min=${st.min} max=${st.max} p2p=${st.max-st.min}`,'d');
-      acc(key+'/'+c.toString(16),'mean',st.mean);acc(key+'/'+c.toString(16),'sd',st.sd);acc(key+'/'+c.toString(16),'p2p',st.max-st.min);
-      if(s.out.length>=10)addLog(t,`PPG${c.toString(16)} v=${s.out.join(',')}`,'x')}}
+function onData(e){const dv=e.target.value;const v=new Uint8Array(dv.buffer.slice(dv.byteOffset,dv.byteOffset+dv.byteLength));const t=Date.now();if(!v.length||!eng)return;
+  const c=v[0];
+  if(c===0x3a&&v.length>=43){const s=ppgSamples(v);const r=eng.packet(s,t);lastR=r;
+    addLog(t,`ppg #${v[2]} ${r.k} med=${r.med} rel=${r.rel.toFixed(4)} [${r.mn}..${r.mx}] len=${v.length}`,r.k==='clean'?'x':r.k==='chaos'?'o':'u');
+    addLog(t,'v='+s.join(','),'raw')}
+  else if(c===0x09&&v.length>=25){const tc=(v[22]|(v[23]<<8))/10;if(tc>0)lastTemp=tc;if(tickN%5===0)addLog(t,`09 hr=${v[21]} t=${tc}`,'x')}
+  else if(c===0x13){battery=v[1];addLog(t,`13 bat=${v[1]} chg=${v[2]}`,'x')}
   else addLog(t,`← ${hex(v,40)}${v.length>40?' … len='+v.length:''}`,'u');
   render()}
 
-function render(){const t=Date.now();while(ppgT.length&&t-ppgT[0]>3000)ppgT.shift();
-  $('tHr').textContent=lastHr?lastHr:'—';$('tTemp').textContent=lastTemp!=null?lastTemp.toFixed(1):'—';
-  $('tBat').textContent=battery!=null?battery:'—';$('tChg').textContent=charging?'⚡ شەحن':'%';$('tPpg').textContent=ppgT.length?Math.round(ppgT.length/3):'—'}
+function tick(){if(!wr||!eng)return;tickN++;const t=Date.now();
+  if(tickN%30===0)send(F.battery(),true).catch(()=>{});
+  // ئەگەر Band بێدەنگ بوو: فرمانی PPG دووبارە دەنێرینەوە (ئەگەر لە دەستتە دەست پێدەکاتەوە، ئەگەر نا بێدەنگ دەمێنێت)
+  if(eng.silentFor(t)>=1500&&t-lastSend>=PW.resendEvery)ppgOn(t);
+  eng.tick(t);render()}
 
-// ═══════════ تۆماری ڕێنمایی‌کراو ═══════════
-const ON='on',OFF='off';
-const MODES={
-  hr:{name:'دڵ (0x09)',start:async()=>{await send(F.realtime(true));await send(F.measure(2,true,600))},stop:async()=>{await send(F.measure(2,false,600))}},
-  p78:{name:'PPG خاو (0x78)',start:async()=>{await send(F.realtime(true));await send(F.ppg78(1))},stop:async()=>{await send(F.ppg78(3,0));await send(F.ppg78(5,0))}},
-  p07:{name:'PPG ی HRV (0x07)',start:async()=>{await send(F.realtime(true));await send(F.measure(4,true,600));await sleep(300);await send(F.ppg07(true))},stop:async()=>{await send(F.ppg07(false));await send(F.measure(4,false,600))}}};
-const PLAN=[
-  ['hr',ON,14],['hr',OFF,20],['hr',ON,25],
-  ['p78',ON,12],['p78',OFF,15],['p78',ON,15],
-  ['p07',ON,12],['p07',OFF,15],['p07',ON,15]];
-const TOTAL=PLAN.reduce((a,p)=>a+p[2],0);
-const TXT={on0:'Band لە دەستت بێت و مەیجووڵێنە',off:'ئێستا Band لە دەستت بکەرەوە و لەسەر مێز دایبنێ',on:'ئێستا دووبارە Band لە دەستت بکە'};
+let shown='';
+function render(){const t=Date.now();const s=!wr?'none':eng?eng.state:'none';
+  const M={worn:['لە دەستتە ✓','var(--mint)','💚'],off:['لە دەستت نییە','var(--coral)','✋'],unknown:['دەپشکنرێت…','var(--amber)','⏳'],none:['پەیوەست نییە','var(--mu)','⌚']}[s];
+  if(s!==shown){shown=s;$('stCard').style.setProperty('--k',M[1]);$('lbl').textContent=M[0];$('ring').textContent=M[2];$('ring').classList.toggle('pulse',s==='worn')}
+  $('since').textContent=eng&&eng.changedAt?('لەم دۆخەدایە: '+Math.round((t-eng.changedAt)/1000)+' چرکە'):'—';
+  $('dbg').textContent=eng?`${eng.reason} · ppg ${lastR?lastR.k+' '+lastR.rel.toFixed(4):'-'} · silent ${(eng.silentFor(t)/1000).toFixed(1)}s · bat ${battery??'-'}% · ${lastTemp??'-'}°C`:''}
+
+// ═══════════ تاقیکردنەوەی ٪١٠٠ ═══════════
+const PLAN=[['on',12,'Band لە دەستت بێت'],['off',14,'ئێستا Band لە دەستت بکەرەوە و لەسەر مێز دایبنێ'],['on',14,'ئێستا دووبارە لە دەستی بکە'],
+  ['off',14,'لای ببە و ئەمجارە بە پشتدا لەسەر مێز دایبنێ (شاشە بۆ خوارەوە)'],['on',14,'دووبارە لە دەستی بکە'],
+  ['off',14,'لای ببە و بە دەستی خۆت بیگرە (نەک لە مەچەک)'],['on',14,'دووبارە لە دەستی بکە'],
+  ['hold',60,'Band لە دەستدا بێت: دەستت بجووڵێنە، بڕۆ، دابنیشە — نابێت «لە دەستت نییە» بڵێت']];
+const TOTAL=PLAN.reduce((a,p)=>a+p[1],0);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let actx=null;function beep(f=880,ms=180){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=f;g.gain.value=.18;o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+ms/1000)}catch(e){}
   try{navigator.vibrate&&navigator.vibrate(ms+120)}catch(e){}}
-function show(ic,ins,k,ph){$('rIc').textContent=ic;$('rIns').textContent=ins;$('recCard').style.setProperty('--k',k);if(ph!=null)$('rPh').textContent=ph}
-let wake=null;
-async function runRec(){if(!wr||rec)return;rec=true;$('bRec').disabled=true;$('bRec').hidden=true;for(const k in PH_STATS)delete PH_STATS[k];
+let rec=false,wake=null;const RES=[];
+function renderRes(){$('res').innerHTML=RES.map(r=>`<tr><td>${r.t}</td><td class="${r.ok?'ok':'bad'}">${r.v}</td></tr>`).join('')}
+async function runTest(){if(!wr||rec)return;rec=true;$('bRec').hidden=true;RES.length=0;renderRes();
   try{wake=await navigator.wakeLock?.request('screen')}catch(e){}
-  try{beep(660,120);let done=0,curMode=null;
-    addLog(Date.now(),'### REC START '+new Date().toISOString(),'u');
-    for(let i=0;i<PLAN.length;i++){const[m,a,sec]=PLAN[i];
-      if(m!==curMode){if(curMode){show('⏳','Band لە دەستت بهێڵە…','var(--amber)','گۆڕینی هەستەوەر');await MODES[curMode].stop().catch(()=>{});await sleep(1500)}
-        curMode=m;addLog(Date.now(),'### MODE '+m+' start','u');await MODES[m].start().catch(e=>addLog(Date.now(),'mode error '+e.message,'o'))}
-      const first=i===0||PLAN[i-1][0]!==m;
-      phase={key:m+':'+(a===OFF?'off':first?'on0':'on1'),m,a};addLog(Date.now(),'### PHASE '+phase.key+' ('+sec+'s)',a===OFF?'o':'w');
-      const ins=a===OFF?TXT.off:(first?TXT.on0:TXT.on);beep(a===OFF?440:990,a===OFF?380:200);
-      const t0=Date.now();
-      while(Date.now()-t0<sec*1000){const left=Math.ceil((sec*1000-(Date.now()-t0))/1000);
-        show(a===OFF?'✋':'⌚',ins,a===OFF?'var(--coral)':'var(--mint)',`بەشی ${i+1}/${PLAN.length} · ${MODES[m].name}`);$('rCd').textContent=left+'s';
-        $('rBar').style.width=((done+(Date.now()-t0)/1000)/TOTAL*100).toFixed(1)+'%';await sleep(200);if(!wr)throw new Error('Band پچڕا')}
-      done+=sec}
-    await MODES[curMode].stop().catch(()=>{});phase=null;
-    addLog(Date.now(),'### REC END','u');summary();
-    $('rCd').textContent='';$('rBar').style.width='100%';beep(1200,300);
-    show('✅','تەواو! ئێستا «کۆپی» یان «داگرتن» ی لۆگ دابگرە و بۆمی بنێرە','var(--mint)','Band دەتوانێت لە دەستت بمێنێت');
-  }catch(e){addLog(Date.now(),'REC error: '+e.message,'o');show('⚠️','تۆمار وەستا: '+e.message,'var(--coral)','دووبارە پەیوەستی بکە و هەوڵ بدەرەوە');phase=null}
-  finally{rec=false;$('bRec').hidden=false;$('bRec').disabled=!wr;$('bRec').textContent='🧪 دووبارە تۆمارکردن';try{wake&&wake.release()}catch(e){}}}
-function summary(){addLog(Date.now(),'===== SUMMARY =====','u');
-  for(const k of Object.keys(PH_STATS)){const p=PH_STATS[k];const parts=[];for(const f of Object.keys(p)){const s=stats(p[f]);parts.push(`${f}: n=${s.n} avg=${s.mean} sd=${s.sd} [${s.min}..${s.max}]`)}addLog(Date.now(),k+'  '+parts.join(' | '),'u')}}
-
-function tick(){if(!wr)return;tickN++;if(tickN%15===0)send(F.battery()).catch(()=>{});
-  if(!rec&&tickN%20===0)send(F.realtime(true)).catch(()=>{});render()}
+  try{beep(660,120);let done=0;addLog(Date.now(),'### TEST START','u');
+    for(let i=0;i<PLAN.length;i++){const[want,sec,txt]=PLAN[i];const t0=Date.now();let hit=null,bad=0;
+      addLog(t0,'### STEP '+(i+1)+' '+want+' — '+txt,want==='off'?'o':'w');beep(want==='off'?440:990,want==='off'?380:200);
+      $('recCard').style.setProperty('--k',want==='off'?'var(--coral)':'var(--mint)');$('rIns').textContent=txt;
+      while(Date.now()-t0<sec*1000){const t=Date.now(),st=eng?eng.state:'none';
+        if(want==='hold'){if(st!=='worn'&&!bad){bad=1;addLog(t,'TEST: FALSE OFF while worn','o')}}
+        else if(hit==null&&st===(want==='on'?'worn':want)&&(i===0||eng.changedAt>=t0)){hit=(t-t0)/1000;addLog(t,`TEST step ${i+1}: ${want} after ${hit.toFixed(1)} s`,want==='off'?'o':'w');beep(1320,90)}
+        $('rCd').textContent=Math.ceil((sec*1000-(t-t0))/1000)+'s';$('rPh').textContent=`هەنگاوی ${i+1}/${PLAN.length}`+(hit!=null?` · ✓ دۆزرایەوە دوای ${hit.toFixed(1)} چرکە`:'');
+        $('rBar').style.width=((done+(t-t0)/1000)/TOTAL*100).toFixed(1)+'%';await sleep(150);if(!wr)throw new Error('Band پچڕا')}
+      done+=sec;
+      if(want==='hold')RES.push({t:'١ خولەک جووڵە لە دەستدا',v:bad?'✗ هەڵە':'✓ ٠ هەڵە',ok:!bad});
+      else if(i>0)RES.push({t:(want==='off'?'لابردن ':'لەدەستکردن ')+'('+(i+1)+')',v:hit==null?'✗ نەدۆزرایەوە':hit.toFixed(1)+' s',ok:hit!=null&&hit<=7});
+      renderRes()}
+    const all=RES.every(r=>r.ok);addLog(Date.now(),'### TEST END '+(all?'ALL PASS':'FAIL')+' '+JSON.stringify(RES),'u');
+    $('rCd').textContent='';$('rBar').style.width='100%';beep(1200,300);$('recCard').style.setProperty('--k',all?'var(--mint)':'var(--amber)');
+    $('rIns').textContent=all?'✅ هەمووی سەرکەوت! لۆگەکە بنێرە':'تەواو — لۆگەکە بنێرە';$('rPh').textContent='کاتەکان لە ساتی دەنگەکەوە دەژمێردرێن (کاتی جووڵەی دەستیشت تێدایە)';
+  }catch(e){addLog(Date.now(),'TEST error: '+e.message,'o');$('rIns').textContent='وەستا: '+e.message}
+  finally{rec=false;$('bRec').hidden=false;$('bRec').disabled=!wr;$('bRec').textContent='🧪 دووبارە تاقیکردنەوە';try{wake&&wake.release()}catch(e){}}}
 
 // ═══════════ پەیوەستبوون ═══════════
 async function connect(){
@@ -204,27 +219,30 @@ async function connect(){
     $('conn').textContent='پەیوەست دەبێت بە '+(dev.name||'Band')+'…';
     const g=await dev.gatt.connect();const s=await g.getPrimaryService(SVC);
     wr=await s.getCharacteristic(WR);nt=await s.getCharacteristic(NT);
+    eng=new PpgWear(PW,addLog);
     await nt.startNotifications();nt.addEventListener('characteristicvaluechanged',onData);
     addLog(Date.now(),'connected: '+(dev.name||'?')+' · '+navigator.userAgent,'u');
     $('conn').textContent='✓ پەیوەستە: '+(dev.name||'Band');$('bConn').disabled=true;$('bDisc').disabled=false;$('bRec').disabled=false;
-    show('⌚','Band لە دەستت بکە، ئینجا دوگمەی 🧪 دابگرە','var(--cy)','ڕێنماییەکان لێرە دەردەکەون و هەر جارێک دەنگێک لێدەدات');
-    await send(F.setTime(new Date())).catch(()=>{});await send(F.battery()).catch(()=>{});await send(F.realtime(true)).catch(()=>{});
-    clearInterval(timer);timer=setInterval(tick,1000);render();
+    await send(F.setTime(new Date())).catch(()=>{});await send(F.battery()).catch(()=>{});
+    await send(F.measure(2,false,600)).catch(()=>{});await send(F.measure(4,false,600)).catch(()=>{});await send(frame(0x07,{1:0})).catch(()=>{});
+    await send(F.realtime(true)).catch(()=>{});
+    eng.begin(Date.now());await ppgOn(Date.now());
+    clearInterval(timer);timer=setInterval(tick,250);render();
   }catch(e){const fast=Date.now()-t0<1500;
     if(fast&&/cancel|permissions policy|not allowed|NotFound|Security/i.test(e.name+' '+e.message)){$('useChrome').hidden=false;$('conn').textContent='ئەم پەنجەرەیە لیستی بلووتوس پیشان نادات — لە Google Chrome بیکەرەوە'}
     else $('conn').textContent=/cancel/i.test(e.message)?'هیچ Band ێک هەڵنەبژێردرا — دووبارە هەوڵ بدە':'نەکرا: '+e.message;
     addLog(Date.now(),'connect error: '+e.name+': '+e.message,'o')}}
-function onDown(){addLog(Date.now(),'BLE disconnected','o');clearInterval(timer);wr=null;nt=null;$('conn').textContent='پچڕا — دووبارە پەیوەستی بکە';$('bConn').disabled=false;$('bDisc').disabled=true;$('bRec').disabled=true;render()}
-async function disconnect(){try{if(wr){await send(F.ppg07(false));await send(F.measure(4,false,600));await send(F.ppg78(5,0));await send(F.measure(2,false,600))}}catch(e){}try{dev&&dev.gatt.disconnect()}catch(e){}onDown()}
-$('bRec').onclick=runRec;$('bConn').onclick=connect;$('bDisc').onclick=disconnect;
+function onDown(){addLog(Date.now(),'BLE disconnected','o');clearInterval(timer);wr=null;nt=null;eng=null;$('conn').textContent='پچڕا — دووبارە پەیوەستی بکە';$('bConn').disabled=false;$('bDisc').disabled=true;$('bRec').disabled=true;render()}
+async function disconnect(){try{if(wr){await send(F.ppgStop());await send(F.ppgExit())}}catch(e){}try{dev&&dev.gatt.disconnect()}catch(e){}onDown()}
+$('bRec').onclick=runTest;$('bConn').onclick=connect;$('bDisc').onclick=disconnect;
 function logText(){return LOG.map(l=>ts(l.t)+'  '+l.s).join('\n')}
 $('bCopy').onclick=async()=>{try{await navigator.clipboard.writeText(logText());$('bCopy').textContent='✓ کۆپی کرا'}catch(e){$('bCopy').textContent='نەکرا — داگرتن'}setTimeout(()=>$('bCopy').textContent='کۆپی',1800)};
-$('bSave').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([logText()],{type:'text/plain'}));a.download='vex_band_ppg_log.txt';a.click()};
+$('bSave').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([logText()],{type:'text/plain'}));a.download='vex_band_wear_test.txt';a.click()};
 if(!navigator.bluetooth){$('noBt').hidden=false;$('useChrome').hidden=false}
 $('myUrl').textContent=location.href;
 $('bCopyUrl').onclick=async()=>{try{await navigator.clipboard.writeText(location.href);$('bCopyUrl').textContent='✓ کۆپی کرا — لە Chrome دایبنێ'}catch(e){const r=document.createRange();r.selectNode($('myUrl'));getSelection().removeAllRanges();getSelection().addRange(r)}};
 render();
-window.__VX={frame,F,samples,stats,PLAN};
+window.__VX={PpgWear,PW,ppgSamples,ppgClass,PLAN,frame};
 </script>
 </body>
 </html>
