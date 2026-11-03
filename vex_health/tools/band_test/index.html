@@ -42,7 +42,7 @@ h1 i{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg
 .st .r{font:800 13px Sora;direction:ltr;white-space:nowrap}
 .act{margin-top:10px}
 .log{background:#03131a;border-radius:14px;padding:10px;height:230px;overflow:auto;font:12px/1.55 ui-monospace,Menlo,monospace;direction:ltr;text-align:left;color:#bfe9ee;white-space:pre-wrap}
-.log .w{color:var(--mint)}.log .o{color:var(--coral)}.log .u{color:var(--amber)}.log .x{color:#6c8f96}
+.log .w{color:var(--mint)}.log .o{color:var(--coral)}.log .u{color:var(--amber)}.log .x{color:#6c8f96}.log .d{color:#d6c8ff}
 .tag{display:inline-block;font-size:11px;font-weight:800;padding:2px 9px;border-radius:99px;background:rgba(47,230,243,.12);color:var(--cy)}
 .warn{background:rgba(255,190,77,.09);border:1px solid rgba(255,190,77,.35);color:#ffe2a8;border-radius:16px;padding:10px 12px;font-size:12.5px;margin-top:12px}
 .err{background:rgba(255,95,126,.1);border:1px solid rgba(255,95,126,.4);color:#ffd0da;border-radius:16px;padding:10px 12px;font-size:13px;margin-top:12px}
@@ -78,6 +78,13 @@ h1 i{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg
       <div class="tile"><span>پاکێت/چرکە</span><b id="tRate">—</b><em>0x28</em></div>
     </div>
     <div class="why" id="why"></div>
+  </div>
+
+  <div class="card" style="border-color:rgba(155,123,255,.45)">
+    <div class="hd"><b>🔬 پشکنینی هەستەوەرەکانی Band</b><span class="tag" id="dgT">~٨٠ چرکە</span></div>
+    <p style="margin:0 0 10px;color:var(--mu);font-size:12.5px">Band لە دەستت بێت و مەیجووڵێنە. هەموو هەستەوەرەکان یەک بە یەک دەپشکنرێن و هەموو پاکێتەکان تۆمار دەکرێن، بۆ ئەوەی بزانین Band ـەکەت ڕێک چی دەنێرێت.</p>
+    <button class="btn" id="bDiag" disabled style="background:linear-gradient(135deg,#9b7bff,#2fe6f3)">▶ دەستپێکردنی پشکنین</button>
+    <div class="why" id="dgS" style="direction:rtl;text-align:center;font-family:'Noto Sans Arabic',Sora"></div>
   </div>
 
   <div class="card">
@@ -149,6 +156,7 @@ const SESSION_SEC=3600;
 
 // ═══════════ دۆخ ═══════════
 const $=id=>document.getElementById(id);
+let diag=false;
 let dev=null,wr=null,nt=null,eng=null,timer=null,tickN=0,q=Promise.resolve(),armedAt=0,stateAt=Date.now(),showRaw=false,arming=false;
 const pk=[];// کاتی پاکێتەکانی 0x28
 let battery=null,lastHrShown=null;
@@ -156,7 +164,8 @@ const LOG=[];
 function ts(t){const d=new Date(t);return d.toTimeString().slice(0,8)+'.'+String(d.getMilliseconds()).padStart(3,'0').slice(0,1)}
 function addLog(t,s,k){LOG.push({t,s,k});if(LOG.length>4000)LOG.shift();renderLog()}
 let logT=0;function renderLog(){if(logT)return;logT=requestAnimationFrame(()=>{logT=0;const el=$('log'),stick=el.scrollTop+el.clientHeight>=el.scrollHeight-20;
-  el.innerHTML=LOG.filter(l=>showRaw||l.k!=='raw').slice(-400).map(l=>`<div class="${l.k==='worn'?'w':l.k==='off'?'o':l.k==='unknown'?'u':'x'}">${ts(l.t)}  ${l.s.replace(/</g,'&lt;')}</div>`).join('');if(stick)el.scrollTop=el.scrollHeight})}
+  el.innerHTML=LOG.filter(l=>showRaw||l.k!=='raw').slice(-400).map(l=>`<div class="${l.k==='worn'?'w':l.k==='off'?'o':l.k==='unknown'?'u':l.k==='d'?'d':'x'}">${ts(l.t)}  ${l.s.replace(/</g,'&lt;')}</div>`).join('');if(stick)el.scrollTop=el.scrollHeight})}
+function decode(v){switch(v[0]){case 0x28:return `[0x28 kind=${v[1]} hr=${v[2]} spo2=${v[3]} hrv=${v[4]} stress=${v[5]}]`;case 0x09:return `[0x09 steps=${v[1]|(v[2]<<8)|(v[3]<<16)} hr=${v[21]} temp=${((v[22]|(v[23]<<8))/10)} spo2=${v[24]}]`;case 0x14:return `[0x14 temp=${((v[1]|(v[2]<<8))/10)}]`;case 0x13:return `[0x13 bat=${v[1]} chg=${v[2]}]`;case 0x07:return `[0x07 ppg len=${v.length}]`;default:return `[0x${v[0].toString(16)} len=${v.length}]`}}
 function hex(v){return Array.from(v).map(b=>b.toString(16).padStart(2,'0')).join(' ')}
 
 function send(v){const p=q.then(async()=>{if(!wr)throw new Error('no link');if(showRaw)addLog(Date.now(),'→ '+hex(v),'raw');
@@ -164,7 +173,7 @@ function send(v){const p=q.then(async()=>{if(!wr)throw new Error('no link');if(s
   await new Promise(r=>setTimeout(r,40))});q=p.catch(()=>{});return p}
 
 function onData(e){const v=new Uint8Array(e.target.value.buffer.slice(e.target.value.byteOffset,e.target.value.byteOffset+e.target.value.byteLength));const t=Date.now();
-  if(showRaw)addLog(t,'← '+hex(v),'raw');if(!v.length||!eng)return;
+  if(showRaw||diag)addLog(t,'← '+hex(v)+'  '+decode(v),diag?'d':'raw');if(!v.length||!eng||diag)return;
   switch(v[0]){
     case 0x28:{const kind=v[1],hr=v[2];if(kind===2){pk.push(t);eng.hr(hr,t);if(hr>=35&&hr<=220)lastHrShown=hr}break}
     case 0x13:{battery=v[1];const ch=v[2]!==0;const was=eng.charging;eng.setCharging(ch,t);if(was&&!ch&&eng.sessionOn)send(F.measure(2,true,SESSION_SEC)).catch(()=>{});break}
@@ -174,7 +183,7 @@ function onData(e){const v=new Uint8Array(e.target.value.buffer.slice(e.target.v
 
 async function arm(t,rearm){if(arming||!wr)return;arming=true;try{if(!rearm)eng.sessionStarted(t);armedAt=t;await send(F.measure(2,true,SESSION_SEC))}catch(e){addLog(Date.now(),'arm error: '+e.message,'off')}finally{arming=false}}
 
-function tick(){if(!wr||!eng)return;tickN++;const t=Date.now();
+function tick(){if(!wr||!eng||diag)return;tickN++;const t=Date.now();
   if(tickN%2===0)send(F.ntc()).catch(()=>{});
   if(tickN%15===0)send(F.battery()).catch(()=>{});
   if(!eng.sessionOn&&!eng.charging)arm(t);
@@ -233,7 +242,7 @@ async function connect(){
     await nt.startNotifications();nt.addEventListener('characteristicvaluechanged',onData);
     eng=new WearEngine(CFG,addLog);lastState='';
     addLog(Date.now(),'connected: '+(dev.name||'?'),'u');
-    $('conn').textContent='✓ پەیوەستە: '+(dev.name||'Band');$('bConn').disabled=true;$('bDisc').disabled=false;
+    $('conn').textContent='✓ پەیوەستە: '+(dev.name||'Band');$('bConn').disabled=true;$('bDisc').disabled=false;$('bDiag').disabled=false;
     await send(F.setTime(new Date())).catch(()=>{});await send(F.battery()).catch(()=>{});await send(F.ntc()).catch(()=>{});await send(F.realtime(true)).catch(()=>{});
     await arm(Date.now(),false);
     clearInterval(timer);timer=setInterval(tick,1000);render();renderSteps();
@@ -241,8 +250,20 @@ async function connect(){
     if(fast&&/cancel|permissions policy|not allowed|NotFound|Security/i.test(e.name+' '+e.message)){$('useChrome').hidden=false;$('conn').textContent='ئەم پەنجەرەیە لیستی بلووتوس پیشان نادات — لە Google Chrome بیکەرەوە'}
     else $('conn').textContent=/cancel/i.test(e.message)?'هیچ Band ێک هەڵنەبژێردرا — دووبارە هەوڵ بدە':'نەکرا: '+e.message;
     addLog(Date.now(),'connect error: '+e.name+': '+e.message,'off')}}
-function onDown(){addLog(Date.now(),'BLE disconnected','off');clearInterval(timer);wr=null;nt=null;eng=null;lastState='';$('conn').textContent='پچڕا — دووبارە پەیوەستی بکە';$('bConn').disabled=false;$('bDisc').disabled=true;render();renderSteps()}
+function onDown(){addLog(Date.now(),'BLE disconnected','off');clearInterval(timer);wr=null;nt=null;eng=null;lastState='';$('conn').textContent='پچڕا — دووبارە پەیوەستی بکە';$('bConn').disabled=false;$('bDisc').disabled=true;$('bDiag').disabled=true;render();renderSteps()}
 async function disconnect(){try{if(wr)await send(F.measure(2,false,SESSION_SEC))}catch(e){}try{dev&&dev.gatt.disconnect()}catch(e){}onDown()}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function runDiag(){if(!wr||diag)return;diag=true;$('bDiag').disabled=true;const S=$('dgS');const L=(m)=>{addLog(Date.now(),'### '+m,'u');S.textContent=m};
+  let tt=null;try{
+  tt=setInterval(()=>send(F.ntc()).catch(()=>{}),1000);
+  L('١/٥ وەستاندنی هەموو پێوانەیەک');await send(F.measure(2,false,60)).catch(()=>{});await send(F.measure(3,false,60)).catch(()=>{});await send(F.measure(4,false,60)).catch(()=>{});await sleep(2000);
+  L('٢/٥ داتای ڕاستەوخۆ (0x09) — ١٠ چرکە');await send(F.realtime(true));await sleep(10000);
+  L('٣/٥ پێوانەی دڵ (0x28 جۆری ٢) — ٣٥ چرکە، بێ دووبارەکردنەوە');await send(F.measure(2,true,60));await sleep(35000);await send(F.measure(2,false,60));await sleep(1500);
+  L('٤/٥ پێوانەی ئۆکسجین (جۆری ٣) — ٢٠ چرکە');await send(F.measure(3,true,60));await sleep(20000);await send(F.measure(3,false,60));await sleep(1500);
+  L('٥/٥ پێوانەی HRV (جۆری ٤) — ١٥ چرکە');await send(F.measure(4,true,60));await sleep(15000);await send(F.measure(4,false,60));await sleep(1500);
+  L('✓ تەواو — «کۆپی» ی لۆگ دابگرە و بۆمی بنێرە');
+  }catch(e){L('هەڵە: '+e.message)}finally{clearInterval(tt);diag=false;$('bDiag').disabled=!wr;if(eng){eng.sessionOn=false}}}
+$('bDiag').onclick=runDiag;
 $('bConn').onclick=connect;$('bDisc').onclick=disconnect;
 $('bRaw').onclick=()=>{showRaw=!showRaw;$('bRaw').textContent=showRaw?'شاردنەوەی خاو':'پاکێتی خاو';renderLog()};
 function logText(){return LOG.map(l=>ts(l.t)+'  '+l.s).join('\n')+'\n\nRESULTS: '+JSON.stringify(res)}
