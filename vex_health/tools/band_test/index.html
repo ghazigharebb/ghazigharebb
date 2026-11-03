@@ -81,9 +81,10 @@ h1 i{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg
   </div>
 
   <div class="card" style="border-color:rgba(155,123,255,.45)">
-    <div class="hd"><b>🔬 پشکنینی هەستەوەرەکانی Band</b><span class="tag" id="dgT">~٨٠ چرکە</span></div>
+    <div class="hd"><b>🔬 پشکنینی هەستەوەرەکانی Band</b><span class="tag" id="dgT">بۆ ڕێکخستن</span></div>
     <p style="margin:0 0 10px;color:var(--mu);font-size:12.5px">Band لە دەستت بێت و مەیجووڵێنە. هەموو هەستەوەرەکان یەک بە یەک دەپشکنرێن و هەموو پاکێتەکان تۆمار دەکرێن، بۆ ئەوەی بزانین Band ـەکەت ڕێک چی دەنێرێت.</p>
-    <button class="btn" id="bDiag" disabled style="background:linear-gradient(135deg,#9b7bff,#2fe6f3)">▶ دەستپێکردنی پشکنین</button>
+    <button class="btn" id="bRec" disabled style="margin-bottom:8px">🧪 تۆماری لابردن و لەدەستکردن (~٩٥ چرکە)</button>
+    <button class="btn s" id="bDiag" disabled style="background:linear-gradient(135deg,#9b7bff,#2fe6f3)">▶ دەستپێکردنی پشکنین</button>
     <div class="why" id="dgS" style="direction:rtl;text-align:center;font-family:'Noto Sans Arabic',Sora"></div>
   </div>
 
@@ -107,7 +108,7 @@ h1 i{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg
 <script>
 'use strict';
 // ═══════════ هەمان لۆجیکی ئەپ: WearEngine (lib/band/ble/vex_wear.dart) ═══════════
-const CFG={minHr:35,maxHr:220,offAfter:5000,offAfterMoving:10000,movingWindow:8000,warmup:9000,stallAfter:3000,silentOffAfter:7000,confirmOn:5000,tempOffAfter:3000,tempDrop:1.2,coldC:27.0,skinMinC:29.5};
+const CFG={minHr:35,maxHr:220,offAfter:5000,offAfterMoving:10000,movingWindow:8000,warmup:12000,stallAfter:4000,silentOffAfter:8000,confirmOn:5000,tempOffAfter:3000,tempDrop:1.2,coldC:27.0,skinMinC:29.5};
 class WearEngine{
   constructor(cfg=CFG,onLog=()=>{}){this.c=cfg;this.state='unknown';this.reason='';this.sessionOn=false;this.sessionAt=null;this.lastArm=null;this.lastPacket=null;this.lastValid=null;this.prevValid=null;this.zeroSince=null;this.lastHr=null;this.rearms=0;this.lastTemp=null;this.skinTemp=null;this.coolSince=null;this.steps_=null;this.lastStep=null;this.charging=false;this.onLog=onLog}
   valid(h){return h>=this.c.minHr&&h<=this.c.maxHr}
@@ -156,7 +157,7 @@ const SESSION_SEC=3600;
 
 // ═══════════ دۆخ ═══════════
 const $=id=>document.getElementById(id);
-let diag=false;
+let diag=false,rec=false;const tempHist=[];let keepAt=0;
 let dev=null,wr=null,nt=null,eng=null,timer=null,tickN=0,q=Promise.resolve(),armedAt=0,stateAt=Date.now(),showRaw=false,arming=false;
 const pk=[];// کاتی پاکێتەکانی 0x28
 let battery=null,lastHrShown=null;
@@ -165,7 +166,7 @@ function ts(t){const d=new Date(t);return d.toTimeString().slice(0,8)+'.'+String
 function addLog(t,s,k){LOG.push({t,s,k});if(LOG.length>4000)LOG.shift();renderLog()}
 let logT=0;function renderLog(){if(logT)return;logT=requestAnimationFrame(()=>{logT=0;const el=$('log'),stick=el.scrollTop+el.clientHeight>=el.scrollHeight-20;
   el.innerHTML=LOG.filter(l=>showRaw||l.k!=='raw').slice(-400).map(l=>`<div class="${l.k==='worn'?'w':l.k==='off'?'o':l.k==='unknown'?'u':l.k==='d'?'d':'x'}">${ts(l.t)}  ${l.s.replace(/</g,'&lt;')}</div>`).join('');if(stick)el.scrollTop=el.scrollHeight})}
-function decode(v){switch(v[0]){case 0x28:return `[0x28 kind=${v[1]} hr=${v[2]} spo2=${v[3]} hrv=${v[4]} stress=${v[5]}]`;case 0x09:return `[0x09 steps=${v[1]|(v[2]<<8)|(v[3]<<16)} hr=${v[21]} temp=${((v[22]|(v[23]<<8))/10)} spo2=${v[24]}]`;case 0x14:return `[0x14 temp=${((v[1]|(v[2]<<8))/10)}]`;case 0x13:return `[0x13 bat=${v[1]} chg=${v[2]}]`;case 0x07:return `[0x07 ppg len=${v.length}]`;default:return `[0x${v[0].toString(16)} len=${v.length}]`}}
+function decode(v){switch(v[0]){case 0x28:return `[0x28 kind=${v[1]} hr=${v[2]} spo2=${v[3]} hrv=${v[4]} stress=${v[5]}]`;case 0x09:return `[0x09 steps=${v[1]|(v[2]<<8)|(v[3]<<16)} hr=${v[21]} temp=${((v[22]|(v[23]<<8))/10)} spo2=${v[24]} b25=${v[25]} b26=${v[26]} b28=${v[28]}]`;case 0x14:return `[0x14 temp=${((v[1]|(v[2]<<8))/10)} b3=${v[3]} b4=${v[4]} b8=${v[8]}]`;case 0x13:return `[0x13 bat=${v[1]} chg=${v[2]}]`;case 0x07:return `[0x07 ppg len=${v.length}]`;default:return `[0x${v[0].toString(16)} len=${v.length}]`}}
 function hex(v){return Array.from(v).map(b=>b.toString(16).padStart(2,'0')).join(' ')}
 
 function send(v){const p=q.then(async()=>{if(!wr)throw new Error('no link');if(showRaw)addLog(Date.now(),'→ '+hex(v),'raw');
@@ -173,12 +174,14 @@ function send(v){const p=q.then(async()=>{if(!wr)throw new Error('no link');if(s
   await new Promise(r=>setTimeout(r,40))});q=p.catch(()=>{});return p}
 
 function onData(e){const v=new Uint8Array(e.target.value.buffer.slice(e.target.value.byteOffset,e.target.value.byteOffset+e.target.value.byteLength));const t=Date.now();
-  if(showRaw||diag)addLog(t,'← '+hex(v)+'  '+decode(v),diag?'d':'raw');if(!v.length||!eng||diag)return;
+  if(showRaw||diag||rec)addLog(t,'← '+hex(v)+'  '+decode(v),diag||rec?'d':'raw');if(!v.length||!eng||diag)return;
   switch(v[0]){
-    case 0x28:{const kind=v[1],hr=v[2];if(kind===2){pk.push(t);eng.hr(hr,t);if(hr>=35&&hr<=220)lastHrShown=hr}break}
+    case 0x28:{const hr=v[2];if(hr>=35&&hr<=220){eng.hr(hr,t);lastHrShown=hr}break} // 0x28 = تەنها وەڵامی فرمان (V8)
     case 0x13:{battery=v[1];const ch=v[2]!==0;const was=eng.charging;eng.setCharging(ch,t);if(was&&!ch&&eng.sessionOn)send(F.measure(2,true,SESSION_SEC)).catch(()=>{});break}
-    case 0x14:{const c=(v[1]+(v[2]<<8))*0.1;eng.temp(c,t);break}
-    case 0x09:{const s=v[1]|(v[2]<<8)|(v[3]<<16)|(v[4]<<24);eng.steps(s>>>0,t);break}
+    case 0x14:break; // گەرمی لە 0x09 دێت
+    case 0x09:{if(v.length<25)break;const s=v[1]|(v[2]<<8)|(v[3]<<16)|(v[4]<<24);eng.steps(s>>>0,t);pk.push(t);
+      const hr=v[21];eng.hr(hr,t);if(hr>=35&&hr<=220)lastHrShown=hr;
+      const c=(v[22]|(v[23]<<8))/10;if(c>0){tempHist.push([t,c]);while(tempHist.length&&t-tempHist[0][0]>15000)tempHist.shift();eng.temp(c,t)}break} // V8: هەر چرکەیەک دڵ (بایتی ٢١) + گەرمی
   }render()}
 
 async function arm(t,rearm){if(arming||!wr)return;arming=true;try{if(!rearm)eng.sessionStarted(t);armedAt=t;await send(F.measure(2,true,SESSION_SEC))}catch(e){addLog(Date.now(),'arm error: '+e.message,'off')}finally{arming=false}}
@@ -187,7 +190,12 @@ function tick(){if(!wr||!eng||diag)return;tickN++;const t=Date.now();
   if(tickN%2===0)send(F.ntc()).catch(()=>{});
   if(tickN%15===0)send(F.battery()).catch(()=>{});
   if(!eng.sessionOn&&!eng.charging)arm(t);
-  else if(eng.sessionOn&&(eng.needsRearm(t)||t-armedAt>=50*60000)){eng.rearmed(t);arm(t,true)}
+  else if(eng.sessionOn&&eng.needsRearm(t)){eng.rearmed(t);send(F.realtime(true)).catch(()=>{});arm(t,true)}
+  else if(eng.sessionOn&&t-armedAt>=50*60000)arm(t,true);
+  else if(eng.sessionOn&&eng.state==='off'&&t-keepAt>=6000){
+    // لە دەست نییە: ئەگەر گەرمی بەرز بووەوە (دانانەوە) یان هەر ٣٠ چرکە ← پێوانەی دڵ دووبارە دەست پێدەکرێتەوە
+    const old=tempHist.length?tempHist[0][1]:null,now=eng.lastTemp;
+    if((old!=null&&now!=null&&now-old>=0.4)||t-armedAt>=30000){keepAt=t;addLog(t,'re-arm heart (off)','x');arm(t,true)}}
   eng.tick(t);render()}
 
 let lastState='';
@@ -242,7 +250,7 @@ async function connect(){
     await nt.startNotifications();nt.addEventListener('characteristicvaluechanged',onData);
     eng=new WearEngine(CFG,addLog);lastState='';
     addLog(Date.now(),'connected: '+(dev.name||'?'),'u');
-    $('conn').textContent='✓ پەیوەستە: '+(dev.name||'Band');$('bConn').disabled=true;$('bDisc').disabled=false;$('bDiag').disabled=false;
+    $('conn').textContent='✓ پەیوەستە: '+(dev.name||'Band');$('bConn').disabled=true;$('bDisc').disabled=false;$('bDiag').disabled=false;$('bRec').disabled=false;
     await send(F.setTime(new Date())).catch(()=>{});await send(F.battery()).catch(()=>{});await send(F.ntc()).catch(()=>{});await send(F.realtime(true)).catch(()=>{});
     await arm(Date.now(),false);
     clearInterval(timer);timer=setInterval(tick,1000);render();renderSteps();
@@ -250,7 +258,7 @@ async function connect(){
     if(fast&&/cancel|permissions policy|not allowed|NotFound|Security/i.test(e.name+' '+e.message)){$('useChrome').hidden=false;$('conn').textContent='ئەم پەنجەرەیە لیستی بلووتوس پیشان نادات — لە Google Chrome بیکەرەوە'}
     else $('conn').textContent=/cancel/i.test(e.message)?'هیچ Band ێک هەڵنەبژێردرا — دووبارە هەوڵ بدە':'نەکرا: '+e.message;
     addLog(Date.now(),'connect error: '+e.name+': '+e.message,'off')}}
-function onDown(){addLog(Date.now(),'BLE disconnected','off');clearInterval(timer);wr=null;nt=null;eng=null;lastState='';$('conn').textContent='پچڕا — دووبارە پەیوەستی بکە';$('bConn').disabled=false;$('bDisc').disabled=true;$('bDiag').disabled=true;render();renderSteps()}
+function onDown(){addLog(Date.now(),'BLE disconnected','off');clearInterval(timer);wr=null;nt=null;eng=null;lastState='';$('conn').textContent='پچڕا — دووبارە پەیوەستی بکە';$('bConn').disabled=false;$('bDisc').disabled=true;$('bDiag').disabled=true;$('bRec').disabled=true;render();renderSteps()}
 async function disconnect(){try{if(wr)await send(F.measure(2,false,SESSION_SEC))}catch(e){}try{dev&&dev.gatt.disconnect()}catch(e){}onDown()}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function runDiag(){if(!wr||diag)return;diag=true;$('bDiag').disabled=true;const S=$('dgS');const L=(m)=>{addLog(Date.now(),'### '+m,'u');S.textContent=m};
@@ -264,6 +272,12 @@ async function runDiag(){if(!wr||diag)return;diag=true;$('bDiag').disabled=true;
   L('✓ تەواو — «کۆپی» ی لۆگ دابگرە و بۆمی بنێرە');
   }catch(e){L('هەڵە: '+e.message)}finally{clearInterval(tt);diag=false;$('bDiag').disabled=!wr;if(eng){eng.sessionOn=false}}}
 $('bDiag').onclick=runDiag;
+async function runRec(){if(!wr||rec||diag)return;rec=true;$('bRec').disabled=true;const S=$('dgS');const L=m=>{addLog(Date.now(),'### '+m,'u');S.textContent=m;try{navigator.vibrate&&navigator.vibrate(200)}catch(e){}};
+  try{L('١/٣ Band لە دەستت بێت — ١٥ چرکە');await sleep(15000);
+  L('٢/٣ ئێستا Band لە دەستت بکەرەوە و لەسەر مێز دایبنێ — ٤٠ چرکە');await sleep(40000);
+  L('٣/٣ ئێستا دووبارە لە دەستی بکە — ٤٠ چرکە');await sleep(40000);
+  L('✓ تەواو — «کۆپی» ی لۆگ دابگرە و بۆمی بنێرە')}finally{rec=false;$('bRec').disabled=!wr}}
+$('bRec').onclick=runRec;
 $('bConn').onclick=connect;$('bDisc').onclick=disconnect;
 $('bRaw').onclick=()=>{showRaw=!showRaw;$('bRaw').textContent=showRaw?'شاردنەوەی خاو':'پاکێتی خاو';renderLog()};
 function logText(){return LOG.map(l=>ts(l.t)+'  '+l.s).join('\n')+'\n\nRESULTS: '+JSON.stringify(res)}
