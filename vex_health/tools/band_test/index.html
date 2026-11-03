@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="ckb" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>VEX Band Test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;600;800&family=Sora:wght@400;600;800&display=swap">
+<style>
+:root{--bg:#06161c;--card:#0c242c;--card2:#103039;--line:rgba(140,235,245,.14);--tx:#e9fbfd;--mu:#8fb3ba;--cy:#2fe6f3;--mint:#3cf08a;--coral:#ff5f7e;--amber:#ffbe4d;--violet:#9b7bff}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(120% 60% at 50% -10%,#0d3a45 0%,var(--bg) 60%);color:var(--tx);font:15px/1.6 'Noto Sans Arabic',system-ui,sans-serif;min-height:100vh}
+.n{font-family:Sora,system-ui,sans-serif;direction:ltr;unicode-bidi:isolate}
+.wrap{max-width:560px;margin:0 auto;padding:18px max(16px,env(safe-area-inset-left)) 40px max(16px,env(safe-area-inset-right))}
+h1{font-size:20px;font-weight:800;margin:4px 0 2px;display:flex;align-items:center;gap:10px}
+h1 i{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,var(--cy),var(--mint));display:grid;place-items:center;font-style:normal;color:#04252b;font:800 15px Sora}
+.sub{color:var(--mu);font-size:12.5px;margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:16px;margin-top:12px}
+.btn{border:0;border-radius:16px;padding:14px 16px;font:800 15px 'Noto Sans Arabic',sans-serif;cursor:pointer;width:100%;color:#04252b;background:linear-gradient(135deg,var(--cy),var(--mint));box-shadow:0 12px 30px -14px rgba(47,230,243,.8)}
+.hd .btn{white-space:nowrap}
+.btn.s{background:var(--card2);color:var(--tx);box-shadow:none;border:1px solid var(--line)}
+.btn:disabled{opacity:.45;cursor:default}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.state{display:flex;align-items:center;gap:14px}
+.dot{width:58px;height:58px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:26px;background:color-mix(in srgb,var(--k) 18%,transparent);border:2px solid var(--k);box-shadow:0 0 30px -6px var(--k);transition:.3s}
+.dot.pulse{animation:pl 1.1s infinite}
+@keyframes pl{50%{transform:scale(1.07)}}
+.state b{display:block;font-size:22px;font-weight:800;color:var(--k);line-height:1.4}
+.state small{color:var(--mu);font-size:12.5px}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.tile{background:var(--card2);border-radius:16px;padding:10px 6px;text-align:center}
+.tile span{display:block;color:var(--mu);font-size:11.5px}
+.tile b{font:800 19px Sora;direction:ltr;display:block}
+.tile em{font:600 10.5px Sora;color:var(--mu);font-style:normal}
+.why{margin-top:10px;font:600 12px Sora;color:var(--mu);direction:ltr;text-align:left;min-height:18px}
+.steps{display:flex;flex-direction:column;gap:8px}
+.st{display:flex;align-items:center;gap:10px;background:var(--card2);border-radius:16px;padding:11px 12px;border:1px solid transparent}
+.st .k{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font:800 12px Sora;background:rgba(255,255,255,.07);flex:none}
+.st.on{border-color:var(--cy)}.st.ok{border-color:rgba(60,240,138,.5)}.st.ok .k{background:var(--mint);color:#04252b}
+.st.bad{border-color:rgba(255,95,126,.55)}.st.bad .k{background:var(--coral);color:#fff}
+.st div{flex:1;min-width:0}.st b{display:block;font-size:14px}.st small{color:var(--mu);font-size:12px}
+.st .r{font:800 13px Sora;direction:ltr;white-space:nowrap}
+.act{margin-top:10px}
+.log{background:#03131a;border-radius:14px;padding:10px;height:230px;overflow:auto;font:12px/1.55 ui-monospace,Menlo,monospace;direction:ltr;text-align:left;color:#bfe9ee;white-space:pre-wrap}
+.log .w{color:var(--mint)}.log .o{color:var(--coral)}.log .u{color:var(--amber)}.log .x{color:#6c8f96}
+.tag{display:inline-block;font-size:11px;font-weight:800;padding:2px 9px;border-radius:99px;background:rgba(47,230,243,.12);color:var(--cy)}
+.warn{background:rgba(255,190,77,.09);border:1px solid rgba(255,190,77,.35);color:#ffe2a8;border-radius:16px;padding:10px 12px;font-size:12.5px;margin-top:12px}
+.err{background:rgba(255,95,126,.1);border:1px solid rgba(255,95,126,.4);color:#ffd0da;border-radius:16px;padding:10px 12px;font-size:13px;margin-top:12px}
+.hd{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}.hd b{font-size:15px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><i>VX</i>VEX Band Test</h1>
+  <p class="sub">تاقیکردنەوەی ڕاستەقینەی «Band لە دەستە یان نا» · هەمان لۆجیکی ئەپ (VEX Skin Sense v3)</p>
+
+  <div id="noBt" class="err" hidden>ئەم وێبگەڕە بلووتوسی نییە. ئەم فایلە بە <b>Google Chrome</b> بکەرەوە (لە ماک یان ئەندرۆید). Safari و Brave پشتگیری ناکەن.</div>
+  <div class="warn">پێش پەیوەستکردن: ئەپی VEX Health لە مۆبایلەکەت <b>بە تەواوی دابخە</b> (یان بلووتوسی مۆبایل بکوژێنەوە)، چونکە Band لە یەک کاتدا تەنها بە یەک ئامێر پەیوەست دەبێت.</div>
+
+  <div class="card">
+    <div class="row">
+      <button class="btn" id="bConn">🔗 پەیوەستکردنی Band</button>
+      <button class="btn s" id="bDisc" disabled>پچڕاندن</button>
+    </div>
+    <div class="why" id="conn" style="text-align:center;direction:rtl;font-family:'Noto Sans Arabic',Sora,sans-serif">پەیوەست نییە</div>
+  </div>
+
+  <div class="card">
+    <div class="state" id="stBox" style="--k:var(--mu)">
+      <div class="dot" id="stDot">⌚</div>
+      <div><b id="stTxt">پەیوەست نییە</b><small id="stSince">—</small></div>
+    </div>
+    <div class="tiles">
+      <div class="tile"><span>دڵ</span><b id="tHr">—</b><em>bpm</em></div>
+      <div class="tile"><span>گەرمیی پێست</span><b id="tTemp">—</b><em>°C</em></div>
+      <div class="tile"><span>باتری</span><b id="tBat">—</b><em id="tChg">%</em></div>
+      <div class="tile"><span>پاکێت/چرکە</span><b id="tRate">—</b><em>0x28</em></div>
+    </div>
+    <div class="why" id="why"></div>
+  </div>
+
+  <div class="card">
+    <div class="hd"><b>تاقیکردنەوەی هەنگاو بە هەنگاو</b><span class="tag">ئامانج: ≤ ٥ چرکە</span></div>
+    <div class="steps" id="steps"></div>
+    <div class="act row">
+      <button class="btn" id="bAct" disabled>دەستپێکردن</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="hd"><b>لۆگ</b><span class="row" style="flex:none;gap:6px">
+      <button class="btn s" id="bCopy" style="width:auto;padding:7px 12px;font-size:12.5px">کۆپی</button>
+      <button class="btn s" id="bSave" style="width:auto;padding:7px 12px;font-size:12.5px">داگرتن</button>
+      <button class="btn s" id="bRaw" style="width:auto;padding:7px 12px;font-size:12.5px">پاکێتی خاو</button></span></div>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ═══════════ هەمان لۆجیکی ئەپ: WearEngine (lib/band/ble/vex_wear.dart) ═══════════
+const CFG={minHr:35,maxHr:220,offAfter:5000,offAfterMoving:10000,movingWindow:8000,warmup:9000,stallAfter:3000,silentOffAfter:7000,confirmOn:5000,tempOffAfter:3000,tempDrop:1.2,coldC:27.0,skinMinC:29.5};
+class WearEngine{
+  constructor(cfg=CFG,onLog=()=>{}){this.c=cfg;this.state='unknown';this.reason='';this.sessionOn=false;this.sessionAt=null;this.lastArm=null;this.lastPacket=null;this.lastValid=null;this.prevValid=null;this.zeroSince=null;this.lastHr=null;this.rearms=0;this.lastTemp=null;this.skinTemp=null;this.coolSince=null;this.steps_=null;this.lastStep=null;this.charging=false;this.onLog=onLog}
+  valid(h){return h>=this.c.minHr&&h<=this.c.maxHr}
+  log(t,s,k){this.onLog(t,s,k)}
+  set(s,t,why){if(s===this.state)return s;this.state=s;this.reason=why;if(s==='off'){this.zeroSince=null;this.coolSince=null}this.log(t,'→ '+s+' ('+why+')',s);return s}
+  sessionStarted(t){this.sessionOn=true;this.sessionAt=t;this.lastArm=t;this.lastPacket=null;this.zeroSince=null;this.prevValid=null;this.log(t,'session start','x')}
+  sessionStopped(t){if(!this.sessionOn)return;this.sessionOn=false;this.zeroSince=null;this.log(t,'session stop','x')}
+  hr(b,t){this.lastPacket=t;this.log(t,'hr '+b,'x');if(this.charging)return this.state;
+    if(this.valid(b)){this.lastHr=b;this.prevValid=this.lastValid;this.lastValid=t;this.zeroSince=null;this.coolSince=null;if(this.state==='worn')return this.state;
+      const pv=this.prevValid;if(pv!=null&&t-pv<=this.c.confirmOn&&t>pv)return this.set('worn',t,'heart '+b);return this.state}
+    this.prevValid=null;if(this.zeroSince==null)this.zeroSince=t;return this.tick(t)}
+  temp(c,t){if(c<=0||c>50)return this.state;this.lastTemp=c;this.log(t,'temp '+c.toFixed(1),'x');
+    const fresh=this.lastValid!=null&&t-this.lastValid<=1500,s0=this.skinTemp;
+    if(this.state==='worn'&&fresh&&c>=this.c.skinMinC&&(s0==null||Math.abs(c-s0)<=0.6))this.skinTemp=s0==null?c:s0*0.8+c*0.2;
+    const s=this.skinTemp,cool=c<this.c.coldC||(s!=null&&c<=s-this.c.tempDrop);
+    if(cool){if(this.coolSince==null)this.coolSince=t}else this.coolSince=null;return this.tick(t)}
+  steps(total,t){const p=this.steps_;this.steps_=total;if(p!=null&&total>p)this.lastStep=t}
+  setCharging(on,t){if(on===this.charging)return this.state;this.charging=on;this.log(t,on?'charging':'unplugged','x');if(on)return this.set('off',t,'charging');
+    this.zeroSince=null;this.lastValid=null;this.prevValid=null;if(this.sessionOn){this.sessionAt=t;this.lastArm=t;this.lastPacket=null}return this.set('unknown',t,'unplugged')}
+  needsRearm(t){if(!this.sessionOn||this.charging)return false;let last=this.lastPacket;const a=this.lastArm;if(last==null||(a!=null&&a>last))last=a;return last!=null&&t-last>=this.c.stallAfter}
+  rearmed(t){this.rearms++;this.lastArm=t;this.log(t,'rearm','x')}
+  tick(t){const c=this.c;if(this.charging)return this.set('off',t,'charging');
+    if(!this.sessionOn){if(this.state!=='off'&&this.lastTemp!=null&&this.lastTemp<c.coldC&&this.coolSince!=null&&t-this.coolSince>=c.offAfter)return this.set('off',t,'cold '+this.lastTemp.toFixed(1)+'°C');return this.state}
+    if(this.state==='off')return this.state;
+    const since=this.sessionAt,inWarm=t-since<c.warmup,lv=this.lastValid,moving=this.lastStep!=null&&t-this.lastStep<=c.movingWindow;
+    const cs=this.coolSince;
+    if(!moving&&cs!=null&&this.skinTemp!=null&&t-cs>=c.tempOffAfter){const noHr=lv==null||t-lv>=c.tempOffAfter;const zs=this.zeroSince!=null||t-(this.lastPacket??since)>=c.tempOffAfter;
+      if(noHr&&zs)return this.set('off',t,'skin cooled '+(this.lastTemp??0).toFixed(1)+'°C')}
+    const z=this.zeroSince;
+    if(z!=null){const need=moving?c.offAfterMoving:c.offAfter;
+      if(this.state==='worn'){if(t-z>=need)return this.set('off',t,'no heart '+need/1000+'s')}
+      else if(!inWarm&&(lv==null||t-lv>=need))return this.set('off',t,'no heart after start')}
+    const silent=t-(this.lastPacket??since);
+    if(this.rearms>0&&silent>=c.silentOffAfter){const noHr=lv==null||t-lv>=c.silentOffAfter;if(noHr&&(this.state==='worn'||!inWarm))return this.set('off',t,'band silent')}
+    if(this.state==='unknown'&&!inWarm&&this.lastTemp!=null&&this.lastTemp<c.coldC&&(lv==null||t-lv>=c.offAfter))return this.set('off',t,'cold '+this.lastTemp.toFixed(1)+'°C');
+    return this.state}
+}
+
+// ═══════════ فرمانەکانی Band (J-STYLE V8 SDK) ═══════════
+const SVC=0xfff0,WR=0xfff6,NT=0xfff7;
+function frame(cmd,b={}){const v=new Uint8Array(16);v[0]=cmd;for(const k in b)v[k]=b[k]&255;let s=0;for(let i=0;i<15;i++)s+=v[i];v[15]=s&255;return v}
+const F={battery:()=>frame(0x13),ntc:()=>frame(0x14),realtime:on=>frame(0x09,{1:on?1:0,2:1}),
+  measure:(kind,start,sec)=>frame(0x28,{1:kind,2:start?1:0,4:sec&255,5:(sec>>8)&255}),
+  setTime:d=>{const bcd=x=>((Math.floor(x/10)%10)<<4)|(x%10);const off=-d.getTimezoneOffset()/60;return frame(0x01,{1:bcd(d.getFullYear()%100),2:bcd(d.getMonth()+1),3:bcd(d.getDate()),4:bcd(d.getHours()),5:bcd(d.getMinutes()),6:bcd(d.getSeconds()),8:off>=0?0x80+off:-off})}};
+const SESSION_SEC=3600;
+
+// ═══════════ دۆخ ═══════════
+const $=id=>document.getElementById(id);
+let dev=null,wr=null,nt=null,eng=null,timer=null,tickN=0,q=Promise.resolve(),armedAt=0,stateAt=Date.now(),showRaw=false,arming=false;
+const pk=[];// کاتی پاکێتەکانی 0x28
+let battery=null,lastHrShown=null;
+const LOG=[];
+function ts(t){const d=new Date(t);return d.toTimeString().slice(0,8)+'.'+String(d.getMilliseconds()).padStart(3,'0').slice(0,1)}
+function addLog(t,s,k){LOG.push({t,s,k});if(LOG.length>4000)LOG.shift();renderLog()}
+let logT=0;function renderLog(){if(logT)return;logT=requestAnimationFrame(()=>{logT=0;const el=$('log'),stick=el.scrollTop+el.clientHeight>=el.scrollHeight-20;
+  el.innerHTML=LOG.filter(l=>showRaw||l.k!=='raw').slice(-400).map(l=>`<div class="${l.k==='worn'?'w':l.k==='off'?'o':l.k==='unknown'?'u':'x'}">${ts(l.t)}  ${l.s.replace(/</g,'&lt;')}</div>`).join('');if(stick)el.scrollTop=el.scrollHeight})}
+function hex(v){return Array.from(v).map(b=>b.toString(16).padStart(2,'0')).join(' ')}
+
+function send(v){const p=q.then(async()=>{if(!wr)throw new Error('no link');if(showRaw)addLog(Date.now(),'→ '+hex(v),'raw');
+  if(wr.properties.write&&wr.writeValueWithResponse)await wr.writeValueWithResponse(v);else if(wr.writeValueWithoutResponse)await wr.writeValueWithoutResponse(v);else await wr.writeValue(v);
+  await new Promise(r=>setTimeout(r,40))});q=p.catch(()=>{});return p}
+
+function onData(e){const v=new Uint8Array(e.target.value.buffer.slice(e.target.value.byteOffset,e.target.value.byteOffset+e.target.value.byteLength));const t=Date.now();
+  if(showRaw)addLog(t,'← '+hex(v),'raw');if(!v.length||!eng)return;
+  switch(v[0]){
+    case 0x28:{const kind=v[1],hr=v[2];if(kind===2){pk.push(t);eng.hr(hr,t);if(hr>=35&&hr<=220)lastHrShown=hr}break}
+    case 0x13:{battery=v[1];const ch=v[2]!==0;const was=eng.charging;eng.setCharging(ch,t);if(was&&!ch&&eng.sessionOn)send(F.measure(2,true,SESSION_SEC)).catch(()=>{});break}
+    case 0x14:{const c=(v[1]+(v[2]<<8))*0.1;eng.temp(c,t);break}
+    case 0x09:{const s=v[1]|(v[2]<<8)|(v[3]<<16)|(v[4]<<24);eng.steps(s>>>0,t);break}
+  }render()}
+
+async function arm(t,rearm){if(arming||!wr)return;arming=true;try{if(!rearm)eng.sessionStarted(t);armedAt=t;await send(F.measure(2,true,SESSION_SEC))}catch(e){addLog(Date.now(),'arm error: '+e.message,'off')}finally{arming=false}}
+
+function tick(){if(!wr||!eng)return;tickN++;const t=Date.now();
+  if(tickN%2===0)send(F.ntc()).catch(()=>{});
+  if(tickN%15===0)send(F.battery()).catch(()=>{});
+  if(!eng.sessionOn&&!eng.charging)arm(t);
+  else if(eng.sessionOn&&(eng.needsRearm(t)||t-armedAt>=50*60000)){eng.rearmed(t);arm(t,true)}
+  eng.tick(t);render()}
+
+let lastState='';
+function render(){const s=eng?eng.state:'none',t=Date.now();
+  if(s!==lastState){lastState=s;stateAt=t;onState(s,t)}
+  const M={worn:['لە دەستتە ✓','var(--mint)','💚'],off:['لە دەستت نییە','var(--coral)','✋'],unknown:['دەپشکنرێت…','var(--amber)','⏳'],none:['پەیوەست نییە','var(--mu)','⌚']}[s];
+  $('stBox').style.setProperty('--k',M[1]);$('stTxt').textContent=M[0];$('stDot').textContent=M[2];$('stDot').classList.toggle('pulse',s==='worn');
+  $('stSince').textContent=eng?('لەم دۆخەدایە: '+((t-stateAt)/1000).toFixed(0)+' چرکە'):'—';
+  $('tHr').textContent=s==='worn'&&lastHrShown?lastHrShown:'—';
+  $('tTemp').textContent=eng&&eng.lastTemp!=null?eng.lastTemp.toFixed(1):'—';
+  $('tBat').textContent=battery!=null?battery:'—';$('tChg').textContent=eng&&eng.charging?'⚡ شەحن':'%';
+  while(pk.length&&t-pk[0]>5000)pk.shift();$('tRate').textContent=eng?(pk.length/5).toFixed(1):'—';
+  $('why').textContent=eng&&eng.reason?('decision: '+eng.reason):''}
+
+// ═══════════ تاقیکردنەوەی هەنگاو بە هەنگاو ═══════════
+const STEPS=[
+ {id:'wear1',t:'Band لە دەستتە و پەیوەستە',s:'چاوەڕێ بکە تا «لە دەستتە ✓»',want:'worn',btn:null},
+ {id:'off1',t:'Band لە دەستت بکەرەوە',s:'لای ببە، لەسەر مێز دایبنێ، ئینجا دوگمەکە دابگرە',want:'off',btn:'ئێستا لام برد'},
+ {id:'on1',t:'دووبارە لە دەستی بکەرەوە',s:'لە دەستی بکە، ئینجا دوگمەکە دابگرە',want:'worn',btn:'ئێستا لە دەستم کرد'},
+ {id:'off2',t:'جارێکی تر لای ببە',s:'بۆ دڵنیابوون',want:'off',btn:'ئێستا لام برد'},
+ {id:'on2',t:'جارێکی تر لە دەستی بکە',s:'بۆ دڵنیابوون',want:'worn',btn:'ئێستا لە دەستم کرد'},
+ {id:'hold',t:'٢ خولەک لە دەستدا بمێنێتەوە',s:'دەستت بجووڵێنە، بڕۆ، دابنیشە — نابێت هیچ جارێک «لە دەستت نییە» بڵێت',want:'hold',btn:null}];
+let cur=-1,mark=0,res={},holdStart=0,holdBad=0,adv=false;
+function renderSteps(){$('steps').innerHTML=STEPS.map((x,i)=>{const r=res[x.id];const cls=r?(r.ok?'ok':'bad'):(i===cur?'on':'');
+  return `<div class="st ${cls}"><span class="k">${r?(r.ok?'✓':'!'):i+1}</span><div><b>${x.t}</b><small>${x.s}</small></div><span class="r">${r?r.txt:(i===cur&&x.want==='hold'&&holdStart?Math.max(0,120-Math.round((Date.now()-holdStart)/1000))+'s':'')}</span></div>`}).join('');
+  const b=$('bAct'),x=STEPS[cur];
+  if(!wr){b.disabled=true;b.textContent='سەرەتا Band پەیوەست بکە';return}
+  if(cur<0){b.disabled=false;b.textContent='▶ دەستپێکردنی تاقیکردنەوە';return}
+  if(cur>=STEPS.length){const all=STEPS.every(s=>res[s.id]&&res[s.id].ok);b.disabled=false;b.textContent=all?'✓ هەمووی سەرکەوت · دووبارە':'دووبارە تاقی بکەرەوە';return}
+  if(x.btn){b.disabled=!!mark;b.textContent=mark?'چاوەڕێ… '+((Date.now()-mark)/1000).toFixed(1)+' چرکە':x.btn}else{b.disabled=true;b.textContent=x.want==='hold'?'چاوەڕێ بکە…':'چاوەڕێ بکە بۆ «لە دەستتە»…'}}
+function next(){adv=false;cur++;mark=0;if(STEPS[cur]&&STEPS[cur].want==='hold'){holdStart=Date.now();holdBad=0}renderSteps();check()}
+function check(){const x=STEPS[cur];if(!x||!eng||adv)return;const s=eng.state,t=Date.now();
+  if(x.want==='hold'){if(s==='off'&&!holdBad){holdBad=1;res[x.id]={ok:false,txt:'پچڕا!'};addLog(t,'TEST: false off while worn','off');cur++;renderSteps()}
+    else if(t-holdStart>=120000){res[x.id]={ok:true,txt:'٠ پچڕان'};addLog(t,'TEST: 2 min worn, no false off','worn');cur++;renderSteps()}return}
+  if(x.btn&&!mark)return;
+  if(s===x.want){const d=x.btn?(t-mark)/1000:0;res[x.id]={ok:!x.btn||d<=6.5,txt:x.btn?d.toFixed(1)+' چرکە':'✓'};if(x.btn)addLog(t,`TEST ${x.id}: detected after ${d.toFixed(1)} s`,s);adv=true;renderSteps();setTimeout(next,600)}}
+$('bAct').onclick=()=>{if(cur<0||cur>=STEPS.length){res={};cur=-1;next();return}const x=STEPS[cur];if(x&&x.btn&&!mark){mark=Date.now();addLog(mark,'TEST '+x.id+': user action','u');renderSteps();check()}};
+function onState(s,t){check();renderSteps()}
+setInterval(()=>{if(eng){render();check()}renderSteps()},250);
+
+// ═══════════ پەیوەستبوون ═══════════
+async function connect(){
+  if(!navigator.bluetooth){$('noBt').hidden=false;return}
+  try{
+    $('conn').textContent='Band هەڵبژێرە…';
+    dev=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:[SVC]});
+    dev.addEventListener('gattserverdisconnected',onDown);
+    $('conn').textContent='پەیوەست دەبێت بە '+(dev.name||'Band')+'…';
+    const g=await dev.gatt.connect();const s=await g.getPrimaryService(SVC);
+    wr=await s.getCharacteristic(WR);nt=await s.getCharacteristic(NT);
+    await nt.startNotifications();nt.addEventListener('characteristicvaluechanged',onData);
+    eng=new WearEngine(CFG,addLog);lastState='';
+    addLog(Date.now(),'connected: '+(dev.name||'?'),'u');
+    $('conn').textContent='✓ پەیوەستە: '+(dev.name||'Band');$('bConn').disabled=true;$('bDisc').disabled=false;
+    await send(F.setTime(new Date())).catch(()=>{});await send(F.battery()).catch(()=>{});await send(F.ntc()).catch(()=>{});await send(F.realtime(true)).catch(()=>{});
+    await arm(Date.now(),false);
+    clearInterval(timer);timer=setInterval(tick,1000);render();renderSteps();
+  }catch(e){$('conn').textContent='نەکرا: '+e.message;addLog(Date.now(),'connect error: '+e.message,'off')}}
+function onDown(){addLog(Date.now(),'BLE disconnected','off');clearInterval(timer);wr=null;nt=null;eng=null;lastState='';$('conn').textContent='پچڕا — دووبارە پەیوەستی بکە';$('bConn').disabled=false;$('bDisc').disabled=true;render();renderSteps()}
+async function disconnect(){try{if(wr)await send(F.measure(2,false,SESSION_SEC))}catch(e){}try{dev&&dev.gatt.disconnect()}catch(e){}onDown()}
+$('bConn').onclick=connect;$('bDisc').onclick=disconnect;
+$('bRaw').onclick=()=>{showRaw=!showRaw;$('bRaw').textContent=showRaw?'شاردنەوەی خاو':'پاکێتی خاو';renderLog()};
+function logText(){return LOG.map(l=>ts(l.t)+'  '+l.s).join('\n')+'\n\nRESULTS: '+JSON.stringify(res)}
+$('bCopy').onclick=async()=>{try{await navigator.clipboard.writeText(logText());$('bCopy').textContent='✓ کۆپی کرا'}catch(e){$('bCopy').textContent='نەکرا'}setTimeout(()=>$('bCopy').textContent='کۆپی',1500)};
+$('bSave').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([logText()],{type:'text/plain'}));a.download='vex_band_test_log.txt';a.click()};
+if(!navigator.bluetooth)$('noBt').hidden=false;
+render();renderSteps();
+window.__VX={WearEngine,CFG,frame,F};
+</script>
+</body>
+</html>
