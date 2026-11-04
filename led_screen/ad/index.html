@@ -178,15 +178,23 @@ function sc2(g,u){
   if(ent>0){const r=frac(u/1.375);g.save();g.globalAlpha=(1-r)*.6*clamp(u-1.3);g.strokeStyle="#ffc83d";g.lineWidth=2;g.beginPath();g.roundRect(tx-112-r*14,py-25-r*10,224+r*28,50+r*20,25+r*10);g.stroke();g.restore()}
 }
 /* ---------- S3 adapter & cable ---------- */
-const S3P=[["cable_coil",266,176,92,128,.15,0],["cable_closeup",448,175,112,112,.35,1],["magsafe",503,181,118,58,.55,2],["adapter",356,183,128,124,.8,3]];
+const S3P=["adapter","cable_closeup","magsafe","cable_coil"];
 function sc3(g,u){
-  const l=clr(LB);
-  for(const[n,x,fy,bh,bw,st,i]of S3P){const q=prog(u,st,st+.55);if(q<=0)continue;const s=lerp(.2,1,oBack(q,1.5)),hero=n==="adapter";
-    prod(l,n,x,fy-(1-oCub(q))*55,bh*s,bw*s,{a:clamp(q*3),bob:2+2.5*Math.sin(TAU*u/2.75+i*1.7),rot:(1-oCub(q))*.5*(i%2?1:-1),glow:hero?"rgba(255,200,80,.55)":rgba(A,.22)})}
+  const cx=352,fy=178,rx=98,rise=oCub(prog(u,0,.6)),yo=(1-rise)*70;
+  g.save();g.translate(0,yo);
+  let gr=g.createRadialGradient(cx,fy+3,0,cx,fy+3,150);gr.addColorStop(0,rgba(A,.35));gr.addColorStop(1,rgba(A,0));g.fillStyle=gr;g.beginPath();g.ellipse(cx,fy+3,150,18,0,0,TAU);g.fill();
+  g.shadowColor=rgba(A,1);g.shadowBlur=10*S;g.strokeStyle=rgba(mix(A,[255,255,255],.4),.9);g.lineWidth=1.6;g.beginPath();g.ellipse(cx,fy+3,140,15,0,0,TAU);g.stroke();g.shadowBlur=0;
+  const da=-TAU*u/2.75;sparkle(g,cx+Math.cos(da)*140,fy+3+Math.sin(da)*15,9,.9);g.restore();
+  let st=0;for(let k=0;k<4;k++)st+=ioCub(prog(u,1.15+k*.95,1.65+k*.95));const b0=-st*TAU/4;
+  const l=clr(LB),its=S3P.map((n,i)=>{const th=b0+i*TAU/4,z=Math.cos(th);return{n,i,x:cx+Math.sin(th)*rx,z,d:(z+1)/2}});
+  its.slice().sort((a,b)=>a.z-b.z).forEach(it=>{const s=.42+.58*it.d;
+    prod(l,it.n,it.x,fy-(1-it.d)*22+yo,168*s,134*s,{bob:2.5+2.5*Math.sin(TAU*u/2.75+it.i*1.7),sil:(1-it.d)*.5,glow:it.d>.85?`rgba(255,200,80,${.55*(it.d-.85)/.15})`:null})});
+  burst(g,cx,150,u-.6,9,[255,200,80],.8);
   glint(LB,prog(u,2.1,2.8),.8);glint(LB,prog(u,4.2,4.9),.6);
   burst(g,356,150,u-1.2,9,[255,200,80],.8);
   g.drawImage(LB,0,0,W,H);
-  for(let j=0;j<3;j++){const w=frac(u*1.15+j*.37);if(u>1.5&&u<5.4&&w<.2){const seed=(Math.floor(u*18)+j*101)|0,tg=[[268,128],[448,112],[503,108]][j];bolt(g,356,118,tg[0],tg[1],seed,1-w/.2)}}
+  const fr=its.reduce((a,b)=>b.z>a.z?b:a);for(let j=0;j<2;j++){const w=frac(u*1.15+j*.5);if(u>1&&u<5.4&&w<.2){const o=its.filter(x=>x!==fr).sort((a,b)=>b.z-a.z)[j];
+    bolt(g,fr.x,112,o.x,128-(1-o.d)*22,(Math.floor(u*18)+j*101)|0,(1-w/.2)*.85)}}
   const tx=620,ent=k=>oBack(prog(u,.35+k*.15,.75+k*.15),1.8);
   flipY(g,34,ent(0),()=>ext(g,M.ad1,TXT.ad1,tx,by(M.ad1,34),{face:vgrad(g,14,54,["#fff","#dfe7f5"]),s1:"#5b6b86",s2:"#1a2236",depth:6,glow:"rgba(255,255,255,.35)"}));
   flipY(g,84,ent(1),()=>ext(g,M.ad2,TXT.ad2,tx,by(M.ad2,84),{face:vgrad(g,64,104,["#fff1b0","#ffc83d","#ff9a1a"]),s1:"#a35800",s2:"#3d1d00",depth:6,glow:"rgba(255,160,40,.6)"}));
