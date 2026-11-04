@@ -15,7 +15,7 @@ page.on('pageerror', e => { console.error('PAGE ERROR', e); process.exit(1); });
 page.on('console', m => console.log('console:', m.text()));
 await page.goto(`http://127.0.0.1:${port}/ad/index.html?capture&scale=${scale}`);
 await page.evaluate(() => window.ready);
-const grab = t => page.evaluate(t => { window.renderAt(t); return document.getElementById('c').toDataURL('image/png').split(',')[1]; }, t);
+const grab = t => page.evaluate(async t => { await window.prepFrame(t); window.renderAt(t); return document.getElementById('c').toDataURL('image/png').split(',')[1]; }, t);
 if (stills) {
   fs.mkdirSync('stills', { recursive: true });
   for (const t of stills.split(',').map(Number)) fs.writeFileSync(`stills/t${t.toFixed(2)}.png`, Buffer.from(await grab(t), 'base64'));

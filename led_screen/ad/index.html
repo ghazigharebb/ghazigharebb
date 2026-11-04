@@ -138,7 +138,18 @@ function logoPanel(g,t,gl){
 }
 
 /* ---------- S1 brand ---------- */
+/* Blender pop-out frames (rendered by blender/s1_popout.py): 153 frames @30fps covering local time -0.25..4.83 s */
+const S1N=153,S1X=186,S1W=534;let S1IMG=null,S1IDX=-1,S1V=null;
+const s1i=u=>clamp(Math.round((u+.25)*30),0,S1N-1);
+function s1u(t){t=((t%DUR)+DUR)%DUR;return t<4.86?t:t>=19.74?t-DUR:null}
+window.prepFrame=async t=>{const u=s1u(t);if(u===null)return;const i=s1i(u);if(i===S1IDX)return;
+  const im=new Image();im.src="blender_s1/s1_"+String(i).padStart(4,"0")+".png";try{await im.decode();S1IMG=im;S1IDX=i}catch(e){S1IMG=null;S1IDX=-1}};
 function sc1(g,u){
+  if(CAP&&S1IMG&&S1IDX===s1i(u)){g.drawImage(S1IMG,S1X,0,S1W,H);return}
+  if(!CAP&&S1V&&S1V.readyState>=2){const want=(u+.25);if(Math.abs(S1V.currentTime-want)>.12)S1V.currentTime=want;if(S1V.paused)S1V.play().catch(()=>{});g.drawImage(S1V,S1X,0,S1W,H);return}
+  sc1_2d(g,u);
+}
+function sc1_2d(g,u){
   const m=M.brand,l=clr(LA),yb=by(m,74);let x=458-m.w/2;
   const face=vgrad(l,yb-m.a,yb,["#ffffff","#dce8ff","#9fbfff"]);
   [...TXT.brand].forEach((ch,i)=>{const w=M.brandC[i];if(ch!==" "){const q=prog(u,.12+i*.045,.62+i*.045);
@@ -267,6 +278,7 @@ async function boot(){
   await Promise.all(NAMES.map(n=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>{prep(n,i);res()};i.onerror=()=>rej(n);i.src="assets/"+n+".png"})));
   try{await Promise.all([document.fonts.load('100px "WG Anton"',"WASTA"),document.fonts.load('900 100px "WG Kufi"',TXT.brandKu+TXT.hoursLine)])}catch(e){}
   setup();window.renderAt=render;
+  if(!CAP){const v=document.createElement("video");v.src="blender_s1/s1_popout.mp4";v.muted=true;v.playsInline=true;v.preload="auto";v.oncanplay=()=>{S1V=v};v.load()}
   if(!CAP){const t0=performance.now();(function loop(nw){render((nw-t0)/1000);requestAnimationFrame(loop)})(t0)}else render(Q.has("t")?+Q.get("t"):0);
 }
 window.ready=boot();
