@@ -1,1 +1,8 @@
 pb_anker165>pb_maggo_stand led_screen/lovart_pro/morph/lovart_f6c663b810cd.mp4
+pb_maggo_stand>pb_qi2_blue led_screen/lovart_pro/morph/lovart_8077e3fba773.mp4
+pb_qi2_blue>pb_anker20k led_screen/lovart_pro/morph/lovart_717c52ea6f88.mp4
+pb_anker20k>pb_instacord led_screen/lovart_pro/morph/lovart_bffb0d2d2540.mp4
+pb_instacord>adapter led_screen/lovart_pro/morph/lovart_c45ad5c4ccc3.mp4
+adapter>cable_coil led_screen/lovart_pro/morph/lovart_809cf7d08a89.mp4
+cable_coil>magsafe led_screen/lovart_pro/morph/lovart_b575d6d40220.mp4
+magsafe>hours led_screen/lovart_pro/morph/lovart_e8c2a12e97f4.mp4
