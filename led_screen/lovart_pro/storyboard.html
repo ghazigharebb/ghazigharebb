@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ckb"><head><meta charset="utf-8"><title>Colour storyboard</title>
+<style>
+@font-face{font-family:CZ;font-weight:900;src:url(../fonts/cand/Cinzel-900.ttf)}
+@font-face{font-family:MS;font-weight:800;src:url(../fonts/cand/Montserrat-800.ttf)}
+@font-face{font-family:MS;font-weight:500;src:url(../fonts/cand/Montserrat-500.ttf)}
+@font-face{font-family:VZ;font-weight:900;src:url(../fonts/cand/Vazirmatn-900.ttf)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#161616;padding:10px;width:740px;font-family:VZ}
+.cap{color:#fff;font:900 14px VZ;direction:rtl;margin:8px 2px 5px;display:flex;gap:8px;align-items:center}
+.sw{width:14px;height:14px;border-radius:3px;display:inline-block}
+.f{position:relative;width:720px;height:200px;overflow:hidden;background:#000}
+.win{position:absolute;left:200px;top:0;width:520px;height:200px;object-fit:cover}
+.edge{position:absolute;left:200px;top:0;width:40px;height:200px;background:linear-gradient(90deg,#000,transparent)}
+.dim{position:absolute;left:380px;top:0;width:340px;height:200px;background:linear-gradient(90deg,transparent,rgba(0,0,0,.55) 30%,rgba(0,0,0,.72))}
+.panel{position:absolute;left:0;top:0;width:212px;height:200px;background:radial-gradient(80% 90% at 50% 35%,#2a2113 0%,#0c0a07 60%,#000 100%);-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent)}
+.arch{position:absolute;left:16px;top:8px;width:168px;height:184px;border-radius:84px 84px 8px 8px;border:2px solid #d9b25d;box-shadow:0 0 16px rgba(217,178,93,.3),inset 0 0 22px rgba(0,0,0,.85);overflow:hidden;background:radial-gradient(80% 70% at 50% 35%,#2b2416,#0a0906)}
+.arch img{position:absolute;left:6px;top:14px;width:152px;height:166px;object-fit:contain;object-position:50% 100%}
+.txt{position:absolute;left:450px;width:262px;text-align:center;white-space:nowrap}
+.gold{background:linear-gradient(180deg,#fff6cf 0%,#f7d27a 30%,#c99a3a 55%,#f3d58c 75%,#9a6b1f 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.kick{top:24px;font:500 11px MS;letter-spacing:6px}
+.head{top:40px;font:900 30px CZ;letter-spacing:1px}
+.rule{position:absolute;left:506px;top:86px;width:150px;height:1.5px}
+.kur{top:92px;font:900 30px VZ;color:#fff;direction:rtl;text-shadow:0 2px 8px rgba(0,0,0,.9)}
+.pill{position:absolute;left:521px;top:148px;width:120px;height:28px;border:1.5px solid;border-radius:14px;display:flex;align-items:center;justify-content:center;font:800 12px MS;letter-spacing:2px;color:#f3d58c;background:rgba(0,0,0,.35)}
+</style></head><body>
+<script>
+const ITEMS=window.ITEMS||[];
+const COPY={power:['— ANKER —','POWER BANK','لەم نزیکانە','COMING SOON'],adapter:['— WASTA GHAREB —','ADAPTER','بەردەستە','IN STOCK'],
+  cable_coil:['— WASTA GHAREB —','CABLE','بەردەستە','IN STOCK'],magsafe:['— WASTA GHAREB —','MAGSAFE','بەردەستە','IN STOCK'],hours:['کاتی کردنەوە','9 AM – 11 PM','لە ٩ی بەیانی تا ١١ی شەو','']};
+window.build=items=>{document.body.innerHTML=items.map(([n,src,acc,label])=>{const c=COPY[n.startsWith('pb_')?'power':n],h=n==='hours';
+  return `<div class="cap"><span class="sw" style="background:${acc}"></span>${label}</div><div class="f">
+  <img class="win" src="${src}"><div class="edge"></div><div class="dim"></div><div class="panel"></div>
+  <div class="arch"><img src="../ad/assets/logo.png"></div>
+  <div class="txt kick ${h?'gold':''}" style="color:${acc};${h?'font:900 17px VZ;letter-spacing:0;direction:rtl;top:14px':''}">${c[0]}</div>
+  <div class="txt head gold">${c[1]}</div>
+  ${h?'':`<div class="rule" style="background:linear-gradient(90deg,transparent,${acc},transparent)"></div>`}
+  <div class="txt kur" style="${h?'font-size:22px':''}">${c[2]}</div>
+  ${c[3]?`<div class="pill" style="border-color:${acc};box-shadow:0 0 10px ${acc}55">${c[3]}</div>`:''}</div>`}).join('');
+  return Promise.all([document.fonts.ready,...[...document.images].map(i=>i.decode().catch(()=>0))])};
+</script></body></html>
