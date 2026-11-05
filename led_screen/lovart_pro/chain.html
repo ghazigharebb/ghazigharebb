@@ -39,7 +39,7 @@ const ITEMS=[['pb_anker165','#d4a24c'],['pb_maggo_stand','#b3122a'],['pb_qi2_blu
   ['adapter','#c9d3e0'],['cable_coil','#c06a2b'],['magsafe','#8e1b3d'],['hours','#d4a24c']];
 const COPY={power:['— ANKER —','POWER BANK','لەم نزیکانە','COMING SOON'],adapter:['— WASTA GHAREB —','ADAPTER','بەردەستە','IN STOCK'],
   cable_coil:['— WASTA GHAREB —','CABLE','بەردەستە','IN STOCK'],magsafe:['— WASTA GHAREB —','MAGSAFE','بەردەستە','IN STOCK'],hours:['کاتی کردنەوە','9 AM – 11 PM','لە ٩ی بەیانی تا ١١ی شەو','']};
-const CL=5,XF=.25,STEP=CL-XF,N=ITEMS.length,LOOP=N*STEP,FPS=60,TSW=3.25,TF=.6;window.LOOP=LOOP;
+const CL=5,XF=+(new URLSearchParams(location.search).get('xf')??.25),STEP=CL-XF,N=ITEMS.length,LOOP=N*STEP,FPS=60,TSW=3.25,TF=.6;window.LOOP=LOOP;
 const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x)),prog=(t,a,b)=>clamp((t-a)/(b-a)),io=x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;
 const $=id=>document.getElementById(id),wrap=t=>((t%LOOP)+LOOP)%LOOP;
 const BL=ITEMS.map(([n,acc])=>{const c=COPY[n.startsWith('pb_')?'power':n],h=n==='hours',d=document.createElement('div');d.className='blk';
