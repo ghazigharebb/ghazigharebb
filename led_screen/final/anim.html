@@ -113,8 +113,8 @@ const s4a=T('ADAPTER',602,12,{size:54,excol:'#3a4256',ls:1}),s4b=T('& CABLE',602
 const pill4=el(`<div style="position:absolute;inset:0;transform-style:preserve-3d" class="pf">
   <div class="pill" style="background:linear-gradient(180deg,#5cf2a6,#11b765 55%,#078a47);box-shadow:0 4px 0 #04582c,0 8px 14px rgba(0,0,0,.6);font:900 22px VZ;color:#fff;direction:rtl;padding-left:30px">بەردەستە</div>
   <div class="pill" style="transform:rotateX(180deg);background:linear-gradient(180deg,#5cf2a6,#11b765 55%,#078a47);box-shadow:0 4px 0 #04582c;font:900 22px BC;color:#fff;letter-spacing:1px;padding-left:30px">IN STOCK</div>
-  <div style="position:absolute;left:-10px;top:-4px;width:48px;height:48px;border-radius:50%;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;transform:translateZ(6px)">
-  <svg width="28" height="28" viewBox="0 0 28 28"><path d="M5 15 L11 21 L23 7" fill="none" stroke="#0aa257" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>`,{left:'522px',top:'136px',width:'172px',height:'42px'});
+  </div><div style="position:absolute;left:-10px;top:-4px;width:48px;height:48px;border-radius:50%;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;transform:translateZ(8px)">
+  <svg width="28" height="28" viewBox="0 0 28 28"><path d="M5 15 L11 21 L23 7" fill="none" stroke="#0aa257" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`,{left:'522px',top:'136px',width:'172px',height:'42px'});
 /* ===== scene 5 — opening hours ===== */
 const ticks=Array.from({length:60},(_,i)=>{const a=i*6*Math.PI/180,b=i%5==0,r1=b?64:70,r2=76;return `<line x1="${100+Math.sin(a)*r1}" y1="${100-Math.cos(a)*r1}" x2="${100+Math.sin(a)*r2}" y2="${100-Math.cos(a)*r2}" stroke="#0b1640" stroke-width="${b?4:1.4}" stroke-linecap="round"/>`}).join('');
 const clock=el(`<svg width="176" height="176" viewBox="0 0 200 200" style="filter:drop-shadow(0 10px 12px rgba(0,0,0,.7))">
