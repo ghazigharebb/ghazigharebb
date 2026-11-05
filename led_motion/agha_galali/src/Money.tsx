@@ -10,13 +10,13 @@ const inE = Easing.bezier(0.7, 0, 0.84, 0);
 export type Bill = {img: string; ar: number; name: string; code: string; accent: string};
 // aspect ratios are measured from the trimmed images (see prep script)
 const ALL_BILLS: Bill[] = [
-  {img: 'notes/iqd.jpg', ar: 2.27, name: 'دیناری عێراقی', code: 'IQD', accent: '#c0392b'},
+  {img: 'notes/iqd.jpg', ar: 2.218, name: 'دیناری عێراقی', code: 'IQD', accent: '#c0392b'},
   {img: 'notes/usd.jpg', ar: 2.36, name: 'دۆلاری ئەمریکی', code: 'USD', accent: '#1e7a46'},
   {img: 'notes/eur.jpg', ar: 1.91, name: 'یۆرۆ', code: 'EUR', accent: '#2a56c6'},
   {img: 'notes/gbp.jpg', ar: 1.87, name: 'پاوەندی بەریتانی', code: 'GBP', accent: '#8e2a5a'},
 ];
 // which real banknote images are present in public/notes (edit when a new scan arrives)
-export const AVAILABLE = ['USD', 'EUR', 'GBP'];
+export const AVAILABLE = ['IQD', 'USD', 'EUR', 'GBP'];
 export const BILLS = ALL_BILLS.filter((b) => AVAILABLE.includes(b.code));
 
 // A banknote that can bend like paper: sliced into vertical strips on a sine wave.
