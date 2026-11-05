@@ -9,9 +9,9 @@
 html,body{background:#000;overflow:hidden}
 body{display:flex;align-items:center;justify-content:center;height:100vh}
 .f{position:relative;width:720px;height:200px;overflow:hidden;background:#000;flex:none}
-.pscr{position:absolute;top:10px;left:10px;width:186px;height:180px;overflow:hidden;background:radial-gradient(90% 85% at 50% 42%,#1d47a6 0%,#0b1d4f 55%,#030919 100%)}
-.por{position:absolute;left:9px;top:5px;width:168px;height:173px;object-fit:contain;object-position:50% 100%;filter:drop-shadow(0 4px 6px rgba(0,0,0,.75))}
-.scr{position:absolute;top:10px;left:206px;width:504px;height:180px;overflow:hidden;background:#02050f}
+.pscr{position:absolute;top:0;left:0;width:214px;height:200px;overflow:hidden;z-index:2;background:radial-gradient(90% 85% at 46% 42%,#1d47a6 0%,#0b1d4f 55%,#030919 100%);-webkit-mask-image:linear-gradient(90deg,#000 82%,transparent 100%)}
+.por{position:absolute;left:8px;top:6px;width:184px;height:190px;object-fit:contain;object-position:50% 100%;filter:drop-shadow(0 4px 6px rgba(0,0,0,.75))}
+.scr{position:absolute;top:0;left:186px;width:534px;height:200px;overflow:hidden;background:#02050f}
 .bg{position:absolute;inset:0;opacity:0}
 .bg0{background:radial-gradient(120% 140% at 50% 115%,#1a4fb8 0%,#0b2463 32%,#050d2a 62%,#02050f 100%)}
 .bg1{background:radial-gradient(120% 140% at 30% 115%,#0f8fbf 0%,#0a3d66 32%,#041a33 62%,#020812 100%)}
@@ -28,7 +28,7 @@ body{display:flex;align-items:center;justify-content:center;height:100vh}
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor}
 .div{position:absolute;top:0;bottom:0;left:196px;width:10px;background:linear-gradient(90deg,#030304,#22252b 50%,#030304)}
 .edge{position:absolute;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),inset 0 3px 6px rgba(0,0,0,.9)}
-.over{position:absolute;inset:0;perspective:650px;perspective-origin:458px 100px}
+.over{position:absolute;inset:0;perspective:520px;perspective-origin:458px 100px;z-index:3}
 .el{position:absolute;transform-style:preserve-3d;will-change:transform}
 .pw img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:50% 100%}
 .pw .gl{position:absolute;inset:0;-webkit-mask-size:contain;-webkit-mask-repeat:no-repeat;-webkit-mask-position:50% 100%;
@@ -46,8 +46,6 @@ body{display:flex;align-items:center;justify-content:center;height:100vh}
   <div class="scr" id="S"><div class="bg bg0"></div><div class="bg bg1"></div><div class="bg bg2"></div><div class="bg bg3"><div class="stars" id="stars"></div><div class="moon"></div></div>
     <div class="floor" id="floor"></div><div class="beam" id="b1" style="left:50px"></div><div class="beam" id="b2" style="left:320px"></div>
     <div class="shadow" id="sh" style="left:44px;top:158px;width:160px;height:22px"></div></div>
-  <div class="bez"></div><div class="div"></div>
-  <div class="edge" style="left:10px;top:10px;width:186px;height:180px"></div><div class="edge" style="left:206px;top:10px;width:504px;height:180px"></div>
   <div class="over" id="O"></div>
 </div>
 <script>
@@ -71,14 +69,15 @@ function T(s,cx,top,o){return centerAt(el(txt(s,o),{}),cx,top)}
 const set=(e,tr,op=1,filter='')=>{e.style.transform=tr;e.style.opacity=op;e.style.filter=filter;e.style.visibility=op<=0?'hidden':'visible'};
 /* product: flies in from deep space, floats + turns, glints, exits toward / past the viewer */
 function product(n,{cx=330,h=176,w=200}={}){
-  const e=el(`<img src="${A(n)}"><div class="gl" style="-webkit-mask-image:url(${A(n)})"></div>`,{left:(cx-w/2)+'px',top:(190-h-1)+'px',width:w+'px',height:h+'px'});e.className='el pw';e.gl=e.querySelector('.gl');return e}
+  const layers=Array.from({length:9},(_,i)=>`<img src="${A(n)}" style="transform:translateZ(${-(9-i)*1.6}px);filter:brightness(${.12+i*.03}) saturate(.6)">`).join('');
+  const e=el(`${layers}<img src="${A(n)}"><div class="gl" style="-webkit-mask-image:url(${A(n)})"></div>`,{left:(cx-w/2)+'px',top:(196-h)+'px',width:w+'px',height:h+'px'});e.className='el pw';e.gl=e.querySelector('.gl');return e}
 function prodAt(e,u,dur,{exit='toward',tilt=-5,glints=[]}={}){
   const q=prog(u,0,1.05),qx=prog(u,dur-.75,dur);if(u<0||u>dur||q<=0){set(e,'',0);return 0}
-  const z=lerp(-1500,0,oCub(q))+bump(u,.85,1.35)*55,blur=(1-q)*5;
-  const fl=Math.sin(u*2.1)*3,ry=Math.sin(u*1.15)*11*clamp(u-.6),rz=tilt+Math.sin(u*.8)*1.5;
+  const z=lerp(-2200,0,oCub(q))+bump(u,.85,1.35)*70,blur=(1-q)*4;
+  const fl=Math.sin(u*2.1)*3,ry=Math.sin(u*1.0)*24*clamp(u-.6),rz=tilt+Math.sin(u*.8)*1.5,rx=Math.sin(u*.7)*5;
   let x=0,y=fl,zz=z,op=clamp(q*3);
   if(qx>0){if(exit==='toward'){zz+=Math.pow(qx,2)*220;op*=1-ioCub(qx)}else{zz-=ioCub(qx)*900;x-=ioCub(qx)*120;op*=1-qx*qx}}
-  set(e,`translate3d(${x}px,${y}px,${zz}px) rotateY(${ry+(1-oCub(q))*30}deg) rotateZ(${rz}deg)`,op,blur>.05?`blur(${blur}px) drop-shadow(0 10px 10px rgba(0,0,0,.7))`:'drop-shadow(0 10px 10px rgba(0,0,0,.7)) drop-shadow(0 0 20px rgba(130,200,255,.22))');
+  set(e,`translate3d(${x}px,${y}px,${zz}px) rotateY(${ry+(1-oCub(q))*70}deg) rotateX(${rx}deg) rotateZ(${rz}deg)`,op,blur>.3?`blur(${blur}px)`:'');
   let g=-1;for(const[a,b]of glints){const p=prog(u,a,b);if(p>0&&p<1)g=p}e.gl.style.backgroundPosition=g<0?'-200% 0':`${lerp(130,-30,g)}% 0`;e.gl.style.opacity=g<0?0:1;
   return op*(1-qx)}
 /* text: letters flip up out of depth, leave by flying at the viewer */
@@ -97,18 +96,18 @@ const s1=T('WASTA GHAREB',458,26,{size:80,ls:1}), s1k=T('وەستا غەریب',
 const s1l=el(`<div style="width:46px;height:2px;background:linear-gradient(90deg,transparent,#ffcf4a)"></div>`,{left:'298px',top:'149px'}),s1r=el(`<div style="width:46px;height:2px;background:linear-gradient(90deg,#ffcf4a,transparent)"></div>`,{left:'572px',top:'149px'});
 const s1g=el('',{left:'230px',top:'20px',width:'460px',height:'86px',background:'linear-gradient(105deg,transparent 45%,rgba(255,255,255,.55) 50%,transparent 55%)',backgroundSize:'300% 100%',mixBlendMode:'overlay',pointerEvents:'none'});
 /* ===== scene 2 — ANKER hero ===== */
-const p2=product('pb_anker165',{cx:322,h:178,w:150});
+const p2=product('pb_anker165',{cx:326,h:186,w:150});
 const s2a=T('ANKER',586,14,{size:86,excol:'#06405f',ls:2}),s2b=T('POWER BANK',586,104,{size:21,font:'MS',w:800,excol:'#06405f',depth:2,ls:3});
 const pill2=el(`<div style="position:absolute;inset:0;transform-style:preserve-3d" class="pf">
   <div class="pill" style="background:linear-gradient(180deg,#fff2b0,#ffcf4a 38%,#e79a12 70%,#b86a05);box-shadow:0 4px 0 #8a5200,0 8px 14px rgba(0,0,0,.6);font:800 17px MS;color:#0a1640;letter-spacing:1px">COMING SOON</div>
   <div class="pill" style="transform:rotateX(180deg);background:linear-gradient(180deg,#fff2b0,#ffcf4a 38%,#e79a12 70%,#b86a05);box-shadow:0 4px 0 #8a5200;font:900 21px VZ;color:#0a1640;direction:rtl">لەم نزیکانە</div></div>`,{left:'496px',top:'140px',width:'180px',height:'38px'});
 /* ===== scene 3 — four power banks ===== */
-const P3=['pb_maggo_stand','pb_qi2_blue','pb_anker20k','pb_instacord'].map((n,i)=>product(n,{cx:330,h:[150,176,170,140][i],w:[180,150,150,200][i]}));
+const P3=['pb_maggo_stand','pb_qi2_blue','pb_anker20k','pb_instacord'].map((n,i)=>product(n,{cx:332,h:[160,186,178,150][i],w:[190,150,150,210][i]}));
 const s3a=T('لەم نزیکانە',592,26,{size:40,font:'VZ',face:'gold',excol:'#5a2c00',depth:3,kur:true}),s3b=T('COMING SOON',592,104,{size:32,excol:'#06405f',depth:3,ls:1});
 const s3c=T('ANKER',592,150,{size:13,font:'MS',w:800,excol:'#06405f',depth:1,ls:5});
 const dots3=el([0,1,2,3].map(i=>`<i style="display:inline-block;width:6px;height:6px;margin:0 3px;border-radius:50%;background:#9fe6ff"></i>`).join(''),{left:'565px',top:'172px'});
 /* ===== scene 4 — adapter / cables / MagSafe ===== */
-const P4=[['adapter',176,170],['cable_coil',150,220],['magsafe',176,90]].map(([n,h,w])=>product(n,{cx:322,h,w}));
+const P4=[['adapter',182,176],['cable_coil',156,230],['magsafe',186,96]].map(([n,h,w])=>product(n,{cx:322,h,w}));
 const s4a=T('ADAPTER',602,12,{size:54,excol:'#3a4256',ls:1}),s4b=T('& CABLE',602,64,{size:54,face:'gold',excol:'#6a3b00',ls:1});
 const pill4=el(`<div style="position:absolute;inset:0;transform-style:preserve-3d" class="pf">
   <div class="pill" style="background:linear-gradient(180deg,#5cf2a6,#11b765 55%,#078a47);box-shadow:0 4px 0 #04582c,0 8px 14px rgba(0,0,0,.6);font:900 22px VZ;color:#fff;direction:rtl;padding-left:30px">بەردەستە</div>
