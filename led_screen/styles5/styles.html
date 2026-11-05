@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ckb"><head><meta charset="utf-8"><title>5 design directions</title>
+<style>
+@font-face{font-family:BC;font-weight:900;src:url(../fonts/cand/BarlowCondensed-900.ttf)}
+@font-face{font-family:BCI;font-weight:900;src:url(../fonts/cand/BarlowCondensed-900i.ttf)}
+@font-face{font-family:MS;font-weight:800;src:url(../fonts/cand/Montserrat-800.ttf)}
+@font-face{font-family:MS;font-weight:900;src:url(../fonts/cand/Montserrat-900.ttf)}
+@font-face{font-family:MS;font-weight:500;src:url(../fonts/cand/Montserrat-500.ttf)}
+@font-face{font-family:VZ;font-weight:900;src:url(../fonts/cand/Vazirmatn-900.ttf)}
+@font-face{font-family:VZ;font-weight:800;src:url(../fonts/cand/Vazirmatn-800.ttf)}
+@font-face{font-family:CZ;font-weight:900;src:url(../fonts/cand/Cinzel-900.ttf)}
+@font-face{font-family:OB;font-weight:900;src:url(../fonts/cand/Orbitron-900.ttf)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#141414;padding:12px;width:744px;font-family:VZ}
+.cap{color:#fff;font:800 15px VZ;direction:rtl;margin:10px 2px 6px;display:flex;gap:8px;align-items:center}
+.cap b{background:#ffc83d;color:#111;border-radius:6px;padding:0 8px;font:900 15px MS}
+.f{position:relative;width:720px;height:200px;overflow:hidden}
+.abs{position:absolute}
+.kur{direction:rtl;white-space:nowrap}
+.nw{white-space:nowrap}
+.por{position:absolute;object-fit:contain;object-position:50% 100%}
+.prod{position:absolute;object-fit:contain;object-position:50% 100%}
+/* ---------- 1 LUXURY black & gold ---------- */
+.d1{background:radial-gradient(70% 120% at 48% 0%,#2a2113 0%,#0d0b08 45%,#030303 100%)}
+.d1 .cone{left:240px;top:-20px;width:190px;height:230px;background:linear-gradient(180deg,rgba(255,226,160,.38),rgba(255,226,160,0) 85%);clip-path:polygon(38% 0,62% 0,100% 100%,0 100%);filter:blur(4px)}
+.d1 .ped{left:262px;top:166px;width:150px;height:26px;border-radius:50%;background:radial-gradient(closest-side,#3a3122,#0b0a08 70%,#000);box-shadow:0 0 0 1px rgba(255,210,120,.35),0 10px 20px rgba(0,0,0,.8)}
+.goldtxt{background:linear-gradient(180deg,#fff6cf 0%,#f7d27a 30%,#c99a3a 55%,#f3d58c 75%,#9a6b1f 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.d1 .arch{left:14px;top:8px;width:172px;height:184px;border-radius:86px 86px 10px 10px;border:2px solid #d9b25d;background:radial-gradient(80% 70% at 50% 35%,#2b2416,#0a0906);box-shadow:0 0 18px rgba(217,178,93,.25),inset 0 0 20px rgba(0,0,0,.8);overflow:hidden}
+.dust i{position:absolute;width:2px;height:2px;border-radius:50%;background:#ffe3a0}
+/* ---------- 2 NEON cyber ---------- */
+.d2{background:linear-gradient(180deg,#06020f 0%,#0b0420 60%,#1a0633 100%)}
+.d2 .grid{left:-200px;right:-200px;bottom:-40px;height:130px;transform:perspective(150px) rotateX(64deg);transform-origin:50% 100%;
+  background-image:linear-gradient(rgba(255,40,200,.75) 1.5px,transparent 1.5px),linear-gradient(90deg,rgba(40,230,255,.7) 1.5px,transparent 1.5px);background-size:40px 26px;-webkit-mask-image:linear-gradient(to top,#000 20%,transparent 95%)}
+.d2 .hz{left:186px;right:0;top:102px;height:3px;background:linear-gradient(90deg,transparent,#ff3bd4,#3be9ff,transparent);filter:blur(1px);box-shadow:0 0 18px #ff3bd4}
+.neonC{color:#e9fdff;text-shadow:0 0 2px #fff,0 0 8px #3be9ff,0 0 18px #3be9ff,0 0 34px #0ab7ff}
+.neonM{color:#fff0fb;text-shadow:0 0 2px #fff,0 0 8px #ff3bd4,0 0 18px #ff3bd4,0 0 30px #b400ff}
+.d2 .ring{left:244px;top:160px;width:180px;height:30px;border-radius:50%;border:2px solid #3be9ff;box-shadow:0 0 12px #3be9ff,inset 0 0 12px #3be9ff}
+.d2 .pframe{left:12px;top:10px;width:172px;height:180px;border-radius:14px;border:2px solid #3be9ff;box-shadow:0 0 14px #3be9ff,inset 0 0 14px rgba(59,233,255,.5);background:linear-gradient(180deg,#120634,#05020f);overflow:hidden}
+.scan{inset:0;background:repeating-linear-gradient(180deg,rgba(255,255,255,.035) 0 1px,transparent 1px 3px);pointer-events:none}
+/* ---------- 3 MINIMAL studio ---------- */
+.d3{background:radial-gradient(90% 140% at 45% 100%,#ffffff 0%,#eef2f8 45%,#d7dfea 100%)}
+.d3 .card{left:12px;top:10px;width:174px;height:180px;border-radius:18px;background:linear-gradient(180deg,#1f4fb6,#0b2a6b);box-shadow:0 10px 24px rgba(16,40,90,.35);overflow:hidden}
+.d3 .soft{left:250px;top:168px;width:170px;height:22px;border-radius:50%;background:radial-gradient(closest-side,rgba(20,30,60,.35),transparent)}
+/* ---------- 4 ELECTRIC energy ---------- */
+.d4{background:radial-gradient(70% 120% at 46% 55%,#0b3fbf 0%,#06205f 35%,#020a22 70%,#01040d 100%)}
+.d4 .halo{left:236px;top:6px;width:190px;height:190px;border-radius:50%;background:radial-gradient(closest-side,rgba(120,200,255,.0) 62%,rgba(120,220,255,.9) 66%,rgba(60,140,255,.25) 72%,transparent 78%);filter:blur(.6px)}
+.d4 .halo2{left:216px;top:-14px;width:230px;height:230px;border-radius:50%;background:radial-gradient(closest-side,rgba(80,170,255,.35),transparent 70%)}
+.d4 .hex{left:14px;top:8px;width:170px;height:184px;clip-path:polygon(50% 0,100% 18%,100% 82%,50% 100%,0 82%,0 18%);background:linear-gradient(180deg,#5fd8ff,#1e6bff)}
+.d4 .hexin{left:17px;top:12px;width:164px;height:176px;clip-path:polygon(50% 0,100% 18%,100% 82%,50% 100%,0 82%,0 18%);background:radial-gradient(80% 70% at 50% 35%,#163c9a,#050f33);overflow:hidden}
+.chrome{background:linear-gradient(180deg,#ffffff 0%,#eaf1ff 42%,#8fa3c7 50%,#ffffff 58%,#cfdcf5 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.bolt{position:absolute;inset:0;overflow:visible}
+/* ---------- 5 KINETIC panels ---------- */
+.d5{background:#0a1a4d}
+.d5 .yel{left:420px;top:0;width:340px;height:200px;background:#ffc83d;clip-path:polygon(18% 0,100% 0,100% 100%,0 100%)}
+.d5 .str{left:392px;top:0;width:40px;height:200px;background:#ffffff;clip-path:polygon(70% 0,100% 0,30% 100%,0 100%);opacity:.9}
+.d5 .big{left:150px;top:-14px;font:900 210px BC;color:transparent;-webkit-text-stroke:1.5px rgba(255,255,255,.14);letter-spacing:-2px}
+.d5 .pp{left:10px;top:10px;width:176px;height:180px;background:linear-gradient(160deg,#1e6bff,#0a1a4d 70%);border-radius:4px;overflow:hidden}
+.d5 .bar{left:10px;top:184px;width:176px;height:6px;background:#ffc83d}
+</style></head><body>
+<script>
+const A=n=>'../ad/assets/'+n+'.png', LOGO=A('logo');
+function bolt(x1,y1,x2,y2,seed,amp=10){let s=seed;const r=()=>((s=(s*9301+49297)%233280)/233280);const n=10;let d=`M${x1} ${y1}`;
+  for(let i=1;i<n;i++){const t=i/n,x=x1+(x2-x1)*t+(r()-.5)*amp,y=y1+(y2-y1)*t+(r()-.5)*amp;d+=` L${x.toFixed(1)} ${y.toFixed(1)}`}return d+` L${x2} ${y2}`}
+const dust=Array.from({length:40},(_,i)=>`<i style="left:${200+(i*137)%520}px;top:${(i*71)%200}px;opacity:${.25+(i%5)*.12};transform:scale(${.6+(i%3)*.5})"></i>`).join('');
+const D=[
+ ['1','ستایلی لۆکس: ڕەش و زێڕ — ڕووناکی سپۆت‌لایت، سەکۆی ڕەش، نووسینی زێڕین',`<div class="f d1">
+   <div class="abs dust" style="inset:0">${dust}</div><div class="abs cone"></div><div class="abs ped"></div>
+   <img class="prod" src="${A('pb_anker165')}" style="left:270px;top:22px;width:130px;height:154px;-webkit-box-reflect:below 0 linear-gradient(transparent 70%,rgba(255,255,255,.18));filter:drop-shadow(0 6px 10px rgba(0,0,0,.8))">
+   <div class="abs arch"><img class="por" src="${LOGO}" style="left:6px;top:14px;width:156px;height:166px"></div>
+   <div class="abs nw" style="left:470px;top:16px;width:230px;text-align:center;font:500 11px MS;letter-spacing:6px;color:#d9b25d">— ANKER —</div>
+   <div class="abs nw goldtxt" style="left:440px;top:34px;width:290px;text-align:center;font:900 31px CZ;letter-spacing:1px">POWER BANK</div>
+   <div class="abs" style="left:500px;top:86px;width:170px;height:1px;background:linear-gradient(90deg,transparent,#d9b25d,transparent)"></div>
+   <div class="abs kur" style="left:440px;top:92px;width:290px;text-align:center;font:900 32px VZ;color:#fff">لەم نزیکانە</div>
+   <div class="abs nw" style="left:525px;top:150px;width:120px;height:28px;border:1.5px solid #d9b25d;border-radius:14px;display:flex;align-items:center;justify-content:center;font:800 12px MS;letter-spacing:2px;color:#f3d58c">COMING SOON</div></div>`],
+ ['2','ستایلی نیۆن: سایبەر، تۆڕی ڕووناک، نووسینی نیۆن کە دەدرەوشێتەوە',`<div class="f d2">
+   <div class="abs grid"></div><div class="abs hz"></div><div class="abs ring"></div>
+   <img class="prod" src="${A('pb_anker165')}" style="left:272px;top:14px;width:126px;height:160px;filter:drop-shadow(0 0 6px #3be9ff) drop-shadow(0 0 16px rgba(59,233,255,.6))">
+   <div class="abs pframe"><img class="por" src="${LOGO}" style="left:4px;top:8px;width:160px;height:168px"></div>
+   <div class="abs nw neonC" style="left:450px;top:8px;width:270px;text-align:center;font:900 44px OB;letter-spacing:3px">ANKER</div>
+   <div class="abs nw neonM" style="left:450px;top:64px;width:270px;text-align:center;font:900 17px OB;letter-spacing:4px">POWER BANK</div>
+   <div class="abs kur neonM" style="left:450px;top:90px;width:270px;text-align:center;font:900 30px VZ">لەم نزیکانە</div>
+   <div class="abs nw neonC" style="left:520px;top:150px;width:130px;height:30px;border:2px solid #3be9ff;border-radius:6px;box-shadow:0 0 10px #3be9ff,inset 0 0 8px #3be9ff;display:flex;align-items:center;justify-content:center;font:900 12px OB;letter-spacing:2px">COMING SOON</div>
+   <div class="abs scan"></div></div>`],
+ ['3','ستایلی مینیماڵ (وەک ڕێکلامی Apple) — ستۆدیۆی ڕووناک، بەرهەمی گەورە، نووسینی پاک',`<div class="f d3">
+   <div class="abs soft"></div>
+   <img class="prod" src="${A('pb_anker165')}" style="left:268px;top:12px;width:134px;height:166px;filter:drop-shadow(0 14px 14px rgba(20,30,60,.35))">
+   <div class="abs card"><img class="por" src="${LOGO}" style="left:6px;top:8px;width:162px;height:170px"></div>
+   <div class="abs nw" style="left:460px;top:18px;font:800 13px MS;letter-spacing:5px;color:#1e6bff">ANKER</div>
+   <div class="abs nw" style="left:458px;top:38px;font:900 35px MS;letter-spacing:-1px;color:#0a1640">Power Bank.</div>
+   <div class="abs kur" style="left:458px;top:86px;width:240px;font:900 30px VZ;color:#0a1640;direction:rtl;text-align:left">لەم نزیکانە</div>
+   <div class="abs nw" style="left:460px;top:146px;width:132px;height:32px;border-radius:16px;background:#1e6bff;box-shadow:0 6px 14px rgba(30,107,255,.35);display:flex;align-items:center;justify-content:center;font:800 12px MS;letter-spacing:1px;color:#fff">COMING SOON</div></div>`],
+ ['4','ستایلی وزە و کارەبا — بازنەی ڕووناکی، بروسکە، نووسینی کرۆم',`<div class="f d4">
+   <div class="abs halo2"></div><div class="abs halo"></div>
+   <svg class="bolt" viewBox="0 0 720 200">${[[331,20,250,60,3],[331,180,420,150,7],[260,170,330,100,11],[400,40,330,90,5]].map(([a,b,c,d,s])=>`<path d="${bolt(a,b,c,d,s,14)}" fill="none" stroke="#bfefff" stroke-width="1.6" style="filter:drop-shadow(0 0 4px #5fd8ff) drop-shadow(0 0 8px #1e6bff)"/>`).join('')}</svg>
+   <img class="prod" src="${A('pb_anker165')}" style="left:270px;top:20px;width:124px;height:158px;filter:drop-shadow(0 0 10px rgba(95,216,255,.6)) drop-shadow(0 10px 12px rgba(0,0,0,.6))">
+   <div class="abs hex"></div><div class="abs hexin"><img class="por" src="${LOGO}" style="left:8px;top:12px;width:148px;height:158px"></div>
+   <div class="abs nw chrome" style="left:452px;top:4px;width:266px;text-align:center;font:900 70px BCI;letter-spacing:1px;filter:drop-shadow(2px 3px 0 #0b2a6b) drop-shadow(0 6px 8px rgba(0,0,0,.6))">ANKER</div>
+   <div class="abs nw" style="left:452px;top:80px;width:266px;text-align:center;font:900 18px MS;letter-spacing:5px;color:#7fe0ff;text-shadow:0 0 10px #1e6bff">POWER BANK</div>
+   <div class="abs kur" style="left:452px;top:104px;width:266px;text-align:center;font:900 30px VZ;color:#ffd84d;text-shadow:0 0 12px rgba(255,200,61,.6)">⚡ لەم نزیکانە</div>
+   <div class="abs nw" style="left:530px;top:154px;width:116px;height:28px;background:#ffc83d;transform:skewX(-14deg);display:flex;align-items:center;justify-content:center;font:900 13px MS;color:#0a1640;box-shadow:0 0 14px rgba(255,200,61,.6)"><span style="transform:skewX(14deg)">COMING SOON</span></div></div>`],
+ ['5','ستایلی بۆڵد و پانێڵ (وەک ڕێکلامی Nike) — ڕەنگی ناڤی و زەرد، نووسینی گەورە لە پاشبنەمادا',`<div class="f d5">
+   <div class="abs big nw">POWER</div><div class="abs yel"></div><div class="abs str"></div>
+   <img class="prod" src="${A('pb_anker165')}" style="left:300px;top:14px;width:134px;height:172px;transform:rotate(-8deg);filter:drop-shadow(12px 14px 0 rgba(0,0,0,.35)) drop-shadow(0 8px 12px rgba(0,0,0,.5))">
+   <div class="abs pp"><img class="por" src="${LOGO}" style="left:6px;top:8px;width:164px;height:172px"></div><div class="abs bar"></div>
+   <div class="abs nw" style="left:540px;top:16px;width:170px;text-align:center;font:900 14px MS;letter-spacing:5px;color:#0a1a4d">ANKER</div>
+   <div class="abs kur" style="left:516px;top:30px;width:200px;text-align:center;font:900 40px VZ;color:#0a1a4d">لەم نزیکانە</div>
+   <div class="abs nw" style="left:516px;top:94px;width:200px;text-align:center;font:900 30px BC;letter-spacing:1px;color:#0a1a4d">POWER BANK</div>
+   <div class="abs nw" style="left:556px;top:144px;width:120px;height:32px;border-radius:16px;background:#0a1a4d;display:flex;align-items:center;justify-content:center;font:900 12px MS;letter-spacing:1px;color:#ffc83d">COMING SOON</div></div>`]
+];
+document.body.innerHTML=D.map(([n,c,h])=>`<div class="cap"><b>${n}</b>${c}</div>${h}`).join('');
+</script></body></html>
