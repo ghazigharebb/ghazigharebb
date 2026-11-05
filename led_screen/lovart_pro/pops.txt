@@ -1,1 +1,10 @@
 pb_anker165>pb_maggo_stand led_screen/lovart_pro/pop/lovart_d3f9e8c64faf.mp4
+pb_maggo_stand>pb_qi2_blue led_screen/lovart_pro/pop/lovart_bd46075c859c.mp4
+pb_qi2_blue>pb_anker20k led_screen/lovart_pro/pop/lovart_69e0e48c8877.mp4
+pb_anker20k>pb_instacord led_screen/lovart_pro/pop/lovart_d930c744cf8d.mp4
+pb_instacord>adapter led_screen/lovart_pro/pop/lovart_3c4858569b87.mp4
+adapter>cable_coil led_screen/lovart_pro/pop/lovart_2ae2601507e9.mp4
+cable_coil>magsafe led_screen/lovart_pro/pop/lovart_8b9921f3fe6e.mp4
+magsafe>hours led_screen/lovart_pro/pop/lovart_90990ed27224.mp4
+hours>pb_anker165 led_screen/lovart_pro/pop/lovart_c672b02cb0ad.mp4
+POPS_DONE
