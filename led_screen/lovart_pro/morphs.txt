@@ -6,3 +6,5 @@ pb_instacord>adapter led_screen/lovart_pro/morph/lovart_c45ad5c4ccc3.mp4
 adapter>cable_coil led_screen/lovart_pro/morph/lovart_809cf7d08a89.mp4
 cable_coil>magsafe led_screen/lovart_pro/morph/lovart_b575d6d40220.mp4
 magsafe>hours led_screen/lovart_pro/morph/lovart_e8c2a12e97f4.mp4
+hours>pb_anker165 led_screen/lovart_pro/morph/lovart_c2cf508d56ec.mp4
+MORPHS_DONE
