@@ -1,1 +1,7 @@
 pb_anker165 led_screen/lovart_pro/color/lovart_9fa963f8d8e3.png
+pb_maggo_stand led_screen/lovart_pro/color/lovart_bffdc39ce2fd.png
+pb_qi2_blue led_screen/lovart_pro/color/lovart_50680713a234.png
+pb_anker20k led_screen/lovart_pro/color/lovart_c3a39383de50.png
+pb_instacord led_screen/lovart_pro/color/lovart_06ad988cb969.png
+adapter led_screen/lovart_pro/color/lovart_5e9548d6b5d3.png
+cable_coil led_screen/lovart_pro/color/lovart_5ee565d99fb6.png
