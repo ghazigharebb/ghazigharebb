@@ -1,7 +1,6 @@
 import React from 'react';
 import {AbsoluteFill, Easing, Img, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {useFonts} from './fonts';
-import {LogoAG} from './LogoAG';
 import {SceneBills, SceneRain} from './Money';
 
 // 936x260 LED, 30 fps, 450 frames = 15 s seamless loop.
@@ -27,7 +26,7 @@ const DARK = '#1c1104';
 const GOLD_TEXT = 'linear-gradient(180deg,#fff6cf 0%,#f3c94f 38%,#b8860b 62%,#ffe9a0 100%)';
 
 // ---------- background ----------
-const Rosette: React.FC<{r: number; k: number; amp: number; n: number; rot: number; op: number; cx: number; cy: number}> = ({r, k, amp, n, rot, op, cx, cy}) => {
+const Rosette: React.FC<{r: number; k: number; amp: number; n: number; rot: number; op: number; cx: number; cy: number; stroke?: string}> = ({r, k, amp, n, rot, op, cx, cy, stroke = '#5a3a05'}) => {
   const paths: string[] = [];
   for (let j = 0; j < n; j++) {
     const ph = (j / n) * (TAU / k);
@@ -41,7 +40,7 @@ const Rosette: React.FC<{r: number; k: number; amp: number; n: number; rot: numb
   }
   return (
     <g transform={`rotate(${rot} ${cx} ${cy})`} opacity={op}>
-      {paths.map((d, i) => <path key={i} d={d} fill="none" stroke="#5a3a05" strokeWidth={1} />)}
+      {paths.map((d, i) => <path key={i} d={d} fill="none" stroke={stroke} strokeWidth={1} />)}
     </g>
   );
 };
@@ -90,30 +89,55 @@ const GoldBG: React.FC<{f: number}> = ({f}) => {
 
 // ---------- logo panel (right, every frame) ----------
 const PULSES = [0, T1, T2, T3];
+// Original Agha Galali logo (transparent PNG, 600x554) on a midnight-navy panel:
+// navy is the complement of the gold field and makes the chrome read crisply on the LED.
+const LOGO_AR = 600 / 554;
 const LogoPanel: React.FC<{f: number}> = ({f}) => {
   const float = Math.sin((TAU * f) / 150) * 2.5;
-  const sheenPos = ((f + 60) % 150) / 150; // chrome glint, 3 per loop
+  const sheen = ((f + 60) % 150) / 150; // chrome glint, 3 per loop
   const clip = `polygon(44px 0, 100% 0, 100% 100%, 0 100%)`;
+  const PW = W - PANEL_X;
+  const lcx = PW / 2 + 14, lcy = 128;
+  const LH = 184, LW = LH * LOGO_AR;
+  const breathe = 0.5 + 0.5 * Math.sin((TAU * f) / 225);
+  const logoSrc = staticFile('logo_ag.png');
   return (
     <>
       {/* shadow cast on gold */}
-      <div style={{position: 'absolute', left: PANEL_X - 18, top: 0, width: W - PANEL_X + 18, height: H, clipPath: clip, background: 'rgba(40,20,0,0.35)', filter: 'blur(8px)'}} />
+      <div style={{position: 'absolute', left: PANEL_X - 18, top: 0, width: PW + 18, height: H, clipPath: clip, background: 'rgba(40,20,0,0.35)', filter: 'blur(8px)'}} />
       {/* gold trim */}
-      <div style={{position: 'absolute', left: PANEL_X - 7, top: 0, width: W - PANEL_X + 7, height: H, clipPath: clip,
+      <div style={{position: 'absolute', left: PANEL_X - 7, top: 0, width: PW + 7, height: H, clipPath: clip,
         background: 'linear-gradient(180deg,#fff2b8,#c8961f 30%,#7a4c06 55%,#f2cf6a 80%,#9b6b0f)'}} />
-      <div style={{position: 'absolute', left: PANEL_X, top: 0, width: W - PANEL_X, height: H, clipPath: clip, overflow: 'hidden',
-        background: 'radial-gradient(90% 80% at 60% 45%,#2c2c2e 0%,#111113 55%,#000 100%)'}}>
+      <div style={{position: 'absolute', left: PANEL_X, top: 0, width: PW, height: H, clipPath: clip, overflow: 'hidden',
+        background: 'radial-gradient(75% 80% at 58% 48%,#25528f 0%,#143466 38%,#0b2147 72%,#06132c 100%)'}}>
+        {/* fine gold pinstripe texture */}
+        <div style={{position: 'absolute', inset: 0, background: 'repeating-linear-gradient(135deg,rgba(233,194,90,0.07) 0 1px,rgba(0,0,0,0) 1px 8px)'}} />
+        {/* gold guilloche rosette behind the logo (banknote engraving motif) */}
+        <svg width={PW} height={H} style={{position: 'absolute', left: 0, top: 0}}>
+          <Rosette cx={lcx} cy={lcy} r={112} k={20} amp={10} n={5} rot={(f / LOOP) * 18} op={0.28} stroke="#e9c25a" />
+          <Rosette cx={lcx} cy={lcy} r={150} k={28} amp={9} n={3} rot={-(f / LOOP) * 12.857} op={0.16} stroke="#e9c25a" />
+        </svg>
+        {/* soft spotlight behind the chrome */}
+        <div style={{position: 'absolute', left: lcx - 120, top: lcy - 120, width: 240, height: 240, borderRadius: '50%',
+          background: `radial-gradient(circle,rgba(170,205,255,${0.30 + 0.12 * breathe}) 0%,rgba(90,140,220,0.12) 45%,rgba(0,0,0,0) 70%)`}} />
         {/* lacquer reflection */}
-        <div style={{position: 'absolute', inset: 0, background: 'linear-gradient(160deg,rgba(255,255,255,0.10) 0%,rgba(255,255,255,0) 40%)'}} />
+        <div style={{position: 'absolute', inset: 0, background: 'linear-gradient(160deg,rgba(255,255,255,0.10) 0%,rgba(255,255,255,0) 38%)'}} />
+        {/* gold hairlines */}
+        <div style={{position: 'absolute', left: 0, right: 0, top: 7, height: 1.5, background: 'linear-gradient(90deg,rgba(233,194,90,0),rgba(233,194,90,0.75) 30%,rgba(233,194,90,0.75))'}} />
+        <div style={{position: 'absolute', left: 0, right: 0, bottom: 7, height: 1.5, background: 'linear-gradient(90deg,rgba(233,194,90,0),rgba(233,194,90,0.75) 30%,rgba(233,194,90,0.75))'}} />
         {PULSES.map((p) => {
           const d = ((f - p + LOOP) % LOOP);
           if (d > 40) return null;
           const t = d / 40;
-          return <div key={p} style={{position: 'absolute', left: (W - PANEL_X) / 2 + 12 - 40 - t * 120, top: 130 - 40 - t * 120, width: 80 + t * 240, height: 80 + t * 240,
+          return <div key={p} style={{position: 'absolute', left: lcx - 40 - t * 120, top: lcy - 40 - t * 120, width: 80 + t * 240, height: 80 + t * 240,
             borderRadius: '50%', border: `${3 - 2 * t}px solid rgba(243,201,79,${0.7 * (1 - t)})`}} />;
         })}
-        <div style={{position: 'absolute', left: (W - PANEL_X) / 2 + 12 - 100, top: 130 - 100 + float, width: 200, height: 200, filter: 'drop-shadow(0 6px 10px rgba(0,0,0,0.8))'}}>
-          <LogoAG size={200} sheen={sheenPos} />
+        {/* the logo */}
+        <div style={{position: 'absolute', left: lcx - LW / 2, top: lcy - LH / 2 + float, width: LW, height: LH}}>
+          <Img src={logoSrc} style={{position: 'absolute', inset: 0, width: LW, height: LH, filter: 'drop-shadow(0 7px 8px rgba(0,8,30,0.75))'}} />
+          {/* chrome glint, masked to the logo shape */}
+          <div style={{position: 'absolute', inset: 0, WebkitMaskImage: `url(${logoSrc})`, WebkitMaskSize: '100% 100%', maskImage: `url(${logoSrc})`, maskSize: '100% 100%', mixBlendMode: 'screen',
+            background: `linear-gradient(115deg,rgba(255,255,255,0) ${sheen * 160 - 40}%,rgba(255,255,255,0.85) ${sheen * 160 - 30}%,rgba(255,255,255,0) ${sheen * 160 - 20}%)`}} />
         </div>
       </div>
     </>
