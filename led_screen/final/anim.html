@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ckb"><head><meta charset="utf-8"><title>Wasta Ghareb LED 46s</title>
+<style>
+@font-face{font-family:BC;font-weight:900;src:url(../fonts/cand/BarlowCondensed-900.ttf)}
+@font-face{font-family:MS;font-weight:800;src:url(../fonts/cand/Montserrat-800.ttf)}
+@font-face{font-family:VZ;font-weight:900;src:url(../fonts/cand/Vazirmatn-900.ttf)}
+@font-face{font-family:VZ;font-weight:800;src:url(../fonts/cand/Vazirmatn-800.ttf)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+body{display:flex;align-items:center;justify-content:center;height:100vh}
+.f{position:relative;width:720px;height:200px;overflow:hidden;background:#000;flex:none}
+.pscr{position:absolute;top:10px;left:10px;width:186px;height:180px;overflow:hidden;background:radial-gradient(90% 85% at 50% 42%,#1d47a6 0%,#0b1d4f 55%,#030919 100%)}
+.por{position:absolute;left:9px;top:5px;width:168px;height:173px;object-fit:contain;object-position:50% 100%;filter:drop-shadow(0 4px 6px rgba(0,0,0,.75))}
+.scr{position:absolute;top:10px;left:206px;width:504px;height:180px;overflow:hidden;background:#02050f}
+.bg{position:absolute;inset:0;opacity:0}
+.bg0{background:radial-gradient(120% 140% at 50% 115%,#1a4fb8 0%,#0b2463 32%,#050d2a 62%,#02050f 100%)}
+.bg1{background:radial-gradient(120% 140% at 30% 115%,#0f8fbf 0%,#0a3d66 32%,#041a33 62%,#020812 100%)}
+.bg2{background:radial-gradient(120% 140% at 30% 115%,#b8861f 0%,#5c3a0c 30%,#24170a 60%,#0a0703 100%)}
+.bg3{background:linear-gradient(180deg,#05081f 0%,#12103d 55%,#3a1d63 85%,#6b2f6e 100%)}
+.floor{position:absolute;left:-50%;right:-50%;bottom:-34px;height:130px;transform:perspective(170px) rotateX(62deg);transform-origin:50% 100%;
+  background-image:linear-gradient(rgba(150,200,255,.32) 1px,transparent 1px),linear-gradient(90deg,rgba(150,200,255,.32) 1px,transparent 1px);background-size:34px 22px;
+  -webkit-mask-image:linear-gradient(to top,#000 10%,transparent 90%)}
+.beam{position:absolute;top:-30px;width:120px;height:280px;background:linear-gradient(180deg,rgba(255,255,255,.14),transparent 75%);filter:blur(7px);transform-origin:50% 0}
+.shadow{position:absolute;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.75),transparent);filter:blur(2px)}
+.stars i{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff}
+.moon{position:absolute;right:24px;top:14px;width:22px;height:22px;border-radius:50%;box-shadow:-6px 4px 0 0 #f3f1ff}
+.bez{position:absolute;inset:0;pointer-events:none;padding:10px;background:linear-gradient(180deg,#25282f 0%,#0b0c10 45%,#020203 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor}
+.div{position:absolute;top:0;bottom:0;left:196px;width:10px;background:linear-gradient(90deg,#030304,#22252b 50%,#030304)}
+.edge{position:absolute;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),inset 0 3px 6px rgba(0,0,0,.9)}
+.over{position:absolute;inset:0;perspective:650px;perspective-origin:458px 100px}
+.el{position:absolute;transform-style:preserve-3d;will-change:transform}
+.pw img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:50% 100%}
+.pw .gl{position:absolute;inset:0;-webkit-mask-size:contain;-webkit-mask-repeat:no-repeat;-webkit-mask-position:50% 100%;
+  background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.75) 50%,transparent 58%);background-size:300% 100%;background-repeat:no-repeat}
+.t{white-space:nowrap;line-height:1}
+.t .x{position:absolute;left:0;top:0}
+.t .fc{position:relative;-webkit-background-clip:text;background-clip:text;color:transparent}
+.chrome{background:linear-gradient(180deg,#ffffff 0%,#f2f5ff 45%,#b9c6e6 52%,#ffffff 100%)}
+.gold{background:linear-gradient(180deg,#fff2b0 0%,#ffcf4a 38%,#e79a12 70%,#b86a05 100%)}
+.letter{display:inline-block;position:relative;transform-style:preserve-3d}
+.pill{position:absolute;inset:0;border-radius:999px;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;white-space:nowrap}
+</style></head><body>
+<div class="f" id="F">
+  <div class="pscr"><img class="por" id="por" src="../ad/assets/logo.png"><div id="porgl" style="position:absolute;inset:0;background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.22) 50%,transparent 58%);background-size:300% 100%;background-repeat:no-repeat"></div></div>
+  <div class="scr" id="S"><div class="bg bg0"></div><div class="bg bg1"></div><div class="bg bg2"></div><div class="bg bg3"><div class="stars" id="stars"></div><div class="moon"></div></div>
+    <div class="floor" id="floor"></div><div class="beam" id="b1" style="left:50px"></div><div class="beam" id="b2" style="left:320px"></div>
+    <div class="shadow" id="sh" style="left:44px;top:158px;width:160px;height:22px"></div></div>
+  <div class="bez"></div><div class="div"></div>
+  <div class="edge" style="left:10px;top:10px;width:186px;height:180px"></div><div class="edge" style="left:206px;top:10px;width:504px;height:180px"></div>
+  <div class="over" id="O"></div>
+</div>
+<script>
+/* ===== timeline (46 s loop) =====
+   0-6 brand | 6-12 ANKER 165W hero | 12-26 four power banks (3.5 s each) | 26-39 adapter / cable / MagSafe | 39-46 opening hours */
+const DUR=46, O=document.getElementById('O'), S=document.getElementById('S');
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x)),lerp=(a,b,x)=>a+(b-a)*x,prog=(t,a,b)=>clamp((t-a)/(b-a));
+const oCub=x=>1-Math.pow(1-x,3),oQuint=x=>1-Math.pow(1-x,5),ioCub=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2,ioSine=x=>-(Math.cos(Math.PI*x)-1)/2;
+const oBack=(x,s=1.6)=>1+(s+1)*Math.pow(x-1,3)+s*Math.pow(x-1,2),bump=(t,a,b)=>Math.sin(Math.PI*prog(t,a,b));
+const A=n=>'../ad/assets/'+n+'.png';
+function el(html,css){const d=document.createElement('div');d.className='el';d.innerHTML=html;Object.assign(d.style,css);O.appendChild(d);return d}
+function ext(depth,col){return Array.from({length:depth},(_,i)=>`${(i+1)*.55}px ${(i+1)*.85}px 0 ${col}`).join(',')+`,${depth*.55+2}px ${depth*.85+5}px 8px rgba(0,0,0,.6)`}
+function txt(s,{size,font='BC',w=900,face='chrome',excol='#0a1a4d',depth=5,ls=0,kur=false,letters=!kur}){
+  const one=c=>`<span class="x" style="color:${excol};text-shadow:${ext(depth,excol)}">${c}</span><span class="fc ${face}">${c}</span>`;
+  const esc=c=>c.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const body=letters?[...s].map(c=>c===' '?'<span class="letter">&nbsp;</span>':`<span class="letter">${one(esc(c))}</span>`).join(''):`<span class="letter" style="position:relative">${one(esc(s))}</span>`;
+  return `<div class="t" style="font:${w} ${size}px ${font};letter-spacing:${ls}px;${kur?'direction:rtl;':''}">${body}</div>`}
+const CEN=[];function centerAt(e,cx,top){e.style.left='0px';e.style.top=top+'px';e.dataset.cx=cx;CEN.push(e);return e}
+function recenter(){for(const e of CEN){const tr=e.style.transform;e.style.transform='none';e.style.left=(e.dataset.cx-e.offsetWidth/2)+'px';e.style.transform=tr}}
+function T(s,cx,top,o){return centerAt(el(txt(s,o),{}),cx,top)}
+const set=(e,tr,op=1,filter='')=>{e.style.transform=tr;e.style.opacity=op;e.style.filter=filter;e.style.visibility=op<=0?'hidden':'visible'};
+/* product: flies in from deep space, floats + turns, glints, exits toward / past the viewer */
+function product(n,{cx=330,h=176,w=200}={}){
+  const e=el(`<img src="${A(n)}"><div class="gl" style="-webkit-mask-image:url(${A(n)})"></div>`,{left:(cx-w/2)+'px',top:(190-h-1)+'px',width:w+'px',height:h+'px'});e.className='el pw';e.gl=e.querySelector('.gl');return e}
+function prodAt(e,u,dur,{exit='toward',tilt=-5,glints=[]}={}){
+  const q=prog(u,0,1.05),qx=prog(u,dur-.75,dur);if(u<0||u>dur||q<=0){set(e,'',0);return 0}
+  const z=lerp(-1500,0,oCub(q))+bump(u,.85,1.35)*55,blur=(1-q)*5;
+  const fl=Math.sin(u*2.1)*3,ry=Math.sin(u*1.15)*11*clamp(u-.6),rz=tilt+Math.sin(u*.8)*1.5;
+  let x=0,y=fl,zz=z,op=clamp(q*3);
+  if(qx>0){if(exit==='toward'){zz+=Math.pow(qx,2)*220;op*=1-ioCub(qx)}else{zz-=ioCub(qx)*900;x-=ioCub(qx)*120;op*=1-qx*qx}}
+  set(e,`translate3d(${x}px,${y}px,${zz}px) rotateY(${ry+(1-oCub(q))*30}deg) rotateZ(${rz}deg)`,op,blur>.05?`blur(${blur}px) drop-shadow(0 10px 10px rgba(0,0,0,.7))`:'drop-shadow(0 10px 10px rgba(0,0,0,.7)) drop-shadow(0 0 20px rgba(130,200,255,.22))');
+  let g=-1;for(const[a,b]of glints){const p=prog(u,a,b);if(p>0&&p<1)g=p}e.gl.style.backgroundPosition=g<0?'-200% 0':`${lerp(130,-30,g)}% 0`;e.gl.style.opacity=g<0?0:1;
+  return op*(1-qx)}
+/* text: letters flip up out of depth, leave by flying at the viewer */
+function textAt(e,u,t0,dur,{stag=.05,out='toward'}={}){
+  const L=[...e.querySelectorAll('.letter')];const vis=u>=t0-.01&&u<=dur;e.style.visibility=vis?'visible':'hidden';if(!vis)return;
+  L.forEach((l,i)=>{const q=prog(u,t0+i*stag,t0+i*stag+.6),qx=prog(u,dur-.6+i*.02,dur+i*.02);const e2=oBack(q,1.5);
+    let z=lerp(-700,0,oCub(q)),rx=lerp(-80,0,clamp(e2,0,1.2)),op=clamp(q*3);
+    if(qx>0){z+=qx*qx*160;op*=1-ioCub(qx)}
+    l.style.transform=`translateZ(${z}px) rotateX(${rx}deg)`;l.style.opacity=op})}
+function kurAt(e,u,t0,dur){const vis=u>=t0&&u<=dur;e.style.visibility=vis?'visible':'hidden';if(!vis)return;
+  const q=oCub(prog(u,t0,t0+.8)),qx=prog(u,dur-.6,dur);e.style.clipPath=`inset(-20px 0 -20px ${(1-q)*100}%)`;
+  set(e,`translateZ(${lerp(-160,0,q)+qx*qx*160}px) rotateY(${(1-q)*-25}deg)`,clamp(q*2)*(1-qx))}
+
+/* ===== scene 1 — brand ===== */
+const s1=T('WASTA GHAREB',458,26,{size:80,ls:1}), s1k=T('وەستا غەریب',458,124,{size:40,font:'VZ',face:'gold',excol:'#5a2c00',depth:3,kur:true});
+const s1l=el(`<div style="width:46px;height:2px;background:linear-gradient(90deg,transparent,#ffcf4a)"></div>`,{left:'298px',top:'149px'}),s1r=el(`<div style="width:46px;height:2px;background:linear-gradient(90deg,#ffcf4a,transparent)"></div>`,{left:'572px',top:'149px'});
+const s1g=el('',{left:'230px',top:'20px',width:'460px',height:'86px',background:'linear-gradient(105deg,transparent 45%,rgba(255,255,255,.55) 50%,transparent 55%)',backgroundSize:'300% 100%',mixBlendMode:'overlay',pointerEvents:'none'});
+/* ===== scene 2 — ANKER hero ===== */
+const p2=product('pb_anker165',{cx:322,h:178,w:150});
+const s2a=T('ANKER',586,14,{size:86,excol:'#06405f',ls:2}),s2b=T('POWER BANK',586,104,{size:21,font:'MS',w:800,excol:'#06405f',depth:2,ls:3});
+const pill2=el(`<div style="position:absolute;inset:0;transform-style:preserve-3d" class="pf">
+  <div class="pill" style="background:linear-gradient(180deg,#fff2b0,#ffcf4a 38%,#e79a12 70%,#b86a05);box-shadow:0 4px 0 #8a5200,0 8px 14px rgba(0,0,0,.6);font:800 17px MS;color:#0a1640;letter-spacing:1px">COMING SOON</div>
+  <div class="pill" style="transform:rotateX(180deg);background:linear-gradient(180deg,#fff2b0,#ffcf4a 38%,#e79a12 70%,#b86a05);box-shadow:0 4px 0 #8a5200;font:900 21px VZ;color:#0a1640;direction:rtl">لەم نزیکانە</div></div>`,{left:'496px',top:'140px',width:'180px',height:'38px'});
+/* ===== scene 3 — four power banks ===== */
+const P3=['pb_maggo_stand','pb_qi2_blue','pb_anker20k','pb_instacord'].map((n,i)=>product(n,{cx:330,h:[150,176,170,140][i],w:[180,150,150,200][i]}));
+const s3a=T('لەم نزیکانە',592,26,{size:40,font:'VZ',face:'gold',excol:'#5a2c00',depth:3,kur:true}),s3b=T('COMING SOON',592,104,{size:32,excol:'#06405f',depth:3,ls:1});
+const s3c=T('ANKER',592,150,{size:13,font:'MS',w:800,excol:'#06405f',depth:1,ls:5});
+const dots3=el([0,1,2,3].map(i=>`<i style="display:inline-block;width:6px;height:6px;margin:0 3px;border-radius:50%;background:#9fe6ff"></i>`).join(''),{left:'565px',top:'172px'});
+/* ===== scene 4 — adapter / cables / MagSafe ===== */
+const P4=[['adapter',176,170],['cable_coil',150,220],['magsafe',176,90]].map(([n,h,w])=>product(n,{cx:322,h,w}));
+const s4a=T('ADAPTER',602,12,{size:54,excol:'#3a4256',ls:1}),s4b=T('& CABLE',602,64,{size:54,face:'gold',excol:'#6a3b00',ls:1});
+const pill4=el(`<div style="position:absolute;inset:0;transform-style:preserve-3d" class="pf">
+  <div class="pill" style="background:linear-gradient(180deg,#5cf2a6,#11b765 55%,#078a47);box-shadow:0 4px 0 #04582c,0 8px 14px rgba(0,0,0,.6);font:900 22px VZ;color:#fff;direction:rtl;padding-left:30px">بەردەستە</div>
+  <div class="pill" style="transform:rotateX(180deg);background:linear-gradient(180deg,#5cf2a6,#11b765 55%,#078a47);box-shadow:0 4px 0 #04582c;font:900 22px BC;color:#fff;letter-spacing:1px;padding-left:30px">IN STOCK</div>
+  <div style="position:absolute;left:-10px;top:-4px;width:48px;height:48px;border-radius:50%;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;transform:translateZ(6px)">
+  <svg width="28" height="28" viewBox="0 0 28 28"><path d="M5 15 L11 21 L23 7" fill="none" stroke="#0aa257" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>`,{left:'522px',top:'136px',width:'172px',height:'42px'});
+/* ===== scene 5 — opening hours ===== */
+const ticks=Array.from({length:60},(_,i)=>{const a=i*6*Math.PI/180,b=i%5==0,r1=b?64:70,r2=76;return `<line x1="${100+Math.sin(a)*r1}" y1="${100-Math.cos(a)*r1}" x2="${100+Math.sin(a)*r2}" y2="${100-Math.cos(a)*r2}" stroke="#0b1640" stroke-width="${b?4:1.4}" stroke-linecap="round"/>`}).join('');
+const clock=el(`<svg width="176" height="176" viewBox="0 0 200 200" style="filter:drop-shadow(0 10px 12px rgba(0,0,0,.7))">
+ <defs><radialGradient id="fc" cx="45%" cy="38%" r="70%"><stop offset="0" stop-color="#fff"/><stop offset=".75" stop-color="#eef1f8"/><stop offset="1" stop-color="#c9d0e2"/></radialGradient>
+ <linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b8"/><stop offset=".35" stop-color="#f2b63a"/><stop offset=".65" stop-color="#a8660a"/><stop offset="1" stop-color="#ffd970"/></linearGradient></defs>
+ <circle cx="100" cy="100" r="98" fill="url(#rg)"/><circle cx="100" cy="100" r="86" fill="#0b1640"/><circle cx="100" cy="100" r="82" fill="url(#fc)"/>${ticks}
+ <line id="hh" x1="100" y1="100" x2="100" y2="60" stroke="#0b1640" stroke-width="7" stroke-linecap="round"/>
+ <line id="mh" x1="100" y1="100" x2="100" y2="40" stroke="#d99a1e" stroke-width="4.5" stroke-linecap="round"/>
+ <circle cx="100" cy="100" r="6" fill="url(#rg)"/><ellipse cx="78" cy="58" rx="46" ry="22" fill="#fff" opacity=".35" transform="rotate(-28 78 58)"/></svg>`,{left:'218px',top:'12px',width:'176px',height:'176px'});
+const HH=clock.querySelector('#hh'),MH=clock.querySelector('#mh');
+const s5a=T('کاتی کردنەوە',568,12,{size:32,font:'VZ',face:'gold',excol:'#5a2c00',depth:3,kur:true});
+const s5b=T('9 AM – 11 PM',566,70,{size:50,excol:'#1b1450',ls:1});
+const s5c=T('لە ٩ی بەیانی تا ١١ی شەو',566,140,{size:24,font:'VZ',w:800,excol:'#1b1450',depth:2,kur:true});
+document.getElementById('stars').innerHTML=Array.from({length:30},(_,i)=>`<i style="left:${(i*97)%500}px;top:${(i*53)%120}px"></i>`).join('');
+const BGS=[...document.querySelectorAll('.bg')],SH=document.getElementById('sh'),FLOOR=document.getElementById('floor'),B1=document.getElementById('b1'),B2=document.getElementById('b2'),PG=document.getElementById('porgl');
+const SC=[[0,6,0],[6,12,1],[12,26,1],[26,39,2],[39,46,3]];
+function render(t){
+  t=((t%DUR)+DUR)%DUR;
+  // background crossfades (wrap-aware)
+  const w=[0,0,0,0];SC.forEach(([a,b,bg],i)=>{const nb=SC[(i+1)%5][2];w[bg]=Math.max(w[bg],prog(t,a-.01,a+.5)*(1-prog(t,b-.5,b)));
+    if(t>b-.5&&t<=b)w[nb]=Math.max(w[nb],prog(t,b-.5,b))});if(t<.5)w[3]=Math.max(w[3],1-prog(t,0,.5)),w[0]=Math.max(w[0],prog(t,0,.5));
+  BGS.forEach((b,i)=>b.style.opacity=w[i]);
+  FLOOR.style.backgroundPosition=`0 ${(t*26)%22}px`;B1.style.transform=`rotate(${-14+Math.sin(t*2*Math.PI/9.2)*10}deg)`;B2.style.transform=`rotate(${12+Math.sin(t*2*Math.PI/9.2+2)*10}deg)`;
+  const pg=prog(t%11.5,9.6,10.6);PG.style.backgroundPosition=pg>0&&pg<1?`${lerp(130,-30,pg)}% 0`:'-200% 0';
+  // scene 1
+  const u1=t;textAt(s1,u1,.2,6,{stag:.06});kurAt(s1k,u1,1.2,6);[s1l,s1r].forEach(e=>set(e,'',clamp(prog(u1,1.8,2.3))*(1-prog(u1,5.4,5.9))));
+  const g1=Math.max(prog(u1,2.6,3.4)*(u1<3.4),prog(u1,4.4,5.2)*(u1<5.2));s1g.style.backgroundPosition=g1>0&&g1<1?`${lerp(130,-30,g1)}% 0`:'-200% 0';
+  // scene 2
+  const u2=t-6;let pv=prodAt(p2,u2,6,{tilt:-7,glints:[[2.3,3.1],[4.3,5.1]]});
+  textAt(s2a,u2,.9,6,{stag:.07});textAt(s2b,u2,1.5,6,{stag:.025});
+  {const q=prog(u2,2.0,2.6),qx=prog(u2,5.4,6);const vis=u2>=2&&u2<=6;pill2.style.visibility=vis?'visible':'hidden';
+   if(vis){set(pill2,`translateZ(${lerp(-400,0,oCub(q))+qx*qx*160}px) scale(${oBack(q,2)})`,clamp(q*3)*(1-qx));pill2.firstElementChild.style.transform=`rotateX(${ioCub(prog(u2,3.6,4.1))*180}deg)`}}
+  // scene 3
+  const u3=t-12;let sv=0;P3.forEach((p,i)=>{sv=Math.max(sv,prodAt(p,u3-i*3.5,3.5,{exit:i<3?'away':'toward',tilt:[-3,-5,6,-4][i],glints:[[1.7,2.4]]}))});
+  kurAt(s3a,u3,.4,14);textAt(s3b,u3,.9,14,{stag:.035});textAt(s3c,u3,1.3,14,{stag:.03});
+  {const vis=u3>=1.3&&u3<=14;dots3.style.visibility=vis?'visible':'hidden';const k=clamp(Math.floor(u3/3.5),0,3);
+   [...dots3.children].forEach((d,i)=>{d.style.opacity=i===k?1:.3;d.style.transform=`scale(${i===k?1.4:1})`});set(dots3,'',clamp(prog(u3,1.3,1.8))*(1-prog(u3,13.5,14)))}
+  // scene 4
+  const u4=t-26;const D4=[4.5,4,4.5];let o4=0;P4.forEach((p,i)=>{const s0=[0,4.5,8.5][i];sv=Math.max(sv,prodAt(p,u4-s0,D4[i],{exit:i<2?'away':'toward',tilt:[-6,0,-4][i],glints:[[1.8,2.6],[3.2,3.9]]}))});
+  textAt(s4a,u4,.6,13,{stag:.05});textAt(s4b,u4,.9,13,{stag:.05});
+  {const q=prog(u4,1.4,1.9),qx=prog(u4,12.4,13);const vis=u4>=1.4&&u4<=13;pill4.style.visibility=vis?'visible':'hidden';
+   if(vis){set(pill4,`translateZ(${lerp(-400,0,oCub(q))+qx*qx*160}px) scale(${oBack(q,2)})`,clamp(q*3)*(1-qx));
+     const fl=ioCub(prog(u4,5.2,5.7))-ioCub(prog(u4,9.5,10));pill4.firstElementChild.style.transform=`rotateX(${fl*180}deg)`}}
+  // scene 5
+  const u5=t-39;{const q=prog(u5,0,1.2),qx=prog(u5,6.3,7);const vis=u5>=0&&u5<=7;clock.style.visibility=vis?'visible':'hidden';
+   if(vis){set(clock,`translate3d(0,${Math.sin(u5*1.8)*2}px,${lerp(-1500,0,oCub(q))+bump(u5,1,1.5)*50+qx*qx*200}px) rotateY(${(1-oCub(q))*40+Math.sin(u5*1.1)*8}deg)`,clamp(q*3)*(1-qx),q<1?`blur(${(1-q)*5}px)`:'')}
+   const hr=9+14*ioCub(prog(u5,1.4,4.6));HH.setAttribute('transform',`rotate(${hr*30} 100 100)`);MH.setAttribute('transform',`rotate(${hr*360} 100 100)`)}
+  kurAt(s5a,u5,.8,7);textAt(s5b,u5,1.2,7,{stag:.05});kurAt(s5c,u5,1.9,7);
+  sv=Math.max(sv,pv);SH.style.opacity=sv*.9;
+}
+window.renderAt=render;window.ready=document.fonts.load('900 40px BC').then(()=>Promise.all([document.fonts.load('900 40px VZ','کاتی'),document.fonts.load('800 20px MS'),document.fonts.load('800 20px VZ','کاتی')])).then(()=>document.fonts.ready).then(()=>Promise.all([...document.images].map(i=>i.decode().catch(()=>0)))).then(recenter);
+if(!/capture/.test(location.search)){window.ready.then(()=>{const t0=performance.now();(function loop(n){render((n-t0)/1000);requestAnimationFrame(loop)})(t0)})}
+</script></body></html>
