@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ckb"><head><meta charset="utf-8"><title>Wasta Ghareb boards</title>
+<style>
+@font-face{font-family:BC;font-weight:900;src:url(../fonts/cand/BarlowCondensed-900.ttf)}
+@font-face{font-family:MS;font-weight:800;src:url(../fonts/cand/Montserrat-800.ttf)}
+@font-face{font-family:MS;font-weight:900;src:url(../fonts/cand/Montserrat-900.ttf)}
+@font-face{font-family:VZ;font-weight:900;src:url(../fonts/cand/Vazirmatn-900.ttf)}
+@font-face{font-family:VZ;font-weight:800;src:url(../fonts/cand/Vazirmatn-800.ttf)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#111;padding:10px;display:flex;flex-direction:column;gap:10px;width:740px}
+.f{position:relative;width:720px;height:200px;overflow:hidden;background:#000}
+/* ---- inner screens ---- */
+.scr{position:absolute;top:10px;bottom:10px;left:206px;right:10px;overflow:hidden;
+  background:radial-gradient(120% 140% at 50% 115%,#1a4fb8 0%,#0b2463 32%,#050d2a 62%,#02050f 100%)}
+.scr.cy{background:radial-gradient(120% 140% at 45% 115%,#0f8fbf 0%,#0a3d66 32%,#041a33 62%,#020812 100%)}
+.scr.au{background:radial-gradient(120% 140% at 40% 115%,#b8861f 0%,#5c3a0c 30%,#24170a 60%,#0a0703 100%)}
+.scr.ni{background:linear-gradient(180deg,#05081f 0%,#12103d 55%,#3a1d63 85%,#6b2f6e 100%)}
+.floor{position:absolute;left:-40%;right:-40%;bottom:-30px;height:120px;transform:perspective(160px) rotateX(62deg);transform-origin:50% 100%;
+  background-image:linear-gradient(rgba(140,190,255,.35) 1px,transparent 1px),linear-gradient(90deg,rgba(140,190,255,.35) 1px,transparent 1px);background-size:34px 22px;
+  -webkit-mask-image:linear-gradient(to top,#000 10%,transparent 90%)}
+.au .floor{background-image:linear-gradient(rgba(255,210,120,.35) 1px,transparent 1px),linear-gradient(90deg,rgba(255,210,120,.35) 1px,transparent 1px)}
+.cy .floor{background-image:linear-gradient(rgba(120,230,255,.35) 1px,transparent 1px),linear-gradient(90deg,rgba(120,230,255,.35) 1px,transparent 1px)}
+.beam{position:absolute;top:-20px;width:120px;height:260px;background:linear-gradient(180deg,rgba(255,255,255,.16),transparent 75%);filter:blur(6px);transform-origin:50% 0}
+.pscr{position:absolute;top:10px;bottom:10px;left:10px;width:186px;overflow:hidden;background:radial-gradient(90% 80% at 50% 40%,#1b3f97 0%,#0a1b4a 55%,#030919 100%)}
+/* ---- the black "screen" bezel (flush with the real LED edge) ---- */
+.bez{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,#25282f 0%,#0b0c10 45%,#020203 100%);
+  padding:10px;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.bez2{position:absolute;inset:0}
+.edge{position:absolute;border-radius:2px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),inset 0 3px 6px rgba(0,0,0,.9)}
+.div{position:absolute;top:0;bottom:0;left:196px;width:10px;background:linear-gradient(90deg,#030304,#22252b 50%,#030304)}
+/* ---- portrait ---- */
+.por{position:absolute;left:7px;top:4px;height:194px;filter:drop-shadow(0 4px 6px rgba(0,0,0,.8))}
+/* ---- type ---- */
+.t3{position:absolute;white-space:nowrap;line-height:1}
+.t3 .x{position:absolute;inset:0;color:#0a1a4d}
+.t3 .fc{position:relative;-webkit-background-clip:text;background-clip:text;color:transparent}
+.kur{direction:rtl}
+.pill{position:absolute;display:flex;align-items:center;justify-content:center;border-radius:999px;white-space:nowrap}
+.gold{background:linear-gradient(180deg,#fff2b0 0%,#ffcf4a 38%,#e79a12 70%,#b86a05 100%)}
+.chrome{background:linear-gradient(180deg,#ffffff 0%,#f2f5ff 45%,#b9c6e6 52%,#ffffff 100%)}
+.prod{position:absolute;filter:drop-shadow(0 10px 10px rgba(0,0,0,.75)) drop-shadow(0 0 22px rgba(120,190,255,.25))}
+.glow{position:absolute;border-radius:50%;filter:blur(18px)}
+</style></head><body>
+<!-- template pieces are injected by script for each of the 5 frames -->
+<script>
+const LOGO='../ad/assets/logo.png', A=n=>'../ad/assets/'+n+'.png';
+function T(txt,{x,y,size,font='BC',w=900,face='chrome',ext='#0a1a4d',depth=5,kur=false,ls=0,anchor='left',shadow=true}){
+  const ex=Array.from({length:depth},(_,i)=>`${(i+1)*.6}px ${(i+1)*.9}px 0 ${ext}`).join(',')+(shadow?`,${depth*.6+2}px ${depth*.9+5}px 8px rgba(0,0,0,.65)`:'');
+  const tr=anchor==='center'?'translateX(-50%)':anchor==='right'?'translateX(-100%)':'';
+  return `<div class="t3 ${kur?'kur':''}" style="left:${x}px;top:${y}px;font:${w} ${size}px ${font};letter-spacing:${ls}px;transform:${tr}">
+   <span class="x" style="text-shadow:${ex}">${txt}</span><span class="fc ${face}">${txt}</span></div>`}
+function frame(cls,inner,over){return `<div class="f"><div class="pscr"></div><img class="por" src="${LOGO}">
+  <div class="scr ${cls}"><div class="floor"></div><div class="beam" style="left:60px;transform:rotate(-14deg)"></div><div class="beam" style="left:330px;transform:rotate(12deg)"></div>${inner}</div>
+  <div class="bez"></div><div class="div"></div><div class="edge" style="left:10px;top:10px;width:186px;height:180px"></div><div class="edge" style="left:206px;top:10px;width:504px;height:180px"></div>
+  ${over}</div>`}
+const clock=`<svg class="prod" style="left:222px;top:5px;width:190px;height:190px" viewBox="0 0 200 200">
+ <defs><radialGradient id="fc" cx="45%" cy="38%" r="70%"><stop offset="0" stop-color="#fff"/><stop offset=".75" stop-color="#eef1f8"/><stop offset="1" stop-color="#c9d0e2"/></radialGradient>
+ <linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b8"/><stop offset=".35" stop-color="#f2b63a"/><stop offset=".65" stop-color="#a8660a"/><stop offset="1" stop-color="#ffd970"/></linearGradient></defs>
+ <circle cx="100" cy="100" r="98" fill="url(#rg)"/><circle cx="100" cy="100" r="86" fill="#0b1640"/><circle cx="100" cy="100" r="82" fill="url(#fc)"/>
+ ${Array.from({length:60},(_,i)=>{const a=i*6*Math.PI/180,b=i%5==0,r1=b?64:70,r2=76;return `<line x1="${100+Math.sin(a)*r1}" y1="${100-Math.cos(a)*r1}" x2="${100+Math.sin(a)*r2}" y2="${100-Math.cos(a)*r2}" stroke="#0b1640" stroke-width="${b?4:1.4}" stroke-linecap="round"/>`}).join('')}
+ <line x1="100" y1="100" x2="${100+Math.sin(305*Math.PI/180)*40}" y2="${100-Math.cos(305*Math.PI/180)*40}" stroke="#0b1640" stroke-width="7" stroke-linecap="round"/>
+ <line x1="100" y1="100" x2="${100+Math.sin(60*Math.PI/180)*60}" y2="${100-Math.cos(60*Math.PI/180)*60}" stroke="#d99a1e" stroke-width="4.5" stroke-linecap="round"/>
+ <circle cx="100" cy="100" r="6" fill="url(#rg)"/><ellipse cx="78" cy="58" rx="46" ry="22" fill="#fff" opacity=".35" transform="rotate(-28 78 58)"/></svg>`;
+const frames=[
+ // 1 — brand
+ frame('', `<div class="glow" style="left:120px;top:40px;width:260px;height:90px;background:rgba(80,140,255,.35)"></div>`,
+   T('WASTA GHAREB',{x:458,y:24,size:80,anchor:'center',ls:1})+
+   T('وەستا غەریب',{x:458,y:122,size:40,font:'VZ',face:'gold',ext:'#5a2c00',depth:3,kur:true,anchor:'center'})+
+   `<div style="position:absolute;left:300px;top:146px;width:46px;height:2px;background:linear-gradient(90deg,transparent,#ffcf4a)"></div><div style="position:absolute;left:570px;top:146px;width:46px;height:2px;background:linear-gradient(90deg,#ffcf4a,transparent)"></div>`),
+ // 2 — ANKER hero
+ frame('cy', `<div class="glow" style="left:20px;top:30px;width:160px;height:140px;background:rgba(60,200,255,.45)"></div>`,
+   `<img class="prod" src="${A('pb_anker165')}" style="left:240px;top:12px;height:176px;transform:rotate(-7deg)">`+
+   T('ANKER',{x:560,y:16,size:88,anchor:'center',ext:'#06405f',ls:2})+
+   T('POWER BANK',{x:560,y:104,size:21,font:'MS',w:800,face:'chrome',ext:'#06405f',depth:2,anchor:'center',ls:3})+
+   `<div class="pill gold" style="left:470px;top:140px;width:180px;height:38px;font:800 17px MS;color:#0a1640;letter-spacing:1px;box-shadow:0 4px 0 #8a5200,0 8px 14px rgba(0,0,0,.6)">COMING SOON</div>`),
+ // 3 — line-up, coming soon
+ frame('cy', `<div class="glow" style="left:40px;top:40px;width:240px;height:120px;background:rgba(60,200,255,.4)"></div>
+   <img class="prod" src="${A('pb_maggo_stand')}" style="left:24px;top:70px;height:100px">
+   <img class="prod" src="${A('pb_anker20k')}" style="left:208px;top:60px;height:112px;transform:rotate(8deg)">`,
+   `<img class="prod" src="${A('pb_qi2_blue')}" style="left:318px;top:4px;height:192px;transform:rotate(-4deg)">`+
+   T('لەم نزیکانە',{x:610,y:40,size:38,font:'VZ',face:'gold',ext:'#5a2c00',depth:3,kur:true,anchor:'center'})+
+   T('COMING SOON',{x:610,y:112,size:30,ext:'#06405f',depth:3,anchor:'center',ls:1})+
+   `<div style="position:absolute;left:560px;top:150px;width:100px;height:2px;background:linear-gradient(90deg,transparent,#5fd8ff,transparent)"></div>
+    <div style="position:absolute;left:610px;top:156px;transform:translateX(-50%);font:800 13px MS;color:#9fe6ff;letter-spacing:4px">ANKER</div>`),
+ // 4 — adapter & cable, in stock
+ frame('au', `<div class="glow" style="left:30px;top:40px;width:220px;height:120px;background:rgba(255,190,80,.35)"></div>
+   <img class="prod" src="${A('cable_coil')}" style="left:150px;top:58px;height:110px">`,
+   `<img class="prod" src="${A('adapter')}" style="left:230px;top:14px;height:174px;transform:rotate(-6deg)">`+
+   T('ADAPTER',{x:610,y:14,size:54,anchor:'center',ext:'#3a4256',ls:1})+
+   T('&amp; CABLE',{x:610,y:66,size:54,face:'gold',ext:'#6a3b00',anchor:'center',ls:1})+
+   `<div class="pill" style="left:525px;top:136px;width:172px;height:42px;background:linear-gradient(180deg,#5cf2a6,#11b765 55%,#078a47);box-shadow:0 4px 0 #04582c,0 8px 14px rgba(0,0,0,.6);font:900 22px VZ;color:#fff;direction:rtl;padding-left:26px;text-shadow:0 2px 2px rgba(0,60,25,.6)">بەردەستە</div>
+    <div style="position:absolute;left:515px;top:133px;width:48px;height:48px;border-radius:50%;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center">
+    <svg width="28" height="28" viewBox="0 0 28 28"><path d="M5 15 L11 21 L23 7" fill="none" stroke="#0aa257" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`),
+ // 5 — opening hours
+ frame('ni', `<div style="position:absolute;right:26px;top:16px;width:22px;height:22px;border-radius:50%;box-shadow:-6px 4px 0 0 #f3f1ff"></div>
+   ${Array.from({length:26},(_,i)=>`<div style="position:absolute;left:${(i*97)%500}px;top:${(i*53)%110}px;width:2px;height:2px;border-radius:50%;background:#fff;opacity:${.3+(i%4)*.15}"></div>`).join('')}`,
+   clock+
+   T('کاتی کردنەوە',{x:562,y:12,size:32,font:'VZ',face:'gold',ext:'#5a2c00',depth:3,kur:true,anchor:'center'})+
+   T('9 AM – 11 PM',{x:562,y:66,size:56,anchor:'center',ext:'#1b1450',ls:1})+
+   T('لە ٩ی بەیانی تا ١١ی شەو',{x:562,y:140,size:24,font:'VZ',w:800,face:'chrome',ext:'#1b1450',depth:2,kur:true,anchor:'center'}))
+];
+document.body.innerHTML+=frames.join('');
+</script></body></html>

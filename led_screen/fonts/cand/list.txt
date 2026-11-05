@@ -1,0 +1,13 @@
+font-family: 'Vazirmatn'	font-weight: 800	https://fonts.gstatic.com/s/vazirmatn/v16/Dxx78j6PP2D_kU2muijPEe1n2vVbfJRkleg0ORc.ttf
+font-family: 'Vazirmatn'	font-weight: 900	https://fonts.gstatic.com/s/vazirmatn/v16/Dxx78j6PP2D_kU2muijPEe1n2vVbfJRklcE0ORc.ttf
+font-family: 'Readex Pro'	font-weight: 700	https://fonts.gstatic.com/s/readexpro/v27/SLXnc1bJ7HE5YDoGPuzj_dh8uc7wUy8ZQQyX2KY8TL0kGZN6blTCBkOmgg.ttf
+font-family: 'Alexandria'	font-weight: 800	https://fonts.gstatic.com/s/alexandria/v6/UMBCrPdDqW66y0Y2usFeQCH18mulUxBvI9p7SabH.ttf
+font-family: 'Alexandria'	font-weight: 900	https://fonts.gstatic.com/s/alexandria/v6/UMBCrPdDqW66y0Y2usFeQCH18mulUxBvI9pSSabH.ttf
+font-family: 'Noto Sans Arabic'	font-weight: 800	https://fonts.gstatic.com/s/notosansarabic/v33/nwpxtLGrOAZMl5nJ_wfgRg3DrWFZWsnVBJ_sS6tlqHHFlhQ5l3sQWIHPqzCfSGuvuw.ttf
+font-family: 'Noto Sans Arabic'	font-weight: 900	https://fonts.gstatic.com/s/notosansarabic/v33/nwpxtLGrOAZMl5nJ_wfgRg3DrWFZWsnVBJ_sS6tlqHHFlhQ5l3sQWIHPqzCfYWuvuw.ttf
+font-family: 'Lalezar'	font-weight: 400	https://fonts.gstatic.com/s/lalezar/v16/zrfl0HLVx-HwTP82UaA.ttf
+font-family: 'Montserrat'	font-weight: 800	https://fonts.gstatic.com/s/montserrat/v31/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCvr70w-.ttf
+font-family: 'Montserrat'	font-weight: 900	https://fonts.gstatic.com/s/montserrat/v31/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCvC70w-.ttf
+font-family: 'Oswald'	font-weight: 700	https://fonts.gstatic.com/s/oswald/v57/TK3_WkUHHAIjg75cFRf3bXL8LICs1xZogUE.ttf
+font-family: 'Barlow Condensed'	font-weight: 800	https://fonts.gstatic.com/s/barlowcondensed/v13/HTxwL3I-JCGChYJ8VI-L6OO_au7B47b1_3E.ttf
+font-family: 'Barlow Condensed'	font-weight: 900	https://fonts.gstatic.com/s/barlowcondensed/v13/HTxwL3I-JCGChYJ8VI-L6OO_au7B45L0_3E.ttf
