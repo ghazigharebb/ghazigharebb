@@ -5,3 +5,6 @@ pb_anker20k led_screen/lovart_pro/color/lovart_c3a39383de50.png
 pb_instacord led_screen/lovart_pro/color/lovart_06ad988cb969.png
 adapter led_screen/lovart_pro/color/lovart_5e9548d6b5d3.png
 cable_coil led_screen/lovart_pro/color/lovart_5ee565d99fb6.png
+magsafe led_screen/lovart_pro/color/lovart_a9e5d99b1448.png
+hours led_screen/lovart_pro/color/lovart_393f49c0a26c.png
+COLORS_DONE
