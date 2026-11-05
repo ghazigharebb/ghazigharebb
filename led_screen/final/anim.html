@@ -70,13 +70,13 @@ const set=(e,tr,op=1,filter='')=>{e.style.transform=tr;e.style.opacity=op;e.styl
 /* product: flies in from deep space, floats + turns, glints, exits toward / past the viewer */
 function product(n,{cx=330,h=176,w=200}={}){
   const layers=Array.from({length:9},(_,i)=>`<img src="${A(n)}" style="transform:translateZ(${-(9-i)*1.6}px);filter:brightness(${.12+i*.03}) saturate(.6)">`).join('');
-  const e=el(`${layers}<img src="${A(n)}"><div class="gl" style="-webkit-mask-image:url(${A(n)})"></div>`,{left:(cx-w/2)+'px',top:(196-h)+'px',width:w+'px',height:h+'px'});e.className='el pw';e.gl=e.querySelector('.gl');return e}
+  const e=el(`${layers}<img src="${A(n)}"><div class="gl" style="-webkit-mask-image:url(${A(n)})"></div>`,{left:(cx-w/2)+'px',top:(184-h)+'px',width:w+'px',height:h+'px'});e.className='el pw';e.gl=e.querySelector('.gl');return e}
 function prodAt(e,u,dur,{exit='toward',tilt=-5,glints=[]}={}){
   const q=prog(u,0,1.05),qx=prog(u,dur-.75,dur);if(u<0||u>dur||q<=0){set(e,'',0);return 0}
-  const z=lerp(-2200,0,oCub(q))+bump(u,.85,1.35)*70,blur=(1-q)*4;
-  const fl=Math.sin(u*2.1)*3,ry=Math.sin(u*1.0)*24*clamp(u-.6),rz=tilt+Math.sin(u*.8)*1.5,rx=Math.sin(u*.7)*5;
+  const z=lerp(-2200,0,oCub(q))+bump(u,.85,1.35)*22,blur=(1-q)*4;
+  const fl=Math.sin(u*2.1)*3,ry=Math.sin(u*1.0)*24*clamp(u-.6),rz=tilt+Math.sin(u*.8)*1.5,rx=Math.sin(u*.7)*3;
   let x=0,y=fl,zz=z,op=clamp(q*3);
-  if(qx>0){if(exit==='toward'){zz+=Math.pow(qx,2)*220;op*=1-ioCub(qx)}else{zz-=ioCub(qx)*900;x-=ioCub(qx)*120;op*=1-qx*qx}}
+  if(qx>0){if(exit==='toward'){zz+=Math.pow(qx,2)*60;y-=qx*12;op*=1-oCub(qx)}else{zz-=ioCub(qx)*900;x-=ioCub(qx)*120;op*=1-qx*qx}}
   set(e,`translate3d(${x}px,${y}px,${zz}px) rotateY(${ry+(1-oCub(q))*70}deg) rotateX(${rx}deg) rotateZ(${rz}deg)`,op,blur>.3?`blur(${blur}px)`:'');
   let g=-1;for(const[a,b]of glints){const p=prog(u,a,b);if(p>0&&p<1)g=p}e.gl.style.backgroundPosition=g<0?'-200% 0':`${lerp(130,-30,g)}% 0`;e.gl.style.opacity=g<0?0:1;
   return op*(1-qx)}
@@ -96,18 +96,18 @@ const s1=T('WASTA GHAREB',458,26,{size:80,ls:1}), s1k=T('وەستا غەریب',
 const s1l=el(`<div style="width:46px;height:2px;background:linear-gradient(90deg,transparent,#ffcf4a)"></div>`,{left:'298px',top:'149px'}),s1r=el(`<div style="width:46px;height:2px;background:linear-gradient(90deg,#ffcf4a,transparent)"></div>`,{left:'572px',top:'149px'});
 const s1g=el('',{left:'230px',top:'20px',width:'460px',height:'86px',background:'linear-gradient(105deg,transparent 45%,rgba(255,255,255,.55) 50%,transparent 55%)',backgroundSize:'300% 100%',mixBlendMode:'overlay',pointerEvents:'none'});
 /* ===== scene 2 — ANKER hero ===== */
-const p2=product('pb_anker165',{cx:326,h:186,w:150});
+const p2=product('pb_anker165',{cx:326,h:162,w:132});
 const s2a=T('ANKER',586,14,{size:86,excol:'#06405f',ls:2}),s2b=T('POWER BANK',586,104,{size:21,font:'MS',w:800,excol:'#06405f',depth:2,ls:3});
 const pill2=el(`<div style="position:absolute;inset:0;transform-style:preserve-3d" class="pf">
   <div class="pill" style="background:linear-gradient(180deg,#fff2b0,#ffcf4a 38%,#e79a12 70%,#b86a05);box-shadow:0 4px 0 #8a5200,0 8px 14px rgba(0,0,0,.6);font:800 17px MS;color:#0a1640;letter-spacing:1px">COMING SOON</div>
   <div class="pill" style="transform:rotateX(180deg);background:linear-gradient(180deg,#fff2b0,#ffcf4a 38%,#e79a12 70%,#b86a05);box-shadow:0 4px 0 #8a5200;font:900 21px VZ;color:#0a1640;direction:rtl">لەم نزیکانە</div></div>`,{left:'496px',top:'140px',width:'180px',height:'38px'});
 /* ===== scene 3 — four power banks ===== */
-const P3=['pb_maggo_stand','pb_qi2_blue','pb_anker20k','pb_instacord'].map((n,i)=>product(n,{cx:332,h:[160,186,178,150][i],w:[190,150,150,210][i]}));
+const P3=['pb_maggo_stand','pb_qi2_blue','pb_anker20k','pb_instacord'].map((n,i)=>product(n,{cx:332,h:[146,162,160,138][i],w:[176,134,134,196][i]}));
 const s3a=T('لەم نزیکانە',592,26,{size:40,font:'VZ',face:'gold',excol:'#5a2c00',depth:3,kur:true}),s3b=T('COMING SOON',592,104,{size:32,excol:'#06405f',depth:3,ls:1});
 const s3c=T('ANKER',592,150,{size:13,font:'MS',w:800,excol:'#06405f',depth:1,ls:5});
 const dots3=el([0,1,2,3].map(i=>`<i style="display:inline-block;width:6px;height:6px;margin:0 3px;border-radius:50%;background:#9fe6ff"></i>`).join(''),{left:'565px',top:'172px'});
 /* ===== scene 4 — adapter / cables / MagSafe ===== */
-const P4=[['adapter',182,176],['cable_coil',156,230],['magsafe',186,96]].map(([n,h,w])=>product(n,{cx:322,h,w}));
+const P4=[['adapter',162,158],['cable_coil',146,214],['magsafe',162,86]].map(([n,h,w])=>product(n,{cx:322,h,w}));
 const s4a=T('ADAPTER',602,12,{size:54,excol:'#3a4256',ls:1}),s4b=T('& CABLE',602,64,{size:54,face:'gold',excol:'#6a3b00',ls:1});
 const pill4=el(`<div style="position:absolute;inset:0;transform-style:preserve-3d" class="pf">
   <div class="pill" style="background:linear-gradient(180deg,#5cf2a6,#11b765 55%,#078a47);box-shadow:0 4px 0 #04582c,0 8px 14px rgba(0,0,0,.6);font:900 22px VZ;color:#fff;direction:rtl;padding-left:30px">بەردەستە</div>
@@ -116,13 +116,13 @@ const pill4=el(`<div style="position:absolute;inset:0;transform-style:preserve-3
   <svg width="28" height="28" viewBox="0 0 28 28"><path d="M5 15 L11 21 L23 7" fill="none" stroke="#0aa257" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`,{left:'522px',top:'136px',width:'172px',height:'42px'});
 /* ===== scene 5 — opening hours ===== */
 const ticks=Array.from({length:60},(_,i)=>{const a=i*6*Math.PI/180,b=i%5==0,r1=b?64:70,r2=76;return `<line x1="${100+Math.sin(a)*r1}" y1="${100-Math.cos(a)*r1}" x2="${100+Math.sin(a)*r2}" y2="${100-Math.cos(a)*r2}" stroke="#0b1640" stroke-width="${b?4:1.4}" stroke-linecap="round"/>`}).join('');
-const clock=el(`<svg width="176" height="176" viewBox="0 0 200 200" style="filter:drop-shadow(0 10px 12px rgba(0,0,0,.7))">
+const clock=el(`<svg width="168" height="168" viewBox="0 0 200 200" style="filter:drop-shadow(0 10px 12px rgba(0,0,0,.7))">
  <defs><radialGradient id="fc" cx="45%" cy="38%" r="70%"><stop offset="0" stop-color="#fff"/><stop offset=".75" stop-color="#eef1f8"/><stop offset="1" stop-color="#c9d0e2"/></radialGradient>
  <linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b8"/><stop offset=".35" stop-color="#f2b63a"/><stop offset=".65" stop-color="#a8660a"/><stop offset="1" stop-color="#ffd970"/></linearGradient></defs>
  <circle cx="100" cy="100" r="98" fill="url(#rg)"/><circle cx="100" cy="100" r="86" fill="#0b1640"/><circle cx="100" cy="100" r="82" fill="url(#fc)"/>${ticks}
  <line id="hh" x1="100" y1="100" x2="100" y2="60" stroke="#0b1640" stroke-width="7" stroke-linecap="round"/>
  <line id="mh" x1="100" y1="100" x2="100" y2="40" stroke="#d99a1e" stroke-width="4.5" stroke-linecap="round"/>
- <circle cx="100" cy="100" r="6" fill="url(#rg)"/><ellipse cx="78" cy="58" rx="46" ry="22" fill="#fff" opacity=".35" transform="rotate(-28 78 58)"/></svg>`,{left:'218px',top:'12px',width:'176px',height:'176px'});
+ <circle cx="100" cy="100" r="6" fill="url(#rg)"/><ellipse cx="78" cy="58" rx="46" ry="22" fill="#fff" opacity=".35" transform="rotate(-28 78 58)"/></svg>`,{left:'220px',top:'16px',width:'168px',height:'168px'});
 const HH=clock.querySelector('#hh'),MH=clock.querySelector('#mh');
 const s5a=T('کاتی کردنەوە',568,12,{size:32,font:'VZ',face:'gold',excol:'#5a2c00',depth:3,kur:true});
 const s5b=T('9 AM – 11 PM',566,70,{size:50,excol:'#1b1450',ls:1});
@@ -159,7 +159,7 @@ function render(t){
      const fl=ioCub(prog(u4,5.2,5.7))-ioCub(prog(u4,9.5,10));pill4.firstElementChild.style.transform=`rotateX(${fl*180}deg)`}}
   // scene 5
   const u5=t-39;{const q=prog(u5,0,1.2),qx=prog(u5,6.3,7);const vis=u5>=0&&u5<=7;clock.style.visibility=vis?'visible':'hidden';
-   if(vis){set(clock,`translate3d(0,${Math.sin(u5*1.8)*2}px,${lerp(-1500,0,oCub(q))+bump(u5,1,1.5)*50+qx*qx*200}px) rotateY(${(1-oCub(q))*40+Math.sin(u5*1.1)*8}deg)`,clamp(q*3)*(1-qx),q<1?`blur(${(1-q)*5}px)`:'')}
+   if(vis){set(clock,`translate3d(0,${Math.sin(u5*1.8)*2}px,${lerp(-1500,0,oCub(q))+bump(u5,1,1.5)*12+qx*qx*40}px) rotateY(${(1-oCub(q))*40+Math.sin(u5*1.1)*8}deg)`,clamp(q*3)*(1-qx),q<1?`blur(${(1-q)*5}px)`:'')}
    const hr=9+14*ioCub(prog(u5,1.4,4.6));HH.setAttribute('transform',`rotate(${hr*30} 100 100)`);MH.setAttribute('transform',`rotate(${hr*360} 100 100)`)}
   kurAt(s5a,u5,.8,7);textAt(s5b,u5,1.2,7,{stag:.05});kurAt(s5c,u5,1.9,7);
   sv=Math.max(sv,pv);SH.style.opacity=sv*.9;
