@@ -1,2 +1,11 @@
 pb_anker165 led_screen/lovart_pro/raw/lovart_144d5558ac7d.png
 pb_maggo_stand led_screen/lovart_pro/raw/lovart_47232ef3145b.png
+pb_qi2_blue led_screen/lovart_pro/raw/lovart_1cfbf88b2796.png
+pb_anker20k FAIL:timeoutNone
+pb_instacord FAIL:timeoutNone
+adapter FAIL:timeoutNone
+cable_coil FAIL:timeoutNone
+magsafe FAIL:timeoutNone
+brand FAIL:timeoutNone
+hours FAIL:timeoutNone
+STILLS_DONE
