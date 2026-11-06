@@ -220,7 +220,7 @@ def build_finishing(scene, s):
     if streak > 0:
         x += 220
         g = _n(tree, 'CompositorNodeGlare', x, -250, Type='Streaks', Threshold=4.0, Strength=1.0, Streaks=2,
-               **{'Streaks Angle': 0.0}, Fade=0.96, Tint=(0.35, 0.6, 1.0, 1.0))
+               **{'Streaks Angle': 0.0}, Fade=0.9, Tint=(0.35, 0.6, 1.0, 1.0))
         L(cur.outputs[out], g.inputs['Image'])
         m = _mix(tree, x + 200, 0, 'ADD', streak * 0.6, cur, g, out, 'Glare')
         cur, out = m, 'Result'; x += 200
