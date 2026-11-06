@@ -448,6 +448,18 @@ for nm, val in (('Lift', (0.88, 0.99, 1.02, 1)), ('Gamma', (0.9, 1.0, 1.04, 1)),
 hs = tree.nodes.new('CompositorNodeHueSat'); hs.inputs['Saturation'].default_value = 0.75
 tree.links.new(src, cb.inputs['Image']); tree.links.new(cb.outputs['Image'], hs.inputs['Image']); tree.links.new(hs.outputs['Image'], go.inputs[0])
 r.filepath = OUT
-bpy.ops.wm.save_as_mainfile(filepath=os.path.splitext(OUT)[0] + '.blend')
-bpy.ops.render.render(write_still=True)
+NO_RENDER = os.environ.get('KELEN_NO_RENDER') == '1'
+if NO_RENDER:
+    # ready-to-open file: pack every texture/HDRI inside, frame the camera view, look through the camera
+    bpy.ops.file.pack_all()
+    for scr in bpy.data.screens:
+        for area in scr.areas:
+            if area.type == 'VIEW_3D':
+                for sp_ in area.spaces:
+                    if sp_.type == 'VIEW_3D':
+                        sp_.shading.type = 'MATERIAL'
+                        sp_.region_3d.view_perspective = 'CAMERA'
+bpy.ops.wm.save_as_mainfile(filepath=os.path.splitext(OUT)[0] + '.blend', compress=True)
+if not NO_RENDER:
+    bpy.ops.render.render(write_still=True)
 print('done', OUT)
