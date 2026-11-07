@@ -24,8 +24,8 @@ def streak_layer(n, len_rng, thick, alpha_rng, blur, angle_deg):
         cv2.line(lay, (int(x), int(y)), (int(x2), int(y2)), float(rng.uniform(*alpha_rng)), max(1, int(round(thick * s))), cv2.LINE_AA)
     if blur > 0: lay = cv2.GaussianBlur(lay, (0, 0), blur * s)
     return lay
-rain = (streak_layer(int(9000), (18, 60), 1.0, (0.10, 0.35), 0.6, -7)      # far
-        + streak_layer(int(2200), (60, 150), 1.6, (0.12, 0.30), 1.2, -8)     # mid
+rain = (streak_layer(int(1600), (45, 110), 1.0, (0.05, 0.15), 0.8, -7)      # far
+        + streak_layer(int(1300), (70, 160), 1.6, (0.08, 0.22), 1.2, -8)     # mid
         + streak_layer(int(260), (220, 520), 4.0, (0.06, 0.14), 6.0, -9))    # near, defocused
 light_behind = cv2.GaussianBlur(lum, (0, 0), 45 * s)
 light_behind = np.clip(light_behind / max(np.percentile(light_behind, 99.5), 1e-3), 0, 1) ** 1.4
@@ -56,8 +56,8 @@ g = rng.normal(0, 1, (H, W)).astype(np.float32)
 g = cv2.GaussianBlur(g, (0, 0), 0.75 * s); g /= g.std()
 gc = rng.normal(0, 1, (H, W, 3)).astype(np.float32)
 gc = cv2.GaussianBlur(gc, (0, 0), 0.9 * s); gc /= gc.std()
-amt = (0.014 + 0.016 * np.clip(1 - np.abs(lum - 0.35) / 0.5, 0, 1))[..., None]
-img = np.clip(img + amt * (0.8 * g[..., None] + 0.25 * gc), 0, 1)
+amt = (0.0045 + 0.0050 * np.clip(1 - np.abs(lum - 0.35) / 0.5, 0, 1))[..., None]
+img = np.clip(img + amt * (0.85 * g[..., None] + 0.2 * gc), 0, 1)
 
 out = img[..., ::-1]
 cv2.imwrite(dst + ".png", (out * 65535 + 0.5).astype(np.uint16))
