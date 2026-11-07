@@ -127,7 +127,7 @@ def emissive(name, col, strength):
     link(nt, e.outputs[0], nt.nodes["Material Output"].inputs["Surface"])
     return m
 
-def curtain(name, col, strength, seed):
+def curtain(name, col, strength, seed, fold=0.6):
     """window interior: warm glow through a curtain with folds + silhouette of furniture"""
     m = bpy.data.materials.new(name); m.use_nodes = True; nt = m.node_tree
     nt.nodes.remove(nt.nodes["Principled BSDF"])
@@ -140,7 +140,7 @@ def curtain(name, col, strength, seed):
     link(nt, mp.outputs[0], w.inputs["Vector"])
     nz = node(nt, "ShaderNodeTexNoise", **{"Scale": 3.0, "Detail": 2.0})
     link(nt, tc.outputs["Object"], nz.inputs["Vector"])
-    f = math_node(nt, 'MULTIPLY', math_node(nt, 'ADD', math_node(nt, 'MULTIPLY', w.outputs["Fac"], 0.6), 0.4),
+    f = math_node(nt, 'MULTIPLY', math_node(nt, 'ADD', math_node(nt, 'MULTIPLY', w.outputs["Fac"], fold), 1.0 - fold),
                   math_node(nt, 'ADD', math_node(nt, 'MULTIPLY', nz.outputs["Fac"], 0.9), 0.35))
     e = node(nt, "ShaderNodeEmission"); e.inputs["Color"].default_value = col + (1,)
     st = math_node(nt, 'MULTIPLY', f, strength)
@@ -362,6 +362,10 @@ for side, seed0 in ((-1, 100), (1, 200)):
         heights[(side, i)] = (y, w, h)
         y += w; i += 1
 
+for nm in ("In201_1_0", "In201_2_0"):
+    o = bpy.data.objects.get(nm)
+    if o:
+        o.data.materials[0] = curtain(nm + "_soft", (1.0, 0.45, 0.14), 1.5, 3.3, fold=0.22)
 # ============================================================ POLES + DISTRIBUTION
 def pole(name, x, y, h=8.5):
     cyl(name, (x, y, 0), (x, y, h), 0.13, M_POLE, 12)
@@ -497,14 +501,22 @@ cyl("TeaGlass", (-2.0, 7.0, 0.38), (-2.0, 7.0, 0.47), 0.024, m_tea, 12)
 # fuel jerrycans
 for k in range(3):
     box(f"Jerry{k}", (-4.35, 6.2 + k * 0.38, 0.39), (0.2, 0.34, 0.48), grimy_paint(f"JC{k}", [(0.04, 0.07, 0.025), (0.12, 0.018, 0.01), (0.05, 0.06, 0.03)][k], 0.3), bevel=0.03)
-# trash bags along walls
+# trash bags: natural clusters of varied bags (separate RNG so the rest of the scene is unchanged)
+RB = random.Random(77)
 for k in range(9):
-    side = R.choice([-1, 1]); yy = R.uniform(4, 60)
-    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=3, radius=0.32, location=(side * (W_FACE - 0.35), yy, 0.4))
-    b = bpy.context.object; b.scale = (1, R.uniform(0.8, 1.3), R.uniform(0.7, 1.0)); b.data.materials.append(M_BAG)
-    d = b.modifiers.new("d", 'DISPLACE'); t = bpy.data.textures.new("bt", 'CLOUDS'); t.noise_scale = 0.15; d.texture = t; d.strength = 0.08
-    bpy.ops.object.shade_smooth()
-
+    side = R.choice([-1, 1]); yy = R.uniform(4, 60)          # consume R exactly as before
+    if k % 3: continue                                         # 3 cluster sites
+    for j in range(RB.randint(3, 5)):
+        bx = side * (W_FACE - 0.3 - RB.uniform(0.0, 0.55)); by = yy + RB.uniform(-0.7, 0.7)
+        rad = RB.uniform(0.18, 0.36)
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=4, radius=rad, location=(bx, by, rad * 0.7 + (0.18 if j == 4 else 0)))
+        b = bpy.context.object; b.name = "TrashBag"
+        b.scale = (RB.uniform(0.8, 1.2), RB.uniform(0.8, 1.4), RB.uniform(0.6, 0.95))
+        b.rotation_euler = (RB.uniform(-0.3, 0.3), RB.uniform(-0.3, 0.3), RB.uniform(0, 6.28))
+        b.data.materials.append(M_BAG if RB.random() < 0.7 else plain(f"BagB{k}{j}", (0.02, 0.03, 0.06), 0.18, coat=0.5))
+        d = b.modifiers.new("d", 'DISPLACE'); t = bpy.data.textures.new("bt", 'CLOUDS'); t.noise_scale = RB.uniform(0.06, 0.14)
+        d.texture = t; d.strength = RB.uniform(0.06, 0.12); d.texture_coords = 'GLOBAL'
+        bpy.ops.object.shade_smooth()
 # open shop with cold fluorescent light (colour contrast)
 SHOP_Y = 19.5
 box("ShopBack", (W_FACE + 3.2, SHOP_Y, 1.5), (0.1, 3.4, 3.0), concrete("ShopWall", (0.55, 0.6, 0.58), dirt=0.4))
