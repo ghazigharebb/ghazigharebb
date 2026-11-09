@@ -16,3 +16,12 @@ Render: put `src/*` in a Remotion project's `src/` (plus `index.ts`), `public/*`
   USD 100 (public domain, BEP), EUR 100 Europa specimen (ECB), GBP 50 Series G specimen (Bank of England).
   IQD 25,000 (2003 series) from en.wikipedia "Dinar-25000.jpg" (small scan, upscaled 2x).
 - `calibration_936x260.mp4/.png` — ruler chart (marks every 10 px, numbers every 50 px) to see exactly where the screen cuts.
+
+## PRO (v5) — `agha_galali_PRO_936x260.mp4`
+Same layout as v4 (gold field, navy logo panel, name, real banknotes, FIB, money rain), finished like an After Effects comp:
+- true camera motion blur (6 temporal samples per frame, 200° shutter) on all content, whip-pan cuts
+- Lovart-generated plates: polished gold guilloche backdrop, gold bokeh dust (screen, two parallax layers), anamorphic flare (screen) on every cut
+- extruded engraved name with fly-in from depth, impact glow + gold particle bursts, subtitle opening from the centre
+- banknotes as 3D bending paper (three.js) with travelling glint light, giant outlined denomination behind, kinetic labels
+- FIB card 3D flip + sheen + particle stream; finale 3D money rain + glowing ribbon; seamless loop through a flare peak
+Source: `pro/src/Pro.tsx` (uses ../agha and ../fx3d helpers), plates in `pro/public/`.
