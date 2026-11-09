@@ -39,8 +39,8 @@ def skin_body():
         'chest': ((0, 0.01, 1.38), (0.21, 0.13)), 'neck': ((0, 0.02, 1.58), (0.06, 0.06)),
         'head': ((0, 0.03, 1.66), (0.05, 0.05)), 'headtop': ((0, 0.03, 1.70), (0.04, 0.04)),
         'lsh': ((-0.235, 0, 1.46), (0.075, 0.07)), 'lel': ((-0.25, 0.02, 1.18), (0.05, 0.05)), 'lha': ((-0.24, 0.06, 0.92), (0.045, 0.04)),
-        'rsh': ((0.235, 0, 1.46), (0.075, 0.07)), 'rel': ((0.29, 0.14, 1.22), (0.05, 0.05)), 'rwr': ((0.32, 0.36, 1.31), (0.04, 0.035)),
-        'rha': ((0.33, 0.43, 1.32), (0.045, 0.045)),
+        'rsh': ((0.235, 0, 1.46), (0.075, 0.07)), 'rel': ((0.29, 0.14, 1.22), (0.05, 0.05)), 'rwr': ((0.31, 0.38, 1.29), (0.045, 0.04)),
+        'rha': ((0.325, 0.445, 1.30), (0.05, 0.05)),
         'lhip': ((-0.1, 0, 0.95), (0.085, 0.085)), 'lkn': ((-0.12, 0.03, 0.52), (0.06, 0.06)), 'lft': ((-0.13, 0.0, 0.07), (0.05, 0.05)),
         'lto': ((-0.14, 0.17, 0.04), (0.045, 0.035)),
         'rhip': ((0.1, 0, 0.95), (0.085, 0.085)), 'rkn': ((0.12, 0.05, 0.52), (0.06, 0.06)), 'rft': ((0.14, 0.02, 0.07), (0.05, 0.05)),
@@ -67,14 +67,16 @@ HEAD = bpy.context.object; HEAD.name = 'Head'; HEAD.scale = (0.092, 0.108, 0.118
 SPEAR_BASE = Vector((0.36, 0.47, 0.0)); SPEAR_TOP = Vector((0.33, 0.50, 2.55))
 def spear():
     d = SPEAR_TOP - SPEAR_BASE
+    shaft_end = SPEAR_BASE.lerp(SPEAR_TOP, 2.30 / d.length)       # wood stops inside the iron socket
+    sd_ = shaft_end - SPEAR_BASE
     # shaft: slightly irregular wooden pole
     bm = bmesh.new()
-    bmesh.ops.create_cone(bm, cap_ends=True, segments=16, radius1=0.019, radius2=0.016, depth=d.length)
+    bmesh.ops.create_cone(bm, cap_ends=True, segments=16, radius1=0.019, radius2=0.016, depth=sd_.length)
     for v in bm.verts:
-        t = (v.co.z / d.length) + 0.5
+        t = (v.co.z / sd_.length) + 0.5
         v.co.x += 0.004 * math.sin(t * 7.0) ; v.co.y += 0.003 * math.cos(t * 5.0)
     shaft = obj_from_bm("Shaft", bm)
-    shaft.location = (SPEAR_BASE + SPEAR_TOP) / 2; shaft.rotation_euler = d.to_track_quat('Z', 'Y').to_euler()
+    shaft.location = (SPEAR_BASE + shaft_end) / 2; shaft.rotation_euler = sd_.to_track_quat('Z', 'Y').to_euler()
     sm = bpy.data.materials.new("Wood"); sm.use_nodes = True; nt = sm.node_tree; p = nt.nodes["Principled BSDF"]
     tc = node(nt, "ShaderNodeTexCoord"); mp = node(nt, "ShaderNodeMapping"); mp.inputs["Scale"].default_value = (40, 40, 1.2)
     link(nt, tc.outputs["Object"], mp.inputs["Vector"])
@@ -125,19 +127,19 @@ def spear():
     blade.visible_shadow = False
     # hot iron material: blackbody emission strongest at the tip, cooling toward the socket
     hm = bpy.data.materials.new("HotIron"); hm.use_nodes = True; nt = hm.node_tree; p = nt.nodes["Principled BSDF"]
-    p.inputs["Base Color"].default_value = (0.03, 0.028, 0.026, 1); p.inputs["Metallic"].default_value = 0.85; p.inputs["Roughness"].default_value = 0.45
+    p.inputs["Base Color"].default_value = (0.03, 0.028, 0.026, 1); p.inputs["Metallic"].default_value = 0.25; p.inputs["Roughness"].default_value = 0.78
     tc = node(nt, "ShaderNodeTexCoord"); sep = node(nt, "ShaderNodeSeparateXYZ"); link(nt, tc.outputs["Object"], sep.inputs[0])
     t = mnode(nt, 'DIVIDE', sep.outputs[2], L)                     # 0 at socket, 1 at tip
     nz = node(nt, "ShaderNodeTexNoise", **{"Scale": 60.0, "Detail": 10.0}); link(nt, tc.outputs["Object"], nz.inputs["Vector"])
     heat = mnode(nt, 'POWER', mnode(nt, 'MAXIMUM', mnode(nt, 'ADD', t, mnode(nt, 'MULTIPLY', mnode(nt, 'SUBTRACT', nz.outputs["Fac"], 0.5), 0.35)), 0.0), 1.6)
     bb = node(nt, "ShaderNodeBlackbody")
-    link(nt, mnode(nt, 'ADD', 820.0, mnode(nt, 'MULTIPLY', heat, 460.0)), bb.inputs[0])
+    link(nt, mnode(nt, 'ADD', 760.0, mnode(nt, 'MULTIPLY', heat, 420.0)), bb.inputs[0])
     link(nt, bb.outputs[0], p.inputs["Emission Color"])
     scale_n = node(nt, "ShaderNodeTexVoronoi", feature='F1'); scale_n.inputs["Scale"].default_value = 140.0
     link(nt, tc.outputs["Object"], scale_n.inputs["Vector"])
     oxide = node(nt, "ShaderNodeMapRange"); oxide.inputs[1].default_value = 0.25; oxide.inputs[2].default_value = 0.55; oxide.inputs[3].default_value = 0.25; oxide.inputs[4].default_value = 1.0
     link(nt, scale_n.outputs["Distance"], oxide.inputs[0])
-    link(nt, mnode(nt, 'MULTIPLY', mnode(nt, 'MULTIPLY', mnode(nt, 'POWER', heat, 1.5), 1.5), oxide.outputs[0]), p.inputs["Emission Strength"])
+    link(nt, mnode(nt, 'MULTIPLY', mnode(nt, 'MULTIPLY', mnode(nt, 'POWER', heat, 1.5), 0.55), oxide.outputs[0]), p.inputs["Emission Strength"])
     # scale/oxide flakes
     b = node(nt, "ShaderNodeBump", **{"Strength": 0.5, "Distance": 0.001}); link(nt, nz.outputs["Fac"], b.inputs["Height"]); link(nt, b.outputs["Normal"], p.inputs["Normal"])
     blade.data.materials.append(hm)
@@ -169,7 +171,6 @@ def cloak_mesh():
     def is_hole(zc, thc):
         deg = math.degrees(thc) % 360
         if 1.57 < zc < 1.79 and 66 < deg < 114: return True          # face opening of the hood
-        if 1.10 < zc < 1.36 and 40 < deg < 60: return True           # opening the right arm reaches through
         if zc < 1.0 and 84 < deg < 92: return True                   # front split of the cloak
         return False
     for j in range(NR):
@@ -197,7 +198,7 @@ def wool_material():
     hn = node(nt, "ShaderNodeTexNoise", **{"Scale": 14.0, "Detail": 8.0}); link(nt, tc.outputs["Object"], hn.inputs["Vector"])
     hem = node(nt, "ShaderNodeMapRange"); hem.inputs[1].default_value = 0.32; hem.inputs[2].default_value = 0.02
     link(nt, mnode(nt, 'ADD', sepw.outputs[2], mnode(nt, 'MULTIPLY', hn.outputs["Fac"], 0.12)), hem.inputs[0])
-    dusty = node(nt, "ShaderNodeMix", data_type='RGBA'); dusty.inputs[7].default_value = (0.075, 0.042, 0.03, 1)
+    dusty = node(nt, "ShaderNodeMix", data_type='RGBA'); dusty.inputs[7].default_value = (0.038, 0.022, 0.015, 1)
     link(nt, mnode(nt, 'MULTIPLY', hem.outputs[0], 0.85), dusty.inputs[0]); link(nt, cr.outputs["Color"], dusty.inputs[6])
     link(nt, dusty.outputs[2], p.inputs["Base Color"])
     p.inputs["Roughness"].default_value = 0.92
@@ -274,7 +275,7 @@ def sleeve_and_hand():
     bm = bmesh.new(); bmesh.ops.create_cone(bm, cap_ends=True, segments=12, radius1=0.012, radius2=0.010, depth=(cyl_b - cyl_a).length)
     th = obj_from_bm("Thumb", bm, gm); th.location = (cyl_a + cyl_b) / 2; th.rotation_euler = (cyl_b - cyl_a).to_track_quat('Z', 'Y').to_euler()
     bpy.context.view_layer.objects.active = th; bpy.ops.object.shade_smooth()
-sleeve_and_hand()
+# (sleeve removed: the cloak itself drapes over the arm)
 
 # ============================================================ GROUND
 def ground():
@@ -358,6 +359,12 @@ dust = obj_from_bm("DustMotes", bm, dust_m); dust.visible_shadow = False
 # ============================================================ LIGHT, ATMOSPHERE, WORLD
 bpy.ops.object.light_add(type='POINT', location=TIP); kl = bpy.context.object; kl.name = "TipLight"
 kl.data.energy = 70; kl.data.color = (1.0, 0.45, 0.14); kl.data.shadow_soft_size = 0.08
+# the tip light must not light the blade itself (it sits inside it): light linking exclusion
+_rc = bpy.data.collections.new("TipReceivers")
+_rc.objects.link(blade)
+kl.light_linking.receiver_collection = _rc
+_rc.collection_objects[0].light_linking.link_state = 'EXCLUDE'
+
 bpy.ops.object.light_add(type='SPOT', location=(-1.6, 3.4, 5.6)); rim = bpy.context.object; rim.name = "MoonRim"
 rim.data.spot_size = math.radians(50); rim.data.spot_blend = 1.0; rim.data.shadow_soft_size = 0.6; rim.data.energy = 1500; rim.data.color = (0.55, 0.68, 1.0)
 rim.rotation_euler = (Vector((0, 0, 1.3)) - rim.location).to_track_quat('-Z', 'Y').to_euler()
@@ -405,7 +412,9 @@ def build_cloak():
     em = bpy.data.objects.new("FoldSpace", None); C.objects.link(em); em.scale = (1.0, 1.0, 4.0)
     dm = o.modifiers.new("folds", 'DISPLACE'); dm.texture = ft; dm.texture_coords = 'OBJECT'; dm.texture_coords_object = em
     dm.strength = 0.085; dm.mid_level = 0.5; dm.vertex_group = "folds"
-    so = o.modifiers.new("thick", 'SOLIDIFY'); so.thickness = 0.008; so.offset = 0
+    wt = bpy.data.textures.new("wrinkle", 'CLOUDS'); wt.noise_scale = 0.035; wt.noise_depth = 3
+    dw = o.modifiers.new("wrinkles", 'DISPLACE'); dw.texture = wt; dw.texture_coords = 'GLOBAL'; dw.strength = 0.007; dw.mid_level = 0.5
+    so = o.modifiers.new("thick", 'SOLIDIFY'); so.thickness = 0.013; so.offset = 0; so.use_rim = True
     sd = o.modifiers.new("sub", 'SUBSURF'); sd.levels = 1; sd.render_levels = 2
     return o
 
