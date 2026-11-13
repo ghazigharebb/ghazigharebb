@@ -12,7 +12,12 @@ import '../health/hc.dart' show pushPage;
 import '../food/food_page.dart' show openFoodPage;
 import '../onboarding/account.dart';
 import '../onboarding/reg_data.dart';
+import 'arena_countdown_banner.dart';
 import 'vex_arena.dart' as va;
+
+/// کاتی دەستپێکردنی وەرزی VEX Arena.
+/// ⚠️ بیگۆڕە بۆ ڕێکەوتی ڕاستەقینە (باشترە لە سێرڤەرەوە بێت). ٧ ڕۆژ پێشی بانەری ماڵەوە دەردەکەوێت.
+DateTime kArenaStartsAt = DateTime(2026, 11, 20, 10);
 
 /// هەژماری Arena — یەک دانەی هاوبەش بۆ هەموو ئەپەکە
 final va.ArenaStore arenaStore = va.ArenaStore();
@@ -112,7 +117,20 @@ class AppArenaHost extends va.ArenaHost {
   }
 }
 
-/// پەڕەی VEX Arena
-Future<void> openArena({ValueChanged<int>? onTab}) {
-  return pushPage(va.VexArenaPage(host: AppArenaHost(onTab: onTab), store: arenaStore));
+/// پەڕەی VEX Arena — [join]: ڕاستەوخۆ پەڕەی تۆمارکردن (ئەگەر هێشتا تۆمار نەکرابێت)
+Future<void> openArena({ValueChanged<int>? onTab, bool join = false}) {
+  return pushPage(va.VexArenaPage(host: AppArenaHost(onTab: onTab), store: arenaStore, autoJoin: join));
+}
+
+/// شوێنی دۆخی Band لە ماڵەوە: ٧ ڕۆژ پێش Arena بانەری ژمێرەر، دواتر [fallback] (دۆخی Band)
+class HomeArenaSlot extends StatelessWidget {
+  const HomeArenaSlot({super.key, required this.fallback});
+  final Widget fallback;
+
+  @override
+  Widget build(BuildContext context) => ArenaCountdownSlot(
+        startsAt: kArenaStartsAt,
+        onTap: () => openArena(join: true),
+        fallback: fallback,
+      );
 }

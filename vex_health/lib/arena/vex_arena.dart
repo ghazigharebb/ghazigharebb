@@ -772,7 +772,10 @@ class ArenaStore extends ChangeNotifier {
 class VexArenaPage extends StatefulWidget {
   final ArenaHost host;
   final ArenaStore? store;
-  const VexArenaPage({super.key, required this.host, this.store});
+
+  /// ڕاستەوخۆ پەڕەی تۆمارکردن بکەرەوە (بۆ نموونە لە بانەری ژمێرەری ماڵەوە)
+  final bool autoJoin;
+  const VexArenaPage({super.key, required this.host, this.store, this.autoJoin = false});
   @override
   State<VexArenaPage> createState() => _VexArenaPageState();
 }
@@ -797,6 +800,11 @@ class _VexArenaPageState extends State<VexArenaPage> {
     st.addListener(_onStore);
     widget.host.changes?.addListener(_refresh);
     _poll = Timer.periodic(const Duration(seconds: 20), (_) => _refresh());
+    if (widget.autoJoin) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && st.acc == null) _openJoin();
+      });
+    }
   }
 
   @override

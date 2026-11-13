@@ -1,6 +1,7 @@
 // VEX Health — پەڕەی سەرەکی
 import 'package:flutter/material.dart';
 
+import '../arena/arena_host.dart' show HomeArenaSlot;
 import '../band/band_state.dart';
 import '../band/band_widgets.dart';
 import '../core/icons.dart';
@@ -33,7 +34,7 @@ class HomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Rise(child: HomeHeader()),
-              Rise(child: BandStatus()),
+              Rise(child: HomeArenaSlot(fallback: BandStatus())),
               Rise(delayMs: 50, child: HealthCard()),
               Rise(delayMs: 100, child: SponsorCarousel()),
               Rise(delayMs: 150, child: FoodScanCard()),
