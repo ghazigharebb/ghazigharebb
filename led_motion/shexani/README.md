@@ -8,3 +8,11 @@
 
 All text and the logo sit in x = 122…936: the left ~110 px of the installed sign are not visible.
 Source: `src/ShexaniStill.tsx` (Remotion), fonts Noto Kufi Arabic 800 / Noto Sans Arabic 700 per the brand guide.
+
+## v2 — safe on both sides
+The installed screen showed the right edge cropped (the "ش" of the wordmark was lost), while the earlier
+Agha Galali photo showed the left edge cropped. So the main file now keeps every element inside x = 140…796:
+up to 140 px can be lost on either side without losing anything. The background still fills 936×260.
+The program on the controller was using a 1920×534 copy of the video — use the 936×260 file directly
+(send it as a document, not as a WhatsApp photo/video, which recompresses and resizes).
+`calibration_936x260.*` shows a ruler (every 10 px, numbers every 50 px) to measure the exact visible area.
