@@ -36,3 +36,9 @@ Source: `master/src/Master.tsx` (Remotion, 2D canvas wall + motion-blurred stage
 Left: Shexani-Yellow panel whose edge is the arrow of the logo, with a deck of real banknotes and service cards;
 right: the official logo, fixed in every frame. Items: IQD, USD, EUR, GBP, Iranian toman, then FIB, Qi Card and
 NassWallet each on its own. Once per loop the yellow sweeps the whole sign. Source: `master/src/Master2.tsx`.
+
+## Master v3 — `shexani_LED_936x260_v3_20s.mp4` (current)
+Same design as v2 with the motion redone and a larger logo (324 px wide, was 268):
+items move horizontally only — the outgoing one eases away to the left and fades, the incoming one arrives
+from the logo side on a quintic ease-out and stops with zero velocity; no bounce, no float, nothing moves
+while an item is held (measured: ~0 pixel change per frame apart from the single sheen pass).
