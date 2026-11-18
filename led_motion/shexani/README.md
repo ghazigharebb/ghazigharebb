@@ -30,3 +30,9 @@ docked on the right otherwise). All content sits in x = 140…796.
 - 12.2–15 s  the whole wall turns Shexani Yellow in one wave, logo returns to the centre on yellow, wave back to Ink
 
 Source: `master/src/Master.tsx` (Remotion, 2D canvas wall + motion-blurred stage), assets in `master/public/`.
+
+## Master v2 — `shexani_LED_936x260_v2_20s.mp4` (replaces the 15 s coin-wall version, kept in `old/`)
+936×260, 30 fps, 600 frames, 20 s, H.264 Main, seamless loop. One item at a time, large, 2.5 s each.
+Left: Shexani-Yellow panel whose edge is the arrow of the logo, with a deck of real banknotes and service cards;
+right: the official logo, fixed in every frame. Items: IQD, USD, EUR, GBP, Iranian toman, then FIB, Qi Card and
+NassWallet each on its own. Once per loop the yellow sweeps the whole sign. Source: `master/src/Master2.tsx`.
