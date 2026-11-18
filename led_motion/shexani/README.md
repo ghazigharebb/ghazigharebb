@@ -16,3 +16,17 @@ up to 140 px can be lost on either side without losing anything. The background 
 The program on the controller was using a 1920×534 copy of the video — use the 936×260 file directly
 (send it as a document, not as a WhatsApp photo/video, which recompresses and resizes).
 `calibration_936x260.*` shows a ruler (every 10 px, numbers every 50 px) to measure the exact visible area.
+
+## Master loop — `shexani_LED_936x260_15s.mp4`
+936×260, 30 fps, 450 frames, 15 s, H.264 Main, silent, seamless loop. Flip-disc coin wall + the two meeting arrows.
+The official logo with the name and tagline is on screen in every frame (big in the centre at the loop point,
+docked on the right otherwise). All content sits in x = 140…796.
+
+- 0–1.5 s  logo hero on the coin wall, then docks right
+- 1.5–8.2 s  five currencies, each born from the arrows meeting (X): IQD, USD, EUR, GBP, Iranian toman —
+  real banknote + Kurdish name + the symbol written in discs on the wall
+- 8.2–10.9 s  FIB, Qi Card, NassWallet cards + "ناردن و وەرگرتنی پارە"
+- 10.9–12.2 s  $ € £ ₺ on the wall + "و هەموو دراوەکانی تر"
+- 12.2–15 s  the whole wall turns Shexani Yellow in one wave, logo returns to the centre on yellow, wave back to Ink
+
+Source: `master/src/Master.tsx` (Remotion, 2D canvas wall + motion-blurred stage), assets in `master/public/`.
