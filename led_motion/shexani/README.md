@@ -42,3 +42,8 @@ Same design as v2 with the motion redone and a larger logo (324 px wide, was 268
 items move horizontally only — the outgoing one eases away to the left and fades, the incoming one arrives
 from the logo side on a quintic ease-out and stops with zero velocity; no bounce, no float, nothing moves
 while an item is held (measured: ~0 pixel change per frame apart from the single sheen pass).
+
+## HQ master — `shexani_LED_936x260_HQ.mp4` (use this one on the sign)
+Same picture as v3, encoded once from a lossless PNG sequence: H.264 High, CRF 6, preset veryslow, yuv420p,
+BT.601 matrix (tagged), 936×260, 30 fps, 600 frames, 20 s, ~1.6 Mbit/s, 4 MB, no audio.
+Measured against the lossless frames: luma PSNR 51–53 dB (the earlier v3 file: 38–42 dB).
